@@ -1,0 +1,125 @@
+/* Shared: Tab4 appointments list + cards, also used on Tab1 dashboard */
+
+.appointments-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: clamp(16px, 2vw, 24px);
+  width: 100%;
+}
+
+.appointment-card {
+  background-color: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius);
+  box-shadow: var(--meditap-shadow-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.status-badge,
+.type-badge {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.confirmed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.cancelled {
+  background-color: #f1f3f5;
+  color: #495057;
+}
+
+.status-badge.completed {
+  background-color: #e7f5ff;
+  color: #1864ab;
+}
+
+.type-badge {
+  background-color: rgba(23, 162, 184, 0.18);
+  color: var(--meditap-accent);
+}
+
+.card-body {
+  flex-grow: 1;
+  margin-bottom: 15px;
+}
+
+.specialist-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--meditap-primary);
+  margin: 5px 0;
+}
+
+.specialist-name i {
+  margin-right: 8px;
+  color: var(--meditap-accent);
+}
+
+.department {
+  font-size: 14px;
+  color: var(--meditap-text-muted);
+}
+
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding-top: 15px;
+  border-top: 1px solid var(--meditap-border-light);
+}
+
+.time-info,
+.date-info {
+  font-size: 14px;
+  color: var(--meditap-text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.time-info i,
+.date-info i {
+  margin-right: 5px;
+  color: var(--meditap-accent);
+}
+
+.manage-btn {
+  margin-left: auto;
+  background-color: var(--meditap-primary);
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.manage-btn:hover {
+  background-color: var(--meditap-primary-shade);
+}

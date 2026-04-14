@@ -1,0 +1,452 @@
+/* Tab1.css (Previously Profile.css) */
+
+/* --- GENERAL LAYOUT & RESET --- */
+.profile-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--ion-font-family);
+    background-color: var(--meditap-bg);
+    color: var(--meditap-text);
+}
+
+/* --- HEADER (scoped: Tab14 used .profile-header on an h1 and inherited this bar) --- */
+.profile-container .profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: var(--meditap-primary);
+    color: #fff;
+    box-shadow: var(--meditap-shadow-md);
+    z-index: 10;
+}
+
+.profile-container .profile-header .logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.logout-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn i {
+    margin-right: 8px;
+}
+
+/* --- MAIN CONTENT LAYOUT --- */
+.profile-main {
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* --- SIDEBAR (Left Column) --- */
+/* Grows with content (e.g. long email) between min/max; nav stretches to match. */
+.profile-sidebar {
+    /* Grid: column width = max(snapshot intrinsic, nav intrinsic), so long email widens the bar. */
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: start;
+    width: max-content;
+    min-width: 280px;
+    max-width: min(560px, 94vw);
+    box-sizing: border-box;
+    background-color: #ffffff; /* White sidebar background */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    padding: 30px 0;
+    flex-shrink: 0;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.user-card {
+    text-align: center;
+    padding: 0 20px 30px 20px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 30px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.profile-sidebar--compact .user-card--compact {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.user-avatar--compact {
+    width: 64px;
+    height: 64px;
+    border-width: 2px;
+}
+
+.user-card__hint {
+    font-size: 0.8rem;
+    color: #6f7f7a;
+    line-height: 1.4;
+    margin: 8px 0 12px;
+    max-width: 260px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.user-card__profile-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--meditap-accent);
+    text-decoration: none;
+}
+
+.user-card__profile-link:hover {
+    text-decoration: underline;
+}
+
+/* Tab-style section headers on the dashboard (aligned with Tab4 schedule-header) */
+.dashboard-tab-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px 20px;
+    padding: 8px 0 16px 0;
+    border-bottom: 2px solid var(--meditap-border);
+    margin-bottom: 20px;
+}
+
+.dashboard-tab-section--secondary {
+    margin-top: 28px;
+    padding-top: 20px;
+}
+
+.dashboard-tab-section__titles {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.dashboard-tab-section__title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--meditap-primary);
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dashboard-tab-section__title i {
+    color: var(--meditap-accent);
+}
+
+.dashboard-tab-section__title--h2 {
+    font-size: 22px;
+}
+
+.dashboard-tab-section__subtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--meditap-text-muted, #777);
+    line-height: 1.45;
+    max-width: 52rem;
+}
+
+.dashboard-tab-section__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.dashboard-tab-section__btn {
+    text-decoration: none;
+    min-height: 44px;
+}
+
+.dashboard-appointments {
+    margin-bottom: 8px;
+}
+
+.dashboard-preview-block {
+    margin-bottom: 8px;
+}
+
+.dashboard-empty-strip {
+    background: var(--meditap-surface, #fff);
+    border: 1px dashed var(--meditap-border);
+    border-radius: var(--meditap-radius, 12px);
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--meditap-text-muted, #666);
+}
+
+.dashboard-empty-strip p {
+    margin: 0 0 12px;
+}
+
+.user-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 3px solid var(--meditap-accent);
+}
+
+.user-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 5px 0 0;
+}
+
+.user-id {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+.patient-mini-profile {
+    margin-top: 14px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 12px;
+    text-align: left;
+    border: 1px solid var(--meditap-border);
+    border-radius: 10px;
+    box-sizing: border-box;
+    min-width: 0;
+    width: fit-content;
+    max-width: 100%;
+    background: linear-gradient(
+        180deg,
+        rgba(23, 162, 184, 0.08) 0%,
+        rgba(26, 99, 86, 0.04) 100%
+    );
+}
+
+.patient-mini-profile__title {
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--meditap-primary);
+    font-weight: 700;
+}
+
+.patient-mini-profile__grid {
+    display: grid;
+    grid-template-columns: auto max-content;
+    gap: 6px 8px;
+    align-items: baseline;
+    justify-items: start;
+    width: max-content;
+    max-width: 100%;
+}
+
+.patient-mini-profile__label {
+    font-size: 0.75rem;
+    color: #6f7f7a;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.patient-mini-profile__value {
+    font-size: 0.83rem;
+    color: var(--meditap-text);
+    font-weight: 600;
+    min-width: 0;
+}
+
+/* Label on one line; email on the next, intrinsic width so sidebar can grow with it */
+.patient-mini-profile__email-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    width: max-content;
+    max-width: 100%;
+}
+
+.patient-mini-profile__value--email {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    text-align: left;
+}
+
+/* Sidebar Navigation */
+.profile-nav {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(23, 162, 184, 0.45) transparent;
+    padding-bottom: 16px;
+}
+
+.profile-nav::-webkit-scrollbar {
+    width: 8px;
+}
+
+.profile-nav::-webkit-scrollbar-thumb {
+    background: rgba(23, 162, 184, 0.45);
+    border-radius: 999px;
+}
+
+.profile-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-item {
+    padding: 15px 30px;
+    text-decoration: none;
+    color: #555;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    border-left: 5px solid transparent;
+    transition: background-color 0.2s, border-left-color 0.2s;
+}
+
+.nav-item i {
+    margin-right: 15px;
+    font-size: 18px;
+    width: 20px; /* Ensures alignment */
+}
+
+.nav-item:hover {
+    background-color: var(--meditap-bg-alt);
+    color: var(--meditap-accent);
+}
+
+.nav-item.active {
+    background-color: rgba(23, 162, 184, 0.12);
+    border-left-color: var(--meditap-accent);
+    color: var(--meditap-accent);
+    font-weight: 600;
+}
+
+/* design for information button here */ 
+
+.info-button {
+    all: unset;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--meditap-accent);
+    color: #fff;
+    border: none;
+    display: flex;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--meditap-radius-sm);
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease;
+}
+
+.info-button:hover {
+    background-color: var(--meditap-surface);
+    color: var(--meditap-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(10, 61, 70, 0.16);
+}
+
+/* --- DASHBOARD CONTENT (Right Column) --- */
+.dashboard-content {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto; /* Allows scrolling if content is long */
+}
+
+.content-subtitle {
+    font-size: 16px;
+    color: #777;
+    margin-bottom: 30px;
+}
+
+/* --- METRICS GRID --- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.metric-tile {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(23, 162, 184, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.22s ease;
+}
+
+.metric-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(10, 61, 70, 0.12);
+}
+
+.metric-tile i {
+    font-size: 36px;
+    color: var(--meditap-accent);
+    margin-right: 20px;
+    background-color: rgba(23, 162, 184, 0.12);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.metric-title {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+.tab1-api-warning {
+    margin: -0.5rem 0 1rem;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--meditap-text, #1a1a1a);
+    background: rgba(23, 162, 184, 0.12);
+    border: 1px solid var(--meditap-border, #c5d5d8);
+}

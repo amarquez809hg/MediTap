@@ -1,0 +1,543 @@
+/**
+ * MediTap — shared UI (imported once from App.tsx).
+ * Toolbar “back” buttons, Quick Status cards, small utilities used across tabs.
+ */
+
+/* Full-height Ionic pages: avoid content clipped above home indicator / bottom of viewport */
+ion-page[class*='ct-page'] ion-content {
+  --padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---- Toolbar / header actions (many tabs use .book-btn without importing Tab4.css) ---- */
+.book-btn {
+  background-color: var(--meditap-accent);
+  color: #fff;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-btn:hover {
+  background-color: var(--meditap-accent-hover);
+}
+
+.book-btn a,
+.book-btn .nav-item {
+  all: unset;
+  color: inherit !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  font: inherit;
+  cursor: pointer;
+}
+
+.book-btn a:hover,
+.book-btn .nav-item:hover,
+.book-btn a:focus,
+.book-btn .nav-item:focus {
+  background: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.book-btn i {
+  margin-right: 0;
+}
+
+/* ---- Quick Status (Tab2) — IonCard metrics ---- */
+ion-card.status-card {
+  margin: 0;
+  border-radius: var(--meditap-radius);
+  box-shadow: var(--meditap-shadow-sm);
+  border: 1px solid rgba(0, 77, 64, 0.1);
+  --background: var(--meditap-surface);
+}
+
+ion-card.status-card ion-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--meditap-text-muted);
+}
+
+ion-card.status-card ion-card-subtitle {
+  color: var(--meditap-text-muted);
+  font-size: 0.8rem;
+}
+
+ion-card.status-card .status-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--meditap-primary);
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+ion-card.status-card.highlight-1 {
+  border-top: 4px solid var(--meditap-accent);
+}
+
+ion-card.status-card.highlight-2 {
+  border-top: 4px solid var(--meditap-primary-tint);
+}
+
+ion-card.status-card.highlight-3 {
+  border-top: 4px solid var(--ion-color-tertiary);
+}
+
+ion-card.task-list-card {
+  margin-top: 8px;
+  border-radius: var(--meditap-radius);
+  box-shadow: var(--meditap-shadow-sm);
+  border: 1px solid var(--meditap-border);
+  overflow: hidden;
+  --background: var(--meditap-surface);
+}
+
+.chronic-conditions-container h2.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--meditap-primary);
+  margin: 1.5rem 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.add-condition-btn {
+  border: none;
+  font-family: inherit;
+}
+
+.add-condition-btn a.nav-item {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Shared glass headers (Dashboard + Tabs) ---- */
+:root {
+  --meditap-header-glass-start: var(--meditap-accent, #17a2b8);
+  --meditap-header-glass-end: var(--meditap-primary-tint, #1a6356);
+  --meditap-header-height: 82px;
+}
+
+.profile-container .profile-header,
+.chronic-conditions-header,
+.schedule-header,
+.incident-records-header,
+.patient-insurance-header,
+.admin-panel-header,
+.settings-header,
+.lab-results-header {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--meditap-header-height);
+  margin: 0 !important;
+  padding: 16px 24px !important;
+  border-radius: 0 !important;
+  box-sizing: border-box;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-header-glass-start) 0%,
+    var(--meditap-header-glass-end) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 10px 24px rgba(8, 20, 18, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Match dashboard structure: full-width container/header, padded body content */
+.schedule-container,
+.incident-records-container,
+.patient-insurance-container,
+.admin-panel-container,
+.settings-container,
+.lab-results-container,
+.chronic-conditions-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.schedule-container > .schedule-header,
+.incident-records-container > .incident-records-header,
+.patient-insurance-container > .patient-insurance-header,
+.admin-panel-container > .admin-panel-header,
+.settings-container > .settings-header,
+.lab-results-container > .lab-results-header,
+.chronic-conditions-container > .chronic-conditions-header {
+  width: 100%;
+  margin-top: -16px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 24px !important;
+  padding-left: clamp(16px, 4vw, 32px) !important;
+  padding-right: clamp(16px, 4vw, 32px) !important;
+}
+
+.schedule-container > .schedule-main,
+.incident-records-container > .incident-records-main,
+.patient-insurance-container > .patient-insurance-main,
+.admin-panel-container > .admin-panel-main,
+.settings-container > .settings-main,
+.lab-results-container > .lab-results-main {
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+}
+
+/* Incident Records: title left; Log New + Back grouped on the right (Ionic/CSS order can drop flex) */
+.incident-records-container > .incident-records-header {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.incident-records-container > .incident-records-header > h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.incident-records-container > .incident-records-header .incident-records-header__actions {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .incident-records-container > .incident-records-header .incident-records-header__actions {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Patient Insurance: same header layout as Incident Records */
+.patient-insurance-container > .patient-insurance-header {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.patient-insurance-container > .patient-insurance-header > h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.patient-insurance-container > .patient-insurance-header .patient-insurance-header__actions {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .patient-insurance-container > .patient-insurance-header .patient-insurance-header__actions {
+    width: auto;
+    margin-left: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Admin Panel: same glass header + actions row as Patient Insurance */
+.admin-panel-container > .admin-panel-header {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.admin-panel-container > .admin-panel-header > h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-panel-container > .admin-panel-header .admin-panel-header__actions {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .admin-panel-container > .admin-panel-header .admin-panel-header__actions {
+    width: auto;
+    margin-left: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Settings: glass header + back link (Patient Insurance pattern) */
+.settings-container > .settings-header {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.settings-container > .settings-header > h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.settings-container > .settings-header .settings-header__actions {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .settings-container > .settings-header .settings-header__actions {
+    width: auto;
+    margin-left: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.patient-insurance-header h1 i,
+.admin-panel-header h1 i,
+.settings-header h1 i {
+  margin-right: 12px;
+  opacity: 0.95;
+}
+
+.patient-insurance-header__action-btn {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.25;
+  gap: 8px;
+  padding: 8px 10px !important;
+  text-decoration: none !important;
+  border-radius: var(--meditap-radius-sm, 8px);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.patient-insurance-header__action-btn i {
+  flex-shrink: 0;
+}
+
+.chronic-conditions-container:not(.tab14-add-patient) > .chronic-conditions-main {
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+}
+
+.profile-container .profile-header::before,
+.chronic-conditions-header::before,
+.schedule-header::before,
+.incident-records-header::before,
+.patient-insurance-header::before,
+.admin-panel-header::before,
+.settings-header::before,
+.lab-results-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.06) 36%,
+    rgba(255, 255, 255, 0) 62%
+  );
+}
+
+.profile-container .profile-header .logo,
+.profile-container .profile-header h1,
+.chronic-conditions-header h1,
+.schedule-header h1,
+.incident-records-header h1,
+.patient-insurance-header h1,
+.admin-panel-header h1,
+.settings-header h1,
+.lab-results-header h1 {
+  color: #f8fffd !important;
+  margin: 0 !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.24);
+}
+
+.profile-container .profile-header .logout-btn,
+.profile-container .profile-header .book-btn,
+.chronic-conditions-header .book-btn,
+.chronic-conditions-header .add-condition-btn,
+.schedule-header .book-btn,
+.schedule-header .add-condition-btn,
+.incident-records-header .book-btn,
+.incident-records-header .add-incident-btn,
+.patient-insurance-header .book-btn,
+.patient-insurance-header .add-policy-header-btn,
+.admin-panel-header .book-btn,
+.admin-panel-header .add-policy-header-btn,
+.settings-header .book-btn,
+.settings-header .add-policy-header-btn,
+.lab-results-header .book-btn,
+.lab-results-header .download-btn {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: none !important;
+}
+
+.profile-container .profile-header .logout-btn:hover,
+.profile-container .profile-header .book-btn:hover,
+.chronic-conditions-header .book-btn:hover,
+.chronic-conditions-header .add-condition-btn:hover,
+.schedule-header .book-btn:hover,
+.schedule-header .add-condition-btn:hover,
+.incident-records-header .book-btn:hover,
+.incident-records-header .add-incident-btn:hover,
+.patient-insurance-header .book-btn:hover,
+.patient-insurance-header .add-policy-header-btn:hover,
+.admin-panel-header .book-btn:hover,
+.admin-panel-header .add-policy-header-btn:hover,
+.settings-header .book-btn:hover,
+.settings-header .add-policy-header-btn:hover,
+.lab-results-header .book-btn:hover,
+.lab-results-header .download-btn:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* Ionic pages using IonHeader/IonToolbar */
+ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-toolbar {
+  --background: transparent !important;
+  --color: #f8fffd !important;
+  --min-height: var(--meditap-header-height);
+  --padding-start: 20px;
+  --padding-end: 20px;
+  position: relative;
+  overflow: hidden;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-sizing: border-box;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-header-glass-start) 0%,
+    var(--meditap-header-glass-end) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px rgba(8, 20, 18, 0.2);
+}
+
+ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-toolbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.06) 36%,
+    rgba(255, 255, 255, 0) 62%
+  );
+}
+
+ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-title {
+  color: #f8fffd;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.22);
+}
+
+.tab8-container > h1 {
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--meditap-header-height);
+  margin: 0 0 12px;
+  padding: 14px clamp(16px, 4vw, 32px);
+  border-radius: 0;
+  box-sizing: border-box;
+  color: #f8fffd;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-header-glass-start) 0%,
+    var(--meditap-header-glass-end) 100%
+  );
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 10px 24px rgba(8, 20, 18, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}

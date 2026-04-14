@@ -1,0 +1,24 @@
+# 1. Use Python base image
+FROM python:3.12-slim
+
+# 2. Set working directory inside the container
+WORKDIR /app
+
+# 3. Prevent Python from buffering stdout/stderr
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+# 4. Install system dependencies (PostgreSQL client for later)
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+
+# 5. Copy requirements if present (we’ll create it soon)
+COPY ./backend/requirements.txt /app/requirements.txt
+
+# 6. Install Python dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt || true
+
+# 7. Copy project files into container
+COPY ./backend /app
+
+# 8. Default command
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

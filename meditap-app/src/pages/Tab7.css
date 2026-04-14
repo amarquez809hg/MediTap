@@ -1,0 +1,240 @@
+/* Tab7.css */
+@import '../labResults/labResultCards.css';
+
+/* Appointment + staff modal styles (shared with Tab4 / Tab14) */
+@import './Tab4.css';
+@import './Tab14.css';
+
+/* --- GENERAL CONTAINER --- */
+.lab-results-container {
+  height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: var(--ion-font-family);
+  background-color: var(--meditap-bg);
+  color: var(--meditap-text);
+  padding: 16px clamp(16px, 4vw, 32px) calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- HEADER (match appointments tab: title left, actions right) --- */
+.lab-results-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px 16px;
+  padding: 10px 0 20px 0;
+  border-bottom: 2px solid var(--meditap-border);
+  margin-bottom: 24px;
+}
+
+.lab-results-header__title-block {
+  flex: 1;
+  min-width: min(100%, 280px);
+}
+
+.lab-results-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--meditap-primary);
+  margin: 0;
+}
+
+.lab-results-header h1 i {
+  margin-right: 15px;
+  color: var(--meditap-accent);
+}
+
+.lab-results-readonly-hint {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: var(--meditap-text-muted, #8a939e);
+  max-width: 42rem;
+  line-height: 1.4;
+}
+
+.lab-results-header__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+}
+
+.lab-results-header__action-btn {
+  width: min(100%, 240px);
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+  gap: 8px;
+  padding: 8px 12px !important;
+  text-decoration: none;
+}
+
+.lab-results-header__action-btn i {
+  flex-shrink: 0;
+  margin-right: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .lab-results-header__actions {
+    width: 100%;
+    flex-direction: column;
+    margin-left: 0;
+  }
+
+  .lab-results-header__action-btn {
+    width: 100%;
+  }
+}
+
+.lab-results-banner {
+  padding: 12px 16px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+}
+
+.lab-results-banner--error {
+  background: rgba(220, 53, 69, 0.12);
+  color: #f8d7da;
+  border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.lab-results-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: var(--meditap-text-muted, #888);
+}
+
+.lab-results-empty-cta {
+  margin-top: 16px;
+}
+
+.lab-panel-modal {
+  max-width: min(96vw, 720px);
+  max-height: min(90vh, 900px);
+  overflow-y: auto;
+}
+
+.lab-panel-modal .lab-modal-select,
+.lab-panel-modal .lab-modal-select-follow {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+}
+
+.lab-panel-modal .lab-modal-select-follow {
+  margin-top: 6px;
+}
+
+.appt-modal__error-text {
+  color: #ffb4b4;
+  font-size: 0.9rem;
+  margin: 8px 0 0;
+}
+
+.lab-components-editor {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--meditap-border, #eee);
+}
+
+.lab-components-editor__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.lab-components-editor__head h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--meditap-primary);
+}
+
+.lab-components-editor__add {
+  font-size: 0.85rem !important;
+  padding: 6px 12px !important;
+  min-height: auto !important;
+}
+
+.lab-components-editor__empty {
+  font-size: 0.9rem;
+  color: var(--meditap-text-muted, #777);
+  margin: 0 0 12px;
+}
+
+.lab-component-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: var(--meditap-surface, #fff);
+  border: 1px solid var(--meditap-border, #eee);
+  border-radius: var(--meditap-radius-sm, 8px);
+  align-items: start;
+}
+
+.lab-component-row .appt-modal__field-wide {
+  grid-column: 1 / -1;
+}
+
+.lab-component-row__remove {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: transparent;
+  border: 1px solid var(--meditap-border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--meditap-text, #333);
+}
+
+.lab-component-row__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-field--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.form-field--checkbox input {
+  width: auto;
+}
+
+@media (max-width: 560px) {
+  .lab-component-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- MAIN CONTENT / LIST --- */
+.lab-results-main {
+  flex-grow: 1;
+}

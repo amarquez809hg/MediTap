@@ -1,0 +1,73 @@
+/* About — scoped so .custom-content / headers don’t leak to Settings (Tab11) */
+
+ion-page.ct-page.ct-tab10 {
+  --ion-background-color: var(--meditap-bg);
+}
+
+ion-page.ct-page.ct-tab10 .custom-content {
+  --background: var(--meditap-bg);
+}
+
+ion-page.ct-page.ct-tab10 .custom-header {
+  --background: var(--meditap-surface);
+  --border-color: var(--meditap-border);
+}
+
+ion-page.ct-page.ct-tab10 .custom-header ion-title {
+  color: var(--meditap-text);
+  font-weight: 600;
+}
+
+ion-page.ct-page.ct-tab10 .about-grid {
+  padding-top: 32px;
+}
+
+ion-page.ct-page.ct-tab10 .main-heading {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--meditap-primary);
+  text-align: center;
+  margin-bottom: 32px;
+  line-height: 1.25;
+}
+
+ion-page.ct-page.ct-tab10 .info-card {
+  border-radius: var(--meditap-radius);
+  box-shadow: var(--meditap-shadow-md);
+  margin-bottom: 28px;
+  border: 1px solid var(--meditap-border);
+}
+
+ion-page.ct-page.ct-tab10 .card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+ion-page.ct-page.ct-tab10 .card-title ion-icon {
+  font-size: 1.35rem;
+  margin-right: 10px;
+}
+
+ion-page.ct-page.ct-tab10 .card-text {
+  line-height: 1.75;
+  font-size: 1.05rem;
+  color: var(--meditap-text-secondary);
+}
+
+ion-page.ct-page.ct-tab10 .problem-card .card-title {
+  color: var(--ion-color-danger);
+}
+
+ion-page.ct-page.ct-tab10 .solution-card {
+  background: linear-gradient(145deg, var(--meditap-primary), var(--meditap-accent));
+  color: #fff;
+  border: none;
+}
+
+ion-page.ct-page.ct-tab10 .solution-card .card-title,
+ion-page.ct-page.ct-tab10 .solution-card .card-text {
+  color: #fff;
+}

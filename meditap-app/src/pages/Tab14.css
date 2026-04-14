@@ -1,0 +1,711 @@
+/* Tab14 — Add Patient: same shell as Chronic Conditions (Tab5) + full-width form */
+
+ion-page.ct-page.ct-tab14 ion-content {
+  --background: var(--meditap-bg);
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Inner form uses Tab5’s .chronic-conditions-container / .chronic-conditions-main */
+.tab14-add-patient .chronic-conditions-header h1 i {
+  margin-right: 12px;
+  color: var(--meditap-accent);
+}
+
+.tab14-add-patient .chronic-conditions-header {
+  flex-wrap: wrap;
+}
+
+.tab14-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tab14-sample-data-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--meditap-radius-sm);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.tab14-sample-data-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tab14-sample-data-btn i {
+  opacity: 0.95;
+}
+
+/* Master–detail: left nav (dashboard-style) + right form panel */
+.tab14-master.chronic-conditions-main {
+  width: 100%;
+  max-width: none;
+  padding: 0 16px 24px;
+  box-sizing: border-box;
+}
+
+.tab14-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-height: min(70vh, 640px);
+  background: var(--meditap-bg);
+  border-radius: var(--meditap-radius);
+  overflow: hidden;
+  border: 1px solid var(--meditap-border);
+  box-shadow: var(--meditap-shadow-sm);
+}
+
+.tab14-sidebar {
+  flex: 0 0 260px;
+  max-width: 260px;
+  background: var(--meditap-surface-muted, #f5f7f6);
+  border-right: 1px solid var(--meditap-border);
+  padding: 16px 0;
+  box-sizing: border-box;
+}
+
+.tab14-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.tab14-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  background: transparent;
+  color: var(--meditap-text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+  border-left: 4px solid transparent;
+  box-sizing: border-box;
+}
+
+.tab14-nav-item i {
+  width: 1.25em;
+  text-align: center;
+  color: var(--meditap-accent);
+  opacity: 0.85;
+}
+
+.tab14-nav-item:hover {
+  background: rgba(38, 198, 218, 0.12);
+  color: var(--meditap-text);
+}
+
+.tab14-nav-item.active {
+  background: rgba(38, 198, 218, 0.18);
+  color: var(--meditap-primary-shade);
+  border-left-color: var(--meditap-accent);
+}
+
+.tab14-main-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--meditap-surface);
+}
+
+.tab14-view-only-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--meditap-border);
+  background: rgba(38, 198, 218, 0.08);
+  color: var(--meditap-text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tab14-view-only-banner p {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.tab14-view-only-banner code {
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.tab14-staff-signin-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: var(--meditap-radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--meditap-accent);
+  background: var(--meditap-accent);
+  color: #fff;
+}
+
+.tab14-staff-signin-btn:hover {
+  filter: brightness(1.05);
+}
+
+.tab14-staff-elevation-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--meditap-border);
+  background: rgba(76, 175, 80, 0.12);
+  color: var(--meditap-text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tab14-staff-elevation-banner p {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.tab14-end-staff-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: var(--meditap-radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+  color: var(--meditap-text);
+}
+
+.tab14-end-staff-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.tab14-staff-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.tab14-staff-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.tab14-staff-modal__backdrop:disabled {
+  cursor: default;
+}
+
+.tab14-staff-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  padding: 20px 22px 22px;
+  border-radius: var(--meditap-radius);
+  background: var(--meditap-surface);
+  color: var(--meditap-text);
+  border: 1px solid var(--meditap-border);
+  box-shadow: var(--meditap-shadow-sm);
+  box-sizing: border-box;
+}
+
+.tab14-staff-modal__panel h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tab14-staff-modal__hint {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  color: var(--meditap-text-secondary);
+  line-height: 1.45;
+}
+
+.tab14-staff-modal__panel .form-field {
+  margin-bottom: 14px;
+}
+
+.tab14-staff-modal__panel .form-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.tab14-staff-modal__panel .form-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: var(--meditap-radius-sm);
+  border: 1px solid var(--meditap-border);
+  font: inherit;
+}
+
+.tab14-staff-modal__error {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: #c62828;
+}
+
+.tab14-staff-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.tab14-staff-modal__btn {
+  padding: 10px 18px;
+  border-radius: var(--meditap-radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--meditap-border);
+}
+
+.tab14-staff-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tab14-staff-modal__btn--secondary {
+  background: var(--meditap-surface);
+  color: var(--meditap-text);
+}
+
+.tab14-staff-modal__btn--primary {
+  background: var(--meditap-accent);
+  border-color: var(--meditap-accent);
+  color: #fff;
+}
+
+/* Reset native fieldset chrome; disabled state grays descendants via UA */
+.tab14-record-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tab14-sample-data-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.tab14-panel-header {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--meditap-border);
+}
+
+.tab14-panel-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--meditap-text);
+}
+
+.tab14-panel-sub {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--meditap-text-secondary);
+  line-height: 1.45;
+}
+
+.tab14-panel-body {
+  flex: 1;
+  padding: 20px 24px 8px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab14-section-card {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border-radius: var(--meditap-radius);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.tab14-section-card .form-field input,
+.tab14-section-card .form-field textarea,
+.tab14-section-card .form-field select {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  font-weight: 500;
+  color: var(--meditap-text);
+  background: var(--meditap-surface);
+  border-radius: var(--meditap-radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 0;
+  border: 1px solid var(--meditap-border);
+}
+
+/* Glass date picker: wrapper carries border; inner input must not inherit form-field chrome */
+.tab14-section-card .form-field .glass-date-field {
+  width: 100%;
+  max-width: none;
+}
+
+.tab14-section-card .form-field .glass-date-field__input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.tab14-panel-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+}
+
+@media (max-width: 768px) {
+  .tab14-layout {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .tab14-sidebar {
+    flex: none;
+    max-width: none;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--meditap-border);
+    padding: 12px 0;
+  }
+
+  .tab14-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .tab14-nav-item {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 140px;
+    border-left-width: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab14-nav-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--meditap-accent);
+  }
+}
+
+.form-container {
+  display: block;
+  width: 100%;
+  max-width: none;
+  padding: 0 0 32px;
+  margin: 0;
+  background-color: transparent;
+  color: var(--meditap-text);
+  box-sizing: border-box;
+}
+
+/* Buttons */
+.save-button,
+.clear-button,
+.add-button,
+.remove-button,
+.add-section-button,
+.preview-button {
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.save-button {
+  background-color: var(--meditap-accent);
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.clear-button {
+  background-color: var(--meditap-accent);
+  color: #fff;
+  padding: 10px 20px;
+}
+
+.add-button {
+  background-color: var(--meditap-accent);
+  color: #fff;
+  padding: 8px 15px;
+  margin: 10px 0;
+}
+
+.remove-button {
+  background-color: var(--meditap-text-secondary);
+  color: #fff;
+  padding: 8px 15px;
+  margin: 10px 0;
+}
+
+.add-section-button {
+  background-color: var(--meditap-primary-shade);
+  color: #fff;
+  padding: 8px 14px;
+  margin-top: 15px;
+}
+
+.add-section-button:hover {
+  background-color: var(--meditap-primary);
+}
+
+.preview-button {
+  background-color: var(--meditap-accent);
+  color: #fff;
+  padding: 8px 14px;
+  margin-top: 10px;
+}
+
+/* Forms — full width like condition cards */
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.accordion-header {
+  width: 100%;
+  max-width: none;
+  text-align: center;
+  border-radius: var(--meditap-radius);
+  margin: 8px 0;
+  padding: 14px 16px;
+  background: var(--meditap-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
+  box-shadow: var(--meditap-shadow-sm);
+}
+
+.accordion-header:hover {
+  background: var(--meditap-accent);
+}
+
+.accordion-header:active {
+  background: var(--meditap-accent-hover);
+}
+
+.accordion-content {
+  width: 100%;
+  max-width: none;
+  padding: 20px;
+  border-radius: var(--meditap-radius);
+  background: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  box-shadow: var(--meditap-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+.accordion-content input,
+.accordion-content textarea,
+.accordion-content select {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  font-weight: 500;
+  color: var(--meditap-text);
+  background: var(--meditap-surface);
+  border-radius: var(--meditap-radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--meditap-border);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  width: 100%;
+  flex: 1;
+}
+
+.form-field label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--meditap-text);
+}
+
+.section-block {
+  margin-bottom: 15px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.section-block h3 {
+  color: var(--meditap-primary);
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.saved-message {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--meditap-primary-shade);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--meditap-radius-sm);
+  opacity: 0.95;
+  z-index: 9999;
+  pointer-events: none;
+  font-weight: 600;
+  box-shadow: var(--meditap-shadow-md);
+}
+
+.save-error-message {
+  color: var(--ion-color-danger, #c62828);
+  font-size: 0.9rem;
+  margin-left: 0;
+}
+
+.file-upload-section {
+  margin-top: 30px;
+  text-align: center;
+  width: 100%;
+}
+
+.file-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--meditap-accent);
+  color: #fff;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.file-upload-label input[type='file'] {
+  display: none;
+}
+
+.file-preview {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--meditap-accent);
+}
+
+.no-allergies-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--meditap-text);
+  align-items: flex-start;
+}
+
+.no-allergies-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.bottom-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.remove-file-button {
+  margin-top: 10px;
+  padding: 8px 14px;
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.remove-file-button:hover {
+  background-color: #b71c1c;
+}

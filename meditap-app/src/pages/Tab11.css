@@ -1,0 +1,235 @@
+/* Settings — glass header + glass section subtitles + glass footer buttons */
+
+ion-page.ct-page.ct-tab11 {
+  --ion-background-color: var(--meditap-bg);
+}
+
+ion-page.ct-page.ct-tab11 .settings-page-content {
+  --background: var(--meditap-bg);
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+.settings-container {
+  min-height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: var(--ion-font-family);
+  background-color: var(--meditap-bg);
+  color: var(--meditap-text);
+  padding: 16px 0 calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-list {
+  width: 100%;
+  margin: 0 0 18px 0;
+  background: var(--meditap-surface);
+  border-radius: var(--meditap-radius-sm);
+  border: 1px solid var(--meditap-border);
+  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+  overflow: hidden;
+}
+
+.settings-list.settings-list--spaced {
+  margin-top: 4px;
+}
+
+/* Section titles — same glass language as main settings header (smaller) */
+.settings-glass-subtitle {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 13px clamp(16px, 4vw, 22px);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-radius: var(--meditap-radius-sm) var(--meditap-radius-sm) 0 0;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-header-glass-start, #17a2b8) 0%,
+    var(--meditap-header-glass-end, #1a6356) 100%
+  );
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.settings-glass-subtitle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 38%,
+    rgba(255, 255, 255, 0) 62%
+  );
+}
+
+.settings-glass-subtitle__label {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f8fffd;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.22);
+}
+
+.settings-list .settings-list-ion {
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  background: transparent;
+}
+
+.settings-item {
+  --background: var(--meditap-surface);
+  --border-color: var(--meditap-border);
+  --inner-border-width: 0 0 1px 0;
+  --inner-padding-end: 14px;
+  --inner-padding-start: 14px;
+  --min-height: 56px;
+}
+
+.settings-list .settings-list-ion > ion-item.settings-item:nth-child(odd) {
+  --background: rgba(0, 0, 0, 0.034);
+}
+
+.ion-palette-dark .settings-list .settings-list-ion > ion-item.settings-item:nth-child(odd) {
+  --background: rgba(255, 255, 255, 0.055);
+}
+
+.settings-list .settings-list-ion ion-item:last-child {
+  --inner-border-width: 0;
+}
+
+.settings-item ion-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--meditap-text);
+}
+
+.settings-item ion-note {
+  color: var(--meditap-text-muted);
+  font-size: 0.875rem;
+}
+
+.settings-item ion-icon {
+  font-size: 1.35rem;
+  margin-right: 12px;
+  color: var(--meditap-accent);
+}
+
+/* Native <a>/<button> so red/teal glass is not overridden by IonButton shadow styles */
+.settings-footer-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  margin: 10px 0 0;
+  min-height: 52px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-footer-btn:active {
+  filter: brightness(0.94);
+}
+
+/* Teal glass — same as section headers */
+.settings-footer-btn--report {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #f8fffd;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 38%,
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, #17a2b8) 0%,
+      var(--meditap-header-glass-end, #1a6356) 100%
+    );
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 22px rgba(8, 20, 18, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.settings-footer-btn--report ion-icon {
+  color: #f8fffd;
+}
+
+.ion-palette-dark .settings-footer-btn--report {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Red glass — saturated red (IonButton ::part was not reliably painting) */
+.settings-footer-btn--logout {
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  color: #fff;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 42%,
+      rgba(255, 255, 255, 0) 65%
+    ),
+    linear-gradient(135deg, #e53935 0%, #c62828 42%, #b71c1c 100%);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 24px rgba(160, 28, 28, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.settings-footer-btn--logout ion-icon {
+  color: #fff;
+}
+
+.ion-palette-dark .settings-footer-btn--logout {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}

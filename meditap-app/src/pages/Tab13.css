@@ -1,0 +1,189 @@
+/* Admin — high-contrast section headers, full width, scroll-safe */
+
+ion-page.ct-page.ct-tab13 {
+  --ion-background-color: var(--meditap-bg);
+}
+
+ion-page.ct-page.ct-tab13 ion-content {
+  --background: var(--meditap-bg);
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+.admin-panel-container {
+  min-height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: var(--ion-font-family);
+  background-color: var(--meditap-bg);
+  color: var(--meditap-text);
+  padding: 16px 0 calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab13-readonly-hint {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--meditap-text-muted, #8a939e);
+  line-height: 1.4;
+  padding: 0;
+}
+
+.tab13-staff-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(0, 128, 128, 0.12);
+  border: 1px solid var(--meditap-border, #ddd);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tab13-staff-banner__text {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.admin-header {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius-sm);
+  margin: 0 0 12px 0;
+}
+
+.admin-header p {
+  margin: 0;
+  color: var(--meditap-text-muted);
+  font-size: 0.95rem;
+}
+
+.admin-main-icon {
+  font-size: 3.25rem;
+  color: var(--meditap-accent);
+}
+
+ion-page.ct-page.ct-tab13 .collapsible-container {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+/* Primary strip — always readable (teal bar + white label) */
+ion-page.ct-page.ct-tab13 .section-banner {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--meditap-primary);
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  border-left: 4px solid var(--meditap-accent);
+}
+
+ion-page.ct-page.ct-tab13 .section-banner p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+ion-page.ct-page.ct-tab13 .section-banner.clickable {
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+ion-page.ct-page.ct-tab13 .section-banner.clickable:hover {
+  filter: brightness(1.08);
+}
+
+ion-page.ct-page.ct-tab13 .section-banner.active {
+  filter: brightness(1.12);
+}
+
+ion-page.ct-page.ct-tab13 .toggle-icon {
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-in-out, opacity 0.2s ease;
+  opacity: 0;
+}
+
+.collapsible-content.is-open {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+ion-page.ct-page.ct-tab13 .admin-list {
+  width: 100%;
+  margin: 8px 0 16px 0;
+  background: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius-sm);
+  overflow: hidden;
+}
+
+ion-page.ct-page.ct-tab13 .admin-list ion-item {
+  --background: var(--meditap-surface);
+  --border-color: var(--meditap-border);
+  --inner-border-width: 0 0 1px 0;
+  --min-height: 52px;
+  color: var(--meditap-text);
+}
+
+ion-page.ct-page.ct-tab13 .admin-list ion-item:last-child {
+  --inner-border-width: 0;
+}
+
+ion-page.ct-page.ct-tab13 .admin-list ion-label {
+  color: var(--meditap-text);
+  font-weight: 500;
+}
+
+ion-page.ct-page.ct-tab13 ion-grid.ion-padding-horizontal {
+  width: 100%;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-bottom: 8px;
+}
+
+ion-page.ct-page.ct-tab13 ion-grid ion-col {
+  padding: 6px;
+}
+
+ion-page.ct-page.ct-tab13 ion-toolbar .book-btn {
+  background: var(--meditap-accent) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: var(--meditap-shadow-sm) !important;
+  padding: 8px 14px !important;
+  font-size: 0.8rem !important;
+  border-radius: var(--meditap-radius-sm) !important;
+}
+
+ion-page.ct-page.ct-tab13 ion-toolbar .book-btn:hover {
+  background: var(--meditap-accent-hover) !important;
+}
+
+ion-page.ct-page.ct-tab13 ion-toolbar .book-btn a,
+ion-page.ct-page.ct-tab13 ion-toolbar .book-btn .nav-item {
+  color: #fff !important;
+}

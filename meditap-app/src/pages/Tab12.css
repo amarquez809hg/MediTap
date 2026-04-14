@@ -1,0 +1,229 @@
+/* Patient insurance — glass header (meditap-shared) + padded main */
+@import './Tab14.css';
+
+ion-page.ct-page.ct-tab12 {
+  --ion-background-color: var(--meditap-bg);
+}
+
+ion-page.ct-page.ct-tab12 ion-content {
+  --background: var(--meditap-bg);
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+.patient-insurance-container {
+  min-height: 100%;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: var(--ion-font-family);
+  background-color: var(--meditap-bg);
+  color: var(--meditap-text);
+  padding: 16px 0 calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab12-readonly-hint {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--meditap-text-muted, #8a939e);
+  max-width: 42rem;
+  line-height: 1.4;
+}
+
+.tab12-staff-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(0, 128, 128, 0.12);
+  border: 1px solid var(--meditap-border, #ddd);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tab12-staff-banner p {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+.tab12-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--meditap-text-muted, #666);
+}
+
+.tab12-error {
+  margin: 16px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f1aeb5;
+  border-radius: var(--meditap-radius-sm, 8px);
+}
+
+.tab12-hint {
+  font-size: 0.88rem;
+  color: var(--meditap-text-muted, #666);
+  line-height: 1.45;
+}
+
+.tab12-hint--spaced {
+  margin: 16px 0 0;
+}
+
+.insurance-header {
+  width: 100%;
+  padding: 24px 16px 20px;
+  text-align: center;
+  background: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius-sm);
+  margin: 0 0 12px 0;
+  box-sizing: border-box;
+}
+
+.insurance-header__name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--meditap-primary);
+  margin: 12px 0 6px;
+}
+
+.insurance-header p {
+  font-size: 0.95rem;
+  color: var(--meditap-text-muted);
+  margin: 0;
+}
+
+.insurance-main-icon {
+  font-size: 3.25rem;
+  color: var(--meditap-accent);
+}
+
+/* Centered primary “Edit policy” action */
+.tab12-edit-policy-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto 8px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.tab12-edit-policy-wrap ion-button {
+  --border-radius: var(--meditap-radius-sm);
+  font-weight: 600;
+  margin: 0;
+  width: 100%;
+  max-width: 22rem;
+}
+
+ion-page.ct-page.ct-tab12 .action-grid {
+  width: 100%;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+ion-page.ct-page.ct-tab12 .action-grid ion-row {
+  margin: 0;
+}
+
+ion-page.ct-page.ct-tab12 .action-grid ion-col {
+  padding: 6px;
+}
+
+ion-page.ct-page.ct-tab12 .action-grid ion-button {
+  --border-radius: var(--meditap-radius-sm);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* In-policy “Edit this policy” row: centered button */
+ion-page.ct-page.ct-tab12 .detail-list ion-item.tab12-edit-inline {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --background: var(--meditap-surface);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+ion-page.ct-page.ct-tab12 .detail-list ion-item.tab12-edit-inline ion-button {
+  margin: 8px 0;
+  width: 100%;
+  max-width: 22rem;
+}
+
+ion-page.ct-page.ct-tab12 .section-banner {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--meditap-primary);
+  color: #fff;
+  padding: 12px 16px;
+  margin: 16px 0 0 0;
+  border-radius: var(--meditap-radius-sm) var(--meditap-radius-sm) 0 0;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--meditap-border);
+  border-bottom: none;
+}
+
+ion-page.ct-page.ct-tab12 .section-banner p {
+  margin: 0;
+  color: #fff;
+}
+
+ion-page.ct-page.ct-tab12 .detail-list {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--meditap-surface);
+  margin: 0 0 20px 0;
+  border-radius: 0 0 var(--meditap-radius-sm) var(--meditap-radius-sm);
+  border: 1px solid var(--meditap-border);
+  border-top: none;
+  box-shadow: var(--meditap-shadow-sm);
+  overflow: hidden;
+}
+
+ion-page.ct-page.ct-tab12 .detail-list ion-item {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --background: var(--meditap-surface);
+  --border-color: var(--meditap-border);
+  color: var(--meditap-text);
+}
+
+ion-page.ct-page.ct-tab12 .detail-list ion-item ion-label {
+  font-weight: 500;
+  color: var(--meditap-text);
+}
+
+ion-page.ct-page.ct-tab12 .detail-list ion-item ion-note.detail-value {
+  font-weight: 600;
+  color: var(--meditap-text-secondary);
+  max-width: 58%;
+  text-align: right;
+  white-space: normal;
+}
+
+ion-page.ct-page.ct-tab12 ion-note ion-icon[color='success'],
+ion-page.ct-page.ct-tab12 ion-note ion-icon[color='danger'] {
+  margin-left: 6px;
+}

@@ -1,0 +1,467 @@
+/* Landing + professional sign-in card (MediTap) */
+.login-container {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  width: 100%;
+  font-family: var(--ion-font-family, 'Inter', system-ui, sans-serif);
+  position: relative;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem clamp(1.25rem, 4vw, 2.5rem);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.nav a {
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  margin-left: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.9;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.nav a:hover {
+  opacity: 1;
+  color: #fff;
+}
+
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overlay {
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(
+    105deg,
+    rgba(0, 77, 64, 0.55) 0%,
+    rgba(0, 40, 50, 0.5) 45%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(1.5rem, 5vw, 4rem) clamp(1.25rem, 6vw, 6rem);
+  box-sizing: border-box;
+  gap: clamp(2rem, 6vw, 4rem);
+}
+
+.text-section {
+  max-width: min(520px, 50%);
+  flex: 1;
+}
+
+.slogan {
+  color: #fff;
+  font-size: clamp(2rem, 4.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* —— Sign-in card —— */
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  flex-shrink: 0;
+  padding: clamp(1.75rem, 4vw, 2.25rem);
+  border-radius: 16px;
+  background: rgba(12, 18, 22, 0.72);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  text-align: left;
+  align-self: center;
+  overflow: hidden;
+}
+
+.login-card__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--meditap-primary-tint, #1a6356),
+    var(--meditap-accent, #17a2b8),
+    var(--meditap-primary-tint, #1a6356)
+  );
+  opacity: 0.95;
+}
+
+.login-card__header {
+  margin-bottom: 1.5rem;
+}
+
+.login-card__badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--meditap-accent, #17a2b8);
+  background: rgba(23, 162, 184, 0.12);
+  border: 1px solid rgba(23, 162, 184, 0.28);
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.875rem;
+}
+
+.login-card__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.login-card__subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 400;
+}
+
+.login-card__alert {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  background: rgba(220, 53, 69, 0.12);
+  border: 1px solid rgba(255, 120, 130, 0.35);
+}
+
+.login-card__alert-icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: rgba(220, 53, 69, 0.35);
+  color: #ffb4b4;
+  font-size: 0.875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.login-card__alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.login-card__alert-body strong {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffc9c9;
+  margin-bottom: 0.25rem;
+}
+
+.login-card__alert-body p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 220, 220, 0.92);
+}
+
+.login-card__alert-retry {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #7fdbff;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.login-card__alert-retry:hover {
+  color: #a8e8ff;
+}
+
+.login-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.login-card__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.875rem 1.125rem;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+  border: none;
+  box-sizing: border-box;
+}
+
+.login-card__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-card__btn:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.login-card__btn--primary {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-accent, #17a2b8) 0%,
+    var(--meditap-primary-tint, #1a6356) 100%
+  );
+  box-shadow: 0 8px 24px rgba(23, 162, 184, 0.35);
+}
+
+.login-card__btn--primary:not(:disabled):hover {
+  box-shadow: 0 10px 28px rgba(23, 162, 184, 0.45);
+  filter: brightness(1.05);
+}
+
+.login-card__btn--secondary {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.login-card__btn--secondary:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.login-card__btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.95;
+}
+
+.login-card__btn-label {
+  line-height: 1.2;
+}
+
+.login-card__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0;
+}
+
+.login-card__divider::before,
+.login-card__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.login-card__divider span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.login-card__sso {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-card__sso-label {
+  margin: 0 0 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+/* Google brand–style button (neutral surface + multicolor mark); aligns with common “Sign in with Google” patterns */
+.login-card__google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+  font-family:
+    'Roboto',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #1f1f1f;
+  background: #fff;
+  border: 1px solid #747775;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.login-card__google-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.login-card__google-logo {
+  display: block;
+}
+
+.login-card__google-btn-label {
+  line-height: 1.2;
+}
+
+.login-card__google-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #5f6368;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.login-card__google-btn:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.login-card__google-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+  transform: none;
+}
+
+.login-card__sso-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.login-card__terms {
+  margin: 1.25rem 0 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.login-card__terms a {
+  color: rgba(127, 219, 255, 0.95);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-card__terms a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .overlay {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding-top: 5.5rem;
+  }
+
+  .text-section {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .slogan {
+    font-size: clamp(1.75rem, 8vw, 2.5rem);
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card__btn {
+    transition: none;
+  }
+
+  .login-card__btn:not(:disabled):active {
+    transform: none;
+  }
+
+  .login-card__google-btn {
+    transition: none;
+  }
+
+  .login-card__google-btn:active:not(:disabled) {
+    transform: none;
+  }
+}

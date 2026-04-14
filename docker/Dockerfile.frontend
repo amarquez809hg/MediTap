@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+ENV CI=true
+
+# Paths are relative to build context (MediTap repo root), not this file.
+COPY meditap-app/package*.json /app/
+RUN npm install
+
+# Copy the rest (overridden by bind mount in compose)
+COPY meditap-app /app
+
+# Use Ionic CLI via npx (no global install needed on your host)
+EXPOSE 8100
+CMD ["sh", "-lc", "npx @ionic/cli serve --external --host=0.0.0.0 --port=8100"]

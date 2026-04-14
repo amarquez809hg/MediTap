@@ -1,0 +1,125 @@
+/* Shared: Tab6 + Tab1 dashboard */
+
+.incidents-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 25px;
+}
+
+.incidents-list--dashboard {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+.incident-card {
+  background-color: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius);
+  box-shadow: var(--meditap-shadow-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.incident-type {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--meditap-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.incident-type i {
+  margin-right: 10px;
+  color: #cc0000;
+}
+
+.severity-badge {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.severity-badge.high {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.severity-badge.medium {
+  background-color: #ffeeb3;
+  color: #856404;
+}
+
+.severity-badge.low {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.severity-badge.unknown {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.incident-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #666;
+}
+
+.incident-meta p strong {
+  color: #333;
+  margin-right: 5px;
+}
+
+.incident-details h4 {
+  font-size: 15px;
+  color: #555;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
+}
+
+.outcome-text,
+.summary-text {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444;
+}
+
+.incident-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--meditap-border-light, #eee);
+}
+
+.incident-card__manage {
+  background-color: var(--meditap-primary);
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--meditap-radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.incident-card__manage:hover {
+  background-color: var(--meditap-primary-shade);
+}

@@ -1,0 +1,200 @@
+/* Tab4.css */
+@import '../appointments/appointmentCards.css';
+
+/* --- SCHEDULE CONTAINER --- */
+.schedule-container {
+    min-height: 100vh;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    font-family: var(--ion-font-family);
+    background-color: var(--meditap-bg);
+    color: var(--meditap-text);
+    padding: 16px clamp(16px, 4vw, 32px) calc(24px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER --- */
+.schedule-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 10px 0 20px 0;
+    border-bottom: 2px solid var(--meditap-border);
+    margin-bottom: 24px;
+}
+
+.schedule-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--meditap-primary);
+    margin: 0;
+}
+
+.schedule-header h1 i {
+    margin-right: 15px;
+    color: var(--meditap-accent);
+}
+
+/* Book + dashboard: same size, Book immediately left of dashboard */
+.schedule-header__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.schedule-header__action-btn {
+    width: min(100%, 240px);
+    min-height: 44px;
+    box-sizing: border-box;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.25;
+    gap: 8px;
+    padding: 8px 12px !important;
+}
+
+.schedule-header__action-btn i {
+    flex-shrink: 0;
+    margin-right: 0 !important;
+}
+
+@media (max-width: 640px) {
+    .schedule-header__actions {
+        width: 100%;
+        flex-direction: column;
+        margin-left: 0;
+    }
+
+    .schedule-header__action-btn {
+        width: 100%;
+    }
+}
+
+/* .book-btn lives in theme/meditap-shared.css */
+
+/* --- MAIN CONTENT / LIST --- */
+.schedule-main {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* --- APPOINTMENT MANAGE MODAL --- */
+.appt-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+}
+
+.appt-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: rgba(10, 22, 28, 0.5);
+    cursor: pointer;
+}
+
+.appt-modal__panel {
+    position: relative;
+    width: min(980px, 94vw);
+    max-height: min(90vh, 920px);
+    overflow: auto;
+    background: #fff;
+    border: 1px solid var(--meditap-border);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    padding: 20px;
+}
+
+.appt-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.appt-modal__header h2 {
+    margin: 0;
+    color: var(--meditap-primary);
+}
+
+.appt-modal__close {
+    border: 1px solid var(--meditap-border);
+    background: #fff;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+}
+
+.appt-modal__sub {
+    margin: 8px 0 14px;
+    color: var(--meditap-text-muted);
+}
+
+.appt-modal__lock-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background: #fff8ea;
+    border: 1px solid #ecd6a4;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+}
+
+.appt-modal__lock-banner--active {
+    background: #eaf9f5;
+    border-color: #8cd1be;
+}
+
+.appt-modal__lock-banner p {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.appt-modal__form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.appt-modal__field-wide {
+    grid-column: 1 / -1;
+}
+
+.appt-modal__form-grid textarea {
+    min-height: 86px;
+    resize: vertical;
+}
+
+.appt-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+    .appt-modal__panel {
+        width: min(96vw, 640px);
+        padding: 14px;
+    }
+
+    .appt-modal__form-grid {
+        grid-template-columns: 1fr;
+    }
+}

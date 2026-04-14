@@ -1,0 +1,323 @@
+/* Tab5.css (Previously Tab4.css content) */
+@import '../chronic/conditionCards.css';
+
+/* --- GENERAL CONTAINER --- */
+.chronic-conditions-container {
+    min-height: 100%;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    font-family: var(--ion-font-family);
+    background-color: var(--meditap-bg);
+    color: var(--meditap-text);
+    padding: 16px clamp(16px, 4vw, 32px) calc(24px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER --- */
+.chronic-conditions-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 10px 0 25px 0;
+    border-bottom: 2px solid var(--meditap-border);
+    margin-bottom: 30px;
+}
+
+.chronic-conditions-header__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.chronic-conditions-header__action-btn {
+    width: min(100%, 240px);
+    min-height: 44px;
+    box-sizing: border-box;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.25;
+    gap: 8px;
+    padding: 8px 12px !important;
+}
+
+.chronic-conditions-header__action-btn i {
+    flex-shrink: 0;
+    margin-right: 0 !important;
+}
+
+@media (max-width: 640px) {
+    .chronic-conditions-header__actions {
+        width: 100%;
+        flex-direction: column;
+        margin-left: 0;
+    }
+
+    .chronic-conditions-header__action-btn {
+        width: 100%;
+    }
+}
+
+.chronic-conditions-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--meditap-primary);
+    margin: 0;
+}
+
+.chronic-conditions-header h1 i {
+    margin-right: 15px;
+    color: var(--meditap-accent);
+}
+
+.add-condition-btn {
+    background-color: var(--meditap-accent);
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--meditap-radius-sm);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--meditap-shadow-sm);
+}
+
+.add-condition-btn:hover {
+    background-color: var(--meditap-accent-hover);
+}
+
+.add-condition-btn i {
+    margin-right: 8px;
+}
+
+/* --- MAIN CONTENT / LIST --- */
+.chronic-conditions-main {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* --- No Conditions State --- */
+.no-conditions {
+    text-align: center;
+    padding: 50px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    margin: 50px auto;
+    max-width: 600px;
+}
+
+.no-conditions p {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.large-add-btn {
+    padding: 12px 25px;
+    font-size: 18px;
+}
+
+.tab5-first-add-btn {
+    width: min(100%, 240px);
+    margin-top: 12px;
+}
+
+.tab5-loading,
+.tab5-inline-error {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+}
+
+.tab5-inline-error {
+    color: #c0392b;
+}
+
+/* --- Chronic condition modal (Tab4 appointments parity) --- */
+.cc-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+}
+
+.cc-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: rgba(10, 22, 28, 0.5);
+    cursor: pointer;
+}
+
+.cc-modal__panel {
+    position: relative;
+    width: min(980px, 94vw);
+    max-height: min(90vh, 920px);
+    overflow: auto;
+    background: #fff;
+    border: 1px solid var(--meditap-border);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    padding: 20px;
+}
+
+.cc-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.cc-modal__header h2 {
+    margin: 0;
+    color: var(--meditap-primary);
+}
+
+.cc-modal__close {
+    border: 1px solid var(--meditap-border);
+    background: #fff;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+}
+
+.cc-modal__sub {
+    margin: 8px 0 14px;
+    color: var(--meditap-text-muted);
+}
+
+.cc-modal__lock-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    background: #fff8ea;
+    border: 1px solid #ecd6a4;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+}
+
+.cc-modal__lock-banner--active {
+    background: #eaf9f5;
+    border-color: #8cd1be;
+}
+
+.cc-modal__lock-banner p {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.cc-modal__form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.cc-modal__field-wide {
+    grid-column: 1 / -1;
+}
+
+.cc-modal__form-grid textarea {
+    min-height: 86px;
+    resize: vertical;
+}
+
+.cc-modal__section-title {
+    margin: 18px 0 6px;
+    font-size: 1rem;
+    color: var(--meditap-primary);
+}
+
+.cc-modal__hint {
+    margin: 0 0 10px;
+    font-size: 0.82rem;
+    color: var(--meditap-text-muted);
+}
+
+.cc-modal__hosp-block {
+    border: 1px solid var(--meditap-border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: var(--meditap-bg-alt, #fafafa);
+}
+
+.cc-modal__add-hosp,
+.cc-modal__remove-hosp {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: var(--meditap-radius-sm);
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: 1px solid var(--meditap-border);
+    background: #fff;
+}
+
+.cc-modal__add-hosp {
+    margin-bottom: 12px;
+    background: var(--meditap-primary);
+    color: #fff;
+    border-color: transparent;
+}
+
+.cc-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.chronic-conditions-container .cc-modal .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chronic-conditions-container .cc-modal .form-field label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--meditap-text-muted);
+}
+
+.chronic-conditions-container .cc-modal .form-field input,
+.chronic-conditions-container .cc-modal .form-field select,
+.chronic-conditions-container .cc-modal .form-field textarea {
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--meditap-border);
+    border-radius: var(--meditap-radius-sm);
+    background: #fff;
+}
+
+.chronic-conditions-container .cc-modal .form-field input:disabled,
+.chronic-conditions-container .cc-modal .form-field select:disabled,
+.chronic-conditions-container .cc-modal .form-field textarea:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+    .cc-modal__panel {
+        width: min(96vw, 640px);
+        padding: 14px;
+    }
+
+    .cc-modal__form-grid {
+        grid-template-columns: 1fr;
+    }
+}
