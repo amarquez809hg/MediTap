@@ -119,7 +119,11 @@ else
 fi
 
 # Optional: VM / public hostname (no scheme), e.g. 34.56.78.90 — adds SPA redirect + web origin for :8100
+# MEDITAP_PUBLIC_SCHEME: http (default) or https (use with Caddy TLS override on same ports)
 if [ -n "${MEDITAP_PUBLIC_HOST:-}" ]; then
+  SCHEME="${MEDITAP_PUBLIC_SCHEME:-http}"
+  case "$SCHEME" in http|https) ;; *) SCHEME=http ;; esac
+  PUB_ORIGIN="${SCHEME}://${MEDITAP_PUBLIC_HOST}:8100"
   spa_client_internal_id() {
     /opt/keycloak/bin/kcadm.sh get clients -r meditap -q clientId=meditap-spa --fields id 2>/dev/null \
       | tr -d ' \n' | sed 's/.*"id":"\([^"]*\)".*/\1/'
@@ -127,9 +131,9 @@ if [ -n "${MEDITAP_PUBLIC_HOST:-}" ]; then
   SID="$(spa_client_internal_id)"
   if [ -n "$SID" ]; then
     /opt/keycloak/bin/kcadm.sh update "clients/${SID}" -r meditap \
-      -s "redirectUris=[\"http://localhost:8100/*\",\"http://127.0.0.1:8100/*\",\"http://${MEDITAP_PUBLIC_HOST}:8100/*\"]" \
-      -s "webOrigins=[\"http://localhost:8100\",\"http://127.0.0.1:8100\",\"http://${MEDITAP_PUBLIC_HOST}:8100\"]" \
-      && echo "client meditap-spa: added redirect/webOrigin for http://${MEDITAP_PUBLIC_HOST}:8100"
+      -s "redirectUris=[\"http://localhost:8100/*\",\"http://127.0.0.1:8100/*\",\"${PUB_ORIGIN}/*\"]" \
+      -s "webOrigins=[\"http://localhost:8100\",\"http://127.0.0.1:8100\",\"${PUB_ORIGIN}\"]" \
+      && echo "client meditap-spa: added redirect/webOrigin for ${PUB_ORIGIN}"
   else
     echo "WARN: meditap-spa client missing; cannot add MEDITAP_PUBLIC_HOST redirects." >&2
   fi

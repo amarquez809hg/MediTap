@@ -115,8 +115,10 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KEYCLOAK_INTERNAL_URL: http://auth:8080
-      # External IP or DNS hostname (no http://) so Keycloak allows SPA redirects from :8100
+      # External IP or DNS hostname (no scheme) so Keycloak allows SPA redirects from :8100
       MEDITAP_PUBLIC_HOST: ${MEDITAP_PUBLIC_HOST:-}
+      # http (default) or https when using docker-compose.override + Caddy (see deploy-gcp-vm.md)
+      MEDITAP_PUBLIC_SCHEME: ${MEDITAP_PUBLIC_SCHEME:-http}
     entrypoint: ["/bin/sh", "/configure.sh"]
     depends_on:
       auth:

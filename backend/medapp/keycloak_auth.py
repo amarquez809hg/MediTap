@@ -34,7 +34,7 @@ def _issuer_allowed(iss: str) -> bool:
         return True
     if getattr(settings, "KEYCLOAK_TRUST_ISSUER_SUFFIX", False):
         suffix = getattr(settings, "KEYCLOAK_ISSUER_SUFFIX", "") or ""
-        if suffix and iss.startswith("http://") and iss.endswith(suffix):
+        if suffix and iss.startswith(("http://", "https://")) and iss.endswith(suffix):
             return True
     return False
 

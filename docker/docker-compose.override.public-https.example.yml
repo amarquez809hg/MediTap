@@ -1,0 +1,37 @@
+# Copy to docker-compose.override.yml on a VM when using HTTPS on a raw public IP
+# (fixes “Web Crypto API is not available” with Keycloak over http://IP).
+#
+#   cd docker
+#   cp docker-compose.override.public-https.example.yml docker-compose.override.yml
+#
+# In .env set: MEDITAP_PUBLIC_HOST, MEDITAP_PUBLIC_SCHEME=https,
+#              MEDITAP_CORS_EXTRA_ORIGINS=https://IP:8100
+# Then: docker compose run --rm keycloak-config && docker compose up -d --build
+
+services:
+  frontend:
+    ports: []
+  auth:
+    ports: []
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+  backend:
+    ports: []
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "8100:443"
+      - "8081:4443"
+      - "8080:4455"
+    volumes:
+      - ./caddy/Caddyfile.public:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - frontend
+      - auth
+      - backend
+
+volumes:
+  caddy_data: {}

@@ -2,15 +2,58 @@
 
 This guide assumes a **Linux VM** (e.g. Debian/Ubuntu on Compute Engine) with a **public IP**, and that you clone MediTap on the VM and run the stack with **Docker Compose** from the `docker/` folder.
 
-You will open:
+## 0. Public IP + Keycloak: use HTTPS (required for browser sign-in)
+
+Browsers only expose the **Web Crypto API** in a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts): **`https://`**, **`http://localhost`**, etc. **`http://34.x.x.x`** is **not** secure, so **Keycloak-js fails** with *“Web Crypto API is not available”*.
+
+**Fix:** terminate TLS on the VM with the provided **Caddy** override (self-signed on the **same ports** 8100 / 8080 / 8081), then open:
 
 | URL | Service |
 |-----|---------|
-| `http://<VM_EXTERNAL_IP>:8100` | MediTap SPA (Ionic dev server) |
-| `http://<VM_EXTERNAL_IP>:8080` | Django API |
-| `http://<VM_EXTERNAL_IP>:8081` | Keycloak admin & login |
+| `https://<VM_EXTERNAL_IP>:8100` | MediTap SPA |
+| `https://<VM_EXTERNAL_IP>:8080` | Django API |
+| `https://<VM_EXTERNAL_IP>:8081` | Keycloak |
 
-All three ports must be reachable from your browser (firewall).
+Accept the browser certificate warning the first time (or install Caddy’s root CA from `/data` if you mount it — optional).
+
+**Steps:**
+
+1. In `docker/.env` set (replace the IP):
+
+   ```env
+   MEDITAP_PUBLIC_HOST=34.72.190.141
+   MEDITAP_PUBLIC_SCHEME=https
+   MEDITAP_CORS_EXTRA_ORIGINS=https://34.72.190.141:8100
+   ```
+
+2. Enable the override (from the `docker/` directory):
+
+   ```bash
+   cp docker-compose.override.public-https.example.yml docker-compose.override.yml
+   ```
+
+3. Recreate Keycloak client redirects and start everything:
+
+   ```bash
+   docker compose run --rm keycloak-config
+   docker compose up -d --build
+   ```
+
+4. Open **`https://<VM_EXTERNAL_IP>:8100/tab3`** (not `http://`).
+
+For **local / LAN only** demos over HTTP, you can skip the override and keep `http://` — **do not** use plain `http://` with a **public numeric IP** for Keycloak login.
+
+---
+
+### URLs without the HTTPS override (localhost / LAN HTTP only)
+
+| URL | Service |
+|-----|---------|
+| `http://<host>:8100` | MediTap SPA |
+| `http://<host>:8080` | Django API |
+| `http://<host>:8081` | Keycloak |
+
+All three ports must be reachable from your browser (firewall). Use this only when `http://` is still a secure context (e.g. `localhost`) or for API checks from SSH on the VM.
 
 ---
 
@@ -56,19 +99,17 @@ cd docker
 cp .env.gcp.example .env   # if present; otherwise edit existing .env
 ```
 
-Set at minimum:
+Set at minimum (use **`https://`** values if you enabled the Caddy override in **§0**):
 
 ```env
-# Replace with your VM’s external IP (no http://)
 MEDITAP_PUBLIC_HOST=34.56.78.90
-
-# Same host, SPA origin — Django CORS (comma-separated if you need more)
-MEDITAP_CORS_EXTRA_ORIGINS=http://34.56.78.90:8100
+MEDITAP_PUBLIC_SCHEME=https
+MEDITAP_CORS_EXTRA_ORIGINS=https://34.56.78.90:8100
 ```
 
 Paste the **Keycloak elevate client secret** into `KEYCLOAK_ELEVATE_CLIENT_SECRET` (see `backend.dev.env` / Keycloak Admin after first boot) so staff elevation works.
 
-`KEYCLOAK_TRUST_ISSUER_SUFFIX=true` is already set in Compose so the API accepts tokens whose issuer is `http://<your-ip>:8081/realms/meditap` without listing every IP in `KEYCLOAK_ALLOWED_ISSUERS`.
+`KEYCLOAK_TRUST_ISSUER_SUFFIX=true` is already set in Compose so the API accepts tokens whose issuer ends with `/realms/meditap` for both **`http://`** and **`https://`** front URLs.
 
 ---
 
@@ -98,25 +139,29 @@ docker compose logs -f auth backend
 
 ## 5. Keycloak redirects if you change the public IP later
 
-The one-shot `keycloak-config` service adds `http://<MEDITAP_PUBLIC_HOST>:8100/*` to the `meditap-spa` client when `MEDITAP_PUBLIC_HOST` is set.
+The one-shot `keycloak-config` service adds `<MEDITAP_PUBLIC_SCHEME>://<MEDITAP_PUBLIC_HOST>:8100/*` to the `meditap-spa` client when `MEDITAP_PUBLIC_HOST` is set.
 
-If you **already ran** Compose without `MEDITAP_PUBLIC_HOST`, then set it in `docker/.env` and re-run only the config job:
+If you **change** the IP, scheme, or Caddy setup, update `docker/.env` and re-run:
 
 ```bash
 cd docker
 docker compose run --rm keycloak-config
-docker compose restart backend frontend
+docker compose restart backend frontend auth caddy
 ```
 
 ---
 
 ## 6. Use the app
 
-1. Open **`http://<VM_EXTERNAL_IP>:8100`** (Tab 3 login).
-2. Keycloak loads from **`http://<VM_EXTERNAL_IP>:8081`** (`VITE_KEYCLOAK_URL=auto` in Compose).
-3. The API is called at **`http://<VM_EXTERNAL_IP>:8080`** (derived in the SPA from the same hostname, or override with `VITE_API_BASE`).
+With **HTTPS (Caddy) override** (recommended for a **public IP**):
 
-**Keycloak admin console:** `http://<VM_EXTERNAL_IP>:8081` — user `admin` / password `admin` (change for anything beyond a demo).
+1. Open **`https://<VM_EXTERNAL_IP>:8100/tab3`**.
+2. Keycloak is reached at **`https://<VM_EXTERNAL_IP>:8081`** (`VITE_KEYCLOAK_URL=auto` uses the same hostname and ports as the page).
+3. The API is **`https://<VM_EXTERNAL_IP>:8080`**.
+
+**Keycloak admin console:** same **`https://<VM_EXTERNAL_IP>:8081`** — user `admin` / password `admin` (change for anything beyond a demo).
+
+Without the override (e.g. SSH tunnel to `localhost`), use **`http://localhost:8100`** etc. as in §0.
 
 Register the first user via the app (“Create an account”) or in Keycloak realm **meditap**.
 
@@ -126,10 +171,11 @@ Register the first user via the app (“Create an account”) or in Keycloak rea
 
 | Symptom | Check |
 |--------|--------|
-| SPA loads but API calls fail / empty data | Browser devtools → request URL; confirm `:8080`. Run `docker compose ps`. Open `http://IP:8080/` → `{"status":"ok"}`. |
-| CORS error in browser | Set `MEDITAP_CORS_EXTRA_ORIGINS=http://IP:8100` and `docker compose up -d backend`. |
-| Keycloak “Invalid parameter: redirect_uri” | Set `MEDITAP_PUBLIC_HOST` and run `docker compose run --rm keycloak-config`, or add `http://IP:8100/*` under **Clients → meditap-spa → Valid redirect URIs** and matching **Web origins**. |
-| API 401 “issuer” / token | Ensure you open the app with the **same host** you put in Keycloak (use external IP consistently, not mixing hostname and IP). |
+| **“Web Crypto API is not available”** on login | You are on **`http://` + public IP**. Use the **Caddy HTTPS override** (§0) and open **`https://IP:8100`**, or use an **SSH tunnel** and `http://localhost:8100`. |
+| SPA loads but API calls fail / empty data | Devtools → Network: API URL must match scheme/host (`https://IP:8080` with Caddy). `docker compose ps` should show **caddy** when using the override. |
+| CORS error in browser | Set `MEDITAP_CORS_EXTRA_ORIGINS` to the **exact** SPA origin (`https://IP:8100` or `http://…`) and `docker compose up -d backend`. |
+| Keycloak “Invalid parameter: redirect_uri” | Set `MEDITAP_PUBLIC_HOST` + `MEDITAP_PUBLIC_SCHEME` and run `docker compose run --rm keycloak-config`, or fix **Clients → meditap-spa** redirect URIs / web origins to match how you open the app. |
+| API 401 “issuer” / token | Same scheme/host everywhere; with HTTPS, token `iss` is often `https://IP:8081/realms/meditap` (supported when `KEYCLOAK_TRUST_ISSUER_SUFFIX=true`). |
 | Staff elevation fails | `KEYCLOAK_ELEVATE_CLIENT_SECRET` must match Keycloak **Clients → meditap-elevate → Credentials**; assign realm role **meditap-record-editor** to staff users. |
 
 ---

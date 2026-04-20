@@ -1,0 +1,18 @@
+# TLS termination for a public IP (GCP, etc.). Use https:// on these same host ports.
+# Maps: host 8100 → SPA, 8081 → Keycloak, 8080 → Django.
+# First visit: browser warns on self-signed cert → Advanced / Proceed once per port (or trust Caddy root).
+
+:443 {
+	tls internal
+	reverse_proxy frontend:8100
+}
+
+:4443 {
+	tls internal
+	reverse_proxy auth:8080
+}
+
+:4455 {
+	tls internal
+	reverse_proxy backend:8000
+}
