@@ -407,6 +407,127 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.login-card__epic {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-card__epic-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.login-card__epic-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+/* Epic-style CTA: burgundy / wine palette (inspired by Epic Systems public wordmark colors) */
+.login-card__epic-link {
+  --epic-burgundy-mid: #8b2d52;
+  --epic-burgundy-deep: #5c1f38;
+  --epic-burgundy-dark: #3d1426;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.85rem 0.7rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    155deg,
+    #a33762 0%,
+    var(--epic-burgundy-mid) 38%,
+    var(--epic-burgundy-deep) 72%,
+    var(--epic-burgundy-dark) 100%
+  );
+  color: #fff;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 16px rgba(0, 0, 0, 0.28);
+  transition:
+    filter 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.login-card__epic-link:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 20px rgba(0, 0, 0, 0.32);
+}
+
+.login-card__epic-link:active {
+  transform: scale(0.99);
+}
+
+.login-card__epic-link__mark {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  padding: 0.15rem 0.35rem 0.15rem 0.15rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.12);
+  color: #fff;
+}
+
+.login-card__epic-link__logo {
+  display: block;
+  height: 1.65rem;
+  width: auto;
+  max-width: 5.5rem;
+  color: #fff;
+}
+
+.login-card__epic-link__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.login-card__epic-link__title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+}
+
+.login-card__epic-link__subtitle {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 245, 248, 0.82);
+  line-height: 1.25;
+}
+
+.login-card__epic-link__chev {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.88;
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .login-card__terms {
   margin: 1.25rem 0 0;
   font-size: 0.6875rem;
@@ -462,6 +583,10 @@
   }
 
   .login-card__google-btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .login-card__epic-link:active {
     transform: none;
   }
 }

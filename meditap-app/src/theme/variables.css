@@ -44,33 +44,5 @@
   --ion-color-tertiary-tint: #3cafa4;
 }
 
-/* Dark mode (Ionic + system dark): same brand, readable surfaces — no harsh white “frames” */
-.ion-palette-dark.ios,
-.ion-palette-dark.md,
-.ion-palette-dark {
-  --meditap-primary: #1b806e;
-  --meditap-primary-shade: #156b5c;
-  --meditap-primary-tint: #2a9d87;
-  --meditap-accent: #3dc4d9;
-  --meditap-accent-hover: #32adbf;
-  --meditap-bg: #0e1211;
-  --meditap-bg-alt: #151c1a;
-  --meditap-surface: #1a2220;
-  --meditap-border: #2a3834;
-  --meditap-border-light: #334640;
-  --meditap-text: #e8f2ef;
-  --meditap-text-secondary: #b4c9c2;
-  --meditap-text-muted: #8aa399;
-  --meditap-shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.06);
-  --meditap-shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45);
-
-  --ion-color-primary: #1b806e;
-  --ion-color-primary-rgb: 27, 128, 110;
-  --ion-color-primary-shade: #156b5c;
-  --ion-color-primary-tint: #2a9d87;
-
-  --ion-color-secondary: #3dc4d9;
-  --ion-color-secondary-rgb: 61, 196, 217;
-  --ion-color-secondary-shade: #32adbf;
-  --ion-color-secondary-tint: #57cde0;
-}
+/* Dark palette + Ionic dark semantics live in meditap-ion-dark-overrides.css
+   (imported after @ionic/react/css/palettes/dark.class.css in App.tsx). */

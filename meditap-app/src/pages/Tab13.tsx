@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -52,7 +52,17 @@ import {
   setMeditapIntakeElevationToken,
 } from '../auth/staffElevationStorage';
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
-import { ensureHospital, requestPatientIntakeStaffElevation } from '../api';
+import {
+  ensureHospital,
+  fetchEpicOAuthConfig,
+  fetchPatientEpicLinkForSession,
+  formatSessionOrTokenErrorForUi,
+  patchPatientEpicLink,
+  prepareEpicPatientAuthorize,
+  requestPatientIntakeStaffElevation,
+  type EpicOAuthConfigApi,
+  type EpicPatientLinkApi,
+} from '../api';
 
 function fullAppUrl(path: string) {
   const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -62,7 +72,7 @@ function fullAppUrl(path: string) {
 
 const Tab13: React.FC = () => {
   const ionRouter = useIonRouter();
-  const { hasRealmRole } = useAuth();
+  const { hasRealmRole, username } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
   const kcParsed = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
@@ -83,6 +93,40 @@ const Tab13: React.FC = () => {
   const [hospitalName, setHospitalName] = useState('');
   const [hospitalSaving, setHospitalSaving] = useState(false);
   const [hospitalMessage, setHospitalMessage] = useState<string | null>(null);
+
+  const [epicCfg, setEpicCfg] = useState<EpicOAuthConfigApi | null>(null);
+  const [epicPatientId, setEpicPatientId] = useState<string | null>(null);
+  const [epicLink, setEpicLink] = useState<EpicPatientLinkApi | null>(null);
+  const [epicLoading, setEpicLoading] = useState(false);
+  const [epicErr, setEpicErr] = useState<string | null>(null);
+  const [epicManualId, setEpicManualId] = useState('');
+  const [epicSavingManual, setEpicSavingManual] = useState(false);
+
+  const reloadEpic = useCallback(async () => {
+    setEpicLoading(true);
+    setEpicErr(null);
+    try {
+      const [cfg, pl] = await Promise.all([
+        fetchEpicOAuthConfig(),
+        fetchPatientEpicLinkForSession(username),
+      ]);
+      setEpicCfg(cfg);
+      setEpicPatientId(pl.patientId);
+      setEpicLink(pl.link);
+    } catch (e) {
+      setEpicErr(
+        formatSessionOrTokenErrorForUi(
+          e instanceof Error ? e.message : 'Could not load Epic link status.'
+        )
+      );
+    } finally {
+      setEpicLoading(false);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    void reloadEpic();
+  }, [reloadEpic]);
 
   const toggleSection = (sectionName: string) => {
     setOpenSection(openSection === sectionName ? null : sectionName);
@@ -260,6 +304,148 @@ const Tab13: React.FC = () => {
                 </IonCol>
               </IonRow>
             </IonGrid>
+
+            <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
+              <h2 id="tab13-epic-title">Epic FHIR (read-only sandbox)</h2>
+              <p>
+                Link the current MediTap patient chart to an Epic sandbox patient for SMART OAuth
+                demos. The backend does not store Epic access tokens—only linkage metadata after a
+                successful code exchange.
+              </p>
+              {epicLoading && <p className="tab13-epic-card__meta">Loading…</p>}
+              {epicErr && <p className="tab13-epic-card__meta">{epicErr}</p>}
+              {!epicLoading && epicCfg && (
+                <>
+                  <p className="tab13-epic-card__meta">
+                    OAuth ready: {epicCfg.integration_enabled ? 'yes' : 'no'}
+                    {epicCfg.hint ? ` — ${epicCfg.hint}` : ''}
+                  </p>
+                  {!epicPatientId && (
+                    <p className="tab13-epic-card__meta">
+                      No MediTap patient record matches this sign-in yet. Complete intake (Tab 14) or
+                      ensure a patient row exists before linking.
+                    </p>
+                  )}
+                  {epicLink && (
+                    <p className="tab13-epic-card__meta">
+                      Status: <strong>{epicLink.status}</strong>
+                      {epicLink.epic_patient_fhir_id
+                        ? ` · Epic Patient.id: ${epicLink.epic_patient_fhir_id}`
+                        : ''}
+                    </p>
+                  )}
+                  <div className="tab13-epic-card__actions">
+                    <IonButton
+                      size="small"
+                      disabled={
+                        !epicCfg.integration_enabled || !epicPatientId || epicLoading
+                      }
+                      onClick={() => {
+                        void (async () => {
+                          if (!epicPatientId) return;
+                          try {
+                            const { authorize_url } =
+                              await prepareEpicPatientAuthorize(epicPatientId);
+                            window.location.assign(authorize_url);
+                          } catch (e) {
+                            setEpicErr(
+                              formatSessionOrTokenErrorForUi(
+                                e instanceof Error ? e.message : 'Could not start Epic OAuth.'
+                              )
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      Connect Epic (sandbox)
+                    </IonButton>
+                    <IonButton
+                      size="small"
+                      fill="outline"
+                      disabled={epicLoading}
+                      onClick={() => void reloadEpic()}
+                    >
+                      Refresh status
+                    </IonButton>
+                    {epicPatientId && epicLink?.status === 'connected' && (
+                      <IonButton
+                        size="small"
+                        fill="clear"
+                        color="medium"
+                        disabled={!canEditAdmin || epicLoading}
+                        onClick={() => {
+                          void (async () => {
+                            if (!epicPatientId) return;
+                            try {
+                              const next = await patchPatientEpicLink(epicPatientId, {
+                                status: 'disconnected',
+                                epic_patient_fhir_id: '',
+                              });
+                              setEpicLink(next);
+                              setEpicManualId('');
+                            } catch (e) {
+                              setEpicErr(
+                                formatSessionOrTokenErrorForUi(
+                                  e instanceof Error ? e.message : 'Could not clear link.'
+                                )
+                              );
+                            }
+                          })();
+                        }}
+                      >
+                        Clear link
+                      </IonButton>
+                    )}
+                  </div>
+                  {canEditAdmin && epicPatientId && (
+                    <div style={{ marginTop: 14, width: '100%' }}>
+                      <IonItem lines="none" className="tab13-epic-manual">
+                        <IonLabel position="stacked">Demo: Epic Patient.id (manual)</IonLabel>
+                        <IonInput
+                          value={epicManualId}
+                          placeholder="e.g. eH-XXXXXXXX"
+                          onIonInput={(e) => setEpicManualId(e.detail.value ?? '')}
+                        />
+                      </IonItem>
+                      <IonButton
+                        size="small"
+                        className="ion-margin-top"
+                        disabled={epicSavingManual || !epicManualId.trim()}
+                        onClick={() => {
+                          void (async () => {
+                            if (!epicPatientId) return;
+                            setEpicSavingManual(true);
+                            setEpicErr(null);
+                            try {
+                              const next = await patchPatientEpicLink(epicPatientId, {
+                                epic_patient_fhir_id: epicManualId.trim(),
+                                status: 'connected',
+                              });
+                              setEpicLink(next);
+                              setEpicManualId('');
+                            } catch (e) {
+                              setEpicErr(
+                                formatSessionOrTokenErrorForUi(
+                                  e instanceof Error ? e.message : 'Could not save manual id.'
+                                )
+                              );
+                            } finally {
+                              setEpicSavingManual(false);
+                            }
+                          })();
+                        }}
+                      >
+                        {epicSavingManual ? 'Saving…' : 'Save manual id'}
+                      </IonButton>
+                    </div>
+                  )}
+                  <p className="tab13-epic-card__meta" style={{ marginTop: 12 }}>
+                    Redirect URI for Epic on FHIR:{' '}
+                    <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
+                  </p>
+                </>
+              )}
+            </section>
 
             {sections.map((section) => (
               <div key={section.title} className="collapsible-container">

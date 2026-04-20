@@ -6,6 +6,11 @@ import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    /* Match common Ionic dev URL (many bookmarks use :8100) */
+    port: 8100,
+    strictPort: false,
+  },
   plugins: [
     react(),
     legacy()

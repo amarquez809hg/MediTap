@@ -150,6 +150,27 @@ KEYCLOAK_DEV_MASTER_ADMIN_PASSWORD = os.getenv(
     "KEYCLOAK_DEV_MASTER_ADMIN_PASSWORD", ""
 ).strip()
 
+# ============================================
+# EPIC FHIR (SMART) — optional sandbox read linking
+# ============================================
+EPIC_INTEGRATION_ENABLED = os.getenv("EPIC_INTEGRATION_ENABLED", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+EPIC_SANDBOX = os.getenv("EPIC_SANDBOX", "true").lower() in ("1", "true", "yes")
+EPIC_FHIR_BASE_URL = os.getenv("EPIC_FHIR_BASE_URL", "").strip()
+EPIC_AUTHORIZE_URL = os.getenv("EPIC_AUTHORIZE_URL", "").strip()
+EPIC_TOKEN_URL = os.getenv("EPIC_TOKEN_URL", "").strip()
+EPIC_CLIENT_ID = os.getenv("EPIC_CLIENT_ID", "").strip()
+EPIC_CLIENT_SECRET = os.getenv("EPIC_CLIENT_SECRET", "").strip()
+EPIC_REDIRECT_URI = os.getenv("EPIC_REDIRECT_URI", "").strip()
+EPIC_DEFAULT_SCOPE = os.getenv(
+    "EPIC_DEFAULT_SCOPE",
+    "openid fhirUser launch/patient patient/Patient.read patient/Observation.read",
+).strip()
+EPIC_OAUTH_STATE_MAX_AGE = int(os.getenv("EPIC_OAUTH_STATE_MAX_AGE", "600") or "600")
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),

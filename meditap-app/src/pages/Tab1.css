@@ -450,3 +450,51 @@
     background: rgba(23, 162, 184, 0.12);
     border: 1px solid var(--meditap-border, #c5d5d8);
 }
+
+/* Dark mode (Settings): sidebar + dashboard tiles use MediTap surfaces, not fixed white */
+.ion-palette-dark .profile-sidebar {
+    background-color: var(--meditap-surface);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.35);
+}
+
+.ion-palette-dark .user-card {
+    border-bottom-color: var(--meditap-border);
+}
+
+.ion-palette-dark .user-card__hint,
+.ion-palette-dark .user-id,
+.ion-palette-dark .patient-mini-profile__label {
+    color: var(--meditap-text-muted);
+}
+
+.ion-palette-dark .nav-item {
+    color: var(--meditap-text-secondary);
+}
+
+.ion-palette-dark .nav-item.active {
+    background-color: rgba(61, 196, 217, 0.14);
+}
+
+.ion-palette-dark .content-subtitle {
+    color: var(--meditap-text-muted);
+}
+
+.ion-palette-dark .metric-tile {
+    background-color: var(--meditap-surface);
+    border: 1px solid var(--meditap-border);
+    box-shadow: var(--meditap-shadow-md);
+}
+
+.ion-palette-dark .metric-tile:hover {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ion-palette-dark .metric-title {
+    color: var(--meditap-text-muted);
+}
+
+.ion-palette-dark .info-button:hover {
+    background-color: var(--meditap-bg-alt);
+    color: var(--meditap-text);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}

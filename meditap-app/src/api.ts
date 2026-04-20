@@ -120,6 +120,28 @@ export type PatientLabPanelWriteBody = {
   components: PatientLabPanelComponentApi[];
 };
 
+/** Epic sandbox SMART linking (read-only; backend never stores Epic access tokens). */
+export type EpicOAuthConfigApi = {
+  integration_enabled: boolean;
+  sandbox: boolean;
+  fhir_base_url: string | null;
+  authorize_url: string | null;
+  redirect_uri: string | null;
+  client_id: string | null;
+  default_scope: string | null;
+  hint: string | null;
+};
+
+export type EpicPatientLinkApi = {
+  patient: string;
+  status: string;
+  epic_patient_fhir_id: string;
+  fhir_server_base_url: string | null;
+  last_error: string;
+  created_at: string;
+  updated_at: string;
+};
+
 /** Tab5 UI + persistence helpers (hospitalization rows stored as JSON in `notes` after a marker). */
 export type Tab5ChronicHospitalization = {
   admissionDate: string;
@@ -1398,6 +1420,58 @@ export async function updatePatientLabPanel(
 export async function deletePatientLabPanel(labPanelId: string): Promise<void> {
   await apiRequest(`/api/patient-lab-panels/${labPanelId}/`, {
     method: 'DELETE',
+  });
+}
+
+export async function fetchEpicOAuthConfig(): Promise<EpicOAuthConfigApi> {
+  return requestJson<EpicOAuthConfigApi>('/api/epic/oauth-config/');
+}
+
+export async function fetchPatientEpicLinkForSession(
+  username: string | null
+): Promise<{ patientId: string | null; link: EpicPatientLinkApi | null }> {
+  const patients = await fetchAllPages<PatientApi>('/api/patients/');
+  let current = pickCurrentPatient(patients, username);
+  if (!current) {
+    current = await ensurePatientForCurrentSession(username, patients);
+  }
+  if (!current) {
+    return { patientId: null, link: null };
+  }
+  const link = await requestJson<EpicPatientLinkApi>(
+    `/api/patients/${current.patient_id}/epic-link/`
+  );
+  return { patientId: current.patient_id, link };
+}
+
+export async function prepareEpicPatientAuthorize(
+  patientId: string
+): Promise<{ authorize_url: string; state: string }> {
+  return requestJson<{ authorize_url: string; state: string }>(
+    `/api/patients/${patientId}/epic-link/prepare-authorize/`,
+    { method: 'POST', body: '{}' }
+  );
+}
+
+export async function completeEpicOAuth(
+  code: string,
+  state: string
+): Promise<EpicPatientLinkApi> {
+  return requestJson<EpicPatientLinkApi>('/api/epic/oauth-complete/', {
+    method: 'POST',
+    body: JSON.stringify({ code, state }),
+  });
+}
+
+export async function patchPatientEpicLink(
+  patientId: string,
+  body: Partial<
+    Pick<EpicPatientLinkApi, 'status' | 'epic_patient_fhir_id' | 'fhir_server_base_url'>
+  >
+): Promise<EpicPatientLinkApi> {
+  return requestJson<EpicPatientLinkApi>(`/api/patients/${patientId}/epic-link/`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
   });
 }
 

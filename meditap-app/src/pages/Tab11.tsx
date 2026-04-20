@@ -24,6 +24,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { clearMeditapIntakeElevation } from '../auth/staffElevationStorage';
 import { getKeycloak, getKeycloakBaseUrl } from '../config/keycloak';
+import { useDarkMode } from '../contexts/DarkModeContext';
 
 function fullAppUrl(path: string) {
   const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -32,35 +33,22 @@ function fullAppUrl(path: string) {
 }
 
 const LS_PUSH = 'meditap_settings_push_notifications';
-const LS_DARK = 'meditap_settings_dark_mode';
-
 const APP_VERSION = '0.0.1';
 
 const Tab11: React.FC = () => {
   const { logout } = useAuth();
+  const { dark: darkModeEnabled, setDark: setDarkMode } = useDarkMode();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   useEffect(() => {
     try {
       const n = localStorage.getItem(LS_PUSH);
       if (n === '0') setNotificationsEnabled(false);
-      const d = localStorage.getItem(LS_DARK);
-      if (d === '1') setDarkModeEnabled(true);
     } catch {
       /* ignore */
     }
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('ion-palette-dark', darkModeEnabled);
-    try {
-      localStorage.setItem(LS_DARK, darkModeEnabled ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  }, [darkModeEnabled]);
 
   const persistNotifications = useCallback((on: boolean) => {
     setNotificationsEnabled(on);
@@ -113,7 +101,7 @@ const Tab11: React.FC = () => {
               </div>
               <IonList lines="none" className="settings-list-ion">
           <IonItem className="settings-item">
-            <IonIcon icon={notificationsOutline} slot="start" color="medium" />
+            <IonIcon icon={notificationsOutline} slot="start" />
             <IonLabel>Push Notifications</IonLabel>
             <IonToggle
               checked={notificationsEnabled}
@@ -123,17 +111,17 @@ const Tab11: React.FC = () => {
           </IonItem>
 
           <IonItem className="settings-item">
-            <IonIcon icon={languageOutline} slot="start" color="medium" />
+            <IonIcon icon={languageOutline} slot="start" />
             <IonLabel>Language</IonLabel>
             <IonNote slot="end">English</IonNote>
           </IonItem>
 
           <IonItem className="settings-item">
-            <IonIcon icon={moonOutline} slot="start" color="medium" />
+            <IonIcon icon={moonOutline} slot="start" />
             <IonLabel>Dark Mode</IonLabel>
             <IonToggle
               checked={darkModeEnabled}
-              onIonChange={(e) => setDarkModeEnabled(e.detail.checked)}
+              onIonChange={(e) => setDarkMode(e.detail.checked)}
               slot="end"
             />
           </IonItem>
@@ -155,13 +143,13 @@ const Tab11: React.FC = () => {
               }
             }}
           >
-            <IonIcon icon={shieldOutline} slot="start" color="medium" />
+            <IonIcon icon={shieldOutline} slot="start" />
             <IonLabel>Change Password</IonLabel>
             <IonNote slot="end">Opens Keycloak account</IonNote>
           </IonItem>
 
           <IonItem className="settings-item">
-            <IonIcon icon={fingerPrintOutline} slot="start" color="medium" />
+            <IonIcon icon={fingerPrintOutline} slot="start" />
             <IonLabel>Enable Biometric Lock</IonLabel>
             <IonNote slot="end">Not available in this web app</IonNote>
           </IonItem>
@@ -174,18 +162,18 @@ const Tab11: React.FC = () => {
               </div>
               <IonList lines="none" className="settings-list-ion">
           <IonItem button detail className="settings-item">
-            <IonIcon icon={informationCircleOutline} slot="start" color="medium" />
+            <IonIcon icon={informationCircleOutline} slot="start" />
             <IonLabel>Version</IonLabel>
             <IonNote slot="end">{APP_VERSION}</IonNote>
           </IonItem>
 
           <IonItem button detail className="settings-item" routerLink="/about">
-            <IonIcon icon={informationCircleOutline} slot="start" color="medium" />
+            <IonIcon icon={informationCircleOutline} slot="start" />
             <IonLabel>About MediTap</IonLabel>
           </IonItem>
 
           <IonItem button detail className="settings-item">
-            <IonIcon icon={shieldOutline} slot="start" color="medium" />
+            <IonIcon icon={shieldOutline} slot="start" />
             <IonLabel>Privacy Policy</IonLabel>
           </IonItem>
               </IonList>

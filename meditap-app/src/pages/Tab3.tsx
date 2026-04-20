@@ -4,6 +4,11 @@ import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import { useAuth } from '../contexts/AuthContext';
 
+/** Epic developer portal (app registration, sandbox, docs)—not MediTap auth. */
+const EPIC_ON_FHIR_PORTAL =
+  (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
+  'https://fhir.epic.com/';
+
 const Tab3: React.FC = () => {
   const history = useHistory();
   const {
@@ -180,6 +185,59 @@ const Tab3: React.FC = () => {
                   {keycloakReady ? 'Sign in with Google' : 'Connecting…'}
                 </span>
               </button>
+            </div>
+
+            <div className="login-card__epic">
+              <p className="login-card__epic-label">Epic on FHIR</p>
+              <p className="login-card__epic-hint">
+                Sign in on Epic’s site to manage sandbox apps and documentation. Separate from
+                MediTap sign-in above.
+              </p>
+              <a
+                className="login-card__epic-link"
+                href={EPIC_ON_FHIR_PORTAL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Epic on FHIR developer portal in a new tab"
+              >
+                <span className="login-card__epic-link__mark" aria-hidden="true">
+                  <svg
+                    className="login-card__epic-link__logo"
+                    viewBox="0 0 120 32"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <g transform="skewX(-11) translate(2 0)">
+                      <text
+                        x="0"
+                        y="23"
+                        fill="currentColor"
+                        fontSize="26"
+                        fontWeight="800"
+                        fontStyle="italic"
+                        fontFamily="Inter, 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif"
+                      >
+                        Epic
+                      </text>
+                    </g>
+                  </svg>
+                </span>
+                <span className="login-card__epic-link__text">
+                  <span className="login-card__epic-link__title">on FHIR</span>
+                  <span className="login-card__epic-link__subtitle">Developer portal</span>
+                </span>
+                <span className="login-card__epic-link__chev" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M7 17L17 7M17 7H9M17 7V15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </a>
             </div>
 
             <p className="login-card__terms">

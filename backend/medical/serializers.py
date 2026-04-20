@@ -105,3 +105,20 @@ class PatientLabPanelSerializer(serializers.ModelSerializer):
                     f"components[{i}].interpretation must be a string or omitted."
                 )
         return value
+
+
+class EpicPatientLinkSerializer(serializers.ModelSerializer):
+    patient = serializers.UUIDField(source="patient_id", read_only=True)
+
+    class Meta:
+        model = models.EpicPatientLink
+        fields = (
+            "patient",
+            "status",
+            "epic_patient_fhir_id",
+            "fhir_server_base_url",
+            "last_error",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("patient", "last_error", "created_at", "updated_at")

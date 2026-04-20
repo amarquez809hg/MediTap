@@ -236,3 +236,49 @@ class PatientChronicDisease(models.Model):
 
     class Meta:
         unique_together = ("patient", "disease")
+
+
+# ---------- External FHIR (Epic sandbox / SMART) ----------
+class EpicPatientLink(models.Model):
+    """
+    Read-only Epic linkage for a MediTap patient (OAuth + FHIR reads; no token persistence).
+    """
+
+    STATUS_DISCONNECTED = "disconnected"
+    STATUS_PENDING_AUTH = "pending_auth"
+    STATUS_CONNECTED = "connected"
+    STATUS_ERROR = "error"
+    STATUS_CHOICES = (
+        (STATUS_DISCONNECTED, "Disconnected"),
+        (STATUS_PENDING_AUTH, "Pending authorization"),
+        (STATUS_CONNECTED, "Connected"),
+        (STATUS_ERROR, "Error"),
+    )
+
+    patient = models.OneToOneField(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="epic_link",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=STATUS_CHOICES,
+        default=STATUS_DISCONNECTED,
+    )
+    epic_patient_fhir_id = models.CharField(
+        max_length=128,
+        blank=True,
+        help_text="Epic FHIR Patient.id after SMART authorize (or manual sandbox id for demos).",
+    )
+    fhir_server_base_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="FHIR base URL used when this link was established (sandbox issuer).",
+    )
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"EpicLink({self.patient_id}, {self.status})"

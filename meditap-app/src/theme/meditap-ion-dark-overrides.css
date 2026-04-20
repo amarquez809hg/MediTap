@@ -1,0 +1,70 @@
+/**
+ * Applied when <html> has .ion-palette-dark (Settings toggle).
+ * Loaded after Ionic `dark.class.css` so MediTap brand + surfaces win over Ionic defaults.
+ */
+.ion-palette-dark,
+.ion-palette-dark.ios,
+.ion-palette-dark.md {
+  /* MediTap tokens */
+  --meditap-primary: #1b806e;
+  --meditap-primary-shade: #156b5c;
+  --meditap-primary-tint: #2a9d87;
+  --meditap-accent: #3dc4d9;
+  --meditap-accent-hover: #32adbf;
+  --meditap-bg: #0e1211;
+  --meditap-bg-alt: #151c1a;
+  --meditap-surface: #1a2220;
+  --meditap-border: #2a3834;
+  --meditap-border-light: #334640;
+  --meditap-text: #e8f2ef;
+  --meditap-text-secondary: #b4c9c2;
+  --meditap-text-muted: #8aa399;
+  --meditap-shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.06);
+  --meditap-shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45);
+
+  /* Brand primary / secondary (Ionic dark palette uses blue — restore teal) */
+  --ion-color-primary: #1b806e;
+  --ion-color-primary-rgb: 27, 128, 110;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #156b5c;
+  --ion-color-primary-tint: #2a9d87;
+
+  --ion-color-secondary: #3dc4d9;
+  --ion-color-secondary-rgb: 61, 196, 217;
+  --ion-color-secondary-contrast: #0a1210;
+  --ion-color-secondary-contrast-rgb: 10, 18, 16;
+  --ion-color-secondary-shade: #32adbf;
+  --ion-color-secondary-tint: #57cde0;
+
+  /* Map Ionic surfaces to MediTap (fixes lists, labels, toolbars app-wide) */
+  --ion-background-color: var(--meditap-bg);
+  --ion-text-color: var(--meditap-text);
+  --ion-text-color-rgb: 232, 242, 239;
+  --ion-item-background: var(--meditap-surface);
+  --ion-card-background: var(--meditap-surface);
+  --ion-toolbar-background: var(--meditap-bg-alt);
+  --ion-tab-bar-background: var(--meditap-bg-alt);
+  --ion-toolbar-border-color: var(--meditap-border);
+  --ion-item-border-color: var(--meditap-border);
+  --ion-placeholder-color: var(--meditap-text-muted);
+}
+
+/*
+ * List row copy: target any .ion-palette-dark ancestor (IonApp + html/body from sync).
+ * Literal light greys so text stays readable even if CSS variables fail to cascade.
+ */
+.ion-palette-dark ion-item {
+  --color: #e8f2ef !important;
+  --ion-item-color: #e8f2ef !important;
+}
+
+.ion-palette-dark ion-item ion-label,
+.ion-palette-dark ion-item ion-label p,
+.ion-palette-dark ion-item .ion-label-text {
+  color: #e8f2ef !important;
+}
+
+.ion-palette-dark ion-note {
+  color: #b4cfc6 !important;
+}

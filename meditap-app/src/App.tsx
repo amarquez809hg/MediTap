@@ -21,7 +21,9 @@ import Tab11 from './pages/Tab11';
 import Tab12 from './pages/Tab12';
 import Tab13 from './pages/Tab13';
 import Tab14 from './pages/Tab14';
+import EpicCallback from './pages/EpicCallback';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
 
@@ -43,16 +45,21 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables + shared MediTap UI */
 import './theme/variables.css';
+/* Ionic dark palette (text / item / step colors); MediTap overrides come next */
+import '@ionic/react/css/palettes/dark.class.css';
+import './theme/meditap-ion-dark-overrides.css';
 import './theme/meditap-shared.css';
 
 setupIonicReact();
 
 const AppRoutes: React.FC = () => {
   const { keycloakReady } = useAuth();
+  const { dark } = useDarkMode();
+  const ionAppClass = dark ? 'ion-palette-dark' : undefined;
 
   if (!keycloakReady) {
     return (
-      <IonApp>
+      <IonApp className={ionAppClass}>
         <IonContent
           className="ion-padding"
           style={{
@@ -78,7 +85,7 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <IonApp>
+    <IonApp className={ionAppClass}>
       <IonReactRouter>
         <>
           <SessionExpiredModal />
@@ -146,6 +153,11 @@ const AppRoutes: React.FC = () => {
                 <Tab14 />
               </ProtectedRoute>
             </Route>
+            <Route exact path="/epic-callback">
+              <ProtectedRoute>
+                <EpicCallback />
+              </ProtectedRoute>
+            </Route>
 
             <Route exact path="/">
               <Redirect to="/tab3" />
@@ -158,9 +170,11 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <AuthProvider>
-    <AppRoutes />
-  </AuthProvider>
+  <DarkModeProvider>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  </DarkModeProvider>
 );
 
 export default App;

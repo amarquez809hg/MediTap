@@ -3,6 +3,21 @@
  * Toolbar “back” buttons, Quick Status cards, small utilities used across tabs.
  */
 
+/* Dark mode: shell + Ionic lists (class applied on <html> from Settings) */
+.ion-palette-dark ion-app {
+  background: var(--meditap-bg);
+}
+
+.ion-palette-dark ion-item {
+  --color: var(--meditap-text);
+  --detail-icon-color: var(--meditap-text-muted);
+  --detail-icon-opacity: 1;
+}
+
+.ion-palette-dark ion-list-header {
+  --color: var(--meditap-text);
+}
+
 /* Full-height Ionic pages: avoid content clipped above home indicator / bottom of viewport */
 ion-page[class*='ct-page'] ion-content {
   --padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
@@ -540,4 +555,22 @@ ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-title {
   box-shadow:
     0 10px 24px rgba(8, 20, 18, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Dark mode: every MediTap tab page + content follows MediTap tokens */
+.ion-palette-dark ion-page[class*='ct-page'] {
+  --ion-background-color: var(--meditap-bg);
+  --background: var(--meditap-bg);
+  color: var(--meditap-text);
+}
+
+.ion-palette-dark ion-page[class*='ct-page'] ion-content {
+  --background: var(--meditap-bg);
+  color: var(--meditap-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ion-app {
+    transition: background-color 0.22s ease;
+  }
 }

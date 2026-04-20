@@ -24,7 +24,7 @@ from rest_framework_simplejwt.views import (
 )
 from medical import views as mviews
 from django.http import JsonResponse
-from medapp import staff_elevation_views
+from medapp import staff_elevation_views, epic_views
 
 def healthz(_request):
     return JsonResponse({"status": "ok"})
@@ -61,5 +61,21 @@ urlpatterns = [
         'api/auth/staff-elevate/debug/',
         staff_elevation_views.staff_elevate_debug,
         name='staff_elevate_debug',
+    ),
+    path("api/epic/oauth-config/", epic_views.EpicOAuthConfigView.as_view(), name="epic_oauth_config"),
+    path(
+        "api/epic/oauth-complete/",
+        epic_views.EpicOAuthCompleteView.as_view(),
+        name="epic_oauth_complete",
+    ),
+    path(
+        "api/patients/<uuid:patient_id>/epic-link/",
+        epic_views.PatientEpicLinkView.as_view(),
+        name="patient_epic_link",
+    ),
+    path(
+        "api/patients/<uuid:patient_id>/epic-link/prepare-authorize/",
+        epic_views.PrepareEpicAuthorizeView.as_view(),
+        name="patient_epic_prepare_authorize",
     ),
 ]

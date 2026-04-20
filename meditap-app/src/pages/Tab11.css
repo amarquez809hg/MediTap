@@ -62,11 +62,23 @@ ion-page.ct-page.ct-tab11 .settings-page-content {
   border-radius: var(--meditap-radius-sm) var(--meditap-radius-sm) 0 0;
   background: linear-gradient(
     135deg,
-    var(--meditap-header-glass-start, #17a2b8) 0%,
-    var(--meditap-header-glass-end, #1a6356) 100%
+    color-mix(in srgb, var(--meditap-header-glass-start, #17a2b8) 88%, transparent) 0%,
+    color-mix(in srgb, var(--meditap-header-glass-end, #1a6356) 88%, transparent) 100%
   );
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .settings-glass-subtitle {
+    background: linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, #17a2b8) 0%,
+      var(--meditap-header-glass-end, #1a6356) 100%
+    );
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
 }
 
 .settings-glass-subtitle::before {
@@ -104,6 +116,7 @@ ion-page.ct-page.ct-tab11 .settings-page-content {
 
 .settings-item {
   --background: var(--meditap-surface);
+  --color: var(--meditap-text);
   --border-color: var(--meditap-border);
   --inner-border-width: 0 0 1px 0;
   --inner-padding-end: 14px;
@@ -116,7 +129,21 @@ ion-page.ct-page.ct-tab11 .settings-page-content {
 }
 
 .ion-palette-dark .settings-list .settings-list-ion > ion-item.settings-item:nth-child(odd) {
-  --background: rgba(255, 255, 255, 0.055);
+  --background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Settings: explicit light text in dark (Ionic label / note can ignore variables) */
+.ion-palette-dark ion-page.ct-page.ct-tab11 ion-item.settings-item {
+  --color: #e8f2ef !important;
+}
+
+.ion-palette-dark ion-page.ct-page.ct-tab11 ion-item.settings-item ion-label,
+.ion-palette-dark ion-page.ct-page.ct-tab11 ion-item.settings-item ion-label p {
+  color: #e8f2ef !important;
+}
+
+.ion-palette-dark ion-page.ct-page.ct-tab11 ion-item.settings-item ion-note {
+  color: #b4cfc6 !important;
 }
 
 .settings-list .settings-list-ion ion-item:last-child {
