@@ -118,6 +118,23 @@ else
     && echo "client meditap-elevate: created (secret matches docker/backend.dev.env for dev)"
 fi
 
+# Optional: VM / public hostname (no scheme), e.g. 34.56.78.90 — adds SPA redirect + web origin for :8100
+if [ -n "${MEDITAP_PUBLIC_HOST:-}" ]; then
+  spa_client_internal_id() {
+    /opt/keycloak/bin/kcadm.sh get clients -r meditap -q clientId=meditap-spa --fields id 2>/dev/null \
+      | tr -d ' \n' | sed 's/.*"id":"\([^"]*\)".*/\1/'
+  }
+  SID="$(spa_client_internal_id)"
+  if [ -n "$SID" ]; then
+    /opt/keycloak/bin/kcadm.sh update "clients/${SID}" -r meditap \
+      -s "redirectUris=[\"http://localhost:8100/*\",\"http://127.0.0.1:8100/*\",\"http://${MEDITAP_PUBLIC_HOST}:8100/*\"]" \
+      -s "webOrigins=[\"http://localhost:8100\",\"http://127.0.0.1:8100\",\"http://${MEDITAP_PUBLIC_HOST}:8100\"]" \
+      && echo "client meditap-spa: added redirect/webOrigin for http://${MEDITAP_PUBLIC_HOST}:8100"
+  else
+    echo "WARN: meditap-spa client missing; cannot add MEDITAP_PUBLIC_HOST redirects." >&2
+  fi
+fi
+
 echo "Keycloak HTTP dev configuration finished."
 echo "Staff elevate: assign realm role meditap-record-editor to each staff Keycloak user"
 echo "  (Users → <user> → Role mapping → Assign role → meditap-record-editor), then use that user's password in the app."

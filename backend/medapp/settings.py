@@ -67,6 +67,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8100",
     "http://127.0.0.1:8100",
 ]
+# e.g. GCP VM: MEDITAP_CORS_EXTRA_ORIGINS=http://34.12.34.56:8100,https://app.example.com
+_cors_extra = os.getenv("MEDITAP_CORS_EXTRA_ORIGINS", "").strip()
+if _cors_extra:
+    for _o in _cors_extra.split(","):
+        _o = _o.strip()
+        if _o and _o not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(_o)
+
 # Phones / tablets on LAN: open the app as http://<host>:8100
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://localhost(:\d+)?$",
