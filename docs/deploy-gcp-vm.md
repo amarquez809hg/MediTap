@@ -41,6 +41,9 @@ Accept the browser certificate warning the first time (or install Caddy’s root
 
 4. Open **`https://<VM_EXTERNAL_IP>:8100/tab3`** (not `http://`).
 
+**If the browser shows *“Client sent an HTTP request to an HTTPS server”***  
+You opened **`http://34.x.x.x:8100`**. Port **8100** is **HTTPS only** (Caddy). Change the address bar to **`https://`** (same IP and port) and reload.
+
 For **local / LAN only** demos over HTTP, you can skip the override and keep `http://` — **do not** use plain `http://` with a **public numeric IP** for Keycloak login.
 
 ---
@@ -177,6 +180,7 @@ Register the first user via the app (“Create an account”) or in Keycloak rea
 | Keycloak “Invalid parameter: redirect_uri” | Set `MEDITAP_PUBLIC_HOST` + `MEDITAP_PUBLIC_SCHEME` and run `docker compose run --rm keycloak-config`, or fix **Clients → meditap-spa** redirect URIs / web origins to match how you open the app. |
 | API 401 “issuer” / token | Same scheme/host everywhere; with HTTPS, token `iss` is often `https://IP:8081/realms/meditap` (supported when `KEYCLOAK_TRUST_ISSUER_SUFFIX=true`). |
 | Staff elevation fails | `KEYCLOAK_ELEVATE_CLIENT_SECRET` must match Keycloak **Clients → meditap-elevate → Credentials**; assign realm role **meditap-record-editor** to staff users. |
+| **`Bind for :::8081 failed: port is already allocated`** on `auth` | Compose **merged** base `ports` with the override instead of replacing them. Ensure `docker-compose.override.yml` uses **`ports: !reset []`** for `frontend`, `auth`, and `backend` (see `docker-compose.override.public-https.example.yml`), and upgrade **Docker Compose to v2.24+**. Then `docker compose down` and `docker compose up -d`. |
 
 ---
 

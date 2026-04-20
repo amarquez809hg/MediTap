@@ -1,4 +1,5 @@
-# TLS termination for a public IP (GCP, etc.). Use https:// on these same host ports.
+# TLS termination for a public IP (GCP, etc.).
+# Browsers MUST use https:// on these ports (http:// will show “HTTP request to an HTTPS server”).
 # Maps: host 8100 → SPA, 8081 → Keycloak, 8080 → Django.
 # First visit: browser warns on self-signed cert → Advanced / Proceed once per port (or trust Caddy root).
 

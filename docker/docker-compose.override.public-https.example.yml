@@ -7,16 +7,19 @@
 # In .env set: MEDITAP_PUBLIC_HOST, MEDITAP_PUBLIC_SCHEME=https,
 #              MEDITAP_CORS_EXTRA_ORIGINS=https://IP:8100
 # Then: docker compose run --rm keycloak-config && docker compose up -d --build
+#
+# Requires Docker Compose v2.24+ so `!reset` clears base `ports` (otherwise auth + caddy
+# both try to bind host :8081 and you get "port is already allocated").
 
 services:
   frontend:
-    ports: []
+    ports: !reset []
   auth:
-    ports: []
+    ports: !reset []
     environment:
       KC_PROXY_HEADERS: xforwarded
   backend:
-    ports: []
+    ports: !reset []
 
   caddy:
     image: caddy:2.8-alpine
