@@ -38,8 +38,6 @@ services:
       # Staff sign-in (Tab14): non-secret defaults; secret must be set in docker/backend.dev.env
       KEYCLOAK_TOKEN_URL: http://auth:8080/realms/meditap/protocol/openid-connect/token
       KEYCLOAK_ELEVATE_CLIENT_ID: meditap-elevate
-    ports:
-      - "8080:8000"
     depends_on:
       db:
         condition: service_started
@@ -58,8 +56,6 @@ services:
     volumes:
       - ../meditap-app:/app
       - frontend_node_modules:/app/node_modules
-    ports:
-      - "8100:8100"
     environment:
       BROWSER: "none"
       # "auto" = same hostname as the SPA, port 8081 (phone/tablet use http://<LAN-IP>:8100 → Keycloak on :8081)
@@ -98,8 +94,6 @@ services:
       KC_HTTP_ENABLED: "true"
       # Do not pin KC_HOSTNAME to localhost — phones/tablets use your LAN IP or hostname.
       KC_HOSTNAME_STRICT: "false"
-    ports:
-      - "8081:8080"                 # all interfaces: http://<host>:8081
     depends_on:
       keycloak-db:
         condition: service_started

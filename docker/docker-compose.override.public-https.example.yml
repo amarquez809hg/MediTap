@@ -1,25 +1,21 @@
-# Copy to docker-compose.override.yml on a VM when using HTTPS on a raw public IP
-# (fixes “Web Crypto API is not available” with Keycloak over http://IP).
+# GCP / public IP: HTTPS on ports 8100, 8080, 8081 via Caddy (self-signed).
+# Base docker-compose.yml does NOT publish app ports; this file adds Caddy only (no !reset).
 #
 #   cd docker
 #   cp docker-compose.override.public-https.example.yml docker-compose.override.yml
 #
-# In .env set: MEDITAP_PUBLIC_HOST, MEDITAP_PUBLIC_SCHEME=https,
-#              MEDITAP_CORS_EXTRA_ORIGINS=https://IP:8100
-# Then: docker compose run --rm keycloak-config && docker compose up -d --build
+# In .env: MEDITAP_PUBLIC_HOST, MEDITAP_PUBLIC_SCHEME=https,
+#          MEDITAP_CORS_EXTRA_ORIGINS=https://YOUR_IP:8100
+# Then:
+#   docker compose run --rm keycloak-config
+#   docker compose up -d --build
 #
-# Requires Docker Compose v2.24+ so `!reset` clears base `ports` (otherwise auth + caddy
-# both try to bind host :8081 and you get "port is already allocated").
+# Open: https://YOUR_IP:8100/tab3  (https:// required)
 
 services:
-  frontend:
-    ports: !reset []
   auth:
-    ports: !reset []
     environment:
       KC_PROXY_HEADERS: xforwarded
-  backend:
-    ports: !reset []
 
   caddy:
     image: caddy:2.8-alpine

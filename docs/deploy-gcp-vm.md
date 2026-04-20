@@ -44,11 +44,17 @@ Accept the browser certificate warning the first time (or install Caddy’s root
 **If the browser shows *“Client sent an HTTP request to an HTTPS server”***  
 You opened **`http://34.x.x.x:8100`**. Port **8100** is **HTTPS only** (Caddy). Change the address bar to **`https://`** (same IP and port) and reload.
 
-For **local / LAN only** demos over HTTP, you can skip the override and keep `http://` — **do not** use plain `http://` with a **public numeric IP** for Keycloak login.
+For **laptop / LAN** over HTTP, use **`docker-compose.local-ports.yml`** (see `docker/README.md`) and **do not** keep the GCP HTTPS `docker-compose.override.yml` on the same machine unless you intend to use Caddy locally.
 
 ---
 
-### URLs without the HTTPS override (localhost / LAN HTTP only)
+### URLs without the GCP HTTPS override (localhost / LAN HTTP)
+
+From `docker/`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-ports.yml up -d
+```
 
 | URL | Service |
 |-----|---------|
@@ -56,7 +62,7 @@ For **local / LAN only** demos over HTTP, you can skip the override and keep `ht
 | `http://<host>:8080` | Django API |
 | `http://<host>:8081` | Keycloak |
 
-All three ports must be reachable from your browser (firewall). Use this only when `http://` is still a secure context (e.g. `localhost`) or for API checks from SSH on the VM.
+**Do not** use plain `http://` with a **public numeric IP** for Keycloak login in the browser — use the HTTPS + Caddy flow in §0 instead.
 
 ---
 
@@ -175,12 +181,13 @@ Register the first user via the app (“Create an account”) or in Keycloak rea
 | Symptom | Check |
 |--------|--------|
 | **“Web Crypto API is not available”** on login | You are on **`http://` + public IP**. Use the **Caddy HTTPS override** (§0) and open **`https://IP:8100`**, or use an **SSH tunnel** and `http://localhost:8100`. |
+| **`ERR_SSL_PROTOCOL_ERROR`** on `https://IP:8100` | Port **8100** is answering with **plain HTTP** (usually the Ionic dev server), not TLS. **Pull the latest repo**: `docker-compose.yml` no longer publishes app ports on the host; only **Caddy** should bind 8100 when `docker-compose.override.yml` is the public-HTTPS copy. Re-copy the example override, `docker compose down`, `docker compose up -d --build`, then verify **`docker ps`** shows **caddy** mapping `0.0.0.0:8100->443/tcp` and **frontend** has **no** `8100->8100` publish. |
 | SPA loads but API calls fail / empty data | Devtools → Network: API URL must match scheme/host (`https://IP:8080` with Caddy). `docker compose ps` should show **caddy** when using the override. |
 | CORS error in browser | Set `MEDITAP_CORS_EXTRA_ORIGINS` to the **exact** SPA origin (`https://IP:8100` or `http://…`) and `docker compose up -d backend`. |
 | Keycloak “Invalid parameter: redirect_uri” | Set `MEDITAP_PUBLIC_HOST` + `MEDITAP_PUBLIC_SCHEME` and run `docker compose run --rm keycloak-config`, or fix **Clients → meditap-spa** redirect URIs / web origins to match how you open the app. |
 | API 401 “issuer” / token | Same scheme/host everywhere; with HTTPS, token `iss` is often `https://IP:8081/realms/meditap` (supported when `KEYCLOAK_TRUST_ISSUER_SUFFIX=true`). |
 | Staff elevation fails | `KEYCLOAK_ELEVATE_CLIENT_SECRET` must match Keycloak **Clients → meditap-elevate → Credentials**; assign realm role **meditap-record-editor** to staff users. |
-| **`Bind for :::8081 failed: port is already allocated`** on `auth` | Compose **merged** base `ports` with the override instead of replacing them. Ensure `docker-compose.override.yml` uses **`ports: !reset []`** for `frontend`, `auth`, and `backend` (see `docker-compose.override.public-https.example.yml`), and upgrade **Docker Compose to v2.24+**. Then `docker compose down` and `docker compose up -d`. |
+| **`Bind for :::8081 failed: port is already allocated`** | You were on an **older** layout where both **auth** and **Caddy** published **8081**. **Pull latest** `docker-compose.yml` (no host ports on `auth`) and use the current **`docker-compose.override.public-https.example.yml`** (Caddy only — no `!reset` needed). |
 
 ---
 
