@@ -20,9 +20,11 @@ services:
   caddy:
     image: caddy:2.8-alpine
     restart: unless-stopped
-    environment:
-      # Same value as in .env — required for TLS when browsers open https://<IP>:8100 without SNI
-      MEDITAP_PUBLIC_HOST: ${MEDITAP_PUBLIC_HOST:-127.0.0.1}
+    # Load MEDITAP_PUBLIC_HOST from docker/.env into the container. Do not use Compose
+    # `environment: ${MEDITAP_PUBLIC_HOST}` here — that overrides env_file and can bake
+    # in 127.0.0.1 if the variable is missing at *compose parse* time.
+    env_file:
+      - .env
     ports:
       - "8100:443"
       - "8081:4443"

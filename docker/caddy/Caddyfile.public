@@ -4,23 +4,24 @@
 # First visit: browser warns on self-signed cert → Advanced / Proceed once per port (or trust Caddy root).
 #
 # Raw IPs: many browsers omit SNI; Caddy then had “no certificate available” → ERR_SSL_PROTOCOL_ERROR.
-# Set MEDITAP_PUBLIC_HOST (same as docker/.env) on the caddy service so default_sni matches your VM IP.
+# Set MEDITAP_PUBLIC_HOST in docker/.env and pass it into the caddy container (see public-HTTPS override).
+# default_sni + explicit https://<host>:<port> sites ensure internal certs include that IP/hostname.
 
 {
 	default_sni {$MEDITAP_PUBLIC_HOST:127.0.0.1}
 }
 
-:443 {
+https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:443 {
 	tls internal
 	reverse_proxy frontend:8100
 }
 
-:4443 {
+https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:4443 {
 	tls internal
 	reverse_proxy auth:8080
 }
 
-:4455 {
+https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:4455 {
 	tls internal
 	reverse_proxy backend:8000
 }
