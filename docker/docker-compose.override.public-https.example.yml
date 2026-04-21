@@ -20,6 +20,9 @@ services:
   caddy:
     image: caddy:2.8-alpine
     restart: unless-stopped
+    environment:
+      # Same value as in .env — required for TLS when browsers open https://<IP>:8100 without SNI
+      MEDITAP_PUBLIC_HOST: ${MEDITAP_PUBLIC_HOST:-127.0.0.1}
     ports:
       - "8100:443"
       - "8081:4443"

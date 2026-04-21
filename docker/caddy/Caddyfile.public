@@ -2,6 +2,13 @@
 # Browsers MUST use https:// on these ports (http:// will show “HTTP request to an HTTPS server”).
 # Maps: host 8100 → SPA, 8081 → Keycloak, 8080 → Django.
 # First visit: browser warns on self-signed cert → Advanced / Proceed once per port (or trust Caddy root).
+#
+# Raw IPs: many browsers omit SNI; Caddy then had “no certificate available” → ERR_SSL_PROTOCOL_ERROR.
+# Set MEDITAP_PUBLIC_HOST (same as docker/.env) on the caddy service so default_sni matches your VM IP.
+
+{
+	default_sni {$MEDITAP_PUBLIC_HOST:127.0.0.1}
+}
 
 :443 {
 	tls internal
