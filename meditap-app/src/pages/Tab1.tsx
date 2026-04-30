@@ -22,7 +22,6 @@ import {
 } from '../labResults/labResultModel';
 import {
   loadAppointmentsFromStorage,
-  mockAppointments,
   type Appointment,
 } from '../appointments/appointmentStorage';
 
@@ -63,13 +62,67 @@ function initialsFromName(name: string): string {
   return `${parts[0][0] || ''}${parts[parts.length - 1][0] || ''}`.toUpperCase();
 }
 
+/** Auto-created patient rows use this until Tab 14 is completed. */
+function isGenericPatientRecordName(name: string): boolean {
+  const t = name.trim().toLowerCase();
+  return t === 'patient user' || t === 'patient';
+}
+
+/** e.g. JoseHernandez → Jose Hernandez + JH; jose@x.com → Jose + JO from local part. */
+function splitLoginIntoWords(raw: string): string[] {
+  const beforeAt = raw.includes('@') ? (raw.split('@')[0] || raw) : raw;
+  const spaced = beforeAt.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+  return spaced.split(/[\s._+-]+/).filter(Boolean);
+}
+
+function displayNameAndInitialsFromLogin(username: string | null): {
+  displayName: string;
+  initials: string;
+} {
+  if (!username?.trim()) {
+    return { displayName: 'Patient', initials: 'PT' };
+  }
+  const words = splitLoginIntoWords(username.trim());
+  if (words.length === 0) {
+    return { displayName: 'Patient', initials: 'PT' };
+  }
+  const title = (w: string) =>
+    (w[0]?.toUpperCase() ?? '') + w.slice(1).toLowerCase();
+  if (words.length >= 2) {
+    const displayName = words.map(title).join(' ');
+    const initials = `${words[0][0] ?? ''}${
+      words[words.length - 1][0] ?? ''
+    }`.toUpperCase();
+    return { displayName, initials };
+  }
+  const w = words[0];
+  return {
+    displayName: title(w),
+    initials: w.slice(0, 2).toUpperCase(),
+  };
+}
+
+function sidebarIdentityFromDashboard(
+  apiPatientName: string,
+  loginUsername: string | null
+): { displayName: string; initials: string } {
+  if (isGenericPatientRecordName(apiPatientName)) {
+    return displayNameAndInitialsFromLogin(loginUsername);
+  }
+  const displayName = apiPatientName.trim() || 'Patient';
+  return {
+    displayName,
+    initials: initialsFromName(displayName),
+  };
+}
+
 const Tab1: React.FC = () => {
   const { logout, username } = useAuth();
   const [user, setUser] = React.useState(defaultUserProfile);
   const [detail, setDetail] = React.useState<DashboardDetail | null>(null);
   const [loadingSummary, setLoadingSummary] = React.useState(true);
   const [summaryError, setSummaryError] = React.useState<string | null>(null);
-  const [appointments, setAppointments] = React.useState<Appointment[]>(mockAppointments);
+  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [dashboardRefreshKey, setDashboardRefreshKey] = React.useState(0);
   const [chronicConditions, setChronicConditions] = React.useState<
     Tab5ChronicCondition[]
@@ -93,7 +146,7 @@ const Tab1: React.FC = () => {
 
   React.useEffect(() => {
     const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? mockAppointments);
+    setAppointments(stored ?? []);
   }, [username, dashboardRefreshKey]);
 
   React.useEffect(() => {
@@ -131,14 +184,18 @@ const Tab1: React.FC = () => {
         const d = await fetchDashboardDetail(username);
         if (cancelled) return;
         setDetail(d);
+        const { displayName, initials } = sidebarIdentityFromDashboard(
+          d.name,
+          username
+        );
         setUser((prev) => ({
           ...prev,
-          name: d.name,
+          name: displayName,
           id: d.id,
           email: d.email,
           healthSummary: d.healthSummary,
           avatarUrl: `https://placehold.co/100x100/17A2B8/FFFFFF?text=${encodeURIComponent(
-            initialsFromName(d.name)
+            initials
           )}`,
         }));
         setSummaryError(null);

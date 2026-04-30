@@ -1,6 +1,6 @@
 """
 Who may create/update/delete patient intake–style records (e.g. lab panels):
-Django superuser, Keycloak realm role meditap-record-editor on the user's token,
+Django superuser, Django group MEDITAP_RECORD_EDITOR_ROLE (default meditap-record-editor),
 or a valid X-Meditap-Elevation JWT from staff-elevate (patient_sub matches bearer sub).
 Read-only access does not require this.
 """
@@ -8,37 +8,39 @@ Read-only access does not require this.
 from __future__ import annotations
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from jose import JWTError, jwt as jose_jwt
-from rest_framework.exceptions import AuthenticationFailed
-
-from medapp.keycloak_auth import verify_keycloak_access_token_string
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 def _bearer_sub(request) -> str | None:
     auth = request.META.get("HTTP_AUTHORIZATION") or ""
     if not auth.startswith("Bearer "):
         return None
+    raw = auth[7:].strip()
     try:
-        claims = verify_keycloak_access_token_string(auth[7:].strip())
-    except AuthenticationFailed:
+        validated = AccessToken(raw)
+    except (InvalidToken, TokenError):
         return None
-    sub = claims.get("sub")
-    return str(sub) if sub else None
+    sub = validated.get("sub")
+    if sub is not None:
+        return str(sub)
+    uid = validated.get("user_id")
+    return str(uid) if uid is not None else None
 
 
 def patient_has_intake_editor_role(request) -> bool:
     role = (getattr(settings, "MEDITAP_RECORD_EDITOR_ROLE", "") or "").strip() or (
         "meditap-record-editor"
     )
-    auth = request.META.get("HTTP_AUTHORIZATION") or ""
-    if not auth.startswith("Bearer "):
+    user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
         return False
-    try:
-        claims = verify_keycloak_access_token_string(auth[7:].strip())
-    except AuthenticationFailed:
-        return False
-    roles = (claims.get("realm_access") or {}).get("roles") or []
-    return role in roles
+    if getattr(user, "is_superuser", False):
+        return True
+    grp = Group.objects.filter(name=role).first()
+    return bool(grp and user.groups.filter(pk=grp.pk).exists())
 
 
 def intake_elevation_valid(request) -> bool:

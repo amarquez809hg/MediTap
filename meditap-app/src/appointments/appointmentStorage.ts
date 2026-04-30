@@ -62,7 +62,7 @@ export const mockAppointments: Appointment[] = [
   },
 ];
 
-const APPOINTMENTS_STORAGE_PREFIX = 'meditap_tab4_appointments_v1';
+export const APPOINTMENTS_STORAGE_PREFIX = 'meditap_tab4_appointments_v1';
 
 export function appointmentsStorageKey(username: string | null): string {
   const key = (username || 'guest').trim() || 'guest';

@@ -1,5 +1,4 @@
-# Local / LAN dev: publish backend, SPA, and Keycloak on the host.
-# Docker Compose merges this with docker-compose.yml (it does not use !reset).
+# Local / LAN dev: publish backend and SPA on the host.
 #
 #   cd docker
 #   docker compose -f docker-compose.yml -f docker-compose.local-ports.yml up -d --build
@@ -11,6 +10,3 @@ services:
   frontend:
     ports:
       - "8100:8100"
-  auth:
-    ports:
-      - "8081:8080"

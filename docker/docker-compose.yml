@@ -18,7 +18,6 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ../backend:/app          # your Django code
-    # Later files override earlier ones. Put local secrets in ./.env (e.g. KEYCLOAK_ELEVATE_CLIENT_SECRET).
     env_file:
       - ./backend.dev.env
       - ./.env
@@ -27,98 +26,27 @@ services:
       DEBUG: "True"
       SECRET_KEY: dev-secret
       ALLOWED_HOSTS: "*"
-      # Comma-separated SPA origins (required for GCP / public IP; see docs/deploy-gcp-vm.md)
+      MEDITAP_PUBLIC_HOST: ${MEDITAP_PUBLIC_HOST:-}
       MEDITAP_CORS_EXTRA_ORIGINS: ${MEDITAP_CORS_EXTRA_ORIGINS:-}
-      # Keycloak token validation (JWKS from compose service `auth`)
-      KEYCLOAK_JWKS_URL: http://auth:8080/realms/meditap/protocol/openid-connect/certs
-      KEYCLOAK_ALLOWED_ISSUERS: http://localhost:8081/realms/meditap,http://127.0.0.1:8081/realms/meditap,http://auth:8080/realms/meditap
-      KEYCLOAK_TRUST_ISSUER_SUFFIX: "true"
-      KEYCLOAK_ISSUER_SUFFIX: /realms/meditap
-      KEYCLOAK_EXPECTED_AZP: meditap-spa
-      # Staff sign-in (Tab14): non-secret defaults; secret must be set in docker/backend.dev.env
-      KEYCLOAK_TOKEN_URL: http://auth:8080/realms/meditap/protocol/openid-connect/token
-      KEYCLOAK_ELEVATE_CLIENT_ID: meditap-elevate
     depends_on:
       db:
         condition: service_started
-      auth:
-        condition: service_started
-      keycloak-config:
-        condition: service_completed_successfully
 
   frontend:
     build:
       context: ..                # repo root
       dockerfile: docker/Dockerfile.frontend
     working_dir: /app
-    # Named volume hides host node_modules; run npm install on start when package.json adds deps (e.g. keycloak-js).
     command: ["sh", "-lc", "npm install && npx @ionic/cli serve --external --host=0.0.0.0 --port=8100"]
     volumes:
       - ../meditap-app:/app
       - frontend_node_modules:/app/node_modules
     environment:
       BROWSER: "none"
-      # "auto" = same hostname as the SPA, port 8081 (phone/tablet use http://<LAN-IP>:8100 → Keycloak on :8081)
-      VITE_KEYCLOAK_URL: auto
-      VITE_KEYCLOAK_REALM: meditap
-      VITE_KEYCLOAK_CLIENT_ID: meditap-spa
-      VITE_KEYCLOAK_REDIRECT_PATH: /tab3
-      # Must match Keycloak → Identity providers → Google → Alias (often "google")
-      VITE_KEYCLOAK_IDP_GOOGLE: google
     depends_on:
       backend:
-        condition: service_started
-
-  # === Keycloak database ===
-  keycloak-db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak       # ✅ no space
-      POSTGRES_PASSWORD: keycloak   # ✅ simple, matches KC_DB_PASSWORD
-    volumes:
-      - keycloak_pg_data:/var/lib/postgresql/data
-
-  # === Keycloak (auth / SSO server) ===
-  # Admin: ensure client meditap-spa (public), redirect + web origins e.g. http://<this-host>:8100/*
-  auth:
-    image: quay.io/keycloak/keycloak:26.0
-    command: ["start-dev"]
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-      KC_DB_USERNAME: keycloak      # ✅ same as POSTGRES_USER
-      KC_DB_PASSWORD: keycloak      # ✅ same as POSTGRES_PASSWORD
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HTTP_ENABLED: "true"
-      # Do not pin KC_HOSTNAME to localhost — phones/tablets use your LAN IP or hostname.
-      KC_HOSTNAME_STRICT: "false"
-    depends_on:
-      keycloak-db:
-        condition: service_started
-    restart: unless-stopped
-
-  # One-shot: master (+ meditap realm) sslRequired=NONE so HTTP works from any client IP.
-  keycloak-config:
-    image: quay.io/keycloak/keycloak:26.0
-    restart: "no"
-    volumes:
-      - ./keycloak-http-dev.configure.sh:/configure.sh:ro
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KEYCLOAK_INTERNAL_URL: http://auth:8080
-      # External IP or DNS hostname (no scheme) so Keycloak allows SPA redirects from :8100
-      MEDITAP_PUBLIC_HOST: ${MEDITAP_PUBLIC_HOST:-}
-      # http (default) or https when using docker-compose.override + Caddy (see deploy-gcp-vm.md)
-      MEDITAP_PUBLIC_SCHEME: ${MEDITAP_PUBLIC_SCHEME:-http}
-    entrypoint: ["/bin/sh", "/configure.sh"]
-    depends_on:
-      auth:
         condition: service_started
 
 volumes:
   pg_data:
   frontend_node_modules:
-  keycloak_pg_data:

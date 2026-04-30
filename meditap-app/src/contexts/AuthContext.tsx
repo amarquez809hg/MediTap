@@ -6,198 +6,173 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import Keycloak from 'keycloak-js';
-import {
-  getKeycloak,
-  getKeycloakGoogleIdpHint,
-  getPostLoginPath,
-} from '../config/keycloak';
+import { getApiBase } from '../config/api';
 import { emitSessionExpired, subscribeSessionExpired } from '../auth/sessionEvents';
-import { parseRealmRoles } from '../auth/keycloakRoles';
-import { clearMeditapIntakeElevation } from '../auth/staffElevationStorage';
+import { parseRealmRoles } from '../auth/realmRoles';
+import {
+  clearStoredTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  setStoredTokens,
+} from '../auth/tokenStorage';
+import { parseJwtPayload } from '../auth/accessTokenClaims';
+import { clearMediTapWorkflowLocalState } from '../auth/clearWorkflowLocalState';
+import { ensureFreshAccessToken } from '../auth/ensureFreshAccessToken';
 
 interface AuthContextValue {
-  keycloakReady: boolean;
+  /** True after initial token hydrate / refresh attempt (SPA may render routes). */
+  authReady: boolean;
   authInitError: string | null;
   isAuthenticated: boolean;
   username: string | null;
-  /** Realm roles from the current access token (`realm_access.roles`). */
+  /** From JWT; Django admin uses a separate session login on the API host. */
+  isStaff: boolean;
+  isSuperuser: boolean;
   realmRoles: string[];
-  /** Case-sensitive realm role check. */
   hasRealmRole: (role: string) => boolean;
-  /** True when refresh/API indicates the session must be renewed (show global modal). */
   sessionExpired: boolean;
   dismissSessionExpired: () => void;
-  /** Redirect browser to Keycloak login, then back to the app. */
-  loginWithKeycloak: () => void;
-  /** Force Keycloak login screen (e.g. switch to a staff account with different roles). */
-  loginWithKeycloakFresh: () => void;
-  /** Keycloak self-registration (enable “User registration” on the realm). */
-  registerWithKeycloak: () => void;
-  /** Sign in via Google (Keycloak Identity Provider broker; configure realm IdP first). */
-  loginWithGoogle: () => void;
+  /** Django JWT login (username + password). */
+  loginWithPassword: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-let keycloakInitPromise: Promise<boolean> | null = null;
 
-function redirectUri(): string {
-  return `${window.location.origin}${getPostLoginPath()}`;
+function usernameFromPayload(p: Record<string, unknown> | null): string | null {
+  if (!p) return null;
+  const u =
+    (typeof p.preferred_username === 'string' && p.preferred_username) ||
+    (typeof p.username === 'string' && p.username) ||
+    (typeof p.email === 'string' && p.email) ||
+    null;
+  return u;
 }
 
-function syncHandlers(
-  kc: InstanceType<typeof Keycloak>,
-  setAuthenticated: (v: boolean) => void,
-  setUsername: (v: string | null) => void,
-  setSessionExpired: (v: boolean) => void,
-  setRealmRoles: (roles: string[]) => void
-) {
-  const syncRoles = () => {
-    if (kc.authenticated && kc.tokenParsed) {
-      setRealmRoles(parseRealmRoles(kc.tokenParsed as Record<string, unknown>));
-    } else {
-      setRealmRoles([]);
-    }
-  };
-
-  kc.onAuthSuccess = () => {
-    setSessionExpired(false);
-    setAuthenticated(!!kc.authenticated);
-    const p = kc.tokenParsed as Record<string, unknown> | undefined;
-    const u =
-      (typeof p?.preferred_username === 'string' && p.preferred_username) ||
-      (typeof p?.email === 'string' && p.email) ||
-      null;
-    setUsername(u);
-    syncRoles();
-  };
-  kc.onAuthLogout = () => {
-    setSessionExpired(false);
-    setAuthenticated(false);
-    setUsername(null);
-    setRealmRoles([]);
-  };
-  kc.onAuthRefreshSuccess = () => {
-    setAuthenticated(!!kc.authenticated);
-    syncRoles();
-  };
-  kc.onTokenExpired = () => {
-    void kc.updateToken(30).catch(() => {
-      emitSessionExpired();
-    });
-  };
+function boolJwtClaim(p: Record<string, unknown> | null, key: string): boolean {
+  if (!p) return false;
+  const v = p[key];
+  return v === true || v === 'true' || v === 1;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [keycloakReady, setKeycloakReady] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [authInitError, setAuthInitError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [realmRoles, setRealmRoles] = useState<string[]>([]);
+  const [isStaff, setIsStaff] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  const applyTokenPayload = useCallback((access: string) => {
+    const p = parseJwtPayload(access);
+    setUsername(usernameFromPayload(p));
+    setRealmRoles(parseRealmRoles(p ?? undefined));
+    setIsStaff(boolJwtClaim(p, 'is_staff'));
+    setIsSuperuser(boolJwtClaim(p, 'is_superuser'));
+  }, []);
 
   useEffect(() => {
     return subscribeSessionExpired(() => {
-      const kc = getKeycloak();
-      if (typeof kc.clearToken === 'function') {
-        kc.clearToken();
-      }
+      clearMediTapWorkflowLocalState();
+      clearStoredTokens();
       setIsAuthenticated(false);
       setUsername(null);
       setRealmRoles([]);
-      clearMeditapIntakeElevation();
+      setIsStaff(false);
+      setIsSuperuser(false);
       setSessionExpired(true);
     });
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const kc = getKeycloak();
-    syncHandlers(
-      kc,
-      setIsAuthenticated,
-      setUsername,
-      setSessionExpired,
-      setRealmRoles
-    );
-
     (async () => {
       try {
-        if (!keycloakInitPromise) {
-          keycloakInitPromise = kc.init({
-            onLoad: 'check-sso',
-            pkceMethod: 'S256',
-            silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-            checkLoginIframe: false,
-          });
+        if (getStoredRefreshToken()) {
+          await ensureFreshAccessToken(5);
         }
-        const ok = await keycloakInitPromise;
         if (cancelled) return;
-        setIsAuthenticated(!!ok && !!kc.authenticated);
-        if (kc.authenticated && kc.tokenParsed) {
-          const p = kc.tokenParsed as Record<string, unknown>;
-          const u =
-            (typeof p.preferred_username === 'string' && p.preferred_username) ||
-            (typeof p.email === 'string' && p.email) ||
-            null;
-          setUsername(u);
-          setRealmRoles(parseRealmRoles(p));
+        const access = getStoredAccessToken();
+        if (access) {
+          setIsAuthenticated(true);
+          applyTokenPayload(access);
         } else {
+          setIsAuthenticated(false);
+          setUsername(null);
           setRealmRoles([]);
+          setIsStaff(false);
+          setIsSuperuser(false);
         }
         setAuthInitError(null);
       } catch (e) {
         if (!cancelled) {
           setAuthInitError(
-            e instanceof Error ? e.message : 'Could not connect to Keycloak.'
+            e instanceof Error ? e.message : 'Could not restore sign-in session.'
           );
           setIsAuthenticated(false);
           setUsername(null);
           setRealmRoles([]);
+          setIsStaff(false);
+          setIsSuperuser(false);
         }
       } finally {
-        if (!cancelled) setKeycloakReady(true);
+        if (!cancelled) setAuthReady(true);
       }
     })();
-
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyTokenPayload]);
 
-  const loginWithKeycloak = useCallback(() => {
-    const kc = getKeycloak();
-    void kc.login({ redirectUri: redirectUri() });
-  }, []);
-
-  const loginWithKeycloakFresh = useCallback(() => {
-    const kc = getKeycloak();
-    void kc.login({ redirectUri: redirectUri(), prompt: 'login' });
-  }, []);
-
-  const registerWithKeycloak = useCallback(() => {
-    const kc = getKeycloak();
-    void kc.register({ redirectUri: redirectUri() });
-  }, []);
-
-  const loginWithGoogle = useCallback(() => {
-    const kc = getKeycloak();
-    void kc.login({
-      redirectUri: redirectUri(),
-      idpHint: getKeycloakGoogleIdpHint(),
-      // Keycloak ends your app session on logout, but Google may still have a browser
-      // session. These ask Keycloak / the broker path to treat auth as fresh so Google
-      // shows account selection or sign-in again instead of silent SSO.
-      prompt: 'login',
-      maxAge: 0,
-    });
-  }, []);
+  const loginWithPassword = useCallback(
+    async (user: string, password: string) => {
+      setAuthInitError(null);
+      const base = getApiBase();
+      if (!base) {
+        setAuthInitError('API base URL is not configured (set VITE_API_BASE).');
+        throw new Error('no api base');
+      }
+      const r = await fetch(`${base}/api/auth/token/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.trim(), password }),
+      });
+      if (!r.ok) {
+        let detail = 'Sign-in failed.';
+        try {
+          const j = (await r.json()) as { detail?: string };
+          if (typeof j.detail === 'string') detail = j.detail;
+        } catch {
+          /* ignore */
+        }
+        setAuthInitError(detail);
+        throw new Error(detail);
+      }
+      const data = (await r.json()) as { access: string; refresh: string };
+      clearMediTapWorkflowLocalState();
+      setStoredTokens(data.access, data.refresh);
+      setSessionExpired(false);
+      setIsAuthenticated(true);
+      applyTokenPayload(data.access);
+    },
+    [applyTokenPayload]
+  );
 
   const logout = useCallback(() => {
-    clearMeditapIntakeElevation();
-    const kc = getKeycloak();
-    void kc.logout({ redirectUri: redirectUri() });
+    clearMediTapWorkflowLocalState();
+    clearStoredTokens();
+    setIsAuthenticated(false);
+    setUsername(null);
+    setRealmRoles([]);
+    setIsStaff(false);
+    setIsSuperuser(false);
+    try {
+      window.location.assign(`${window.location.origin}/tab3`);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const dismissSessionExpired = useCallback(() => {
@@ -211,33 +186,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = useMemo(
     () => ({
-      keycloakReady,
+      authReady,
       authInitError,
       isAuthenticated,
       username,
+      isStaff,
+      isSuperuser,
       realmRoles,
       hasRealmRole,
       sessionExpired,
       dismissSessionExpired,
-      loginWithKeycloak,
-      loginWithKeycloakFresh,
-      registerWithKeycloak,
-      loginWithGoogle,
+      loginWithPassword,
       logout,
     }),
     [
-      keycloakReady,
+      authReady,
       authInitError,
       isAuthenticated,
       username,
+      isStaff,
+      isSuperuser,
       realmRoles,
       hasRealmRole,
       sessionExpired,
       dismissSessionExpired,
-      loginWithKeycloak,
-      loginWithKeycloakFresh,
-      registerWithKeycloak,
-      loginWithGoogle,
+      loginWithPassword,
       logout,
     ]
   );

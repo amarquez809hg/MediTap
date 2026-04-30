@@ -3,7 +3,7 @@ import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -71,7 +71,7 @@ const Tab5: React.FC = () => {
   const [pendingAfterStaff, setPendingAfterStaff] = useState<'add' | null>(null);
   const [deferOpenNewAfterStaff, setDeferOpenNewAfterStaff] = useState(false);
 
-  const kcParsedTab5 = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsedTab5 = getAccessTokenPayload() ?? undefined;
   const patientSub =
     typeof kcParsedTab5?.sub === 'string' ? kcParsedTab5.sub : undefined;
 

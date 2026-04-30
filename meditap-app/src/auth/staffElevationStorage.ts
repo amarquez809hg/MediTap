@@ -1,4 +1,4 @@
-import { getKeycloak } from '../config/keycloak';
+import { getSessionPatientSub } from './accessTokenClaims';
 
 const STORAGE_KEY = 'meditap_intake_elevation_jwt';
 
@@ -42,13 +42,11 @@ export function isMeditapIntakeElevationValidForPatient(
   return exp > Date.now() / 1000 + 15;
 }
 
-/** Attach to API calls when a valid elevation exists for the current Keycloak user. */
+/** Attach to API calls when a valid elevation exists for the current patient JWT `sub`. */
 export function getMeditapElevationRequestHeaders(): Record<string, string> {
   const t = getMeditapIntakeElevationToken();
   if (!t) return {};
-  const kc = getKeycloak();
-  const sub = (kc.tokenParsed as Record<string, unknown> | undefined)?.sub;
-  const patientSub = typeof sub === 'string' ? sub : undefined;
+  const patientSub = getSessionPatientSub();
   if (!isMeditapIntakeElevationValidForPatient(patientSub)) {
     clearMeditapIntakeElevation();
     return {};

@@ -1,5 +1,5 @@
 /**
- * Realm roles from a Keycloak access token (`realm_access.roles`).
+ * Roles from JWT `realm_access.roles` (Django groups mirrored in MediTap access tokens).
  */
 export function parseRealmRoles(
   tokenParsed: Record<string, unknown> | undefined

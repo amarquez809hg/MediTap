@@ -33,7 +33,7 @@ import {
 
 import './Tab12.css';
 import { useAuth } from '../contexts/AuthContext';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import {
   clearMeditapIntakeElevation,
@@ -107,7 +107,7 @@ const Tab12: React.FC = () => {
   } | null>(null);
   const [, setElevationNonce] = useState(0);
 
-  const kcParsed = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsed = getAccessTokenPayload() ?? undefined;
   const patientSub = typeof kcParsed?.sub === 'string' ? kcParsed.sub : undefined;
   const canEditInsurance =
     hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);

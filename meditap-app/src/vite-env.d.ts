@@ -2,12 +2,11 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE?: string;
-  readonly VITE_KEYCLOAK_URL?: string;
-  readonly VITE_KEYCLOAK_REALM?: string;
-  readonly VITE_KEYCLOAK_CLIENT_ID?: string;
-  readonly VITE_KEYCLOAK_REDIRECT_PATH?: string;
-  /** Keycloak Google IdP alias (default `google`). */
-  readonly VITE_KEYCLOAK_IDP_GOOGLE?: string;
+  /** Post-login path for the Ionic router (default `/tab3`). */
+  readonly VITE_POST_LOGIN_PATH?: string;
+  /** Must match Django group / JWT `realm_access.roles` for intake editors. */
+  readonly VITE_MEDITAP_RECORD_EDITOR_ROLE?: string;
+  readonly VITE_EPIC_DEVELOPER_PORTAL_URL?: string;
 }
 
 interface ImportMeta {

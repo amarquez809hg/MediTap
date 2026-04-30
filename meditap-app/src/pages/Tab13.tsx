@@ -44,7 +44,7 @@ import {
 import './Tab13.css';
 import './Tab14.css';
 import { useAuth } from '../contexts/AuthContext';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import {
   clearMeditapIntakeElevation,
@@ -75,7 +75,7 @@ const Tab13: React.FC = () => {
   const { hasRealmRole, username } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
-  const kcParsed = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsed = getAccessTokenPayload() ?? undefined;
   const patientSub = typeof kcParsed?.sub === 'string' ? kcParsed.sub : undefined;
   const canEditAdmin =
     hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);

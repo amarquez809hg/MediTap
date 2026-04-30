@@ -5,6 +5,7 @@ class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Patient
         fields = "__all__"
+        read_only_fields = ("portal_user",)
 
 class HospitalSerializer(serializers.ModelSerializer):
     class Meta:

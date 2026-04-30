@@ -68,9 +68,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(1.5rem, 5vw, 4rem) clamp(1.25rem, 6vw, 6rem);
+  padding: clamp(1.75rem, 5vw, 4.5rem) clamp(1.5rem, 6vw, 6rem);
   box-sizing: border-box;
-  gap: clamp(2rem, 6vw, 4rem);
+  gap: clamp(2.25rem, 6vw, 4.5rem);
 }
 
 .text-section {
@@ -91,9 +91,9 @@
 .login-card {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: min(500px, 94vw);
   flex-shrink: 0;
-  padding: clamp(1.75rem, 4vw, 2.25rem);
+  padding: clamp(2rem, 5vw, 2.75rem);
   border-radius: 16px;
   background: rgba(12, 18, 22, 0.72);
   -webkit-backdrop-filter: blur(20px);
@@ -104,7 +104,10 @@
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   text-align: left;
   align-self: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(90vh, 920px);
+  -webkit-overflow-scrolling: touch;
 }
 
 .login-card__accent {
@@ -123,7 +126,7 @@
 }
 
 .login-card__header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .login-card__badge {
@@ -152,7 +155,7 @@
 .login-card__subtitle {
   margin: 0;
   font-size: 0.875rem;
-  line-height: 1.55;
+  line-height: 1.65;
   color: rgba(255, 255, 255, 0.68);
   font-weight: 400;
 }
@@ -162,7 +165,7 @@
   gap: 0.75rem;
   align-items: flex-start;
   padding: 0.875rem 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   border-radius: 12px;
   background: rgba(220, 53, 69, 0.12);
   border: 1px solid rgba(255, 120, 130, 0.35);
@@ -224,7 +227,39 @@
 .login-card__actions {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1.05rem;
+}
+
+.login-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  text-align: left;
+}
+
+.login-card__field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.login-card__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.login-card__input:focus {
+  outline: 2px solid rgba(23, 162, 184, 0.5);
+  border-color: rgba(23, 162, 184, 0.6);
 }
 
 .login-card__btn {
@@ -300,7 +335,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
 }
 
 .login-card__divider::before,
@@ -408,8 +443,8 @@
 }
 
 .login-card__epic {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -529,9 +564,9 @@
 }
 
 .login-card__terms {
-  margin: 1.25rem 0 0;
+  margin: 1.5rem 0 0;
   font-size: 0.6875rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: rgba(255, 255, 255, 0.45);
   text-align: center;
 }
@@ -566,6 +601,7 @@
 
   .login-card {
     max-width: 100%;
+    max-height: min(88vh, 900px);
   }
 }
 

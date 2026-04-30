@@ -1,232 +1,280 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import './Tab9.css';
+import { Link, useHistory } from 'react-router-dom';
+import './Tab3.css';
+import bgImage from './MediTapBG.jpg';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiBase } from '../config/api';
 
-// Interface for the form data state based on the provided image
-interface RegistrationFormData {
-  givenName: string;
-  lastName: string;
-  dateOfBirth: string;
-  bloodType: string;
-  email: string;
-  phoneNumber: string;
-  sexAtBirth: string;
-}
+const EPIC_ON_FHIR_PORTAL =
+  (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
+  'https://fhir.epic.com/';
 
 const Tab9: React.FC = () => {
-  const { registerWithKeycloak, keycloakReady } = useAuth();
-  const [formData, setFormData] = useState<RegistrationFormData>({
-    givenName: '',
-    lastName: '',
-    dateOfBirth: '',
-    bloodType: '',
-    email: '',
-    phoneNumber: '',
-    sexAtBirth: '',
-  });
-  const [errors, setErrors] = useState<Partial<RegistrationFormData>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const history = useHistory();
+  const { authReady, isAuthenticated, loginWithPassword } = useAuth();
+  const [accUsername, setAccUsername] = useState('');
+  const [accEmail, setAccEmail] = useState('');
+  const [accPassword, setAccPassword] = useState('');
+  const [accPasswordConfirm, setAccPasswordConfirm] = useState('');
+  const [accError, setAccError] = useState<string | null>(null);
+  const [accSubmitting, setAccSubmitting] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({ ...prevData, [name]: value }));
-    // Clear error for the current field as user types
-    setErrors(prevErrors => ({ ...prevErrors, [name]: undefined }));
-  };
-
-  const validateForm = () => {
-    const newErrors: Partial<RegistrationFormData> = {};
-    
-    // Basic presence validation for all required fields
-    if (!formData.givenName.trim()) newErrors.givenName = 'Given Name is required.';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last Name is required.';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required.';
-    if (!formData.bloodType) newErrors.bloodType = 'Blood Type is required.';
-    if (!formData.sexAtBirth) newErrors.sexAtBirth = 'Sex at Birth is required.';
-
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'A valid E-Mail address is required.';
+  React.useEffect(() => {
+    if (authReady && isAuthenticated) {
+      history.replace('/tab1');
     }
-    
-    // Basic phone number validation (digits only)
-    if (!/^\d{10,}$/.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = 'A valid phone number (10+ digits) is required.';
-    }
+  }, [authReady, isAuthenticated, history]);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const registerMediTapAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    if (validateForm()) {
-      // In a real application, this is where you would call your API for user registration
-      setTimeout(() => {
-        console.log('Account Registration Data:', formData);
-        
-        // Use a custom modal or message box instead of alert()
-        console.log('Success! Registration simulated.');
-
-        // Reset the form
-        setFormData({
-          givenName: '',
-          lastName: '',
-          dateOfBirth: '',
-          bloodType: '',
-          email: '',
-          phoneNumber: '',
-          sexAtBirth: '',
-        });
-        setIsSubmitting(false);
-
-      }, 1500);
-    } else {
-      setIsSubmitting(false);
+    setAccError(null);
+    const u = accUsername.trim();
+    const em = accEmail.trim();
+    if (!u || !em || !accPassword) {
+      setAccError('Enter username, email, and password.');
+      return;
+    }
+    if (accPassword !== accPasswordConfirm) {
+      setAccError('Passwords do not match.');
+      return;
+    }
+    const base = getApiBase();
+    if (!base) {
+      setAccError('API base URL is not configured (set VITE_API_BASE).');
+      return;
+    }
+    setAccSubmitting(true);
+    try {
+      const r = await fetch(`${base}/api/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: u,
+          email: em,
+          password: accPassword,
+          password_confirm: accPasswordConfirm,
+        }),
+      });
+      const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!r.ok) {
+        const parts: string[] = [];
+        for (const [k, v] of Object.entries(body)) {
+          if (k === 'detail' && typeof v === 'string') {
+            parts.push(v);
+            continue;
+          }
+          if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`);
+          else if (typeof v === 'string') parts.push(`${k}: ${v}`);
+          else if (v && typeof v === 'object') {
+            parts.push(`${k}: ${JSON.stringify(v)}`);
+          }
+        }
+        setAccError(parts.join(' ') || 'Registration failed.');
+        return;
+      }
+      await loginWithPassword(u, accPassword);
+      history.replace('/tab1');
+    } catch {
+      setAccError('Could not complete registration. Try again.');
+    } finally {
+      setAccSubmitting(false);
     }
   };
 
   return (
-    <div className="registration-container">
-      <div className="registration-card">
-        <h2>CREATE AN ACCOUNT</h2>
-        <p className="subtitle">
-          Register through Keycloak (enable &quot;User registration&quot; on the realm), then you
-          can complete medical profile details here or in the app.
-        </p>
+    <div
+      className="login-container"
+      style={{ backgroundImage: `url(${bgImage})` }}
+    >
+      <header className="header">
+        <div className="logo">MediTap</div>
+        <nav className="nav">
+          <a href="/tab3">Sign in</a>
+          <a href="/tab10">About us</a>
+          <a href="/tab8">Support</a>
+        </nav>
+      </header>
 
-        <button
-          type="button"
-          className="submit-btn"
-          style={{ marginBottom: '1.5rem', width: '100%' }}
-          onClick={registerWithKeycloak}
-          disabled={!keycloakReady}
-        >
-          Register with Keycloak
-        </button>
-
-        <p className="subtitle" style={{ marginBottom: '1rem' }}>
-          Optional — save profile details locally (API hookup later):
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          
-          {/* GIVEN NAME and LAST NAME */}
-          <div className="name-group">
-            <div className="form-group half-width">
-              <label htmlFor="givenName">GIVEN NAME</label>
-              <input
-                type="text"
-                id="givenName"
-                name="givenName"
-                value={formData.givenName}
-                onChange={handleInputChange}
-              />
-              {errors.givenName && <p className="error-message">{errors.givenName}</p>}
-            </div>
-
-            <div className="form-group half-width">
-              <label htmlFor="lastName">LAST NAME</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-              />
-              {errors.lastName && <p className="error-message">{errors.lastName}</p>}
+      <main className="main-content">
+        <div className="overlay">
+          <div className="text-section">
+            <div className="slogan">
+              Start your journey.
+              <br />
+              One secure account
             </div>
           </div>
 
-          {/* DATE OF BIRTH and BLOOD TYPE */}
-          <div className="data-group">
-            <div className="form-group half-width">
-              <label htmlFor="dateOfBirth">DATE OF BIRTH</label>
-              <input
-                type="date"
-                id="dateOfBirth"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleInputChange}
-                max={new Date().toISOString().split('T')[0]} // Prevent future dates
-              />
-              {errors.dateOfBirth && <p className="error-message">{errors.dateOfBirth}</p>}
+          <aside
+            className="login-card"
+            role="complementary"
+            aria-labelledby="register-card-title"
+          >
+            <div className="login-card__accent" aria-hidden="true" />
+
+            <div className="login-card__header">
+              <span className="login-card__badge">New account</span>
+              <h2 id="register-card-title" className="login-card__title">
+                Create your MediTap account
+              </h2>
+              <p className="login-card__subtitle">
+                Choose a username, email, and password. Your password must meet the server’s
+                security rules (length and complexity). You’ll be signed in right after
+                registration.
+              </p>
             </div>
 
-            <div className="form-group half-width">
-              <label htmlFor="bloodType">BLOOD TYPE</label>
-              <select
-                id="bloodType"
-                name="bloodType"
-                value={formData.bloodType}
-                onChange={handleInputChange}
+            {accError && (
+              <div className="login-card__alert" role="alert">
+                <span className="login-card__alert-icon" aria-hidden="true">
+                  !
+                </span>
+                <div className="login-card__alert-body">
+                  <strong>Could not create account</strong>
+                  <p>{accError}</p>
+                  <button
+                    type="button"
+                    className="login-card__alert-retry"
+                    onClick={() => setAccError(null)}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <form className="login-card__actions" onSubmit={registerMediTapAccount}>
+              <label className="login-card__field">
+                <span className="login-card__field-label">Username</span>
+                <input
+                  className="login-card__input"
+                  id="accUsername"
+                  value={accUsername}
+                  onChange={(e) => setAccUsername(e.target.value)}
+                  autoComplete="username"
+                  disabled={!authReady || accSubmitting}
+                />
+              </label>
+              <label className="login-card__field">
+                <span className="login-card__field-label">Email</span>
+                <input
+                  className="login-card__input"
+                  id="accEmail"
+                  type="email"
+                  value={accEmail}
+                  onChange={(e) => setAccEmail(e.target.value)}
+                  autoComplete="email"
+                  disabled={!authReady || accSubmitting}
+                />
+              </label>
+              <label className="login-card__field">
+                <span className="login-card__field-label">Password</span>
+                <input
+                  className="login-card__input"
+                  id="accPassword"
+                  type="password"
+                  value={accPassword}
+                  onChange={(e) => setAccPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={!authReady || accSubmitting}
+                />
+              </label>
+              <label className="login-card__field">
+                <span className="login-card__field-label">Confirm password</span>
+                <input
+                  className="login-card__input"
+                  id="accPasswordConfirm"
+                  type="password"
+                  value={accPasswordConfirm}
+                  onChange={(e) => setAccPasswordConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={!authReady || accSubmitting}
+                />
+              </label>
+
+              <button
+                type="submit"
+                className="login-card__btn login-card__btn--primary"
+                disabled={!authReady || accSubmitting}
               >
-                <option value="" disabled>Select</option>
-                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
-                    <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              {errors.bloodType && <p className="error-message">{errors.bloodType}</p>}
-            </div>
-          </div>
+                <span className="login-card__btn-label">
+                  {accSubmitting ? 'Creating account…' : authReady ? 'Create account' : 'Loading…'}
+                </span>
+              </button>
 
-          {/* E-MAIL */}
-          <div className="form-group">
-            <label htmlFor="email">E-MAIL</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-            {errors.email && <p className="error-message">{errors.email}</p>}
-          </div>
+              <div className="login-card__divider">
+                <span>Already registered?</span>
+              </div>
 
-          {/* PHONE NUMBER and SEX AT BIRTH */}
-          <div className="data-group">
-            <div className="form-group half-width">
-              <label htmlFor="phoneNumber">PHONE NUMBER</label>
-              <input
-                type="tel"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                placeholder="e.g. 5551234567"
-              />
-              {errors.phoneNumber && <p className="error-message">{errors.phoneNumber}</p>}
-            </div>
-            
-            <div className="form-group half-width">
-              <label htmlFor="sexAtBirth">SEX AT BIRTH</label>
-              <select
-                id="sexAtBirth"
-                name="sexAtBirth"
-                value={formData.sexAtBirth}
-                onChange={handleInputChange}
+              <Link
+                to="/tab3"
+                className="login-card__btn login-card__btn--secondary"
+                style={{ textDecoration: 'none', textAlign: 'center', display: 'block' }}
               >
-                <option value="" disabled>Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-              {errors.sexAtBirth && <p className="error-message">{errors.sexAtBirth}</p>}
+                <span className="login-card__btn-label">Back to sign in</span>
+              </Link>
+            </form>
+
+            <div className="login-card__epic">
+              <p className="login-card__epic-label">Epic on FHIR</p>
+              <p className="login-card__epic-hint">
+                Epic’s developer portal is separate from MediTap account creation above.
+              </p>
+              <a
+                className="login-card__epic-link"
+                href={EPIC_ON_FHIR_PORTAL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Epic on FHIR developer portal in a new tab"
+              >
+                <span className="login-card__epic-link__mark" aria-hidden="true">
+                  <svg
+                    className="login-card__epic-link__logo"
+                    viewBox="0 0 120 32"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <g transform="skewX(-11) translate(2 0)">
+                      <text
+                        x="0"
+                        y="23"
+                        fill="currentColor"
+                        fontSize="26"
+                        fontWeight="800"
+                        fontStyle="italic"
+                        fontFamily="Inter, 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif"
+                      >
+                        Epic
+                      </text>
+                    </g>
+                  </svg>
+                </span>
+                <span className="login-card__epic-link__text">
+                  <span className="login-card__epic-link__title">on FHIR</span>
+                  <span className="login-card__epic-link__subtitle">Developer portal</span>
+                </span>
+                <span className="login-card__epic-link__chev" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M7 17L17 7M17 7H9M17 7V15"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </a>
             </div>
-          </div>
 
-          
-          <button type="submit" className="submit-btn" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : 'Save profile draft'}
-          </button>
-        </form>
-
-        <div className="login-link">
-          Already have an account? <Link to="/tab3">Log in</Link>
+            <p className="login-card__terms">
+              By continuing you agree to our{' '}
+              <a href="#">Terms of Service</a> and{' '}
+              <a href="#">Privacy Policy</a>.
+            </p>
+          </aside>
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

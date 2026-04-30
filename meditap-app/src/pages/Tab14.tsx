@@ -4,7 +4,8 @@ import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
-import { getKeycloak } from '../config/keycloak';
+import { clearTab14DraftKeysOnly } from '../auth/clearWorkflowLocalState';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import {
     clearMeditapIntakeElevation,
     isMeditapIntakeElevationValidForPatient,
@@ -248,7 +249,7 @@ const Tab14: React.FC = () => {
     const [staffModalError, setStaffModalError] = useState<string | null>(null);
     const [elevationNonce, setElevationNonce] = useState(0);
 
-    const kcParsedTab14 = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+    const kcParsedTab14 = getAccessTokenPayload() ?? undefined;
     const patientSub =
         typeof kcParsedTab14?.sub === 'string' ? kcParsedTab14.sub : undefined;
 
@@ -534,7 +535,7 @@ const Tab14: React.FC = () => {
 
     // clear form 
     const clearForm = () => {
-        localStorage.clear();
+        clearTab14DraftKeysOnly();
         setPatientInfo(defaultPatientInfo);
         setInsurances([defaultInsurance]);
         setAllergies([defaultAllergy]);

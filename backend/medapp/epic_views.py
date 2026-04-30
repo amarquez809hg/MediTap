@@ -20,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from medical import models
+from medical.patient_api_scoping import scoped_patient_queryset
 from medical.permissions import IntakeEditorWritePermission
 from medical.serializers import EpicPatientLinkSerializer
 
@@ -114,12 +115,12 @@ class PatientEpicLinkView(APIView):
         return [IsAuthenticated(), IntakeEditorWritePermission()]
 
     def get(self, request, patient_id):
-        patient = get_object_or_404(models.Patient, pk=patient_id)
+        patient = get_object_or_404(scoped_patient_queryset(request), pk=patient_id)
         link, _ = models.EpicPatientLink.objects.get_or_create(patient=patient)
         return Response(EpicPatientLinkSerializer(link).data)
 
     def patch(self, request, patient_id):
-        patient = get_object_or_404(models.Patient, pk=patient_id)
+        patient = get_object_or_404(scoped_patient_queryset(request), pk=patient_id)
         link, _ = models.EpicPatientLink.objects.get_or_create(patient=patient)
         ser = EpicPatientLinkSerializer(link, data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
@@ -136,7 +137,7 @@ class PrepareEpicAuthorizeView(APIView):
                 {"detail": "Epic OAuth is not configured on the server."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        patient = get_object_or_404(models.Patient, pk=patient_id)
+        patient = get_object_or_404(scoped_patient_queryset(request), pk=patient_id)
         link, _ = models.EpicPatientLink.objects.get_or_create(patient=patient)
         state = _state_signer().sign(str(patient.patient_id))
         link.status = models.EpicPatientLink.STATUS_PENDING_AUTH

@@ -35,15 +35,15 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import {
   fetchDashboardDetail,
+  fetchPatientLabPanels,
   formatSessionOrTokenErrorForUi,
   type DashboardDetail,
+  type PatientLabPanelApi,
 } from '../api';
 import {
   loadAppointmentsFromStorage,
-  mockAppointments,
   type Appointment,
 } from '../appointments/appointmentStorage';
-import { mockLabResults } from '../labResults/labResultModel';
 
 type IonColor =
   | 'primary'
@@ -230,11 +230,10 @@ const Tab2: React.FC = () => {
   const history = useHistory();
   const { username } = useAuth();
   const [detail, setDetail] = useState<DashboardDetail | null>(null);
+  const [labPanels, setLabPanels] = useState<PatientLabPanelApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>(
-    mockAppointments
-  );
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -245,7 +244,7 @@ const Tab2: React.FC = () => {
 
   useEffect(() => {
     const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? mockAppointments);
+    setAppointments(stored ?? []);
   }, [username, refreshKey]);
 
   useEffect(() => {
@@ -254,8 +253,14 @@ const Tab2: React.FC = () => {
       setLoading(true);
       setLoadError(null);
       try {
-        const d = await fetchDashboardDetail(username);
-        if (!cancelled) setDetail(d);
+        const [d, { panels }] = await Promise.all([
+          fetchDashboardDetail(username),
+          fetchPatientLabPanels(username),
+        ]);
+        if (!cancelled) {
+          setDetail(d);
+          setLabPanels(panels);
+        }
       } catch (e) {
         if (!cancelled) {
           setLoadError(
@@ -264,6 +269,7 @@ const Tab2: React.FC = () => {
             )
           );
           setDetail(null);
+          setLabPanels([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -275,15 +281,15 @@ const Tab2: React.FC = () => {
   }, [username, refreshKey]);
 
   const labStats = useMemo(() => {
-    const pending = mockLabResults.filter(
+    const pending = labPanels.filter(
       (r) => r.status.toLowerCase() === 'pending'
     ).length;
-    const newPanels = mockLabResults.filter((r) => r.isNew).length;
-    const needsAttention = mockLabResults.filter(
-      (r) => r.status.toLowerCase() === 'pending' || r.isNew
+    const newPanels = labPanels.filter((r) => r.is_new).length;
+    const needsAttention = labPanels.filter(
+      (r) => r.status.toLowerCase() === 'pending' || r.is_new
     ).length;
     return { pending, newPanels, needsAttention };
-  }, []);
+  }, [labPanels]);
 
   const appointmentStats = useMemo(() => {
     const total = appointments.length;
@@ -306,13 +312,7 @@ const Tab2: React.FC = () => {
       labStats.pending,
       labStats.newPanels
     );
-  }, [
-    loading,
-    detail,
-    appointments,
-    labStats.pending,
-    labStats.newPanels,
-  ]);
+  }, [loading, detail, appointments, labStats.pending, labStats.newPanels]);
 
   const go = useCallback(
     (href: string) => {

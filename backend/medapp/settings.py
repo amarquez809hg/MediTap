@@ -37,6 +37,13 @@ elif _allowed_raw:
 else:
     ALLOWED_HOSTS = []
 
+# GCP / public IP: browser hits https://<IP>:8080 so Host is the numeric IP. Compose sets
+# ALLOWED_HOSTS="*" as a dev shortcut (fixed list above) — merge MEDITAP_PUBLIC_HOST so
+# DisallowedHost (400 HTML) does not break the SPA API.
+_meditap_public_host = os.getenv("MEDITAP_PUBLIC_HOST", "").strip()
+if _meditap_public_host and _meditap_public_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, _meditap_public_host]
+
 
 # Application definition
 
@@ -50,6 +57,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'medical',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -93,7 +101,6 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "medapp.keycloak_auth.KeycloakAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
@@ -101,62 +108,12 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
 }
 
-# ============================================
-# KEYCLOAK (OIDC) — validated in medapp.keycloak_auth
-# ============================================
-# JWKS: use Docker service hostname from the backend container.
-KEYCLOAK_JWKS_URL = os.getenv(
-    "KEYCLOAK_JWKS_URL",
-    "http://auth:8080/realms/meditap/protocol/openid-connect/certs",
-)
-# Issuers that may appear in the JWT `iss` claim (browser uses localhost:8081).
-_raw_issuers = os.getenv(
-    "KEYCLOAK_ALLOWED_ISSUERS",
-    "http://localhost:8081/realms/meditap,http://127.0.0.1:8081/realms/meditap,"
-    "http://localhost:8080/realms/meditap,http://127.0.0.1:8080/realms/meditap,"
-    "http://auth:8080/realms/meditap",
-)
-KEYCLOAK_ALLOWED_ISSUERS = [s.strip() for s in _raw_issuers.split(",") if s.strip()]
-# When DEBUG and KEYCLOAK_TRUST_ISSUER_SUFFIX=true: accept http://<any-host>/… suffix (LAN / mDNS).
-KEYCLOAK_ISSUER_SUFFIX = os.getenv("KEYCLOAK_ISSUER_SUFFIX", "/realms/meditap")
-KEYCLOAK_TRUST_ISSUER_SUFFIX = DEBUG and os.getenv(
-    "KEYCLOAK_TRUST_ISSUER_SUFFIX", ""
-).lower() in ("1", "true", "yes")
-# Public SPA client id — must match `azp` on access tokens from that client.
-KEYCLOAK_EXPECTED_AZP = os.getenv("KEYCLOAK_EXPECTED_AZP", "meditap-spa")
-# Optional: add an audience mapper in Keycloak so access tokens include this audience.
-KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE", "meditap-backend")
-KEYCLOAK_VERIFY_AUDIENCE = os.getenv("KEYCLOAK_VERIFY_AUDIENCE", "").lower() in (
-    "1",
-    "true",
-    "yes",
-)
-
-# Staff elevation (patient stays signed in; staff proves identity server-side via password grant).
-# Create a confidential Keycloak client with "Direct access grants" ON and map the same
-# realm role (e.g. meditap-record-editor) for staff users.
-KEYCLOAK_TOKEN_URL = os.getenv(
-    "KEYCLOAK_TOKEN_URL",
-    "http://auth:8080/realms/meditap/protocol/openid-connect/token",
-).strip()
-KEYCLOAK_ELEVATE_CLIENT_ID = os.getenv(
-    "KEYCLOAK_ELEVATE_CLIENT_ID", "meditap-elevate"
-).strip()
-KEYCLOAK_ELEVATE_CLIENT_SECRET = os.getenv("KEYCLOAK_ELEVATE_CLIENT_SECRET", "").strip()
+# Staff elevation + intake editor: Django group name (create in Admin → Groups).
 MEDITAP_RECORD_EDITOR_ROLE = os.getenv(
     "MEDITAP_RECORD_EDITOR_ROLE", "meditap-record-editor"
 ).strip()
 MEDITAP_ELEVATION_TTL_SECONDS = int(os.getenv("MEDITAP_ELEVATION_TTL_SECONDS", "1800") or "1800")
 MEDITAP_ELEVATION_SIGNING_KEY = os.getenv("MEDITAP_ELEVATION_SIGNING_KEY", "").strip()
-# Local dev only: master-realm admin password so the API can resolve email → Keycloak
-# username before the staff password grant (see medapp.keycloak_dev_user_lookup).
-# Matches docker Keycloak defaults when unset; leave empty outside trusted dev machines.
-KEYCLOAK_DEV_MASTER_ADMIN_USER = os.getenv(
-    "KEYCLOAK_DEV_MASTER_ADMIN_USER", "admin"
-).strip()
-KEYCLOAK_DEV_MASTER_ADMIN_PASSWORD = os.getenv(
-    "KEYCLOAK_DEV_MASTER_ADMIN_PASSWORD", ""
-).strip()
 
 # ============================================
 # EPIC FHIR (SMART) — optional sandbox read linking

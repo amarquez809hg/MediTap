@@ -17,20 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
+from rest_framework_simplejwt.views import TokenVerifyView
 from medical import views as mviews
 from django.http import JsonResponse
-from medapp import staff_elevation_views, epic_views
+from medapp import staff_elevation_views, epic_views, native_auth_views
 
 def healthz(_request):
     return JsonResponse({"status": "ok"})
 
 router = routers.DefaultRouter()
-router.register(r'patients', mviews.PatientViewSet)
+router.register(r'patients', mviews.PatientViewSet, basename='patient')
 router.register(r'hospitals', mviews.HospitalViewSet)
 router.register(r'incidents', mviews.IncidentViewSet)
 router.register(r'medication-catalog', mviews.MedicationCatalogViewSet)
@@ -49,8 +45,18 @@ urlpatterns = [
     path("", healthz),  # returns {"status":"ok"}
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path(
+        'api/auth/token/',
+        native_auth_views.MediTapTokenObtainPairView.as_view(),
+        name='token_obtain_pair',
+    ),
+    path('api/auth/register/', native_auth_views.register, name='auth_register'),
+    path('api/auth/me/', native_auth_views.auth_me, name='auth_me'),
+    path(
+        'api/auth/token/refresh/',
+        native_auth_views.MediTapTokenRefreshView.as_view(),
+        name='token_refresh',
+    ),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path(
         'api/auth/staff-elevate/',

@@ -1,5 +1,7 @@
 import API_BASE from './config/api';
-import { getKeycloak } from './config/keycloak';
+import { getMeditapRecordEditorRole } from './config/meditap-roles';
+import { getAccessTokenPayload } from './auth/accessTokenClaims';
+import { parseRealmRoles } from './auth/realmRoles';
 import { getAuthHeaders } from './auth/getAuthHeaders';
 import { emitSessionExpired } from './auth/sessionEvents';
 import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage';
@@ -492,7 +494,7 @@ function summarizeApiErrorBody(status: number, body: string, statusText: string)
   if (looksLikeHtml) {
     return `server error (${status}); check API logs or run database migrations`;
   }
-  // Keep JSON intact so callers (e.g. staff elevation modal) can parse detail/hint/keycloak_error.
+  // Keep JSON intact so callers (e.g. staff elevation modal) can parse detail/hint.
   if (t.startsWith('{') && t.endsWith('}')) {
     return t.length > 4000 ? `${t.slice(0, 4000)}…` : t;
   }
@@ -510,8 +512,8 @@ export function formatSessionOrTokenErrorForUi(message: string): string {
   ) {
     return (
       'The MediTap server did not accept your sign-in token (it may be expired, or the ' +
-      'backend may not trust your Keycloak URL). Try Log out, then sign in again. ' +
-      'Developers: add your token iss to KEYCLOAK_ALLOWED_ISSUERS on the Django backend.'
+      'backend rejected the token). Try Log out, then sign in again. ' +
+      'Developers: check Django SIMPLE_JWT and CORS settings.'
     );
   }
   return message;
@@ -535,7 +537,7 @@ async function apiRequest<T>(
     },
   });
   if (!response.ok) {
-    // Staff elevation uses 401 for wrong staff password; that must not wipe the patient's Keycloak session.
+    // Staff elevation uses 401 for wrong staff password; that must not wipe the patient's session.
     const staffElevatePath =
       normalizeApiPath(path).includes('/api/auth/staff-elevate');
     if (response.status === 401 && !staffElevatePath) {
@@ -586,26 +588,40 @@ function formatDate(isoLike?: string | null): string {
   return date.toISOString().slice(0, 10);
 }
 
+function currentUserMayBrowseAllPatientsFromToken(): boolean {
+  const p = getAccessTokenPayload();
+  if (!p) return false;
+  if (p.is_superuser === true || p.is_superuser === 'true') return true;
+  if (p.is_staff === true || p.is_staff === 'true') return true;
+  const roles = parseRealmRoles(p);
+  return roles.includes(getMeditapRecordEditorRole());
+}
+
 function pickCurrentPatient(
   patients: PatientApi[],
   username: string | null
 ): PatientApi | null {
   if (!patients.length) return null;
+  if (patients.length === 1) return patients[0];
   if (username) {
     const normalized = username.toLowerCase();
     const byEmail = patients.find(
-      (p) => (p.email || '').toLowerCase() === normalized
+      (pt) => (pt.email || '').toLowerCase() === normalized
     );
     if (byEmail) return byEmail;
+    const localPart = normalized.split('@')[0];
     const byUsername = patients.find(
-      (p) => (p.email || '').split('@')[0]?.toLowerCase() === normalized
+      (pt) => (pt.email || '').split('@')[0]?.toLowerCase() === localPart
     );
     if (byUsername) return byUsername;
   }
-  return patients[0];
+  if (currentUserMayBrowseAllPatientsFromToken()) {
+    return patients[0];
+  }
+  return null;
 }
 
-function parseNameFromKeycloakClaims(
+function parseNameFromAccessTokenClaims(
   parsed: Record<string, unknown> | undefined
 ): { given: string; family: string } {
   const gn =
@@ -630,7 +646,7 @@ function parseNameFromKeycloakClaims(
 }
 
 /**
- * When the API has no Patient rows yet, create one from the Keycloak access token
+ * When the API has no Patient rows yet, create one from the JWT access token claims
  * so tabs like Lab Results can attach data (same idea as completing Tab14, but minimal).
  */
 export async function ensurePatientForCurrentSession(
@@ -646,10 +662,8 @@ export async function ensurePatientForCurrentSession(
     return null;
   }
 
-  const kc = getKeycloak();
-  if (!kc.authenticated || !kc.tokenParsed) return null;
-
-  const parsed = kc.tokenParsed as Record<string, unknown>;
+  const parsed = getAccessTokenPayload();
+  if (!parsed) return null;
   const emailFromToken =
     typeof parsed.email === 'string' ? parsed.email.trim() : '';
   const preferred =
@@ -665,13 +679,13 @@ export async function ensurePatientForCurrentSession(
       emailForPatient = preferred;
     } else if (sub) {
       const safe = sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 48) || 'user';
-      emailForPatient = `${safe}@keycloak.local`;
+      emailForPatient = `${safe}@meditap.local`;
     } else {
-      emailForPatient = `${preferred.replace(/[^a-zA-Z0-9._-]/g, '_')}@keycloak.local`;
+      emailForPatient = `${preferred.replace(/[^a-zA-Z0-9._-]/g, '_')}@meditap.local`;
     }
   }
 
-  const { given, family } = parseNameFromKeycloakClaims(parsed);
+  const { given, family } = parseNameFromAccessTokenClaims(parsed);
 
   try {
     return await requestJson<PatientApi>('/api/patients/', {
@@ -1366,7 +1380,7 @@ export type StaffElevateResponse = {
   expires_in: number;
 };
 
-/** Backend verifies staff with Keycloak (password grant); patient browser session unchanged. */
+/** Backend verifies staff with Django auth; patient browser session unchanged. */
 export async function requestPatientIntakeStaffElevation(
   username: string,
   password: string

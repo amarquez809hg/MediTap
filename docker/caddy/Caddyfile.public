@@ -1,6 +1,6 @@
 # TLS termination for a public IP (GCP, etc.).
 # Browsers MUST use https:// on these ports (http:// will show “HTTP request to an HTTPS server”).
-# Maps: host 8100 → SPA, 8081 → Keycloak, 8080 → Django.
+# Maps: host 8100 → SPA, host 8080 → Django API.
 # First visit: browser warns on self-signed cert → Advanced / Proceed once per port (or trust Caddy root).
 #
 # Raw IPs: many browsers omit SNI; Caddy then had “no certificate available” → ERR_SSL_PROTOCOL_ERROR.
@@ -14,11 +14,6 @@
 https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:443 {
 	tls internal
 	reverse_proxy frontend:8100
-}
-
-https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:4443 {
-	tls internal
-	reverse_proxy auth:8080
 }
 
 https://{$MEDITAP_PUBLIC_HOST:127.0.0.1}:4455 {

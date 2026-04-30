@@ -3,7 +3,7 @@ import { IonContent, IonPage, IonSpinner } from '@ionic/react';
 import './Tab7.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -122,9 +122,9 @@ const Tab7: React.FC = () => {
   const [displayCodePickCustom, setDisplayCodePickCustom] = useState(false);
   const [panelPickCustom, setPanelPickCustom] = useState(false);
 
-  // Must read Keycloak `sub` every render — memoizing on [username] misses token refresh
+  // Must read JWT `sub` every render — memoizing on [username] misses token refresh
   // and leaves elevation checks failing (Manage hidden though X-Meditap-Elevation is valid).
-  const kcParsed = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsed = getAccessTokenPayload() ?? undefined;
   const patientSub = typeof kcParsed?.sub === 'string' ? kcParsed.sub : undefined;
 
   // Re-check elevation every render — JWT expiry is time-based.
@@ -340,7 +340,7 @@ const Tab7: React.FC = () => {
       const msg = e instanceof Error ? e.message : 'Save failed.';
       if (msg.includes('403')) {
         setSaveError(
-          'Permission denied. If you used staff sign-in here, it may have expired—open staff sign-in again. Otherwise use a Keycloak account with the record editor realm role, or a Django superuser on the API.'
+          'Permission denied. If you used staff sign-in here, it may have expired—open staff sign-in again. Otherwise use a Django account in the record-editor group, or a superuser.'
         );
       } else if (msg.includes('500')) {
         setSaveError(

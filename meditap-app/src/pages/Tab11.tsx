@@ -22,8 +22,7 @@ import {
 import './Tab11.css';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { clearMeditapIntakeElevation } from '../auth/staffElevationStorage';
-import { getKeycloak, getKeycloakBaseUrl } from '../config/keycloak';
+import { getApiBase } from '../config/api';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
 function fullAppUrl(path: string) {
@@ -36,7 +35,8 @@ const LS_PUSH = 'meditap_settings_push_notifications';
 const APP_VERSION = '0.0.1';
 
 const Tab11: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, isStaff, isSuperuser } = useAuth();
+  const djangoAdminUrl = `${getApiBase().replace(/\/$/, '')}/admin/`;
   const { dark: darkModeEnabled, setDark: setDarkMode } = useDarkMode();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
@@ -63,15 +63,7 @@ const Tab11: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    clearMeditapIntakeElevation();
     void logout();
-  };
-
-  const openKeycloakAccountSecurity = () => {
-    const realm = import.meta.env.VITE_KEYCLOAK_REALM || 'meditap';
-    const base = getKeycloakBaseUrl();
-    const url = `${base}/realms/${encodeURIComponent(realm)}/account/#/security/signingin`;
-    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -128,24 +120,44 @@ const Tab11: React.FC = () => {
               </IonList>
             </div>
 
+            {(isSuperuser || isStaff) && (
+              <div className="settings-list settings-list--spaced">
+                <div className="settings-glass-subtitle" role="heading" aria-level={2}>
+                  <span className="settings-glass-subtitle__label">Administration</span>
+                </div>
+                <IonList lines="none" className="settings-list-ion">
+                  <IonItem
+                    button
+                    detail
+                    className="settings-item"
+                    onClick={() =>
+                      window.open(djangoAdminUrl, '_blank', 'noopener,noreferrer')
+                    }
+                  >
+                    <IonIcon icon={shieldOutline} slot="start" />
+                    <IonLabel>Django Admin</IonLabel>
+                    <IonNote slot="end">Separate sign-in on API host</IonNote>
+                  </IonItem>
+                  {isSuperuser && (
+                    <IonItem className="settings-item">
+                      <IonIcon icon={informationCircleOutline} slot="start" />
+                      <IonLabel>Superuser</IonLabel>
+                      <IonNote slot="end">Full API + admin access</IonNote>
+                    </IonItem>
+                  )}
+                </IonList>
+              </div>
+            )}
+
             <div className="settings-list settings-list--spaced">
               <div className="settings-glass-subtitle" role="heading" aria-level={2}>
                 <span className="settings-glass-subtitle__label">Security & Privacy</span>
               </div>
               <IonList lines="none" className="settings-list-ion">
-          <IonItem
-            button
-            detail
-            className="settings-item"
-            onClick={() => {
-              if (getKeycloak().authenticated) {
-                openKeycloakAccountSecurity();
-              }
-            }}
-          >
+          <IonItem className="settings-item">
             <IonIcon icon={shieldOutline} slot="start" />
-            <IonLabel>Change Password</IonLabel>
-            <IonNote slot="end">Opens Keycloak account</IonNote>
+            <IonLabel>Password</IonLabel>
+            <IonNote slot="end">Ask an administrator to reset your Django user password</IonNote>
           </IonItem>
 
           <IonItem className="settings-item">

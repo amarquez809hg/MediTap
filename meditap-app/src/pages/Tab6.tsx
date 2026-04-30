@@ -4,7 +4,7 @@ import './Tab4.css';
 import './Tab14.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -127,7 +127,7 @@ const Tab6: React.FC = () => {
 
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const kcParsedTab6 = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsedTab6 = getAccessTokenPayload() ?? undefined;
   const patientSub =
     typeof kcParsedTab6?.sub === 'string' ? kcParsedTab6.sub : undefined;
 

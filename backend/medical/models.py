@@ -12,6 +12,14 @@ class Patient(models.Model):
     sex_at_birth = models.CharField(max_length=32, blank=True, null=True)
     email = models.EmailField(blank=True, null=True, unique=True)
     phone = models.CharField(max_length=32, blank=True, null=True)
+    # Portal account that owns this chart (null = legacy / demo rows not tied to a login).
+    portal_user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="patient_profile",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

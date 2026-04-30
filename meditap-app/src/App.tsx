@@ -53,11 +53,11 @@ import './theme/meditap-shared.css';
 setupIonicReact();
 
 const AppRoutes: React.FC = () => {
-  const { keycloakReady } = useAuth();
+  const { authReady } = useAuth();
   const { dark } = useDarkMode();
   const ionAppClass = dark ? 'ion-palette-dark' : undefined;
 
-  if (!keycloakReady) {
+  if (!authReady) {
     return (
       <IonApp className={ionAppClass}>
         <IonContent
@@ -77,7 +77,7 @@ const AppRoutes: React.FC = () => {
             }}
           >
             <IonSpinner name="crescent" />
-            <p style={{ marginTop: 16 }}>Connecting to sign-in…</p>
+            <p style={{ marginTop: 16 }}>Loading…</p>
           </div>
         </IonContent>
       </IonApp>

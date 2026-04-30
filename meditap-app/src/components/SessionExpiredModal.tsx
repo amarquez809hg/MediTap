@@ -4,23 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import './SessionExpiredModal.css';
 
 /**
- * Shown when the Keycloak session/token can no longer be refreshed or API returns 401.
+ * Shown when the JWT can no longer be refreshed or API returns 401.
  */
 const SessionExpiredModal: React.FC = () => {
   const history = useHistory();
-  const {
-    keycloakReady,
-    sessionExpired,
-    dismissSessionExpired,
-    loginWithKeycloak,
-  } = useAuth();
+  const { authReady, sessionExpired, dismissSessionExpired } = useAuth();
 
-  if (!keycloakReady || !sessionExpired) return null;
-
-  const handleSignInAgain = () => {
-    dismissSessionExpired();
-    loginWithKeycloak();
-  };
+  if (!authReady || !sessionExpired) return null;
 
   const handleGoToLoginPage = () => {
     dismissSessionExpired();
@@ -39,23 +29,16 @@ const SessionExpiredModal: React.FC = () => {
           Session ended
         </h2>
         <p className="session-expired-text">
-          Your sign-in session has expired or is no longer valid. Sign in again to
-          continue working in MediTap.
+          Your sign-in session has expired or is no longer valid. Sign in again to continue
+          working in MediTap.
         </p>
         <div className="session-expired-actions">
           <button
             type="button"
             className="session-expired-btn session-expired-btn--primary"
-            onClick={handleSignInAgain}
-          >
-            Sign in again
-          </button>
-          <button
-            type="button"
-            className="session-expired-btn session-expired-btn--secondary"
             onClick={handleGoToLoginPage}
           >
-            Back to login page
+            Back to sign in
           </button>
         </div>
       </div>

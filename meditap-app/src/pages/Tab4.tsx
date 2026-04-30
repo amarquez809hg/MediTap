@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './Tab4.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
-import { getKeycloak } from '../config/keycloak';
+import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -16,7 +16,6 @@ import {
   appointmentsStorageKey,
   emptyAppointmentDraft,
   loadAppointmentsFromStorage,
-  mockAppointments,
 } from '../appointments/appointmentStorage';
 
 const Tab4: React.FC = () => {
@@ -26,7 +25,7 @@ const Tab4: React.FC = () => {
 
   const storageKey = useMemo(() => appointmentsStorageKey(username), [username]);
 
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsHydrated, setAppointmentsHydrated] = useState(false);
   const skipNextAppointmentsPersist = useRef(false);
   const [draftAppointment, setDraftAppointment] = useState<Appointment | null>(null);
@@ -41,7 +40,7 @@ const Tab4: React.FC = () => {
   const [staffModalError, setStaffModalError] = useState<string | null>(null);
   const [elevationNonce, setElevationNonce] = useState(0);
 
-  const kcParsedTab4 = getKeycloak().tokenParsed as Record<string, unknown> | undefined;
+  const kcParsedTab4 = getAccessTokenPayload() ?? undefined;
   const patientSub =
     typeof kcParsedTab4?.sub === 'string' ? kcParsedTab4.sub : undefined;
 
@@ -63,7 +62,7 @@ const Tab4: React.FC = () => {
   useEffect(() => {
     skipNextAppointmentsPersist.current = true;
     const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? mockAppointments);
+    setAppointments(stored ?? []);
     setAppointmentsHydrated(true);
   }, [storageKey, username]);
 
