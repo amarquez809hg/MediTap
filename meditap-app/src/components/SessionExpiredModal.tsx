@@ -29,8 +29,8 @@ const SessionExpiredModal: React.FC = () => {
           Session ended
         </h2>
         <p className="session-expired-text">
-          Your sign-in session has expired or is no longer valid. Sign in again to continue
-          working in MediTap.
+          Your login session has expired or is no longer valid. Log in again to continue working in
+          MediTap.
         </p>
         <div className="session-expired-actions">
           <button
@@ -38,7 +38,7 @@ const SessionExpiredModal: React.FC = () => {
             className="session-expired-btn session-expired-btn--primary"
             onClick={handleGoToLoginPage}
           >
-            Back to sign in
+            Back to log in
           </button>
         </div>
       </div>

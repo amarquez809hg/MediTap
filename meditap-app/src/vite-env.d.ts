@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE?: string;
+  /** Capacitor iOS/Android only when `VITE_API_BASE` is unset (default http://127.0.0.1:8080). */
+  readonly VITE_NATIVE_API_BASE?: string;
   /** Post-login path for the Ionic router (default `/tab3`). */
   readonly VITE_POST_LOGIN_PATH?: string;
   /** Must match Django group / JWT `realm_access.roles` for intake editors. */

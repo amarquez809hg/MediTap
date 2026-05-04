@@ -16,6 +16,9 @@ services:
       dockerfile: docker/Dockerfile.backend
     working_dir: /app
     command: python manage.py runserver 0.0.0.0:8000
+    # Host :8080 → container :8000 (browser + Capacitor iOS Simulator use http://127.0.0.1:8080)
+    ports:
+      - "8080:8000"
     volumes:
       - ../backend:/app          # your Django code
     env_file:

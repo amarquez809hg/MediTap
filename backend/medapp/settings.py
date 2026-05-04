@@ -74,6 +74,9 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8100",
     "http://127.0.0.1:8100",
+    # Capacitor / Ionic WebView (iOS Simulator & device native shells)
+    "capacitor://localhost",
+    "ionic://localhost",
 ]
 # e.g. GCP VM: MEDITAP_CORS_EXTRA_ORIGINS=http://34.12.34.56:8100,https://app.example.com
 _cors_extra = os.getenv("MEDITAP_CORS_EXTRA_ORIGINS", "").strip()
@@ -83,8 +86,17 @@ if _cors_extra:
         if _o and _o not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(_o)
 
+# Browser origin for the public SPA (same host you set for ALLOWED_HOSTS), e.g. https://meditap.ai
+if _meditap_public_host:
+    for _scheme in ("https", "http"):
+        _origin = f"{_scheme}://{_meditap_public_host}"
+        if _origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(_origin)
+
 # Phones / tablets on LAN: open the app as http://<host>:8100
 CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^capacitor://localhost$",
+    r"^ionic://localhost$",
     r"^http://localhost(:\d+)?$",
     r"^http://127\.0\.0\.1(:\d+)?$",
     r"^http://192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$",
@@ -207,6 +219,24 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+def _env_truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
+# Registration: no cap on how many users may sign up. Tune strictness for demos / internal pilots.
+try:
+    MEDITAP_REGISTER_MIN_PASSWORD_LENGTH = max(
+        1,
+        min(int(os.getenv("MEDITAP_REGISTER_MIN_PASSWORD_LENGTH", "8") or "8"), 128),
+    )
+except ValueError:
+    MEDITAP_REGISTER_MIN_PASSWORD_LENGTH = 8
+# When True, only min-length is enforced on register (login still uses hashed passwords).
+MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS = _env_truthy(
+    "MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS"
+)
 
 
 # Internationalization

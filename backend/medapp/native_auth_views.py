@@ -7,16 +7,19 @@ Register + /api/auth/me/; login uses /api/auth/token/; refresh uses MediTapToken
 
 from __future__ import annotations
 
-import re
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.contrib.auth import get_user_model
 from rest_framework import serializers, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -24,6 +27,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+_username_validator = UnicodeUsernameValidator()
 
 
 class MediTapTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -65,7 +70,10 @@ class MediTapTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class MediTapTokenObtainPairView(TokenObtainPairView):
+    """No session auth: JSON login from the SPA must not require a CSRF cookie."""
+
     serializer_class = MediTapTokenObtainPairSerializer
+    authentication_classes: list = []
 
 
 class MediTapTokenRefreshSerializer(TokenRefreshSerializer):
@@ -105,18 +113,23 @@ class MediTapTokenRefreshSerializer(TokenRefreshSerializer):
 
 class MediTapTokenRefreshView(TokenRefreshView):
     serializer_class = MediTapTokenRefreshSerializer
+    authentication_classes: list = []
 
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, trim_whitespace=True)
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, min_length=8, max_length=128)
-    password_confirm = serializers.CharField(write_only=True, min_length=8, max_length=128)
+    password = serializers.CharField(write_only=True, max_length=128)
+    password_confirm = serializers.CharField(write_only=True, max_length=128)
 
     def validate_username(self, value: str) -> str:
         v = value.strip()
-        if not re.match(r"^[\w.@+-]+$", v):
-            raise serializers.ValidationError("Username may only contain letters, digits, and @/./+/-/_")
+        if not v:
+            raise serializers.ValidationError("Username is required.")
+        try:
+            _username_validator(v)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages)) from e
         if User.objects.filter(username__iexact=v).exists():
             raise serializers.ValidationError("A user with that username already exists.")
         return v
@@ -130,14 +143,23 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
-        try:
-            validate_password(attrs["password"])
-        except DjangoValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)}) from e
+        min_len = int(getattr(settings, "MEDITAP_REGISTER_MIN_PASSWORD_LENGTH", 8) or 8)
+        pw = attrs["password"]
+        if len(pw) < min_len:
+            raise serializers.ValidationError(
+                {"password": [f"This password is too short. It must contain at least {min_len} characters."]}
+            )
+        if not getattr(settings, "MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS", False):
+            ghost = User(username=attrs["username"], email=attrs.get("email") or "")
+            try:
+                validate_password(pw, user=ghost)
+            except DjangoValidationError as e:
+                raise serializers.ValidationError({"password": list(e.messages)}) from e
         return attrs
 
 
 @api_view(["POST"])
+@authentication_classes([])  # avoid SessionAuthentication + CSRF blocking browser JSON registration
 @permission_classes([AllowAny])
 def register(request):
     ser = RegisterSerializer(data=request.data)

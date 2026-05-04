@@ -9,6 +9,28 @@ const EPIC_ON_FHIR_PORTAL =
   (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
   'https://fhir.epic.com/';
 
+/** Flatten DRF / Django validation payloads so users see real reasons (password rules, etc.). */
+function formatRegisterApiErrors(body: Record<string, unknown>): string {
+  const parts: string[] = [];
+  const flatten = (v: unknown): string[] => {
+    if (v == null) return [];
+    if (typeof v === 'string') return [v];
+    if (typeof v === 'number' || typeof v === 'boolean') return [String(v)];
+    if (Array.isArray(v)) return v.flatMap(flatten);
+    if (typeof v === 'object') {
+      return Object.values(v as Record<string, unknown>).flatMap(flatten);
+    }
+    return [];
+  };
+  if (typeof body.detail === 'string') parts.push(body.detail);
+  for (const [k, v] of Object.entries(body)) {
+    if (k === 'detail') continue;
+    const msgs = flatten(v);
+    if (msgs.length) parts.push(`${k}: ${msgs.join(' ')}`);
+  }
+  return parts.join(' — ') || 'Registration failed.';
+}
+
 const Tab9: React.FC = () => {
   const history = useHistory();
   const { authReady, isAuthenticated, loginWithPassword } = useAuth();
@@ -57,25 +79,19 @@ const Tab9: React.FC = () => {
       });
       const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
       if (!r.ok) {
-        const parts: string[] = [];
-        for (const [k, v] of Object.entries(body)) {
-          if (k === 'detail' && typeof v === 'string') {
-            parts.push(v);
-            continue;
-          }
-          if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`);
-          else if (typeof v === 'string') parts.push(`${k}: ${v}`);
-          else if (v && typeof v === 'object') {
-            parts.push(`${k}: ${JSON.stringify(v)}`);
-          }
-        }
-        setAccError(parts.join(' ') || 'Registration failed.');
+        setAccError(formatRegisterApiErrors(body));
         return;
       }
-      await loginWithPassword(u, accPassword);
-      history.replace('/tab1');
+      try {
+        await loginWithPassword(u, accPassword);
+        history.replace('/tab1');
+      } catch {
+        setAccError(
+          'Your account was created. Use Log in with the same username and password (check spam filters if email verification is added later).'
+        );
+      }
     } catch {
-      setAccError('Could not complete registration. Try again.');
+      setAccError('Could not reach the server. Check your connection and API URL (VITE_API_BASE / same-origin /api).');
     } finally {
       setAccSubmitting(false);
     }
@@ -89,7 +105,7 @@ const Tab9: React.FC = () => {
       <header className="header">
         <div className="logo">MediTap</div>
         <nav className="nav">
-          <a href="/tab3">Sign in</a>
+          <a href="/tab3">Log in</a>
           <a href="/tab10">About us</a>
           <a href="/tab8">Support</a>
         </nav>
@@ -118,9 +134,11 @@ const Tab9: React.FC = () => {
                 Create your MediTap account
               </h2>
               <p className="login-card__subtitle">
-                Choose a username, email, and password. Your password must meet the server’s
-                security rules (length and complexity). You’ll be signed in right after
-                registration.
+                Username must follow Django’s rules (letters, numbers, @ . + - _; international
+                letters allowed). Password rules come from the server (defaults: at least 8
+                characters plus standard Django checks). Admins may set
+                MEDITAP_REGISTER_MIN_PASSWORD_LENGTH and MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS on
+                the API host. There is no limit on how many accounts you can create.
               </p>
             </div>
 
@@ -176,6 +194,7 @@ const Tab9: React.FC = () => {
                   value={accPassword}
                   onChange={(e) => setAccPassword(e.target.value)}
                   autoComplete="new-password"
+                  minLength={1}
                   disabled={!authReady || accSubmitting}
                 />
               </label>
@@ -188,6 +207,7 @@ const Tab9: React.FC = () => {
                   value={accPasswordConfirm}
                   onChange={(e) => setAccPasswordConfirm(e.target.value)}
                   autoComplete="new-password"
+                  minLength={1}
                   disabled={!authReady || accSubmitting}
                 />
               </label>
@@ -211,7 +231,7 @@ const Tab9: React.FC = () => {
                 className="login-card__btn login-card__btn--secondary"
                 style={{ textDecoration: 'none', textAlign: 'center', display: 'block' }}
               >
-                <span className="login-card__btn-label">Back to sign in</span>
+                <span className="login-card__btn-label">Back to log in</span>
               </Link>
             </form>
 

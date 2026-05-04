@@ -1,4 +1,4 @@
-/* Landing + professional sign-in card (MediTap) */
+/* Landing + professional login card (MediTap) */
 .login-container {
   background-size: cover;
   background-position: center;
@@ -87,7 +87,7 @@
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
 }
 
-/* —— Sign-in card —— */
+/* —— Login card —— */
 .login-card {
   position: relative;
   width: 100%;

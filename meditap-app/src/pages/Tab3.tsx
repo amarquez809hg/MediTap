@@ -28,7 +28,7 @@ const Tab3: React.FC = () => {
     setFormError(null);
     const u = username.trim();
     if (!u || !password) {
-      setFormError('Enter username and password.');
+      setFormError('Enter username (or email) and password.');
       return;
     }
     setSubmitting(true);
@@ -76,13 +76,14 @@ const Tab3: React.FC = () => {
             <div className="login-card__accent" aria-hidden="true" />
 
             <div className="login-card__header">
-              <span className="login-card__badge">Secure access</span>
+              <span className="login-card__badge">Already have an account</span>
               <h2 id="login-card-title" className="login-card__title">
-                Sign in to MediTap
+                Log in to MediTap
               </h2>
               <p className="login-card__subtitle">
-                Sign in with the <strong>username</strong> you chose at registration (it may differ
-                from your email). New users can create an account from the registration page.
+                Use the <strong>username</strong> or <strong>email</strong> and password for your
+                existing MediTap account. Need an account? Use <strong>Create an account</strong>{' '}
+                below.
               </p>
             </div>
 
@@ -92,7 +93,7 @@ const Tab3: React.FC = () => {
                   !
                 </span>
                 <div className="login-card__alert-body">
-                  <strong>Sign-in problem</strong>
+                  <strong>Login problem</strong>
                   <p>{displayError}</p>
                   <button
                     type="button"
@@ -107,11 +108,12 @@ const Tab3: React.FC = () => {
 
             <form className="login-card__actions" onSubmit={onSubmit}>
               <label className="login-card__field">
-                <span className="login-card__field-label">Username</span>
+                <span className="login-card__field-label">Username or email</span>
                 <input
                   className="login-card__input"
                   name="username"
                   autoComplete="username"
+                  placeholder="Username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={!authReady || submitting}
@@ -135,7 +137,7 @@ const Tab3: React.FC = () => {
                 disabled={!authReady || submitting}
               >
                 <span className="login-card__btn-label">
-                  {submitting ? 'Signing in…' : authReady ? 'Sign in' : 'Loading…'}
+                  {submitting ? 'Logging in…' : authReady ? 'Log in' : 'Loading…'}
                 </span>
               </button>
 
@@ -155,8 +157,8 @@ const Tab3: React.FC = () => {
             <div className="login-card__epic">
               <p className="login-card__epic-label">Epic on FHIR</p>
               <p className="login-card__epic-hint">
-                Sign in on Epic’s site to manage sandbox apps and documentation. Separate from
-                MediTap sign-in above.
+                Log in on Epic’s site to manage sandbox apps and documentation. Separate from
+                MediTap login above.
               </p>
               <a
                 className="login-card__epic-link"

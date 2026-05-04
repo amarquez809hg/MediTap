@@ -134,28 +134,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthInitError('API base URL is not configured (set VITE_API_BASE).');
         throw new Error('no api base');
       }
-      const r = await fetch(`${base}/api/auth/token/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user.trim(), password }),
-      });
-      if (!r.ok) {
-        let detail = 'Sign-in failed.';
-        try {
-          const j = (await r.json()) as { detail?: string };
-          if (typeof j.detail === 'string') detail = j.detail;
-        } catch {
-          /* ignore */
+      try {
+        const r = await fetch(`${base}/api/auth/token/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user.trim(), password }),
+        });
+        if (!r.ok) {
+          let detail = 'Login failed.';
+          try {
+            const j = (await r.json()) as Record<string, unknown>;
+            if (typeof j.detail === 'string') detail = j.detail;
+            else if (Array.isArray(j.non_field_errors) && j.non_field_errors.length) {
+              const first = j.non_field_errors[0];
+              detail = typeof first === 'string' ? first : detail;
+            }
+          } catch {
+            /* ignore */
+          }
+          setAuthInitError(detail);
+          throw new Error(detail);
         }
-        setAuthInitError(detail);
-        throw new Error(detail);
+        const data = (await r.json()) as { access: string; refresh: string };
+        clearMediTapWorkflowLocalState();
+        setStoredTokens(data.access, data.refresh);
+        setSessionExpired(false);
+        setIsAuthenticated(true);
+        applyTokenPayload(data.access);
+      } catch (e) {
+        const isNetwork =
+          e instanceof TypeError ||
+          (e instanceof Error && /network|fetch|load failed|failed to fetch/i.test(e.message));
+        const hint =
+          isNetwork && (base.includes('127.0.0.1') || base.includes('localhost'))
+            ? ' Start the API on this Mac (port 8080 by default). From the MediTap repo: cd docker && docker compose up -d. Restart the Django container after pulling so CORS allows the iOS app (capacitor://localhost). On a physical iPhone, build with VITE_API_BASE set to your Mac’s LAN IP (e.g. http://192.168.1.10:8080).'
+            : '';
+        const msg = isNetwork
+          ? `Could not reach the API at ${base}.${hint}${e instanceof Error ? ` (${e.message})` : ''}`
+          : e instanceof Error
+            ? e.message
+            : 'Login failed.';
+        setAuthInitError(msg);
+        throw e instanceof Error ? e : new Error(msg);
       }
-      const data = (await r.json()) as { access: string; refresh: string };
-      clearMediTapWorkflowLocalState();
-      setStoredTokens(data.access, data.refresh);
-      setSessionExpired(false);
-      setIsAuthenticated(true);
-      applyTokenPayload(data.access);
     },
     [applyTokenPayload]
   );
