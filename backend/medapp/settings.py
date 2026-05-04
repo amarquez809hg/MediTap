@@ -225,7 +225,8 @@ def _env_truthy(name: str) -> bool:
     return os.getenv(name, "").strip().lower() in ("1", "true", "yes", "on")
 
 
-# Registration: no cap on how many users may sign up. Tune strictness for demos / internal pilots.
+# Registration: no cap on how many users may sign up. Self-service defaults are permissive
+# (unique username + email, valid email format, password length + confirmation only).
 try:
     MEDITAP_REGISTER_MIN_PASSWORD_LENGTH = max(
         1,
@@ -233,9 +234,14 @@ try:
     )
 except ValueError:
     MEDITAP_REGISTER_MIN_PASSWORD_LENGTH = 8
-# When True, only min-length is enforced on register (login still uses hashed passwords).
-MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS = _env_truthy(
-    "MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS"
+# When True (default), register skips Django AUTH_PASSWORD_VALIDATORS (no "too common" etc.).
+# Set MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS=0 on the API host to enforce full Django checks.
+_reg_skip_raw = os.getenv("MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS", "1").strip().lower()
+MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS = _reg_skip_raw not in (
+    "0",
+    "false",
+    "no",
+    "off",
 )
 
 

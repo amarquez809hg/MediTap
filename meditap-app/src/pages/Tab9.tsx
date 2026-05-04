@@ -134,11 +134,10 @@ const Tab9: React.FC = () => {
                 Create your MediTap account
               </h2>
               <p className="login-card__subtitle">
-                Username must follow Django’s rules (letters, numbers, @ . + - _; international
-                letters allowed). Password rules come from the server (defaults: at least 8
-                characters plus standard Django checks). Admins may set
-                MEDITAP_REGISTER_MIN_PASSWORD_LENGTH and MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS on
-                the API host. There is no limit on how many accounts you can create.
+                Choose your own username, email, and password. Username and email must each be
+                unique on MediTap (standard username characters; valid email address). Password must
+                match confirmation and meet the minimum length the server requires (default 8).
+                There is no limit on how many people can create an account.
               </p>
             </div>
 
