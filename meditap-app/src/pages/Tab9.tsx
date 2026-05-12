@@ -38,6 +38,8 @@ const Tab9: React.FC = () => {
   const [accEmail, setAccEmail] = useState('');
   const [accPassword, setAccPassword] = useState('');
   const [accPasswordConfirm, setAccPasswordConfirm] = useState('');
+  const [showAccPassword, setShowAccPassword] = useState(false);
+  const [showAccPasswordConfirm, setShowAccPasswordConfirm] = useState(false);
   const [accError, setAccError] = useState<string | null>(null);
   const [accSubmitting, setAccSubmitting] = useState(false);
 
@@ -77,9 +79,23 @@ const Tab9: React.FC = () => {
           password_confirm: accPasswordConfirm,
         }),
       });
-      const body = (await r.json().catch(() => ({}))) as Record<string, unknown>;
+      const raw = await r.text();
+      let body: Record<string, unknown> = {};
+      try {
+        body = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      } catch {
+        body = {
+          detail: raw
+            ? `HTTP ${r.status} (non-JSON): ${raw.replace(/\s+/g, ' ').trim().slice(0, 280)}`
+            : `HTTP ${r.status} ${r.statusText || ''}`.trim(),
+        };
+      }
       if (!r.ok) {
-        setAccError(formatRegisterApiErrors(body));
+        let msg = formatRegisterApiErrors(body);
+        if (msg === 'Registration failed.') {
+          msg = `Registration failed (HTTP ${r.status}). If you use www. on this site, the API host must allow it (ALLOWED_HOSTS). Open DevTools → Network → register and inspect the response.`;
+        }
+        setAccError(msg);
         return;
       }
       try {
@@ -186,29 +202,53 @@ const Tab9: React.FC = () => {
               </label>
               <label className="login-card__field">
                 <span className="login-card__field-label">Password</span>
-                <input
-                  className="login-card__input"
-                  id="accPassword"
-                  type="password"
-                  value={accPassword}
-                  onChange={(e) => setAccPassword(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={1}
-                  disabled={!authReady || accSubmitting}
-                />
+                <div className="login-card__password-wrap">
+                  <input
+                    className="login-card__input login-card__input--password"
+                    id="accPassword"
+                    type={showAccPassword ? 'text' : 'password'}
+                    value={accPassword}
+                    onChange={(e) => setAccPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={1}
+                    disabled={!authReady || accSubmitting}
+                  />
+                  <button
+                    type="button"
+                    className="login-card__password-toggle"
+                    onClick={() => setShowAccPassword((v) => !v)}
+                    disabled={!authReady || accSubmitting}
+                    aria-label={showAccPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showAccPassword}
+                  >
+                    {showAccPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </label>
               <label className="login-card__field">
                 <span className="login-card__field-label">Confirm password</span>
-                <input
-                  className="login-card__input"
-                  id="accPasswordConfirm"
-                  type="password"
-                  value={accPasswordConfirm}
-                  onChange={(e) => setAccPasswordConfirm(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={1}
-                  disabled={!authReady || accSubmitting}
-                />
+                <div className="login-card__password-wrap">
+                  <input
+                    className="login-card__input login-card__input--password"
+                    id="accPasswordConfirm"
+                    type={showAccPasswordConfirm ? 'text' : 'password'}
+                    value={accPasswordConfirm}
+                    onChange={(e) => setAccPasswordConfirm(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={1}
+                    disabled={!authReady || accSubmitting}
+                  />
+                  <button
+                    type="button"
+                    className="login-card__password-toggle"
+                    onClick={() => setShowAccPasswordConfirm((v) => !v)}
+                    disabled={!authReady || accSubmitting}
+                    aria-label={showAccPasswordConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                    aria-pressed={showAccPasswordConfirm}
+                  >
+                    {showAccPasswordConfirm ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </label>
 
               <button

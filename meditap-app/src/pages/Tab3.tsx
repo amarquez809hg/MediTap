@@ -14,6 +14,7 @@ const Tab3: React.FC = () => {
   const { authReady, authInitError, isAuthenticated, loginWithPassword } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -121,15 +122,27 @@ const Tab3: React.FC = () => {
               </label>
               <label className="login-card__field">
                 <span className="login-card__field-label">Password</span>
-                <input
-                  className="login-card__input"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={!authReady || submitting}
-                />
+                <div className="login-card__password-wrap">
+                  <input
+                    className="login-card__input login-card__input--password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={!authReady || submitting}
+                  />
+                  <button
+                    type="button"
+                    className="login-card__password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    disabled={!authReady || submitting}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </label>
               <button
                 type="submit"
