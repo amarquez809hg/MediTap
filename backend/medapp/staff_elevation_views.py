@@ -13,7 +13,7 @@ import time
 
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.http import HttpResponseNotFound, JsonResponse
 from django.views.decorators.http import require_GET
 from jose import jwt as jose_jwt
@@ -81,17 +81,25 @@ def staff_elevate_patient_intake(request):
     if not patient_sub:
         return Response({"detail": "Invalid patient token."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    username = (request.data.get("username") or "").strip()
+    login_id = (request.data.get("username") or "").strip()
     raw_password = request.data.get("password")
     if raw_password is not None and not isinstance(raw_password, str):
         password = str(raw_password)
     else:
         password = raw_password or ""
-    if not username or not password:
+    if not login_id or not password:
         return Response(
             {"detail": "Username and password are required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Match patient login (/api/auth/token/): allow staff to enter registered email.
+    username = login_id
+    if "@" in login_id:
+        email = login_id.lower()
+        resolved = User.objects.filter(email__iexact=email).order_by("pk").first()
+        if resolved is not None:
+            username = resolved.get_username()
 
     staff = authenticate(request, username=username, password=password)
     if not staff or not staff.is_active:
