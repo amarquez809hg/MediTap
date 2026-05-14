@@ -13,6 +13,12 @@ import {
 } from '../auth/staffElevationStorage';
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
 import { requestPatientIntakeStaffElevation, saveTab14ToBackend } from '../api';
+import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
+import {
+    augmentPdfTextWithFirstPageOcr,
+    fileToDataUrl,
+    ocrImageDataUrl,
+} from '../intake/documentTextExtraction';
 import {
     IonPage,
     IonContent
@@ -223,6 +229,21 @@ const TAB14_SECTIONS: { id: number; label: string; icon: string }[] = [
     { id: 5, label: 'Chronic Conditions', icon: 'fa-notes-medical' },
 ];
 
+function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
+    const chips: string[] = [];
+    if (Object.keys(b.patientFields).length) chips.push('Patient info');
+    if (b.noKnownDrugAllergies) chips.push('NKDA (no known drug allergies)');
+    else if (b.allergies.length) chips.push(`Allergies (${b.allergies.length})`);
+    if (b.medications.length) chips.push(`Medications (${b.medications.length})`);
+    if (b.insurances.length) chips.push('Insurance');
+    if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
+    if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
+    if (!chips.length) {
+        return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
+    }
+    return `Imported: ${chips.join(' · ')} — open each sidebar section to verify, then Save.`;
+}
+
 /**
  * Common + clinically recognizable allergy severity options.
  * - Mild/Moderate/Severe are broadly used in clinical charting.
@@ -295,102 +316,9 @@ const Tab14: React.FC = () => {
     const [backendError, setBackendError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     // allergy handling 
-    const [noAllergies, setNoAllergies] = useState(false); 
-
-
-    // file parsing 
-    const parsePI = (text: string): Partial<PatientInfo> => { 
-        const result: Partial<PatientInfo> = {}; 
-        const nameMatch = text.match(/Patient Name\s+([A-Za-z]+)\s+([A-Za-z]+)/i);
-        const dobMatch = text.match(/born\s+([A-Za-z]+\.*\s+\d{1,2},\s+\d{4})/i);
-        const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-        const phoneMatch = text.match(/\d{3}-\d{3}-\d{3}/);
-        /*
-        invalid number format in example, change last {3} to {4} 
-        country code not inclded 
-        */
-        const sexMatch = text.match(/Sex Assigned at Birth\s+(Male|Female|Other)/i);
-
-
-        if (nameMatch) { // name extraction
-            result.givenName = nameMatch[1];
-            result.familyName = nameMatch[2];
-        }
-        if (dobMatch) { // birthday extraction
-            const parsedDate = new Date(dobMatch[1]);
-            if (!isNaN(parsedDate.getTime())) {
-                result.dateOfBirth = parsedDate.toISOString().split("T")[0];
-            }
-        }
-        if (emailMatch) { // email extraction 
-            result.email = emailMatch[0];
-        }
-        if (phoneMatch) { // phone number extraction 
-            result.phoneNumber = phoneMatch[0];
-        }
-        if (sexMatch) { // sex assigned at birth extraction
-            result.sexAtBirth = sexMatch[1];
-        }
-
-        return result; 
-
-    };
-
-    // file handling 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-
-        if (!file) return; // if no file 
-
-        // if (!allowedTypes.includes(file.type)) {
-        //   alert("Only PDF, JPEG, or PNG files are allowed.");
-        //   return;
-        // }
-      
-        setUploadedFile(file);
-        setFileType(file.type);
-        setUploadTime(new Date().toLocaleString());
-
-        // actions for pdf vs jpeg and png 
-        if (file.type === 'application/pdf') {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          
-            let fullText = "";
-          
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-          
-                const pageText = content.items
-                .map((item: any) => item.str)
-                .join(" ");
-          
-                fullText += pageText + "\n";
-            }
-          
-            console.log("Extracted text:", fullText);
-            const parsedPatient = parsePI(fullText);
-            // console.log("Parsed Data:", parsedPatient);
-
-            const lines = fullText
-                .split("\n")
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-
-            setPatientInfo(prev => ({
-                ...prev,
-                ...parsedPatient
-            }));
-          
-            const url = URL.createObjectURL(file); 
-            setFilePreview(url); 
-        } else {
-            const url = URL.createObjectURL(file);
-            setFilePreview(url); // thumbnail for images
-        }
-    };
+    const [noAllergies, setNoAllergies] = useState(false);
+    const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
+    const [uploadParsing, setUploadParsing] = useState(false);
 
     // local data
     const storedPatientInfo = JSON.parse(localStorage.getItem('patientInfo') || 'null'); 
@@ -417,6 +345,110 @@ const Tab14: React.FC = () => {
                 ? storedHospitalVisit
                 : defaultHospitalVisit
         );
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const allowed = file.type === 'application/pdf' || file.type.startsWith('image/');
+        if (!allowed) {
+            setUploadParseMessage('Please upload a PDF, JPEG, or PNG file.');
+            e.target.value = '';
+            return;
+        }
+
+        setUploadedFile(file);
+        setFileType(file.type);
+        setUploadTime(new Date().toLocaleString());
+        setUploadParseMessage(null);
+        setUploadParsing(true);
+
+        const previewUrl = URL.createObjectURL(file);
+        setFilePreview(previewUrl);
+
+        try {
+            let fullText = '';
+
+            if (file.type === 'application/pdf') {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    const pageText = content.items
+                        .map((item) =>
+                            'str' in item && typeof item.str === 'string' ? item.str : ''
+                        )
+                        .join(' ');
+                    fullText += `${pageText}\n`;
+                }
+                fullText = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
+            } else if (file.type.startsWith('image/')) {
+                const dataUrl = await fileToDataUrl(file);
+                fullText = await ocrImageDataUrl(dataUrl);
+            }
+
+            const bundle = parseTab14IntakeDocument(fullText);
+
+            setPatientInfo((prev) => ({ ...prev, ...bundle.patientFields }));
+
+            if (bundle.noKnownDrugAllergies) {
+                setNoAllergies(true);
+                setAllergies([]);
+            } else if (bundle.allergies.length > 0) {
+                setNoAllergies(false);
+                setAllergies(
+                    bundle.allergies.map((row) => ({
+                        ...defaultAllergy,
+                        ...row,
+                    }))
+                );
+            }
+
+            if (bundle.insurances.length > 0) {
+                setInsurances(
+                    bundle.insurances.map((row) => ({
+                        ...defaultInsurance,
+                        ...row,
+                    }))
+                );
+            }
+
+            if (bundle.medications.length > 0) {
+                setMedications(
+                    bundle.medications.map((row) => ({
+                        ...defaultMedication,
+                        ...row,
+                    }))
+                );
+            }
+
+            if (bundle.chronicConditions.length > 0) {
+                setChronicConditions(
+                    bundle.chronicConditions.map((row) => ({
+                        ...defaultChronicCondition,
+                        ...row,
+                    }))
+                );
+            }
+
+            if (Object.keys(bundle.hospitalVisit).length > 0) {
+                setHospitalVisit((prev) => ({
+                    ...prev,
+                    ...bundle.hospitalVisit,
+                }));
+            }
+
+            setUploadParseMessage(summarizeTab14ParseResult(bundle));
+        } catch (err) {
+            setUploadParseMessage(
+                err instanceof Error ? `Could not read file: ${err.message}` : 'Could not read file.'
+            );
+        } finally {
+            setUploadParsing(false);
+            e.target.value = '';
+        }
+    };
 
     const handleSingleChange = 
     <T,>(field: keyof T, value: string, obj: T, setObj: React.Dispatch<React.SetStateAction<T>>) => {
@@ -1392,8 +1424,14 @@ const Tab14: React.FC = () => {
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
                             Upload File (PDF, JPEG, PNG)
-                            <input type = "file" accept = ".pdf, .jpeg, .png" onChange = {handleFileUpload} /> 
+                            <input type = "file" accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
                         </label>
+                        {uploadParsing && (
+                            <p className="tab14-upload-parse tab14-upload-parse--muted">Reading document… (OCR on images may take a minute.)</p>
+                        )}
+                        {!uploadParsing && uploadParseMessage && (
+                            <p className="tab14-upload-parse">{uploadParseMessage}</p>
+                        )}
 
                         {uploadedFile && (
                         <div className="file-preview">
@@ -1428,6 +1466,7 @@ const Tab14: React.FC = () => {
                                 setFilePreview(null);
                                 setFileType(null);
                                 setUploadTime(null);
+                                setUploadParseMessage(null);
                                 }}>
                                 Remove File
                             </button>

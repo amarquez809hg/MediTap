@@ -709,3 +709,16 @@ ion-page.ct-page.ct-tab14 ion-content {
 .remove-file-button:hover {
   background-color: #b71c1c;
 }
+
+.tab14-upload-parse {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 520px;
+}
+
+.tab14-upload-parse--muted {
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
+}

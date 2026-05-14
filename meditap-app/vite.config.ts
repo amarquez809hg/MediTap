@@ -16,7 +16,7 @@ export default defineConfig({
     legacy()
   ],
   optimizeDeps: {
-    include: ['pdfjs-dist'],
+    include: ['pdfjs-dist', 'tesseract.js'],
   },
   test: {
     globals: true,
