@@ -66,6 +66,35 @@ def staff_elevate_debug(request):
     return JsonResponse({"mode": "django", "record_editor_role": editor})
 
 
+def _authenticate_staff_user(request, login_id: str, password: str):
+    """
+    Resolve the same identifiers as patient token login where possible.
+
+    Django User.email is not unique: multiple rows can share an email; try each until
+    authenticate succeeds. Usernames are case-sensitive for ModelBackend — try iexact match.
+    """
+    staff = None
+    if "@" in login_id:
+        email = login_id.lower()
+        for candidate in User.objects.filter(email__iexact=email).order_by("pk"):
+            staff = authenticate(
+                request, username=candidate.get_username(), password=password
+            )
+            if staff is not None and staff.is_active:
+                return staff
+        staff = None
+    if staff is None:
+        uname = login_id
+        if "@" not in login_id:
+            row = User.objects.filter(username__iexact=login_id).order_by("pk").first()
+            if row is not None:
+                uname = row.get_username()
+        staff = authenticate(request, username=uname, password=password)
+    if staff is not None and staff.is_active:
+        return staff
+    return None
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def staff_elevate_patient_intake(request):
@@ -93,16 +122,8 @@ def staff_elevate_patient_intake(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Match patient login (/api/auth/token/): allow staff to enter registered email.
-    username = login_id
-    if "@" in login_id:
-        email = login_id.lower()
-        resolved = User.objects.filter(email__iexact=email).order_by("pk").first()
-        if resolved is not None:
-            username = resolved.get_username()
-
-    staff = authenticate(request, username=username, password=password)
-    if not staff or not staff.is_active:
+    staff = _authenticate_staff_user(request, login_id, password)
+    if not staff:
         return Response(
             {"detail": "Invalid staff username or password."},
             status=status.HTTP_401_UNAUTHORIZED,
