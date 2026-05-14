@@ -709,10 +709,11 @@ const Tab14: React.FC = () => {
                                 {!canEditPatientRecords && (
                                     <div className="tab14-view-only-banner" role="status">
                                         <p>
-                                            You can review this patient information, but this profile is signed in
-                                            as the patient, so it can’t be changed from here. If you work for the
-                                            hospital or MediTap, use <strong>Staff sign-in</strong> to unlock
-                                            editing <em>without</em> signing the patient out.
+                                            You can review this patient information. You may{' '}
+                                            <strong>upload a PDF or image</strong> below to extract text into these
+                                            fields; use <strong>Staff sign-in</strong> if you need to edit values or
+                                            save to the server. Staff can unlock editing without signing the patient
+                                            out.
                                         </p>
                                         <button
                                             type="button"
@@ -1391,12 +1392,17 @@ const Tab14: React.FC = () => {
                             className = "save-button"
                             type = "button"
                             onClick = {() => void saveForm()}
-                            disabled={saving}
+                            disabled={saving || !canEditPatientRecords}
                         >
                             {saving ? 'Saving…' : 'Save'}
                         </button>
 
-                        <button className = "clear-button" type = "button" onClick = {clearForm}>
+                        <button
+                            className = "clear-button"
+                            type = "button"
+                            onClick = {clearForm}
+                            disabled={!canEditPatientRecords}
+                        >
                             Clear Form
                         </button>
 
@@ -1420,7 +1426,11 @@ const Tab14: React.FC = () => {
                         Data Saved
                     </div>}
 
-                    {/*File Upload*/} 
+                    </div>
+
+                                </fieldset>
+
+                    {/* Outside fieldset: patients can upload; fieldset disables manual edits + Save/Clear for non-editors */}
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
                             Upload File (PDF, JPEG, PNG)
@@ -1457,7 +1467,6 @@ const Tab14: React.FC = () => {
                                 <p>No preview available for this file type.</p>
                             )}
 
-                            {/* Remove File Button */}
                             <button
                                 className="remove-file-button"
                                 type="button"
@@ -1475,8 +1484,6 @@ const Tab14: React.FC = () => {
 
                     </div>
 
-                                </div>
-                                </fieldset>
                             </div>
                         </div>
                     </main>
