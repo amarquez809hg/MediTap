@@ -142,9 +142,11 @@ EPIC_TOKEN_URL = os.getenv("EPIC_TOKEN_URL", "").strip()
 EPIC_CLIENT_ID = os.getenv("EPIC_CLIENT_ID", "").strip()
 EPIC_CLIENT_SECRET = os.getenv("EPIC_CLIENT_SECRET", "").strip()
 EPIC_REDIRECT_URI = os.getenv("EPIC_REDIRECT_URI", "").strip()
+# Standalone patient OAuth: Epic recommends openid fhirUser (+ patient/*.read from Incoming APIs).
+# Do not include launch or launch/patient unless implementing EHR launch.
 EPIC_DEFAULT_SCOPE = os.getenv(
     "EPIC_DEFAULT_SCOPE",
-    "openid fhirUser launch/patient patient/Patient.read patient/Observation.read",
+    "openid fhirUser patient/Patient.read patient/Observation.read",
 ).strip()
 EPIC_OAUTH_STATE_MAX_AGE = int(os.getenv("EPIC_OAUTH_STATE_MAX_AGE", "600") or "600")
 
