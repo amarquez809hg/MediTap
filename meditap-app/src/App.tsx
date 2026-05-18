@@ -17,6 +17,8 @@ import Tab7 from './pages/Tab7';
 import Tab8 from './pages/Tab8';
 import Tab9 from './pages/Tab9';
 import Tab10 from './pages/Tab10';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import Tab11 from './pages/Tab11';
 import Tab12 from './pages/Tab12';
 import Tab13 from './pages/Tab13';
@@ -117,6 +119,12 @@ const AppRoutes: React.FC = () => {
             </Route>
             <Route exact path="/tab10">
               <Tab10 />
+            </Route>
+            <Route exact path="/terms">
+              <TermsPage />
+            </Route>
+            <Route exact path="/privacy">
+              <PrivacyPage />
             </Route>
 
             <Route exact path="/tab1">

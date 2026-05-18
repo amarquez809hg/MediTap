@@ -120,10 +120,10 @@ const Tab9: React.FC = () => {
     >
       <header className="header">
         <div className="logo">MediTap</div>
-        <nav className="nav">
-          <a href="/tab3">Log in</a>
-          <a href="/tab10">About us</a>
-          <a href="/tab8">Support</a>
+        <nav className="nav" aria-label="Site">
+          <Link to="/tab3">Log in</Link>
+          <Link to="/tab10">About us</Link>
+          <Link to="/tab8">Support</Link>
         </nav>
       </header>
 
@@ -328,8 +328,8 @@ const Tab9: React.FC = () => {
 
             <p className="login-card__terms">
               By continuing you agree to our{' '}
-              <a href="#">Terms of Service</a> and{' '}
-              <a href="#">Privacy Policy</a>.
+              <Link to="/terms">Terms of Service</Link> and{' '}
+              <Link to="/privacy">Privacy Policy</Link>.
             </p>
           </aside>
         </div>

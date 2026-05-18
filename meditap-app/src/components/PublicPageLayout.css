@@ -1,0 +1,199 @@
+.public-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--meditap-bg, #0f1419);
+  color: var(--meditap-text, #e8eaed);
+  font-family: var(--ion-font-family, 'Inter', system-ui, sans-serif);
+}
+
+.public-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem clamp(1.25rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.08));
+  background: var(--meditap-surface, #151b22);
+}
+
+.public-page__logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--meditap-text, #fff);
+  text-decoration: none;
+}
+
+.public-page__logo:hover {
+  color: var(--meditap-accent, #17a2b8);
+}
+
+.public-page__nav {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.public-page__nav-link {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--meditap-text-secondary, #a8b0bc);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.public-page__nav-link:hover,
+.public-page__nav-link.is-active {
+  color: var(--meditap-accent, #17a2b8);
+}
+
+.public-page__main {
+  flex: 1;
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.25rem, 4vw, 2rem);
+  box-sizing: border-box;
+}
+
+.public-page__intro {
+  margin-bottom: 1.75rem;
+}
+
+.public-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--meditap-accent, #17a2b8);
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+.public-page__back:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.public-page__title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--meditap-text, #fff);
+  line-height: 1.2;
+}
+
+.public-page__subtitle {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--meditap-text-secondary, #a8b0bc);
+  max-width: 40rem;
+}
+
+.public-page__card {
+  background: var(--meditap-surface, #151b22);
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--meditap-radius, 12px);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  margin-bottom: 1.25rem;
+  box-shadow: var(--meditap-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
+}
+
+.public-page__card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--meditap-text, #fff);
+}
+
+.public-page__card h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--meditap-accent, #17a2b8);
+}
+
+.public-page__card p,
+.public-page__card li {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.public-page__card ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.public-page__card li:last-child,
+.public-page__card p:last-child {
+  margin-bottom: 0;
+}
+
+.public-page__card--accent {
+  background: linear-gradient(
+    145deg,
+    rgba(26, 99, 86, 0.35) 0%,
+    rgba(23, 162, 184, 0.2) 100%
+  );
+  border-color: rgba(23, 162, 184, 0.25);
+}
+
+.public-page__card--accent h2,
+.public-page__card--accent p {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.public-page__footer {
+  padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem);
+  border-top: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.08));
+  background: var(--meditap-surface, #151b22);
+  text-align: center;
+}
+
+.public-page__footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.public-page__footer-link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--meditap-text-secondary, #a8b0bc);
+  text-decoration: none;
+}
+
+.public-page__footer-link:hover,
+.public-page__footer-link.is-active {
+  color: var(--meditap-accent, #17a2b8);
+}
+
+.public-page__footer-sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.8125rem;
+}
+
+.public-page__footer-copy {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.public-page__inline-link {
+  color: var(--meditap-accent, #17a2b8);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.public-page__inline-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
