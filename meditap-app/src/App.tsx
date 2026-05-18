@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route, useLocation } from 'react-router-dom';
 import {
   IonApp,
   IonContent,
@@ -51,6 +51,22 @@ import './theme/meditap-ion-dark-overrides.css';
 import './theme/meditap-shared.css';
 
 setupIonicReact();
+
+const RootRoute: React.FC = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const isEpicOAuthReturn = Boolean(params.get('code') && params.get('state'));
+
+  if (isEpicOAuthReturn) {
+    return (
+      <ProtectedRoute>
+        <EpicCallback />
+      </ProtectedRoute>
+    );
+  }
+
+  return <Redirect to="/tab3" />;
+};
 
 const AppRoutes: React.FC = () => {
   const { authReady } = useAuth();
@@ -160,7 +176,7 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             <Route exact path="/">
-              <Redirect to="/tab3" />
+              <RootRoute />
             </Route>
           </IonRouterOutlet>
         </>
