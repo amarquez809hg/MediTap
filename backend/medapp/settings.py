@@ -27,7 +27,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(ei&czih%!g@*4-a0x671qt0zs1pa%$8_xm$!tg(q2tsu%m=%b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Set DEBUG=1 only for local troubleshooting (never on meditap.ai).
+DEBUG = os.getenv("DEBUG", "").strip().lower() in ("1", "true", "yes")
 
 _allowed_raw = os.getenv("ALLOWED_HOSTS", "").strip()
 if _allowed_raw == "*":
