@@ -203,6 +203,35 @@
     margin: 0 0 12px;
 }
 
+.dashboard-empty-strip .info-button--secondary {
+    margin-left: 8px;
+}
+
+.dashboard-setup-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--meditap-radius, 12px);
+    border: 1px dashed var(--meditap-accent, #17a2b8);
+    background: rgba(23, 162, 184, 0.08);
+}
+
+.dashboard-setup-strip p {
+    margin: 0;
+    flex: 1;
+    min-width: 12rem;
+    color: var(--meditap-text-muted, #666);
+    font-size: 0.9rem;
+}
+
+.dashboard-setup-strip__btn {
+    flex-shrink: 0;
+}
+
 .user-avatar {
     width: 90px;
     height: 90px;

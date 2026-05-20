@@ -3,6 +3,7 @@ import './Tab14.css';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
 import { useAuth } from '../contexts/AuthContext';
+import { markOnboardingStep } from '../onboarding/onboardingStorage';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { clearTab14DraftKeysOnly } from '../auth/clearWorkflowLocalState';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
@@ -346,6 +347,14 @@ const Tab14: React.FC = () => {
                 : defaultHospitalVisit
         );
 
+    useEffect(() => {
+        const first = String(patientInfo.givenName ?? '').trim();
+        const last = String(patientInfo.familyName ?? '').trim();
+        if (first && last) {
+            markOnboardingStep(username, 'profile', true);
+        }
+    }, [patientInfo.givenName, patientInfo.familyName, username]);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -440,6 +449,7 @@ const Tab14: React.FC = () => {
             }
 
             setUploadParseMessage(summarizeTab14ParseResult(bundle));
+            markOnboardingStep(username, 'upload', true);
         } catch (err) {
             setUploadParseMessage(
                 err instanceof Error ? `Could not read file: ${err.message}` : 'Could not read file.'

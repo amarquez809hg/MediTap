@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import PublicPageLayout from '../components/PublicPageLayout';
+import { submitSupportContact } from '../api/publicContact';
 import './Tab8.css';
 
 const faqData = [
@@ -11,7 +12,7 @@ const faqData = [
   {
     question: 'I forgot my password. What should I do?',
     answer:
-      'Password reset by email is coming soon. For now, contact your care organization administrator or use the contact form below and we will help you regain access.',
+      'On the log in page, choose Forgot password and enter your account email. We will send a secure link to reset your password. The link expires after use; request a new one if needed.',
   },
   {
     question: 'How does staff editing work?',
@@ -26,9 +27,12 @@ const faqData = [
 ];
 
 const Tab8: React.FC = () => {
+  const faqListId = useId();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(index === activeFaq ? null : index);
@@ -39,10 +43,20 @@ const Tab8: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setFormError(null);
+    setSuccessMessage(null);
+    setSubmitting(true);
+    try {
+      const msg = await submitSupportContact(formData);
+      setSuccessMessage(msg);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not send your message.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -53,31 +67,48 @@ const Tab8: React.FC = () => {
     >
       <section className="public-page__card tab8-faq-wrap">
         <h2>Frequently asked questions</h2>
-        <div className="faq-list">
-          {faqData.map((item, index) => (
-            <div key={item.question} className={`faq-item ${activeFaq === index ? 'active' : ''}`}>
-              <button type="button" className="faq-question" onClick={() => toggleFaq(index)}>
-                {item.question}
-                <span className="faq-icon" aria-hidden>
-                  {activeFaq === index ? '−' : '+'}
-                </span>
-              </button>
-              {activeFaq === index && (
-                <div className="faq-answer">
-                  <p>{item.answer}</p>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="faq-list" id={faqListId}>
+          {faqData.map((item, index) => {
+            const expanded = activeFaq === index;
+            const answerId = `${faqListId}-answer-${index}`;
+            return (
+              <div key={item.question} className={`faq-item ${expanded ? 'active' : ''}`}>
+                <button
+                  type="button"
+                  className="faq-question"
+                  onClick={() => toggleFaq(index)}
+                  aria-expanded={expanded}
+                  aria-controls={answerId}
+                >
+                  {item.question}
+                  <span className="faq-icon" aria-hidden>
+                    {expanded ? '−' : '+'}
+                  </span>
+                </button>
+                {expanded && (
+                  <div className="faq-answer" id={answerId} role="region">
+                    <p>{item.answer}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
       <section className="public-page__card tab8-contact-wrap">
         <h2>Contact support</h2>
-        <p className="tab8-contact-lead">Cannot find your answer? Send us a message.</p>
-        {submitted && (
+        <p className="tab8-contact-lead">
+          Cannot find your answer? Send us a message—we aim to reply within one business day.
+        </p>
+        {formError && (
+          <p className="tab8-error" role="alert">
+            {formError}
+          </p>
+        )}
+        {successMessage && (
           <p className="tab8-success" role="status">
-            Thank you. We received your message and will respond shortly.
+            {successMessage}
           </p>
         )}
         <form className="contact-form" onSubmit={handleSubmit}>
@@ -90,6 +121,7 @@ const Tab8: React.FC = () => {
               value={formData.name}
               onChange={handleInputChange}
               required
+              disabled={submitting}
             />
           </div>
           <div className="form-group">
@@ -101,6 +133,7 @@ const Tab8: React.FC = () => {
               value={formData.email}
               onChange={handleInputChange}
               required
+              disabled={submitting}
             />
           </div>
           <div className="form-group">
@@ -112,6 +145,7 @@ const Tab8: React.FC = () => {
               value={formData.subject}
               onChange={handleInputChange}
               required
+              disabled={submitting}
             />
           </div>
           <div className="form-group">
@@ -123,10 +157,11 @@ const Tab8: React.FC = () => {
               value={formData.message}
               onChange={handleInputChange}
               required
+              disabled={submitting}
             />
           </div>
-          <button type="submit" className="submit-button">
-            Send message
+          <button type="submit" className="submit-button" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Send message'}
           </button>
         </form>
       </section>

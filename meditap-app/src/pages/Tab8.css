@@ -11,6 +11,15 @@
   color: var(--meditap-text-secondary, #a8b0bc);
 }
 
+.tab8-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(220, 53, 69, 0.12);
+  color: #ffb4bc;
+  font-size: 0.875rem;
+}
+
 .tab8-success {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;

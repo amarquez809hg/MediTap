@@ -1,0 +1,134 @@
+.onboarding-page {
+  min-height: 100vh;
+  background: var(--meditap-bg, #0f1419);
+  color: var(--meditap-text, #e8eaed);
+  font-family: var(--ion-font-family, 'Inter', system-ui, sans-serif);
+}
+
+.onboarding-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem clamp(1.25rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.08));
+}
+
+.onboarding-page__logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+
+.onboarding-page__skip {
+  background: transparent;
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.2));
+  color: var(--meditap-text-secondary, #a8b0bc);
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.onboarding-page__main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1.25rem, 4vw, 2.5rem) 3rem;
+}
+
+.onboarding-page__title {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.onboarding-page__subtitle {
+  color: var(--meditap-text-secondary, #a8b0bc);
+  margin: 0 0 2rem;
+}
+
+.onboarding-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.onboarding-step {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.1));
+  background: var(--meditap-surface, #151b22);
+}
+
+.onboarding-step.is-current {
+  border-color: var(--meditap-accent, #17a2b8);
+  box-shadow: 0 0 0 1px rgba(23, 162, 184, 0.25);
+}
+
+.onboarding-step.is-done .onboarding-step__marker {
+  background: rgba(23, 162, 184, 0.25);
+  color: #9eeaf5;
+}
+
+.onboarding-step__marker {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.onboarding-step__body h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.onboarding-step__body p {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  color: var(--meditap-text-secondary, #a8b0bc);
+  line-height: 1.5;
+}
+
+.onboarding-step__cta {
+  display: inline-block;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  background: var(--meditap-accent, #17a2b8);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+}
+
+.onboarding-step__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.onboarding-page__hint {
+  margin-top: 2rem;
+  font-size: 0.875rem;
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.onboarding-page__hint a {
+  color: var(--meditap-accent, #17a2b8);
+}
+
+.onboarding-page__loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--meditap-text-secondary, #a8b0bc);
+}

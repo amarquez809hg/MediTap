@@ -20,7 +20,7 @@ from rest_framework import routers
 from rest_framework_simplejwt.views import TokenVerifyView
 from medical import views as mviews
 from django.http import JsonResponse
-from medapp import staff_elevation_views, epic_views, native_auth_views
+from medapp import staff_elevation_views, epic_views, native_auth_views, public_views
 
 def healthz(_request):
     return JsonResponse({"status": "ok"})
@@ -51,7 +51,18 @@ urlpatterns = [
         name='token_obtain_pair',
     ),
     path('api/auth/register/', native_auth_views.register, name='auth_register'),
+    path(
+        'api/auth/password-reset/',
+        public_views.password_reset_request,
+        name='auth_password_reset_request',
+    ),
+    path(
+        'api/auth/password-reset/confirm/',
+        public_views.password_reset_confirm,
+        name='auth_password_reset_confirm',
+    ),
     path('api/auth/me/', native_auth_views.auth_me, name='auth_me'),
+    path('api/support/contact/', public_views.support_contact, name='support_contact'),
     path(
         'api/auth/token/refresh/',
         native_auth_views.MediTapTokenRefreshView.as_view(),

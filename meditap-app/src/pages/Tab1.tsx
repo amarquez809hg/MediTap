@@ -1,6 +1,12 @@
 import React from 'react';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
+import OnboardingBanner from '../components/OnboardingBanner';
+import {
+  loadOnboarding,
+  shouldShowDashboardOnboardingBanner,
+  skipOnboarding,
+} from '../onboarding/onboardingStorage';
 import {
   fetchDashboardDetail,
   fetchPatientLabPanels,
@@ -102,6 +108,15 @@ function displayNameAndInitialsFromLogin(username: string | null): {
   };
 }
 
+function healthSummaryNeedsSetup(hs: typeof defaultUserProfile.healthSummary): boolean {
+  return (
+    hs.bmi === 'N/A' &&
+    hs.lastVisit === '—' &&
+    hs.allergies === 0 &&
+    hs.medications === 0
+  );
+}
+
 function sidebarIdentityFromDashboard(
   apiPatientName: string,
   loginUsername: string | null
@@ -137,6 +152,16 @@ const Tab1: React.FC = () => {
   const [incidentRows, setIncidentRows] = React.useState<IncidentRecord[]>([]);
   const [incidentLoading, setIncidentLoading] = React.useState(true);
   const [incidentError, setIncidentError] = React.useState<string | null>(null);
+  const [onboardingBannerKey, setOnboardingBannerKey] = React.useState(0);
+
+  const onboardingRecord = React.useMemo(
+    () => loadOnboarding(username),
+    [username, onboardingBannerKey]
+  );
+  const showOnboardingBanner = shouldShowDashboardOnboardingBanner(username);
+  const onboardingStepsDone = onboardingRecord
+    ? [onboardingRecord.steps.profile, onboardingRecord.steps.upload].filter(Boolean).length
+    : 0;
 
   React.useEffect(() => {
     const onFocus = () => setDashboardRefreshKey((k) => k + 1);
@@ -367,6 +392,29 @@ const Tab1: React.FC = () => {
         </aside>
 
         <section className="dashboard-content">
+          {showOnboardingBanner && (
+            <OnboardingBanner
+              completedSteps={onboardingStepsDone}
+              totalSteps={2}
+              onDismiss={() => {
+                skipOnboarding(username);
+                setOnboardingBannerKey((k) => k + 1);
+              }}
+            />
+          )}
+
+          {!loadingSummary && healthSummaryNeedsSetup(hs) && (
+            <div className="dashboard-setup-strip" role="region" aria-label="Get started">
+              <p>
+                Your health summary is still empty. Complete patient intake or upload a document
+                to populate BMI, allergies, medications, and more.
+              </p>
+              <a href="/tab14" className="book-btn dashboard-setup-strip__btn">
+                Complete intake
+              </a>
+            </div>
+          )}
+
           <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h1 className="dashboard-tab-section__title">
@@ -487,8 +535,14 @@ const Tab1: React.FC = () => {
             </div>
           )}
           {!labLoading && !labError && labRows.length === 0 && (
-            <div className="lab-no-results dashboard-preview-block">
-              <p>No lab reports in your record.</p>
+            <div className="dashboard-empty-strip dashboard-preview-block">
+              <p>No lab reports in your record yet.</p>
+              <a href="/tab7" className="info-button">
+                Add lab results
+              </a>
+              <a href="/tab14" className="info-button info-button--secondary">
+                Upload records on intake
+              </a>
             </div>
           )}
 

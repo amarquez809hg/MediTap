@@ -268,3 +268,26 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================
+# Email (password reset, support contact)
+# ============================================
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+).strip()
+EMAIL_HOST = os.getenv("EMAIL_HOST", "").strip()
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587") or "587")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
+EMAIL_USE_TLS = _env_truthy("EMAIL_USE_TLS")
+EMAIL_USE_SSL = _env_truthy("EMAIL_USE_SSL")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@meditap.ai").strip()
+MEDITAP_SUPPORT_INBOX = os.getenv("MEDITAP_SUPPORT_INBOX", "support@meditap.ai").strip()
+_meditap_frontend_url = os.getenv("MEDITAP_FRONTEND_URL", "").strip()
+if _meditap_frontend_url:
+    MEDITAP_FRONTEND_URL = _meditap_frontend_url.rstrip("/")
+elif _meditap_public_host:
+    MEDITAP_FRONTEND_URL = f"https://{_meditap_public_host}"
+else:
+    MEDITAP_FRONTEND_URL = "http://localhost:8100"

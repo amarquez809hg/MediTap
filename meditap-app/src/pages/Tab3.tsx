@@ -149,6 +149,9 @@ const Tab3: React.FC = () => {
                   </button>
                 </div>
               </label>
+              <p className="login-card__forgot">
+                <Link to="/forgot-password">Forgot password?</Link>
+              </p>
               <button
                 type="submit"
                 className="login-card__btn login-card__btn--primary"

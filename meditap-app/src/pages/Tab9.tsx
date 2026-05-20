@@ -4,6 +4,7 @@ import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import { useAuth } from '../contexts/AuthContext';
 import { getApiBase } from '../config/api';
+import { startOnboardingForNewUser } from '../onboarding/onboardingStorage';
 
 const EPIC_ON_FHIR_PORTAL =
   (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
@@ -100,7 +101,8 @@ const Tab9: React.FC = () => {
       }
       try {
         await loginWithPassword(u, accPassword);
-        history.replace('/tab1');
+        startOnboardingForNewUser(u);
+        history.replace('/onboarding');
       } catch {
         setAccError(
           'Your account was created. Use Log in with the same username and password (check spam filters if email verification is added later).'
