@@ -1,7 +1,16 @@
 import React from 'react';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
+import DashboardHomeHero from '../components/DashboardHomeHero';
+import DashboardNextSteps from '../components/DashboardNextSteps';
 import OnboardingBanner from '../components/OnboardingBanner';
+import {
+  buildNextSteps,
+  countLabAttention,
+  greetingForDisplayName,
+  trimNextStepsForDashboard,
+  welcomeContextLine,
+} from '../dashboard/nextSteps';
 import {
   loadOnboarding,
   shouldShowDashboardOnboardingBanner,
@@ -15,6 +24,7 @@ import {
   formatSessionOrTokenErrorForUi,
   mapIncidentApiToTab6Record,
   type DashboardDetail,
+  type PatientLabPanelApi,
   type Tab5ChronicCondition,
 } from '../api';
 import AppointmentCard from '../appointments/AppointmentCard';
@@ -145,6 +155,7 @@ const Tab1: React.FC = () => {
   const [chronicLoading, setChronicLoading] = React.useState(true);
   const [chronicError, setChronicError] = React.useState<string | null>(null);
 
+  const [labPanels, setLabPanels] = React.useState<PatientLabPanelApi[]>([]);
   const [labRows, setLabRows] = React.useState<LabResultRow[]>([]);
   const [labLoading, setLabLoading] = React.useState(true);
   const [labError, setLabError] = React.useState<string | null>(null);
@@ -250,6 +261,7 @@ const Tab1: React.FC = () => {
       try {
         const { panels } = await fetchPatientLabPanels(username);
         if (!cancelled) {
+          setLabPanels(panels);
           setLabRows(panels.map(mapPatientLabPanelToRow));
         }
       } catch (e) {
@@ -257,6 +269,7 @@ const Tab1: React.FC = () => {
           setLabError(
             e instanceof Error ? e.message : 'Could not load lab results.'
           );
+          setLabPanels([]);
           setLabRows([]);
         }
       } finally {
@@ -297,6 +310,36 @@ const Tab1: React.FC = () => {
   }, [username, dashboardRefreshKey]);
 
   const hs = user.healthSummary;
+
+  const labAttention = React.useMemo(() => countLabAttention(labPanels), [labPanels]);
+
+  const dashboardNextSteps = React.useMemo(() => {
+    if (loadingSummary) return [];
+    return trimNextStepsForDashboard(
+      buildNextSteps(
+        detail,
+        appointments,
+        labAttention.pending,
+        labAttention.newPanels,
+        { surface: 'dashboard', username }
+      ),
+      4
+    );
+  }, [
+    loadingSummary,
+    detail,
+    appointments,
+    labAttention.pending,
+    labAttention.newPanels,
+    username,
+  ]);
+
+  const welcomeGreeting = greetingForDisplayName(user.name);
+  const welcomeContext = welcomeContextLine(
+    appointments,
+    loadingSummary,
+    Boolean(summaryError)
+  );
 
   return (
     <div className="profile-container">
@@ -364,6 +407,9 @@ const Tab1: React.FC = () => {
           </div>
 
           <nav className="profile-nav">
+            <a href="/tab1" className="nav-item active" aria-current="page">
+              <i className="fas fa-home"></i> Dashboard
+            </a>
             <a href="/tab2" className="nav-item">
               <i className="fas fa-chart-line"></i> Quick Status
             </a>
@@ -402,6 +448,10 @@ const Tab1: React.FC = () => {
               }}
             />
           )}
+
+          <DashboardHomeHero greeting={welcomeGreeting} contextLine={welcomeContext} />
+
+          <DashboardNextSteps steps={dashboardNextSteps} loading={loadingSummary} />
 
           {!loadingSummary && healthSummaryNeedsSetup(hs) && (
             <div className="dashboard-setup-strip" role="region" aria-label="Get started">

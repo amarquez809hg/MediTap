@@ -44,6 +44,11 @@ import {
   loadAppointmentsFromStorage,
   type Appointment,
 } from '../appointments/appointmentStorage';
+import {
+  buildNextSteps,
+  countLabAttention,
+  type NextStepTone,
+} from '../dashboard/nextSteps';
 
 type IonColor =
   | 'primary'
@@ -54,7 +59,7 @@ type IonColor =
   | 'danger'
   | 'medium';
 
-type NextStepItem = {
+type Tab2NextStepItem = {
   id: string;
   icon: string;
   title: string;
@@ -63,167 +68,40 @@ type NextStepItem = {
   color?: IonColor;
 };
 
-function isPatientMissing(d: DashboardDetail | null): boolean {
-  if (!d) return false;
-  if (d.id === 'Not created yet') return true;
-  if ((d.patientProfile?.patientId || '').toLowerCase().includes('not created'))
-    return true;
-  return false;
+const ION_STEP_ICONS: Record<string, string> = {
+  profile: personCircleOutline,
+  'profile-fields': personCircleOutline,
+  'upload-doc': documentTextOutline,
+  'labs-pending': beakerOutline,
+  'labs-new': beakerOutline,
+  'appts-pending': calendarOutline,
+  meds: medkitOutline,
+  insurance: shieldCheckmarkOutline,
+  chronic: fitnessOutline,
+  allergies: alarmOutline,
+  book: calendarOutline,
+  'meds-review': medkitOutline,
+  dashboard: documentTextOutline,
+};
+
+function toneToIonColor(tone: NextStepTone): IonColor {
+  if (tone === 'warning') return 'warning';
+  if (tone === 'danger') return 'danger';
+  if (tone === 'neutral') return 'medium';
+  return 'primary';
 }
 
-function buildNextSteps(
-  detail: DashboardDetail | null,
-  appointments: Appointment[],
-  pendingLabs: number,
-  newLabPanels: number
-): NextStepItem[] {
-  const steps: NextStepItem[] = [];
-  const missing = isPatientMissing(detail);
-
-  if (missing) {
-    steps.push({
-      id: 'profile',
-      icon: personCircleOutline,
-      title: 'Complete your patient profile',
-      subtitle: 'Create or finish demographics and contact in Patient Information.',
-      href: '/tab14',
-      color: 'primary',
-    });
-  }
-
-  if (pendingLabs > 0) {
-    steps.push({
-      id: 'labs-pending',
-      icon: beakerOutline,
-      title:
-        pendingLabs === 1
-          ? '1 lab panel still pending'
-          : `${pendingLabs} lab panels pending`,
-      subtitle:
-        newLabPanels > 0
-          ? `${newLabPanels} panel(s) have new or partial results to review.`
-          : 'Open Lab Results to track status.',
-      href: '/tab7',
-      color: 'warning',
-    });
-  } else if (newLabPanels > 0) {
-    steps.push({
-      id: 'labs-new',
-      icon: beakerOutline,
-      title: 'New lab results to review',
-      subtitle: 'Open Lab Results for details and reference ranges.',
-      href: '/tab7',
-      color: 'primary',
-    });
-  }
-
-  const pendingAppts = appointments.filter(
-    (a) => a.status.toLowerCase() === 'pending'
-  ).length;
-  if (pendingAppts > 0) {
-    steps.push({
-      id: 'appts-pending',
-      icon: calendarOutline,
-      title:
-        pendingAppts === 1
-          ? '1 appointment needs attention'
-          : `${pendingAppts} appointments need attention`,
-      subtitle: 'Confirm or update visits on the Appointments tab.',
-      href: '/tab4',
-      color: 'warning',
-    });
-  }
-
-  const medCount = detail?.medications.length ?? 0;
-  if (detail && !missing && medCount === 0) {
-    steps.push({
-      id: 'meds',
-      icon: medkitOutline,
-      title: 'Add your medications',
-      subtitle: 'Document prescriptions in Patient Information for safer care.',
-      href: '/tab14',
-      color: 'medium',
-    });
-  }
-
-  const insCount = detail?.insurance.length ?? 0;
-  if (detail && !missing && insCount === 0) {
-    steps.push({
-      id: 'insurance',
-      icon: shieldCheckmarkOutline,
-      title: 'Add insurance on file',
-      subtitle: 'Speeds check-in and claims on the Patient Insurance tab.',
-      href: '/tab12',
-      color: 'medium',
-    });
-  }
-
-  const chronicCount = detail?.chronicConditions.length ?? 0;
-  if (detail && !missing && chronicCount > 0) {
-    steps.push({
-      id: 'chronic',
-      icon: fitnessOutline,
-      title: 'Review chronic conditions',
-      subtitle: `${chronicCount} condition(s) on file — keep history current.`,
-      href: '/tab5',
-      color: 'primary',
-    });
-  }
-
-  const allergyCount = detail?.allergies.length ?? 0;
-  if (detail && !missing && allergyCount > 0) {
-    const severe = detail.allergies.some((a) =>
-      /severe|high|anaphyl/i.test(a.severity || '')
-    );
-    if (severe) {
-      steps.push({
-        id: 'allergies',
-        icon: alarmOutline,
-        title: 'Review allergy documentation',
-        subtitle: 'Severe allergies on file — confirm details in Patient Information.',
-        href: '/tab14',
-        color: 'danger',
-      });
-    }
-  }
-
-  if (detail && !missing && appointments.length === 0) {
-    steps.push({
-      id: 'book',
-      icon: calendarOutline,
-      title: 'Schedule your next visit',
-      subtitle: 'No upcoming appointments — add one on the Appointments tab.',
-      href: '/tab4',
-      color: 'primary',
-    });
-  }
-
-  if (detail && !missing && medCount > 0) {
-    steps.push({
-      id: 'meds-review',
-      icon: medkitOutline,
-      title: 'Medication list on your record',
-      subtitle: `${medCount} active medication(s). Update anytime in Patient Information.`,
-      href: '/tab14',
-      color: 'primary',
-    });
-  }
-
-  steps.push({
-    id: 'dashboard',
-    icon: documentTextOutline,
-    title: 'Full health overview',
-    subtitle: 'See metrics, labs, incidents, and more on the main dashboard.',
-    href: '/tab1',
-    color: 'medium',
-  });
-
-  const seen = new Set<string>();
-  return steps.filter((s) => {
-    if (seen.has(s.id)) return false;
-    seen.add(s.id);
-    return true;
-  });
+function toTab2Steps(
+  steps: ReturnType<typeof buildNextSteps>
+): Tab2NextStepItem[] {
+  return steps.map((s) => ({
+    id: s.id,
+    icon: ION_STEP_ICONS[s.id] ?? documentTextOutline,
+    title: s.title,
+    subtitle: s.subtitle,
+    href: s.href,
+    color: toneToIonColor(s.tone),
+  }));
 }
 
 const Tab2: React.FC = () => {
@@ -281,10 +159,7 @@ const Tab2: React.FC = () => {
   }, [username, refreshKey]);
 
   const labStats = useMemo(() => {
-    const pending = labPanels.filter(
-      (r) => r.status.toLowerCase() === 'pending'
-    ).length;
-    const newPanels = labPanels.filter((r) => r.is_new).length;
+    const { pending, newPanels } = countLabAttention(labPanels);
     const needsAttention = labPanels.filter(
       (r) => r.status.toLowerCase() === 'pending' || r.is_new
     ).length;
@@ -306,11 +181,10 @@ const Tab2: React.FC = () => {
 
   const nextSteps = useMemo(() => {
     if (loading) return [];
-    return buildNextSteps(
-      detail,
-      appointments,
-      labStats.pending,
-      labStats.newPanels
+    return toTab2Steps(
+      buildNextSteps(detail, appointments, labStats.pending, labStats.newPanels, {
+        surface: 'quick-status',
+      })
     );
   }, [loading, detail, appointments, labStats.pending, labStats.newPanels]);
 
