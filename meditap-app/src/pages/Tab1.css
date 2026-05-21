@@ -97,6 +97,19 @@
     border-width: 2px;
 }
 
+.user-avatar--glass {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 10px 28px rgba(23, 162, 184, 0.38),
+        0 0 0 4px rgba(23, 162, 184, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    background: linear-gradient(
+        145deg,
+        rgba(23, 162, 184, 0.25) 0%,
+        rgba(26, 99, 86, 0.2) 100%
+    );
+}
+
 .user-card__hint {
     font-size: 0.8rem;
     color: #6f7f7a;

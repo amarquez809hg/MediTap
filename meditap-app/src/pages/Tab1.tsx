@@ -375,7 +375,7 @@ const Tab1: React.FC = () => {
             <img
               src={user.avatarUrl}
               alt=""
-              className="user-avatar user-avatar--compact"
+              className="user-avatar user-avatar--compact user-avatar--glass"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null;
@@ -533,7 +533,7 @@ const Tab1: React.FC = () => {
                 <i className="fas fa-calendar-check"></i> Upcoming appointments
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Same layout as the Appointments tab — manage visits there.
+                Your next scheduled visits with provider, date, and location.
               </p>
             </div>
             <DashboardSectionActions
@@ -572,8 +572,8 @@ const Tab1: React.FC = () => {
                 <i className="fas fa-vial"></i> Lab results
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Same expandable cards as the Lab Results tab — tap a row for
-                components and reference ranges.
+                Recent lab panels and collection dates; open a row on the full
+                tab for individual results and reference ranges.
               </p>
             </div>
             <DashboardSectionActions
@@ -621,7 +621,8 @@ const Tab1: React.FC = () => {
                 <i className="fas fa-clipboard-list"></i> Incident records
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Same incident cards as the Incident Records tab.
+                Injuries, accidents, and other clinical events logged in your
+                chart with date and summary.
               </p>
             </div>
             <DashboardSectionActions
@@ -669,8 +670,8 @@ const Tab1: React.FC = () => {
                 <i className="fas fa-notes-medical"></i> Chronic conditions
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Live from your record — add or edit on the Chronic Conditions
-                tab.
+                Ongoing and historical diagnoses with status and notes from your
+                medical record.
               </p>
             </div>
             <DashboardSectionActions

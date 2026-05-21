@@ -5,17 +5,6 @@
   align-items: center;
 }
 
-.dashboard-section-actions__add {
-  background: var(--meditap-surface, #fff);
-  color: var(--meditap-accent, #17a2b8);
-  border: 1px solid var(--meditap-accent, #17a2b8);
-}
-
-.dashboard-section-actions__add:hover {
-  background: rgba(23, 162, 184, 0.1);
-  color: var(--meditap-accent-hover, #138496);
-}
-
 .dashboard-section-actions__view,
 .dashboard-section-actions__add {
   text-decoration: none;

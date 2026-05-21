@@ -76,6 +76,89 @@ ion-page[class*='ct-page'] ion-content {
   margin-right: 0;
 }
 
+/* Glass action buttons (dashboard section headers, etc.) */
+.meditap-glass-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #f8fffd;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 38%,
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, #17a2b8) 0%,
+      var(--meditap-header-glass-end, #1a6356) 100%
+    ) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 22px rgba(8, 20, 18, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.meditap-glass-btn:hover {
+  filter: brightness(1.06);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0.1) 40%,
+      rgba(255, 255, 255, 0) 65%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, #17a2b8) 0%,
+      var(--meditap-header-glass-end, #1a6356) 100%
+    ) !important;
+  color: #fff;
+}
+
+.meditap-glass-btn:active {
+  filter: brightness(0.94);
+  transform: translateY(1px);
+}
+
+.meditap-glass-btn--outline {
+  color: var(--meditap-accent, #17a2b8);
+  text-shadow: none;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.75) 0%,
+      rgba(255, 255, 255, 0.45) 100%
+    ) !important;
+  border: 1px solid rgba(23, 162, 184, 0.45);
+  box-shadow:
+    0 6px 18px rgba(23, 162, 184, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.meditap-glass-btn--outline:hover {
+  filter: none;
+  color: var(--meditap-accent-hover, #138496);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(230, 248, 252, 0.75) 100%
+    ) !important;
+  box-shadow:
+    0 8px 20px rgba(23, 162, 184, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.meditap-glass-btn i {
+  opacity: 0.95;
+}
+
 /* ---- Quick Status (Tab2) — IonCard metrics ---- */
 ion-card.status-card {
   margin: 0;
