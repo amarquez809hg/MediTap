@@ -206,28 +206,41 @@
 .dashboard-empty-strip__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px 16px;
     justify-content: center;
     align-items: center;
 }
 
-.dashboard-empty-strip .info-button {
-    display: inline-flex;
+/* Lab results: two CTAs stacked with clear separation (not flush / full-width) */
+.dashboard-empty-strip__actions--split {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.dashboard-empty-strip .info-button,
+.dashboard-empty-btn {
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: auto;
-    max-width: 100%;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 10.5rem;
+    max-width: calc(100% - 1rem);
     box-sizing: border-box;
     white-space: nowrap;
 }
 
-.dashboard-empty-strip .info-button--secondary {
+.dashboard-empty-strip .info-button--secondary,
+.dashboard-empty-btn--secondary {
     background-color: transparent;
     color: var(--meditap-accent);
     border: 1px solid var(--meditap-accent);
 }
 
-.dashboard-empty-strip .info-button--secondary:hover {
+.dashboard-empty-strip .info-button--secondary:hover,
+.dashboard-empty-btn--secondary:hover {
     background-color: rgba(23, 162, 184, 0.12);
     color: var(--meditap-accent);
     box-shadow: none;
@@ -673,5 +686,14 @@
 
     .metric-tile {
         min-width: 0;
+    }
+
+    .dashboard-empty-strip__actions--split {
+        gap: 14px;
+    }
+
+    .dashboard-empty-strip .info-button,
+    .dashboard-empty-btn {
+        min-width: min(100%, 14rem);
     }
 }

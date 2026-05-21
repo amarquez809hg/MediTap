@@ -539,11 +539,14 @@ const Tab1: React.FC = () => {
           {!labLoading && !labError && labRows.length === 0 && (
             <div className="dashboard-empty-strip dashboard-preview-block">
               <p>No lab reports in your record yet.</p>
-              <div className="dashboard-empty-strip__actions">
-                <a href="/tab7" className="info-button">
+              <div className="dashboard-empty-strip__actions dashboard-empty-strip__actions--split">
+                <a href="/tab7" className="info-button dashboard-empty-btn">
                   Add lab results
                 </a>
-                <a href="/tab14" className="info-button info-button--secondary">
+                <a
+                  href="/tab14"
+                  className="info-button info-button--secondary dashboard-empty-btn dashboard-empty-btn--secondary"
+                >
                   Upload records on intake
                 </a>
               </div>
