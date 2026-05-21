@@ -491,9 +491,11 @@ const Tab1: React.FC = () => {
           ) : (
             <div className="dashboard-empty-strip">
               <p>No upcoming appointments.</p>
-              <a href="/tab4" className="info-button">
-                Go to appointments
-              </a>
+              <div className="dashboard-empty-strip__actions">
+                <a href="/tab4" className="info-button">
+                  Go to appointments
+                </a>
+              </div>
             </div>
           )}
 
@@ -537,12 +539,14 @@ const Tab1: React.FC = () => {
           {!labLoading && !labError && labRows.length === 0 && (
             <div className="dashboard-empty-strip dashboard-preview-block">
               <p>No lab reports in your record yet.</p>
-              <a href="/tab7" className="info-button">
-                Add lab results
-              </a>
-              <a href="/tab14" className="info-button info-button--secondary">
-                Upload records on intake
-              </a>
+              <div className="dashboard-empty-strip__actions">
+                <a href="/tab7" className="info-button">
+                  Add lab results
+                </a>
+                <a href="/tab14" className="info-button info-button--secondary">
+                  Upload records on intake
+                </a>
+              </div>
             </div>
           )}
 
@@ -585,9 +589,11 @@ const Tab1: React.FC = () => {
           {!incidentLoading && !incidentError && incidentRows.length === 0 && (
             <div className="dashboard-empty-strip">
               <p>No incident records to show.</p>
-              <a href="/tab6" className="info-button">
-                Go to incidents
-              </a>
+              <div className="dashboard-empty-strip__actions">
+                <a href="/tab6" className="info-button">
+                  Go to incidents
+                </a>
+              </div>
             </div>
           )}
 
@@ -640,9 +646,11 @@ const Tab1: React.FC = () => {
           {!chronicLoading && !chronicError && chronicConditions.length === 0 && (
             <div className="dashboard-empty-strip">
               <p>No chronic conditions on file yet.</p>
-              <a href="/tab5" className="info-button">
-                Add in chronic conditions
-              </a>
+              <div className="dashboard-empty-strip__actions">
+                <a href="/tab5" className="info-button">
+                  Add chronic conditions
+                </a>
+              </div>
             </div>
           )}
         </section>
