@@ -21,7 +21,11 @@ const DashboardHomeHero: React.FC<DashboardHomeHeroProps> = ({ greeting, context
     </div>
     <nav className="dashboard-hero__actions" aria-label="Quick actions">
       {QUICK_ACTIONS.map((action) => (
-        <Link key={action.label} to={action.href} className="dashboard-hero__action">
+        <Link
+          key={action.label}
+          to={action.href}
+          className="dashboard-hero__action meditap-glass-btn meditap-glass-btn--compact"
+        >
           <i className={action.icon} aria-hidden />
           <span>{action.label}</span>
         </Link>

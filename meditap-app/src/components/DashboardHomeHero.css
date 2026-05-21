@@ -42,25 +42,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--meditap-radius-sm, 8px);
-  background: var(--meditap-accent, #17a2b8);
-  color: #fff;
   text-decoration: none;
-  font-size: 0.8125rem;
-  font-weight: 600;
   white-space: nowrap;
-  transition: background-color 0.2s ease, transform 0.15s ease;
-}
-
-.dashboard-hero__action:hover {
-  background: var(--meditap-accent-hover, #138496);
-  transform: translateY(-1px);
-}
-
-.dashboard-hero__action i {
-  font-size: 0.85rem;
-  opacity: 0.95;
 }
 
 @media (max-width: 900px) {

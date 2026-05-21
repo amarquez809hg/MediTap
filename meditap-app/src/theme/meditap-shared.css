@@ -159,6 +159,38 @@ ion-page[class*='ct-page'] ion-content {
   opacity: 0.95;
 }
 
+/* Compact glass — matches dashboard hero quick-action sizing */
+.meditap-glass-btn--compact,
+.book-btn.meditap-glass-btn--compact {
+  padding: 0.5rem 0.85rem !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 0;
+  gap: 0.4rem;
+  border-radius: var(--meditap-radius-sm, 8px);
+  box-shadow:
+    0 4px 14px rgba(8, 20, 18, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.meditap-glass-btn--compact:hover {
+  transform: translateY(-1px);
+}
+
+.meditap-glass-btn--compact.meditap-glass-btn--outline {
+  box-shadow:
+    0 4px 12px rgba(23, 162, 184, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.meditap-glass-btn--compact.meditap-glass-btn--outline:hover {
+  transform: translateY(-1px);
+}
+
+.meditap-glass-btn--compact i {
+  font-size: 0.85rem;
+}
+
 /* ---- Quick Status (Tab2) — IonCard metrics ---- */
 ion-card.status-card {
   margin: 0;
