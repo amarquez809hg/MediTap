@@ -4,6 +4,7 @@ import { GlassDateInput } from '../components/GlassDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
+import { consumeOpenAddEntry } from '../auth/openAddEntry';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -135,6 +136,12 @@ const Tab5: React.FC = () => {
     }
     beginNewConditionDraft();
   };
+
+  useEffect(() => {
+    if (!consumeOpenAddEntry('/tab5')) return;
+    if (canEdit) beginNewConditionDraft();
+    else handleAddNewClick();
+  }, [canEdit, elevationNonce, beginNewConditionDraft]);
 
   const updateDraft = (patch: Partial<Tab5ChronicCondition>) => {
     setDraft((prev) => (prev ? { ...prev, ...patch } : prev));

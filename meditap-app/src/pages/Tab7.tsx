@@ -4,6 +4,7 @@ import './Tab7.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
+import { consumeOpenAddEntry } from '../auth/openAddEntry';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -191,6 +192,12 @@ const Tab7: React.FC = () => {
     }
     beginNewPanel();
   };
+
+  useEffect(() => {
+    if (!consumeOpenAddEntry('/tab7')) return;
+    if (canEditLabs) beginNewPanel();
+    else handleAddLabResult();
+  }, [canEditLabs, elevationNonce, beginNewPanel]);
 
   const handleManageRow = (row: LabResultRow) => {
     if (!canEditLabs) {

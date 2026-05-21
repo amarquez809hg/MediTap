@@ -1,9 +1,14 @@
 import React from 'react';
+import { useHistory } from 'react-router-dom';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
+import { queueOpenAddEntry, type OpenAddEntryPath } from '../auth/openAddEntry';
 import DashboardHomeHero from '../components/DashboardHomeHero';
 import DashboardNextSteps from '../components/DashboardNextSteps';
+import DashboardSectionActions from '../components/DashboardSectionActions';
 import OnboardingBanner from '../components/OnboardingBanner';
+import StaffElevationModal from '../components/StaffElevationModal';
+import { useStaffElevationGate } from '../hooks/useStaffElevationGate';
 import {
   buildNextSteps,
   countLabAttention,
@@ -142,7 +147,9 @@ function sidebarIdentityFromDashboard(
 }
 
 const Tab1: React.FC = () => {
+  const history = useHistory();
   const { logout, username } = useAuth();
+  const staffGate = useStaffElevationGate();
   const [user, setUser] = React.useState(defaultUserProfile);
   const [detail, setDetail] = React.useState<DashboardDetail | null>(null);
   const [loadingSummary, setLoadingSummary] = React.useState(true);
@@ -341,6 +348,13 @@ const Tab1: React.FC = () => {
     Boolean(summaryError)
   );
 
+  const requestAddEntry = (path: OpenAddEntryPath, hint: string) => {
+    staffGate.gateEdit(() => {
+      queueOpenAddEntry(path);
+      history.push(path);
+    }, hint);
+  };
+
   return (
     <div className="profile-container">
       <header className="profile-header">
@@ -522,11 +536,17 @@ const Tab1: React.FC = () => {
                 Same layout as the Appointments tab — manage visits there.
               </p>
             </div>
-            <div className="dashboard-tab-section__actions">
-              <a href="/tab4" className="book-btn dashboard-tab-section__btn">
-                <i className="fas fa-external-link-alt"></i> Open appointments tab
-              </a>
-            </div>
+            <DashboardSectionActions
+              viewHref="/tab4"
+              viewLabel="Appointments tab"
+              addLabel="Add appointment"
+              onAddEntry={() =>
+                requestAddEntry(
+                  '/tab4',
+                  'Only staff or admin users can book appointments. Enter those credentials to add a new visit.'
+                )
+              }
+            />
           </header>
 
           {appointments.length > 0 ? (
@@ -542,12 +562,7 @@ const Tab1: React.FC = () => {
             </div>
           ) : (
             <div className="dashboard-empty-strip">
-              <p>No upcoming appointments.</p>
-              <div className="dashboard-empty-strip__actions">
-                <a href="/tab4" className="info-button">
-                  Go to appointments
-                </a>
-              </div>
+              <p>No upcoming appointments. Use the buttons above to open the tab or add one with staff sign-in.</p>
             </div>
           )}
 
@@ -561,11 +576,17 @@ const Tab1: React.FC = () => {
                 components and reference ranges.
               </p>
             </div>
-            <div className="dashboard-tab-section__actions">
-              <a href="/tab7" className="book-btn dashboard-tab-section__btn">
-                <i className="fas fa-external-link-alt"></i> Open lab results tab
-              </a>
-            </div>
+            <DashboardSectionActions
+              viewHref="/tab7"
+              viewLabel="Lab results tab"
+              addLabel="Add lab result"
+              onAddEntry={() =>
+                requestAddEntry(
+                  '/tab7',
+                  'Only staff or admin users can add lab results. Enter those credentials to create a new panel.'
+                )
+              }
+            />
           </header>
 
           {labLoading && (
@@ -590,18 +611,7 @@ const Tab1: React.FC = () => {
           )}
           {!labLoading && !labError && labRows.length === 0 && (
             <div className="dashboard-empty-strip dashboard-preview-block">
-              <p>No lab reports in your record yet.</p>
-              <div className="dashboard-empty-strip__actions dashboard-empty-strip__actions--split">
-                <a href="/tab7" className="info-button dashboard-empty-btn">
-                  Add lab results
-                </a>
-                <a
-                  href="/tab14"
-                  className="info-button info-button--secondary dashboard-empty-btn dashboard-empty-btn--secondary"
-                >
-                  Upload records on intake
-                </a>
-              </div>
+              <p>No lab reports in your record yet. Use the buttons above to view labs or add a result with staff sign-in.</p>
             </div>
           )}
 
@@ -614,11 +624,17 @@ const Tab1: React.FC = () => {
                 Same incident cards as the Incident Records tab.
               </p>
             </div>
-            <div className="dashboard-tab-section__actions">
-              <a href="/tab6" className="book-btn dashboard-tab-section__btn">
-                <i className="fas fa-external-link-alt"></i> Open incidents tab
-              </a>
-            </div>
+            <DashboardSectionActions
+              viewHref="/tab6"
+              viewLabel="Incidents tab"
+              addLabel="Log incident"
+              onAddEntry={() =>
+                requestAddEntry(
+                  '/tab6',
+                  'Only staff or admin users can log incidents. Enter those credentials to add a new record.'
+                )
+              }
+            />
           </header>
 
           {incidentLoading && (
@@ -643,12 +659,7 @@ const Tab1: React.FC = () => {
           )}
           {!incidentLoading && !incidentError && incidentRows.length === 0 && (
             <div className="dashboard-empty-strip">
-              <p>No incident records to show.</p>
-              <div className="dashboard-empty-strip__actions">
-                <a href="/tab6" className="info-button">
-                  Go to incidents
-                </a>
-              </div>
+              <p>No incident records to show. Use the buttons above to open the tab or log one with staff sign-in.</p>
             </div>
           )}
 
@@ -662,11 +673,17 @@ const Tab1: React.FC = () => {
                 tab.
               </p>
             </div>
-            <div className="dashboard-tab-section__actions">
-              <a href="/tab5" className="book-btn dashboard-tab-section__btn">
-                <i className="fas fa-external-link-alt"></i> Open chronic tab
-              </a>
-            </div>
+            <DashboardSectionActions
+              viewHref="/tab5"
+              viewLabel="Chronic tab"
+              addLabel="Add condition"
+              onAddEntry={() =>
+                requestAddEntry(
+                  '/tab5',
+                  'Only staff or admin users can add chronic conditions. Enter those credentials to create a new entry.'
+                )
+              }
+            />
           </header>
 
           {chronicLoading && (
@@ -700,16 +717,25 @@ const Tab1: React.FC = () => {
           )}
           {!chronicLoading && !chronicError && chronicConditions.length === 0 && (
             <div className="dashboard-empty-strip">
-              <p>No chronic conditions on file yet.</p>
-              <div className="dashboard-empty-strip__actions">
-                <a href="/tab5" className="info-button">
-                  Add chronic conditions
-                </a>
-              </div>
+              <p>No chronic conditions on file yet. Use the buttons above to open the tab or add one with staff sign-in.</p>
             </div>
           )}
         </section>
       </main>
+
+      <StaffElevationModal
+        open={staffGate.staffModalOpen}
+        titleId="dashboard-staff-modal-title"
+        hint={staffGate.staffHint}
+        username={staffGate.staffUsername}
+        password={staffGate.staffPassword}
+        submitting={staffGate.staffSubmitting}
+        error={staffGate.staffModalError}
+        onUsernameChange={staffGate.setStaffUsername}
+        onPasswordChange={staffGate.setStaffPassword}
+        onClose={staffGate.closeStaffModal}
+        onSubmit={(e) => void staffGate.submitStaffModal(e)}
+      />
     </div>
   );
 };

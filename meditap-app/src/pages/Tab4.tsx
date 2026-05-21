@@ -3,6 +3,7 @@ import './Tab4.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
+import { consumeOpenAddEntry } from '../auth/openAddEntry';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -117,6 +118,12 @@ const Tab4: React.FC = () => {
     }
     beginNewAppointmentDraft();
   };
+
+  useEffect(() => {
+    if (!consumeOpenAddEntry('/tab4')) return;
+    if (canEditAppointments) beginNewAppointmentDraft();
+    else handleBookNewAppointment();
+  }, [canEditAppointments, elevationNonce, beginNewAppointmentDraft]);
 
   const closeManageModal = () => {
     setDraftAppointment(null);

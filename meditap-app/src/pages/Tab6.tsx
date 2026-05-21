@@ -5,6 +5,7 @@ import './Tab14.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
+import { consumeOpenAddEntry } from '../auth/openAddEntry';
 import {
   clearMeditapIntakeElevation,
   isMeditapIntakeElevationValidForPatient,
@@ -220,6 +221,17 @@ const Tab6: React.FC = () => {
     setDraft(emptyDraft(patientId, defaultHospitalId));
     setSaveError(null);
   };
+
+  useEffect(() => {
+    if (!consumeOpenAddEntry('/tab6')) return;
+    if (canEditIncidents && patientId) {
+      setIsNewIncident(true);
+      setDraft(emptyDraft(patientId, defaultHospitalId));
+      setSaveError(null);
+    } else {
+      handleLogNewIncident();
+    }
+  }, [canEditIncidents, patientId, defaultHospitalId, elevationNonce]);
 
   const openManageModal = (rec: IncidentRecord) => {
     if (!patientId) return;

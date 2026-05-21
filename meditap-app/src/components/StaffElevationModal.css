@@ -1,0 +1,113 @@
+/* Shared staff elevation dialog (matches Tab14 pattern) */
+.staff-elevation-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.staff-elevation-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.staff-elevation-modal__backdrop:disabled {
+  cursor: default;
+}
+
+.staff-elevation-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  padding: 20px 22px 22px;
+  border-radius: var(--meditap-radius, 12px);
+  background: var(--meditap-surface, #fff);
+  color: var(--meditap-text, #333);
+  border: 1px solid var(--meditap-border, #e0e0e0);
+  box-shadow: var(--meditap-shadow-sm, 0 8px 24px rgba(0, 0, 0, 0.12));
+  box-sizing: border-box;
+}
+
+.staff-elevation-modal__panel h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.staff-elevation-modal__hint {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  color: var(--meditap-text-secondary, #666);
+  line-height: 1.45;
+}
+
+.staff-elevation-modal__panel .form-field {
+  margin-bottom: 14px;
+}
+
+.staff-elevation-modal__panel .form-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.staff-elevation-modal__panel .form-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  border: 1px solid var(--meditap-border, #ccc);
+  font: inherit;
+}
+
+.staff-elevation-modal__error {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: #c62828;
+}
+
+.staff-elevation-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.staff-elevation-modal__btn {
+  padding: 10px 16px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+}
+
+.staff-elevation-modal__btn--secondary {
+  background: transparent;
+  border: 1px solid var(--meditap-border, #ccc);
+  color: var(--meditap-text, #333);
+}
+
+.staff-elevation-modal__btn--primary {
+  background: var(--meditap-accent, #17a2b8);
+  color: #fff;
+}
+
+.staff-elevation-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
