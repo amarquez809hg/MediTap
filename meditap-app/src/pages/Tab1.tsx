@@ -62,8 +62,8 @@ interface MetricTileProps {
 }
 
 const MetricTile: React.FC<MetricTileProps> = ({ iconClass, title, value }) => (
-  <div className="metric-tile">
-    <i className={iconClass}></i>
+  <div className="metric-tile" role="listitem">
+    <i className={iconClass} aria-hidden />
     <div className="metric-details">
       <p className="metric-value">{value}</p>
       <p className="metric-title">{title}</p>
@@ -483,32 +483,34 @@ const Tab1: React.FC = () => {
             </p>
           )}
 
-          <div className="metrics-grid">
-            <MetricTile
-              iconClass="fas fa-heartbeat"
-              title="BMI Score"
-              value={hs.bmi}
-            />
-            <MetricTile
-              iconClass="fas fa-heartbeat"
-              title="BMI Last Mod. by: "
-              value={hs.lmd}
-            />
-            <MetricTile
-              iconClass="fas fa-calendar-alt"
-              title="Last Visit"
-              value={hs.lastVisit}
-            />
-            <MetricTile
-              iconClass="fas fa-allergies"
-              title="Known Allergies"
-              value={hs.allergies}
-            />
-            <MetricTile
-              iconClass="fas fa-pills"
-              title="Active Meds"
-              value={hs.medications}
-            />
+          <div className="metrics-grid-scroll">
+            <div className="metrics-grid" role="list" aria-label="Health metrics summary">
+              <MetricTile
+                iconClass="fas fa-heartbeat"
+                title="BMI Score"
+                value={hs.bmi}
+              />
+              <MetricTile
+                iconClass="fas fa-heartbeat"
+                title="BMI Last Mod. by"
+                value={hs.lmd}
+              />
+              <MetricTile
+                iconClass="fas fa-calendar-alt"
+                title="Last Visit"
+                value={hs.lastVisit}
+              />
+              <MetricTile
+                iconClass="fas fa-allergies"
+                title="Known Allergies"
+                value={hs.allergies}
+              />
+              <MetricTile
+                iconClass="fas fa-pills"
+                title="Active Meds"
+                value={hs.medications}
+              />
+            </div>
           </div>
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
