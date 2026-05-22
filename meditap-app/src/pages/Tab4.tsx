@@ -12,6 +12,23 @@ import {
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
 import { requestPatientIntakeStaffElevation } from '../api';
 import AppointmentCard from '../appointments/AppointmentCard';
+import AppointmentPresetField from '../appointments/AppointmentPresetField';
+import {
+  APPOINTMENT_CLINICAL_NOTES_OPTIONS,
+  APPOINTMENT_DEPARTMENT_OPTIONS,
+  APPOINTMENT_DURATION_OPTIONS,
+  APPOINTMENT_ID_AUTO_LABEL,
+  APPOINTMENT_ID_PRESETS,
+  APPOINTMENT_INSTRUCTIONS_OPTIONS,
+  APPOINTMENT_LOCATION_OPTIONS,
+  APPOINTMENT_REASON_OPTIONS,
+  APPOINTMENT_SPECIALIST_OPTIONS,
+  APPOINTMENT_STATUS_OPTIONS,
+  APPOINTMENT_TIME_OPTIONS,
+  APPOINTMENT_VISIT_TYPE_OPTIONS,
+  buildAppointmentDatePresets,
+  suggestAppointmentId,
+} from '../appointments/appointmentFieldLibrary';
 import type { Appointment } from '../appointments/appointmentStorage';
 import {
   appointmentsStorageKey,
@@ -47,6 +64,8 @@ const Tab4: React.FC = () => {
 
   const canEditAppointments =
     hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
+
+  const appointmentDatePresets = useMemo(() => buildAppointmentDatePresets(), []);
 
   const beginNewAppointmentDraft = useCallback(() => {
     setIsNewAppointment(true);
@@ -221,8 +240,8 @@ const Tab4: React.FC = () => {
 
             <p className="appt-modal__sub">
               {isNewAppointment
-                ? 'Fill in appointment details. Staff access is required to create.'
-                : 'Review complete appointment details. Editing requires staff access.'}
+                ? 'Fill in appointment details. Staff access is required to create. Use Quick pick from library on each field for common values, or type your own.'
+                : 'Review complete appointment details. Editing requires staff access. Use Quick pick from library for common values.'}
             </p>
 
             {!canEditAppointments && (
@@ -262,111 +281,133 @@ const Tab4: React.FC = () => {
             )}
 
             <div className="appt-modal__form-grid">
+              <AppointmentPresetField
+                label="Appointment ID"
+                value={draftAppointment.appointmentId}
+                options={APPOINTMENT_ID_PRESETS}
+                onChange={(v) => {
+                  if (v === APPOINTMENT_ID_AUTO_LABEL) {
+                    const nextId =
+                      appointments.length > 0
+                        ? Math.max(...appointments.map((a) => a.id)) + 1
+                        : 1;
+                    updateDraft('appointmentId', suggestAppointmentId(nextId));
+                    return;
+                  }
+                  updateDraft('appointmentId', v);
+                }}
+                disabled={!canEditAppointments}
+                inputPlaceholder="e.g. APPT-24001 or leave blank to auto-generate"
+              />
               <div className="form-field">
-                <label>Appointment ID</label>
-                <input
-                  value={draftAppointment.appointmentId}
-                  onChange={(e) => updateDraft('appointmentId', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field">
-                <label>Status</label>
+                <label htmlFor="appt-status">Status</label>
                 <select
+                  id="appt-status"
                   value={draftAppointment.status}
                   onChange={(e) => updateDraft('status', e.target.value)}
                   disabled={!canEditAppointments}
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Completed">Completed</option>
+                  {APPOINTMENT_STATUS_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
               </div>
+              <AppointmentPresetField
+                label="Specialist"
+                value={draftAppointment.specialist}
+                options={APPOINTMENT_SPECIALIST_OPTIONS}
+                onChange={(v) => updateDraft('specialist', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="Provider name"
+              />
+              <AppointmentPresetField
+                label="Department"
+                value={draftAppointment.department}
+                options={APPOINTMENT_DEPARTMENT_OPTIONS}
+                onChange={(v) => updateDraft('department', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="Clinic department"
+              />
+              <AppointmentPresetField
+                label="Date"
+                value={draftAppointment.date}
+                options={appointmentDatePresets}
+                onChange={(v) => updateDraft('date', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="e.g. Wednesday, Nov 27"
+              />
+              <AppointmentPresetField
+                label="Time"
+                value={draftAppointment.time}
+                options={APPOINTMENT_TIME_OPTIONS}
+                onChange={(v) => updateDraft('time', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="e.g. 10:00 AM"
+              />
               <div className="form-field">
-                <label>Specialist</label>
-                <input
-                  value={draftAppointment.specialist}
-                  onChange={(e) => updateDraft('specialist', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field">
-                <label>Department</label>
-                <input
-                  value={draftAppointment.department}
-                  onChange={(e) => updateDraft('department', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field">
-                <label>Date</label>
-                <input
-                  value={draftAppointment.date}
-                  onChange={(e) => updateDraft('date', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field">
-                <label>Time</label>
-                <input
-                  value={draftAppointment.time}
-                  onChange={(e) => updateDraft('time', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field">
-                <label>Visit Type</label>
+                <label htmlFor="appt-visit-type">Visit Type</label>
                 <select
+                  id="appt-visit-type"
                   value={draftAppointment.type}
                   onChange={(e) => updateDraft('type', e.target.value)}
                   disabled={!canEditAppointments}
                 >
-                  <option value="In-Office Visit">In-Office Visit</option>
-                  <option value="Video Consultation">Video Consultation</option>
-                  <option value="Phone Consultation">Phone Consultation</option>
+                  {APPOINTMENT_VISIT_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="form-field">
-                <label>Duration</label>
-                <input
-                  value={draftAppointment.duration}
-                  onChange={(e) => updateDraft('duration', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label>Location / Platform</label>
-                <input
-                  value={draftAppointment.location}
-                  onChange={(e) => updateDraft('location', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label>Reason for Visit</label>
-                <textarea
-                  value={draftAppointment.reasonForVisit}
-                  onChange={(e) => updateDraft('reasonForVisit', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label>Patient Instructions</label>
-                <textarea
-                  value={draftAppointment.patientInstructions}
-                  onChange={(e) => updateDraft('patientInstructions', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label>Clinical Notes</label>
-                <textarea
-                  value={draftAppointment.clinicalNotes}
-                  onChange={(e) => updateDraft('clinicalNotes', e.target.value)}
-                  disabled={!canEditAppointments}
-                />
-              </div>
+              <AppointmentPresetField
+                label="Duration"
+                value={draftAppointment.duration}
+                options={APPOINTMENT_DURATION_OPTIONS}
+                onChange={(v) => updateDraft('duration', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="e.g. 30 min"
+              />
+              <AppointmentPresetField
+                className="appt-modal__field-wide"
+                label="Location / Platform"
+                value={draftAppointment.location}
+                options={APPOINTMENT_LOCATION_OPTIONS}
+                onChange={(v) => updateDraft('location', v)}
+                disabled={!canEditAppointments}
+                inputPlaceholder="Clinic site or telehealth room"
+              />
+              <AppointmentPresetField
+                className="appt-modal__field-wide"
+                label="Reason for Visit"
+                value={draftAppointment.reasonForVisit}
+                options={APPOINTMENT_REASON_OPTIONS}
+                onChange={(v) => updateDraft('reasonForVisit', v)}
+                disabled={!canEditAppointments}
+                multiline
+                inputPlaceholder="Chief complaint or visit purpose"
+              />
+              <AppointmentPresetField
+                className="appt-modal__field-wide"
+                label="Patient Instructions"
+                value={draftAppointment.patientInstructions}
+                options={APPOINTMENT_INSTRUCTIONS_OPTIONS}
+                onChange={(v) => updateDraft('patientInstructions', v)}
+                disabled={!canEditAppointments}
+                multiline
+                inputPlaceholder="Pre-visit instructions for the patient"
+              />
+              <AppointmentPresetField
+                className="appt-modal__field-wide"
+                label="Clinical Notes"
+                value={draftAppointment.clinicalNotes}
+                options={APPOINTMENT_CLINICAL_NOTES_OPTIONS}
+                onChange={(v) => updateDraft('clinicalNotes', v)}
+                disabled={!canEditAppointments}
+                multiline
+                inputPlaceholder="Internal clinical notes"
+              />
             </div>
 
             <div className="appt-modal__actions">
