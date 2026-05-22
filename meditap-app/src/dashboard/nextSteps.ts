@@ -231,6 +231,82 @@ export function trimNextStepsForDashboard(steps: NextStepItem[], max = 4): NextS
   return steps.slice(0, max);
 }
 
+const URGENCY_ORDER: Record<NextStepTone, number> = {
+  danger: 0,
+  warning: 1,
+  primary: 2,
+  neutral: 3,
+};
+
+/** Quick Status: surface highest-risk items first, then by priority number. */
+export function sortNextStepsByUrgency(steps: NextStepItem[]): NextStepItem[] {
+  return [...steps].sort((a, b) => {
+    const byTone = URGENCY_ORDER[a.tone] - URGENCY_ORDER[b.tone];
+    if (byTone !== 0) return byTone;
+    return a.priority - b.priority;
+  });
+}
+
+export function trimNextStepsForQuickStatus(steps: NextStepItem[], max = 6): NextStepItem[] {
+  return sortNextStepsByUrgency(steps).slice(0, max);
+}
+
+export function hasUrgentNextSteps(steps: NextStepItem[]): boolean {
+  return steps.some((s) => s.tone === 'danger' || s.tone === 'warning');
+}
+
+export type ProfileCompleteness = {
+  percent: number;
+  subtitle: string;
+};
+
+function fieldFilled(value: string | undefined | null): boolean {
+  return Boolean(value?.trim()) && value!.trim() !== '—';
+}
+
+/** Seven chart fields: intake, demographics, contact, and insurance on file. */
+export function computeProfileCompleteness(
+  detail: DashboardDetail | null
+): ProfileCompleteness {
+  if (!detail || isPatientMissing(detail)) {
+    return {
+      percent: 0,
+      subtitle: 'Create your patient chart in Patient Information',
+    };
+  }
+
+  const p = detail.patientProfile;
+  const checks = [
+    patientInfoLooksComplete(),
+    fieldFilled(p.dateOfBirth),
+    fieldFilled(p.email),
+    fieldFilled(p.phone),
+    fieldFilled(p.bloodType),
+    fieldFilled(p.sexAtBirth),
+    detail.insurance.length > 0,
+  ];
+  const passed = checks.filter(Boolean).length;
+  const percent = Math.round((passed / checks.length) * 100);
+
+  if (percent >= 100) {
+    return { percent: 100, subtitle: 'Chart basics complete — keep details current' };
+  }
+  if (percent >= 70) {
+    return { percent, subtitle: 'Almost there — finish remaining profile fields' };
+  }
+  if (percent >= 40) {
+    return { percent, subtitle: 'Add missing contact and insurance details' };
+  }
+  return { percent, subtitle: 'Start in Patient Information to build your chart' };
+}
+
+export function countSevereAllergies(detail: DashboardDetail | null): number {
+  if (!detail) return 0;
+  return detail.allergies.filter((a) =>
+    /severe|high|anaphyl/i.test(a.severity || '')
+  ).length;
+}
+
 export function greetingForDisplayName(displayName: string): string {
   const hour = new Date().getHours();
   const period = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';

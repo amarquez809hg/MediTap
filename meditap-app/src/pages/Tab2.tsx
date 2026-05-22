@@ -9,10 +9,6 @@ import {
   IonTitle,
   IonToolbar,
   IonCard,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonCardContent,
   IonList,
   IonItem,
   IonLabel,
@@ -31,11 +27,14 @@ import {
   shieldCheckmarkOutline,
   fitnessOutline,
   chevronForwardOutline,
+  warningOutline,
 } from 'ionicons/icons';
 import { useAuth } from '../contexts/AuthContext';
+import StatusKpiCard from '../components/StatusKpiCard';
 import {
   fetchDashboardDetail,
   fetchPatientLabPanels,
+  fetchTab6Data,
   formatSessionOrTokenErrorForUi,
   type DashboardDetail,
   type PatientLabPanelApi,
@@ -46,7 +45,11 @@ import {
 } from '../appointments/appointmentStorage';
 import {
   buildNextSteps,
+  computeProfileCompleteness,
   countLabAttention,
+  countSevereAllergies,
+  hasUrgentNextSteps,
+  trimNextStepsForQuickStatus,
   type NextStepTone,
 } from '../dashboard/nextSteps';
 
@@ -109,6 +112,7 @@ const Tab2: React.FC = () => {
   const { username } = useAuth();
   const [detail, setDetail] = useState<DashboardDetail | null>(null);
   const [labPanels, setLabPanels] = useState<PatientLabPanelApi[]>([]);
+  const [incidentCount, setIncidentCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -131,13 +135,15 @@ const Tab2: React.FC = () => {
       setLoading(true);
       setLoadError(null);
       try {
-        const [d, { panels }] = await Promise.all([
+        const [d, { panels }, tab6] = await Promise.all([
           fetchDashboardDetail(username),
           fetchPatientLabPanels(username),
+          fetchTab6Data(username).catch(() => ({ incidents: [] })),
         ]);
         if (!cancelled) {
           setDetail(d);
           setLabPanels(panels);
+          setIncidentCount(tab6.incidents.length);
         }
       } catch (e) {
         if (!cancelled) {
@@ -148,6 +154,7 @@ const Tab2: React.FC = () => {
           );
           setDetail(null);
           setLabPanels([]);
+          setIncidentCount(null);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -177,16 +184,32 @@ const Tab2: React.FC = () => {
     return { total, confirmed, pending };
   }, [appointments]);
 
+  const profileCompleteness = useMemo(
+    () => computeProfileCompleteness(detail),
+    [detail]
+  );
+
+  const chronicCount = detail?.chronicConditions.length ?? null;
+  const allergyCount = detail?.allergies.length ?? null;
+  const severeAllergies = useMemo(() => countSevereAllergies(detail), [detail]);
   const medCount = detail?.medications.length ?? null;
 
-  const nextSteps = useMemo(() => {
+  const allNextSteps = useMemo(() => {
     if (loading) return [];
-    return toTab2Steps(
-      buildNextSteps(detail, appointments, labStats.pending, labStats.newPanels, {
-        surface: 'quick-status',
-      })
-    );
+    return buildNextSteps(detail, appointments, labStats.pending, labStats.newPanels, {
+      surface: 'quick-status',
+    });
   }, [loading, detail, appointments, labStats.pending, labStats.newPanels]);
+
+  const nextSteps = useMemo(
+    () => toTab2Steps(trimNextStepsForQuickStatus(allNextSteps, 6)),
+    [allNextSteps]
+  );
+
+  const showUrgencyHeading = useMemo(
+    () => hasUrgentNextSteps(allNextSteps),
+    [allNextSteps]
+  );
 
   const go = useCallback(
     (href: string) => {
@@ -197,29 +220,52 @@ const Tab2: React.FC = () => {
 
   const appointmentsSubtitle =
     appointmentStats.total === 0
-      ? 'None scheduled — add on Appointments'
+      ? 'None scheduled — tap to open Appointments'
       : `${appointmentStats.confirmed} confirmed · ${appointmentStats.pending} pending`;
 
   const labsPrimary = labStats.needsAttention;
   const labsSubtitle =
-    labStats.pending > 0 && labStats.newPanels > 0
-      ? `${labStats.pending} pending · ${labStats.newPanels} new to review`
-      : labStats.pending > 0
-        ? `${labStats.pending} awaiting final results`
-        : labStats.newPanels > 0
-          ? `${labStats.newPanels} new result(s) to open`
-          : 'No pending or new panels — all caught up';
+    labStats.needsAttention > 0
+      ? labStats.pending > 0 && labStats.newPanels > 0
+        ? `${labStats.pending} pending · ${labStats.newPanels} new — tap to review`
+        : labStats.pending > 0
+          ? `${labStats.pending} awaiting results — tap to review`
+          : `${labStats.newPanels} new result(s) — tap to review`
+      : 'All caught up — tap to open Lab Results';
 
   const medsSubtitle =
-    loading && medCount === null
-      ? 'Loading from your record…'
-      : medCount === null
-        ? loadError
-          ? 'Sign in and sync to load medications'
-          : '—'
-        : medCount === 0
-          ? 'None on file — add in Patient Information'
-          : `${medCount} active on your MediTap record`;
+    medCount === null
+      ? loadError
+        ? 'Record unavailable — tap Patient Information'
+        : '—'
+      : medCount === 0
+        ? 'None on file — tap to add medications'
+        : `${medCount} on record — tap to review`;
+
+  const chronicSubtitle =
+    chronicCount === null
+      ? 'Loading…'
+      : chronicCount === 0
+        ? 'None on file — tap to add conditions'
+        : `${chronicCount} on record — tap to review`;
+
+  const incidentSubtitle =
+    incidentCount === null
+      ? loadError
+        ? 'Could not load — tap Incidents tab'
+        : 'Loading…'
+      : incidentCount === 0
+        ? 'None logged — tap to add an incident'
+        : `${incidentCount} on record — tap to review`;
+
+  const allergySubtitle =
+    allergyCount === null
+      ? 'Loading…'
+      : allergyCount === 0
+        ? 'None documented — tap Patient Information'
+        : severeAllergies > 0
+          ? `${allergyCount} on file · ${severeAllergies} severe — tap to review`
+          : `${allergyCount} on file — tap to review`;
 
   return (
     <IonPage className="ct-page ct-tab2">
@@ -235,68 +281,108 @@ const Tab2: React.FC = () => {
             <h1>
               <i className="fas fa-notes-medical"></i> Quick Status
             </h1>
-            <a href="/tab1" className="book-btn">
+            <a href="/tab1" className="book-btn meditap-glass-btn meditap-glass-btn--compact">
               <i className="fas fa-arrow-left"></i> Back to dashboard
             </a>
           </header>
 
           {loadError && (
             <p className="tab2-inline-warning" role="status">
-              Live summary unavailable: {loadError}. Appointments and lab
-              preview still reflect local/demo data.
+              Live summary unavailable: {loadError}. Appointment counts use this
+              device until server sync is enabled.
             </p>
           )}
 
-          <IonRow className="ion-margin-bottom">
-            <IonCol size="12" sizeMd="4">
-              <IonCard className="status-card highlight-1">
-                <IonCardHeader>
-                  <IonCardTitle>Appointments</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <div className="status-value">{appointmentStats.total}</div>
-                  <IonCardSubtitle>{appointmentsSubtitle}</IonCardSubtitle>
-                </IonCardContent>
-              </IonCard>
+          <IonRow className="ion-margin-bottom tab2-kpi-grid">
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Profile complete"
+                value={`${profileCompleteness.percent}%`}
+                subtitle={profileCompleteness.subtitle}
+                href="/tab14"
+                highlightClass="highlight-1"
+                onNavigate={go}
+                loading={loading}
+              />
             </IonCol>
-
-            <IonCol size="12" sizeMd="4">
-              <IonCard className="status-card highlight-2">
-                <IonCardHeader>
-                  <IonCardTitle>Results pending</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <div className="status-value">{labsPrimary}</div>
-                  <IonCardSubtitle>{labsSubtitle}</IonCardSubtitle>
-                </IonCardContent>
-              </IonCard>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Appointments"
+                value={appointmentStats.total}
+                subtitle={appointmentsSubtitle}
+                href="/tab4"
+                highlightClass="highlight-2"
+                onNavigate={go}
+              />
             </IonCol>
-
-            <IonCol size="12" sizeMd="4">
-              <IonCard className="status-card highlight-3">
-                <IonCardHeader>
-                  <IonCardTitle>Medications</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  {loading ? (
-                    <IonSpinner name="crescent" />
-                  ) : (
-                    <>
-                      <div className="status-value">
-                        {medCount === null ? '—' : medCount}
-                      </div>
-                      <IonCardSubtitle>{medsSubtitle}</IonCardSubtitle>
-                    </>
-                  )}
-                </IonCardContent>
-              </IonCard>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Labs need attention"
+                value={labsPrimary}
+                subtitle={labsSubtitle}
+                href="/tab7"
+                highlightClass="highlight-3"
+                onNavigate={go}
+                loading={loading && labPanels.length === 0 && !loadError}
+              />
+            </IonCol>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Medications"
+                value={medCount === null ? '—' : medCount}
+                subtitle={medsSubtitle}
+                href="/tab14"
+                highlightClass="highlight-4"
+                onNavigate={go}
+                loading={loading}
+              />
+            </IonCol>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Chronic conditions"
+                value={chronicCount === null ? '—' : chronicCount}
+                subtitle={chronicSubtitle}
+                href="/tab5"
+                highlightClass="highlight-5"
+                onNavigate={go}
+                loading={loading}
+              />
+            </IonCol>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
+                title="Incidents"
+                value={incidentCount === null ? '—' : incidentCount}
+                subtitle={incidentSubtitle}
+                href="/tab6"
+                highlightClass="highlight-6"
+                onNavigate={go}
+                loading={loading && incidentCount === null}
+              />
             </IonCol>
           </IonRow>
 
-          <h2 className="section-title">Your next steps</h2>
+          {allergyCount !== null && allergyCount > 0 && (
+            <p className="tab2-next-steps-hint" role="status">
+              <i className="fas fa-allergies" aria-hidden /> {allergySubtitle}
+            </p>
+          )}
+
+          <h2
+            className={
+              showUrgencyHeading
+                ? 'tab2-urgency-heading tab2-urgency-heading--alert'
+                : 'section-title'
+            }
+          >
+            {showUrgencyHeading && (
+              <IonIcon icon={warningOutline} className="tab2-urgency-icon" aria-hidden />
+            )}
+            {showUrgencyHeading ? 'Needs attention today' : 'Your next steps'}
+          </h2>
+
           <p className="tab2-next-steps-hint">
-            Based on your record, appointments, and lab status (labs use the same
-            preview as the Lab Results tab until wired to the API).
+            Prioritized actions from your live chart, labs, and schedule. Tap a
+            metric above or a step below to open the right tab.
           </p>
 
           <IonCard className="task-list-card">
@@ -305,6 +391,11 @@ const Tab2: React.FC = () => {
                 <IonSpinner name="crescent" />
                 <p>Building your next steps…</p>
               </div>
+            ) : nextSteps.length === 0 ? (
+              <p className="tab2-next-steps-empty">
+                You are caught up for now. Open the dashboard for your full health
+                overview.
+              </p>
             ) : (
               <IonList lines="full" className="task-list">
                 {nextSteps.map((step) => (

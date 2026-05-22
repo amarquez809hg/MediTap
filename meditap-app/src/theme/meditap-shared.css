@@ -231,6 +231,34 @@ ion-card.status-card.highlight-3 {
   border-top: 4px solid var(--ion-color-tertiary);
 }
 
+ion-card.status-card.highlight-4 {
+  border-top: 4px solid #5c6bc0;
+}
+
+ion-card.status-card.highlight-5 {
+  border-top: 4px solid #8d6e63;
+}
+
+ion-card.status-card.highlight-6 {
+  border-top: 4px solid #e65100;
+}
+
+ion-card.status-card--clickable {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+ion-card.status-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--meditap-shadow-md, 0 8px 20px rgba(8, 20, 18, 0.12));
+}
+
+ion-card.status-card--clickable:active {
+  transform: translateY(0);
+}
+
 ion-card.task-list-card {
   margin-top: 8px;
   border-radius: var(--meditap-radius);

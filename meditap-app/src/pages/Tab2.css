@@ -62,3 +62,33 @@ ion-page.ct-page.ct-tab2 .chronic-conditions-container {
 .tab2-next-steps-loading p {
   margin: 0;
 }
+
+.tab2-kpi-grid {
+  margin-bottom: 8px;
+}
+
+.tab2-urgency-heading {
+  margin: 8px 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--meditap-primary, #0a3d46);
+}
+
+.tab2-urgency-heading--alert {
+  color: #b45309;
+}
+
+.tab2-urgency-icon {
+  vertical-align: -0.15em;
+  margin-right: 6px;
+  font-size: 1.15em;
+}
+
+.tab2-next-steps-empty {
+  margin: 0;
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--meditap-text-muted, #666);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
