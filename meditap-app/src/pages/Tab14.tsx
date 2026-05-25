@@ -17,7 +17,9 @@ import { requestPatientIntakeStaffElevation, saveTab14ToBackend } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
 import {
     augmentPdfTextWithFirstPageOcr,
+    extractTextFromPdfContentItems,
     fileToDataUrl,
+    normalizeExtractedDocumentText,
     ocrImageDataUrl,
 } from '../intake/documentTextExtraction';
 import {
@@ -384,12 +386,7 @@ const Tab14: React.FC = () => {
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const content = await page.getTextContent();
-                    const pageText = content.items
-                        .map((item) =>
-                            'str' in item && typeof item.str === 'string' ? item.str : ''
-                        )
-                        .join(' ');
-                    fullText += `${pageText}\n`;
+                    fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
                 }
                 fullText = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
             } else if (file.type.startsWith('image/')) {
@@ -397,6 +394,7 @@ const Tab14: React.FC = () => {
                 fullText = await ocrImageDataUrl(dataUrl);
             }
 
+            fullText = normalizeExtractedDocumentText(fullText);
             const bundle = parseTab14IntakeDocument(fullText);
 
             setPatientInfo((prev) => ({ ...prev, ...bundle.patientFields }));

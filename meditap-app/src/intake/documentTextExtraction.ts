@@ -2,6 +2,76 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 const SPARSE_PDF_CHAR_THRESHOLD = 100;
 
+/** Build page text with line breaks (pdf.js hasEOL) instead of one long glued string. */
+export function extractTextFromPdfContentItems(items: unknown[]): string {
+  let lastY: number | undefined;
+  let buf = '';
+
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue;
+    const item = raw as { str?: string; hasEOL?: boolean; transform?: number[] };
+    if (!('str' in item) || typeof item.str !== 'string') continue;
+    const chunk = item.str;
+    if (!chunk) continue;
+
+    const transform = 'transform' in item && Array.isArray(item.transform) ? item.transform : null;
+    const y = transform ? Number(transform[5]) : undefined;
+    if (y !== undefined && lastY !== undefined && Math.abs(y - lastY) > 4) {
+      buf += '\n';
+    }
+    if (lastY !== undefined && y !== undefined) lastY = y;
+
+    if (buf.length > 0 && !buf.endsWith('\n') && !buf.endsWith(' ')) {
+      const needsSpace =
+        !/[\s:;,\-]$/.test(buf) && !/^[\s.,;:]/.test(chunk) && !chunk.startsWith('\n');
+      if (needsSpace && !('hasEOL' in item && item.hasEOL)) buf += ' ';
+    }
+
+    buf += chunk;
+
+    if ('hasEOL' in item && item.hasEOL) {
+      buf += '\n';
+    }
+    if (chunk.includes('\n')) {
+      buf = buf.replace(/\n+/g, '\n');
+    }
+  }
+
+  return buf
+    .split('\n')
+    .map((l) => l.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
+ * Fix common OCR / PDF extraction spacing issues before field heuristics run.
+ */
+export function normalizeExtractedDocumentText(raw: string): string {
+  let t = raw.replace(/\r\n/g, '\n');
+
+  // "PatientName:" or "Name:Antonio" → add space after labels
+  t = t.replace(
+    /(\b(?:patient\s*)?(?:first|last|given|family|full)\s*name|name|d\.?o\.?b\.?|email|phone|blood\s*type|sex)\s*([:#])(?=\S)/gi,
+    '$1$2 '
+  );
+
+  // lowercase-uppercase glue: "antonioMarquez" → "antonio Marquez" (not inside emails)
+  const emails: string[] = [];
+  t = t.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, (m) => {
+    emails.push(m);
+    return `__EMAIL_${emails.length - 1}__`;
+  });
+  t = t.replace(/([a-zà-ÿ])([A-ZÀ-Ÿ])/g, '$1 $2');
+  t = t.replace(/__EMAIL_(\d+)__/g, (_, i) => emails[Number(i)] ?? '');
+
+  t = t.replace(/[ \t]+/g, ' ');
+  t = t.replace(/\n[ \t]+/g, '\n');
+  t = t.replace(/[ \t]+\n/g, '\n');
+
+  return t.trim();
+}
+
 /** True when the PDF likely has no text layer (scan) or extraction failed. */
 export function isSparseExtractedText(text: string): boolean {
   return text.replace(/\s/g, '').length < SPARSE_PDF_CHAR_THRESHOLD;

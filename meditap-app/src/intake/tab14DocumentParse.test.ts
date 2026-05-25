@@ -70,4 +70,28 @@ Reason: observation
     expect(r.noKnownDrugAllergies).toBe(true);
     expect(r.allergies.length).toBe(0);
   });
+
+  it('parses separate first and last name labels on one line each', () => {
+    const r = parseTab14IntakeDocument(`
+First Name: Antonio
+Last Name: Marquez
+Email: antonio.marquez809@gmail.com
+Phone: (787) 555-0100
+`);
+    expect(r.patientFields.givenName).toBe('Antonio');
+    expect(r.patientFields.familyName).toBe('Marquez');
+    expect(r.patientFields.email).toContain('antonio.marquez809');
+  });
+
+  it('parses glued OCR-style labels and multi-word family names', () => {
+    const r = parseTab14IntakeDocument(`
+PatientName: Maria Elena Rodriguez
+Date of Birth: 1970-01-01
+Blood Type: O+
+`);
+    expect(r.patientFields.givenName).toBe('Maria Elena');
+    expect(r.patientFields.familyName).toBe('Rodriguez');
+    expect(r.patientFields.dateOfBirth).toBe('1970-01-01');
+    expect(r.patientFields.bloodType).toBe('O+');
+  });
 });

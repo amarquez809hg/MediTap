@@ -3,6 +3,8 @@
  * Not a substitute for clinical validation — users should review before Save.
  */
 
+import { normalizeExtractedDocumentText } from './documentTextExtraction';
+
 export type Tab14PatientFields = Partial<{
   givenName: string;
   familyName: string;
@@ -183,59 +185,88 @@ function normalizeBloodType(text: string): string | undefined {
   return undefined;
 }
 
-function labelValue(
-  text: string,
-  labels: RegExp[],
-  flags: 'i' | '' = 'i'
-): string | undefined {
+/** Capture stays on one line — avoids greedy `.+` swallowing the whole document. */
+const LINE_VALUE = '([^\\n]+)';
+
+function labelValue(text: string, labels: RegExp[]): string | undefined {
   const lines = text.split(/\r?\n/).map((l) => l.trim());
   for (const line of lines) {
     for (const re of labels) {
-      const rx = flags === 'i' ? new RegExp(re.source, 'i') : re;
-      const m = line.match(rx);
-      if (m && m[1]) return m[1].trim();
+      const m = line.match(re);
+      if (m && m[1]) return collapseWs(m[1]);
     }
-  }
-  const flat = collapseWs(text);
-  for (const re of labels) {
-    const rx = flags === 'i' ? new RegExp(re.source, 'i') : re;
-    const m = flat.match(rx);
-    if (m && m[1]) return m[1].trim();
   }
   return undefined;
 }
+
+/** "Maria Elena Rodriguez" → given "Maria Elena", family "Rodriguez". */
+function splitPersonName(full: string): { given?: string; family?: string } {
+  const parts = collapseWs(full)
+    .split(/\s+/)
+    .filter((p) => p.length > 0);
+  if (parts.length === 0) return {};
+  if (parts.length === 1) return { given: parts[0] };
+  if (parts.length === 2) return { given: parts[0], family: parts[1] };
+  return {
+    given: parts.slice(0, -1).join(' '),
+    family: parts[parts.length - 1],
+  };
+}
+
+const NAME_CHARS = "A-Za-zÀ-ÿ\\u00C0-\\u024F'\\-";
 
 function parsePatientFields(text: string): Tab14PatientFields {
   const t = text;
   const out: Tab14PatientFields = {};
 
-  const given =
-    labelValue(t, [/(?:given|first)\s*name\s*[:#]?\s*(.+)/i]) || undefined;
-  const namePair = t.match(/patient\s*name\s*[:#]?\s*([A-Za-z'-]+)\s+([A-Za-z'-]+)/i);
-  if (namePair) {
-    out.givenName = namePair[1];
-    out.familyName = namePair[2];
-  } else if (given && !out.givenName) {
-    out.givenName = given;
+  const given = labelValue(t, [
+    new RegExp(`(?:given|first)\\s*name\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+  ]);
+  const family = labelValue(t, [
+    new RegExp(`(?:family|last)\\s*name\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+  ]);
+  if (given) out.givenName = given;
+  if (family) out.familyName = family;
+
+  const fullNameLine = labelValue(t, [
+    new RegExp(`(?:patient\\s*name|full\\s*name|name)\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+  ]);
+  if (fullNameLine) {
+    const split = splitPersonName(fullNameLine);
+    if (!out.givenName && split.given) out.givenName = split.given;
+    if (!out.familyName && split.family) out.familyName = split.family;
   }
 
-  const family = labelValue(t, [/^(?:family|last)\s*name\s*[:#]?\s*(.+)$/im]);
-  if (family && !out.familyName) out.familyName = family;
+  if (!out.givenName || !out.familyName) {
+    const namePair = t.match(
+      new RegExp(
+        `patient\\s*name\\s*[:#]?\\s*([${NAME_CHARS}]+)\\s+([${NAME_CHARS}]+(?:\\s+[${NAME_CHARS}]+)*)`,
+        'i'
+      )
+    );
+    if (namePair) {
+      if (!out.givenName) out.givenName = namePair[1];
+      if (!out.familyName) out.familyName = collapseWs(namePair[2]);
+    }
+  }
 
   if (!out.givenName || !out.familyName) {
     const m2 = t.match(
-      /(?:^|\n)\s*(?:name|patient)\s*[:#]\s*([A-Za-z'-]+)\s+([A-Za-z'-]+)\s*(?:\n|$)/im
+      new RegExp(
+        `(?:^|\\n)\\s*(?:name|patient)\\s*[:#]\\s*([${NAME_CHARS}]+)\\s+([${NAME_CHARS}]+(?:\\s+[${NAME_CHARS}]+)*)\\s*(?:\\n|$)`,
+        'im'
+      )
     );
     if (m2) {
       if (!out.givenName) out.givenName = m2[1];
-      if (!out.familyName) out.familyName = m2[2];
+      if (!out.familyName) out.familyName = collapseWs(m2[2]);
     }
   }
 
   const dobRaw =
     labelValue(t, [
-      /(?:date\s*of\s*birth|d\.?o\.?b\.?|birth\s*date)\s*[:#]?\s*([^\n]+)/i,
-      /\bborn\s+([^\n]+)/i,
+      new RegExp(`(?:date\\s*of\\s*birth|d\\.?o\\.?b\\.?|birth\\s*date)\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+      new RegExp(`\\bborn\\s+${LINE_VALUE}`, 'i'),
     ]) || undefined;
   if (dobRaw) {
     const iso = tryParseDateToIso(dobRaw) || tryParseDateToIso(dobRaw.split(/[,\s]+/).slice(0, 5).join(' '));
@@ -252,7 +283,9 @@ function parsePatientFields(text: string): Tab14PatientFields {
   const ph = t.match(/(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b/);
   if (ph) out.phoneNumber = ph[0].replace(/\s+/g, ' ').trim();
 
-  const sexL = labelValue(t, [/sex\s*(?:at\s*birth|assigned)?\s*[:#]?\s*(male|female)\b/i]);
+  const sexL = labelValue(t, [
+    /sex\s*(?:at\s*birth|assigned)?\s*[:#]?\s*(male|female)\b/i,
+  ]);
   if (sexL) {
     const s = sexL.charAt(0).toUpperCase() + sexL.slice(1).toLowerCase();
     if (s === 'Male' || s === 'Female') out.sexAtBirth = s;
@@ -262,7 +295,9 @@ function parsePatientFields(text: string): Tab14PatientFields {
     if (sx) out.sexAtBirth = sx[1].charAt(0).toUpperCase() + sx[1].slice(1).toLowerCase();
   }
 
-  const bt = labelValue(t, [/blood\s*type\s*[:#]?\s*([^\n]+)/i]);
+  const bt = labelValue(t, [
+    new RegExp(`blood\\s*type\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+  ]);
   if (bt) {
     const n = normalizeBloodType(bt);
     if (n) out.bloodType = n;
@@ -482,7 +517,7 @@ function parseHospital(text: string): Tab14HospitalFields {
  * Parse free-text (from PDF text layer or OCR) into Tab14-shaped structures.
  */
 export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
-  const text = raw.replace(/\r\n/g, '\n');
+  const text = normalizeExtractedDocumentText(raw.replace(/\r\n/g, '\n'));
   const lines = text
     .split('\n')
     .map((l) => l.trim())
