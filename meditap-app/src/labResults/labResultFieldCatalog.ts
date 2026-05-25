@@ -12,17 +12,27 @@ export const LAB_PANEL_OPTIONS = [
   'Comprehensive Metabolic Panel (CMP)',
   'Lipid Panel',
   'Liver panel (hepatic function)',
+  'Thyroid panel (TSH + Free T4)',
   'Thyroid stimulating hormone (TSH)',
   'Hemoglobin A1c',
   'Urinalysis (UA)',
+  'Urinalysis with culture reflex',
   'Coagulation (PT / INR)',
   'Vitamin D, 25-OH',
+  'Vitamin B12 / Folate',
   'Iron studies (Fe, TIBC, Ferritin)',
   'Cardiac troponin',
   'BNP / NT-proBNP',
+  'CRP / high-sensitivity CRP',
+  'ESR (sed rate)',
   'Magnesium',
   'Phosphorus',
   'PSA (total)',
+  'HbA1c + BMP combo',
+  'Prenatal panel (OB)',
+  'Drug screen — urine',
+  'COVID-19 PCR',
+  'Influenza A/B + RSV',
 ] as const;
 
 export type LabPanelOption = (typeof LAB_PANEL_OPTIONS)[number];
@@ -103,12 +113,50 @@ const OTHER_COMMON: AnalyteRowTemplate[] = [
   { name: 'Urine pH', unit: '', range: '4.5–8.0', valuePresets: [5.0, 5.5, 6.0, 6.5, 7.0] },
 ];
 
+const UA_ANALYTES: AnalyteRowTemplate[] = [
+  { name: 'Urine color', unit: '', range: 'Yellow (normal)', valuePresets: [0, 1] },
+  { name: 'Urine clarity', unit: '', range: 'Clear', valuePresets: [0, 1] },
+  { name: 'Urine pH', unit: '', range: '4.5–8.0', valuePresets: [5.0, 5.5, 6.0, 6.5, 7.0] },
+  { name: 'Urine specific gravity', unit: '', range: '1.005–1.030', valuePresets: [1.01, 1.015, 1.02] },
+  { name: 'Urine protein', unit: '', range: 'Negative / trace', valuePresets: [0, 1] },
+  { name: 'Urine glucose', unit: '', range: 'Negative', valuePresets: [0, 1] },
+  { name: 'Urine ketones', unit: '', range: 'Negative', valuePresets: [0, 1] },
+  { name: 'Urine blood', unit: '', range: 'Negative', valuePresets: [0, 1] },
+];
+
+const THYROID_ANALYTES: AnalyteRowTemplate[] = [
+  { name: 'TSH', unit: 'mIU/L', range: '0.4–4.0 (lab-specific)', valuePresets: [0.8, 1.5, 2.5, 4.5] },
+  { name: 'Free T4', unit: 'ng/dL', range: '0.8–1.8', valuePresets: [0.9, 1.0, 1.2, 1.4] },
+  { name: 'Free T3', unit: 'pg/mL', range: '2.3–4.2', valuePresets: [2.5, 3.0, 3.5] },
+];
+
 const PANEL_TO_ANALYTES: Partial<Record<string, AnalyteRowTemplate[]>> = {
   'Complete Blood Count (CBC)': CBC_ANALYTES,
   'Basic Metabolic Panel (BMP)': BMP_ANALYTES,
   'Comprehensive Metabolic Panel (CMP)': [...BMP_ANALYTES, ...CMP_EXTRA],
   'Lipid Panel': LIPID_ANALYTES,
   'Liver panel (hepatic function)': LFT_ANALYTES,
+  'Urinalysis (UA)': UA_ANALYTES,
+  'Urinalysis with culture reflex': UA_ANALYTES,
+  'Thyroid panel (TSH + Free T4)': THYROID_ANALYTES,
+  'Thyroid stimulating hormone (TSH)': THYROID_ANALYTES,
+  'Hemoglobin A1c': [
+    {
+      name: 'Hemoglobin A1c',
+      unit: '%',
+      range: '<5.7% normal',
+      valuePresets: [5.0, 5.4, 5.6, 6.0, 6.5, 7.0, 8.0],
+    },
+  ],
+  'HbA1c + BMP combo': [
+    {
+      name: 'Hemoglobin A1c',
+      unit: '%',
+      range: '<5.7% normal',
+      valuePresets: [5.4, 5.8, 6.2, 7.0],
+    },
+    ...BMP_ANALYTES.slice(0, 4),
+  ],
 };
 
 /** All analytes for dropdown when panel is custom or not mapped */
@@ -121,6 +169,8 @@ export function getAllAnalyteTemplates(): AnalyteRowTemplate[] {
     CMP_EXTRA,
     LIPID_ANALYTES,
     LFT_ANALYTES,
+    UA_ANALYTES,
+    THYROID_ANALYTES,
     OTHER_COMMON,
   ]) {
     for (const a of list) {

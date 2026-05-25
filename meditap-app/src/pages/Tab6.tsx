@@ -23,6 +23,16 @@ import {
 } from '../api';
 import IncidentRecordCard from '../incidents/IncidentRecordCard';
 import type { IncidentRecord } from '../incidents/incidentModel';
+import StaffPresetField from '../components/StaffPresetField';
+import {
+  INCIDENT_DETAILS_PRESETS,
+  INCIDENT_LOCATION_OPTIONS,
+  INCIDENT_OUTCOME_PRESETS,
+  INCIDENT_RECORD_ID_PRESETS,
+  INCIDENT_SEVERITY_OPTIONS,
+  INCIDENT_TYPE_OPTIONS,
+  suggestIncidentRecordCode,
+} from '../incidents/incidentFieldLibrary';
 
 type IncidentDraft = {
   serverId?: string;
@@ -419,16 +429,24 @@ const Tab6: React.FC = () => {
             )}
 
             <div className="appt-modal__form-grid">
-              <div className="form-field">
-                <label htmlFor="inc-record-code">Record ID (display)</label>
-                <input
-                  id="inc-record-code"
-                  value={draft.recordCode}
-                  onChange={(e) => updateDraft('recordCode', e.target.value)}
-                  disabled={!canEditIncidents}
-                  placeholder="e.g. I-2024-005"
-                />
-              </div>
+              <StaffPresetField
+                label="Record ID (display)"
+                value={draft.recordCode}
+                options={INCIDENT_RECORD_ID_PRESETS}
+                onChange={(v) => updateDraft('recordCode', v)}
+                onLibraryPick={(v) => {
+                  if (v === 'Auto-generate on save') {
+                    updateDraft(
+                      'recordCode',
+                      suggestIncidentRecordCode(incidents.length + 1)
+                    );
+                  } else {
+                    updateDraft('recordCode', v);
+                  }
+                }}
+                disabled={!canEditIncidents}
+                inputPlaceholder="e.g. I-2024-005"
+              />
               <div className="form-field">
                 <label htmlFor="inc-severity">Severity</label>
                 <select
@@ -437,20 +455,22 @@ const Tab6: React.FC = () => {
                   onChange={(e) => updateDraft('severity', e.target.value)}
                   disabled={!canEditIncidents}
                 >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
+                  {INCIDENT_SEVERITY_OPTIONS.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="form-field appt-modal__field-wide">
-                <label htmlFor="inc-type">Incident type</label>
-                <input
-                  id="inc-type"
-                  value={draft.incidentType}
-                  onChange={(e) => updateDraft('incidentType', e.target.value)}
-                  disabled={!canEditIncidents}
-                />
-              </div>
+              <StaffPresetField
+                className="appt-modal__field-wide"
+                label="Incident type"
+                value={draft.incidentType}
+                options={INCIDENT_TYPE_OPTIONS}
+                onChange={(v) => updateDraft('incidentType', v)}
+                disabled={!canEditIncidents}
+                inputPlaceholder="Describe the type of incident"
+              />
               <div className="form-field">
                 <label htmlFor="inc-date">Date</label>
                 <input
@@ -477,33 +497,35 @@ const Tab6: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="form-field appt-modal__field-wide">
-                <label htmlFor="inc-location">Location</label>
-                <input
-                  id="inc-location"
-                  value={draft.location}
-                  onChange={(e) => updateDraft('location', e.target.value)}
-                  disabled={!canEditIncidents}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label htmlFor="inc-outcome">Outcome &amp; treatment</label>
-                <textarea
-                  id="inc-outcome"
-                  value={draft.outcome}
-                  onChange={(e) => updateDraft('outcome', e.target.value)}
-                  disabled={!canEditIncidents}
-                />
-              </div>
-              <div className="form-field appt-modal__field-wide">
-                <label htmlFor="inc-details">Detailed summary</label>
-                <textarea
-                  id="inc-details"
-                  value={draft.details}
-                  onChange={(e) => updateDraft('details', e.target.value)}
-                  disabled={!canEditIncidents}
-                />
-              </div>
+              <StaffPresetField
+                className="appt-modal__field-wide"
+                label="Location"
+                value={draft.location}
+                options={INCIDENT_LOCATION_OPTIONS}
+                onChange={(v) => updateDraft('location', v)}
+                disabled={!canEditIncidents}
+                inputPlaceholder="Where the incident occurred"
+              />
+              <StaffPresetField
+                className="appt-modal__field-wide"
+                label="Outcome & treatment"
+                value={draft.outcome}
+                options={INCIDENT_OUTCOME_PRESETS}
+                onChange={(v) => updateDraft('outcome', v)}
+                disabled={!canEditIncidents}
+                multiline
+                inputPlaceholder="Disposition and treatment provided"
+              />
+              <StaffPresetField
+                className="appt-modal__field-wide"
+                label="Detailed summary"
+                value={draft.details}
+                options={INCIDENT_DETAILS_PRESETS}
+                onChange={(v) => updateDraft('details', v)}
+                disabled={!canEditIncidents}
+                multiline
+                inputPlaceholder="Narrative for the incident record"
+              />
             </div>
 
             {saveError && (

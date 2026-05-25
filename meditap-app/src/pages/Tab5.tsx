@@ -20,6 +20,17 @@ import {
   type Tab5ChronicHospitalization,
 } from '../api';
 import ConditionCard from '../chronic/ConditionCard';
+import StaffPresetField from '../components/StaffPresetField';
+import {
+  CHRONIC_CONDITION_NAME_OPTIONS,
+  CHRONIC_ICD10_OPTIONS,
+  CHRONIC_SEVERITY_OPTIONS,
+  CHRONIC_TREATMENT_PRESETS,
+  findChronicConditionPreset,
+  HOSPITALIZATION_FACILITY_PRESETS,
+  HOSPITALIZATION_PHYSICIAN_PRESETS,
+  HOSPITALIZATION_REASON_PRESETS,
+} from '../chronic/chronicFieldLibrary';
 
 const emptyHospitalization = (): Tab5ChronicHospitalization => ({
   admissionDate: '',
@@ -40,14 +51,6 @@ const emptyConditionDraft = (): Tab5ChronicCondition => ({
   currentTreatment: '',
   hospitalizations: [],
 });
-
-const CHRONIC_SEVERITY_OPTIONS = [
-  { value: '', label: 'Select severity' },
-  { value: 'Mild', label: 'Mild' },
-  { value: 'Moderate', label: 'Moderate' },
-  { value: 'Severe', label: 'Severe' },
-  { value: 'Unknown', label: 'Unknown / not documented' },
-] as const;
 
 const Tab5: React.FC = () => {
   const { username, hasRealmRole } = useAuth();
@@ -366,24 +369,31 @@ const Tab5: React.FC = () => {
             )}
 
             <div className="cc-modal__form-grid">
-              <div className="form-field cc-modal__field-wide">
-                <label>Condition name</label>
-                <input
-                  value={draft.name}
-                  onChange={(e) => updateDraft({ name: e.target.value })}
-                  disabled={!canEdit}
-                  placeholder="e.g. Type 2 Diabetes Mellitus"
-                />
-              </div>
-              <div className="form-field">
-                <label>ICD-10 code</label>
-                <input
-                  value={draft.icdCode}
-                  onChange={(e) => updateDraft({ icdCode: e.target.value })}
-                  disabled={!canEdit}
-                  placeholder="e.g. E11.9"
-                />
-              </div>
+              <StaffPresetField
+                className="cc-modal__field-wide"
+                label="Condition name"
+                value={draft.name}
+                options={CHRONIC_CONDITION_NAME_OPTIONS}
+                onChange={(v) => updateDraft({ name: v })}
+                onLibraryPick={(name) => {
+                  const preset = findChronicConditionPreset(name);
+                  if (preset) {
+                    updateDraft({ name: preset.name, icdCode: preset.icdCode });
+                  } else {
+                    updateDraft({ name });
+                  }
+                }}
+                disabled={!canEdit}
+                inputPlaceholder="e.g. Type 2 Diabetes Mellitus"
+              />
+              <StaffPresetField
+                label="ICD-10 code"
+                value={draft.icdCode}
+                options={CHRONIC_ICD10_OPTIONS}
+                onChange={(v) => updateDraft({ icdCode: v })}
+                disabled={!canEdit}
+                inputPlaceholder="e.g. E11.9"
+              />
               <div className="form-field">
                 <label>Diagnosis date</label>
                 <GlassDateInput
@@ -420,17 +430,16 @@ const Tab5: React.FC = () => {
                   <option value="yes">Yes</option>
                 </select>
               </div>
-              <div className="form-field cc-modal__field-wide">
-                <label>Current treatment</label>
-                <textarea
-                  value={draft.currentTreatment}
-                  onChange={(e) =>
-                    updateDraft({ currentTreatment: e.target.value })
-                  }
-                  disabled={!canEdit}
-                  placeholder="Medications, lifestyle, monitoring…"
-                />
-              </div>
+              <StaffPresetField
+                className="cc-modal__field-wide"
+                label="Current treatment"
+                value={draft.currentTreatment}
+                options={CHRONIC_TREATMENT_PRESETS}
+                onChange={(v) => updateDraft({ currentTreatment: v })}
+                disabled={!canEdit}
+                multiline
+                inputPlaceholder="Medications, lifestyle, monitoring…"
+              />
             </div>
 
             <h3 className="cc-modal__section-title">Hospitalization history</h3>
@@ -458,36 +467,31 @@ const Tab5: React.FC = () => {
                       disabled={!canEdit}
                     />
                   </div>
-                  <div className="form-field cc-modal__field-wide">
-                    <label>Reason</label>
-                    <input
-                      value={h.reason}
-                      onChange={(e) =>
-                        updateHosp(index, { reason: e.target.value })
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <div className="form-field">
-                    <label>Facility</label>
-                    <input
-                      value={h.facility}
-                      onChange={(e) =>
-                        updateHosp(index, { facility: e.target.value })
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <div className="form-field">
-                    <label>Physician</label>
-                    <input
-                      value={h.physician}
-                      onChange={(e) =>
-                        updateHosp(index, { physician: e.target.value })
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
+                  <StaffPresetField
+                    className="cc-modal__field-wide"
+                    label="Reason"
+                    value={h.reason}
+                    options={HOSPITALIZATION_REASON_PRESETS}
+                    onChange={(v) => updateHosp(index, { reason: v })}
+                    disabled={!canEdit}
+                    inputPlaceholder="Admission reason"
+                  />
+                  <StaffPresetField
+                    label="Facility"
+                    value={h.facility}
+                    options={HOSPITALIZATION_FACILITY_PRESETS}
+                    onChange={(v) => updateHosp(index, { facility: v })}
+                    disabled={!canEdit}
+                    inputPlaceholder="Hospital or facility name"
+                  />
+                  <StaffPresetField
+                    label="Physician"
+                    value={h.physician}
+                    options={HOSPITALIZATION_PHYSICIAN_PRESETS}
+                    onChange={(v) => updateHosp(index, { physician: v })}
+                    disabled={!canEdit}
+                    inputPlaceholder="Attending or admitting physician"
+                  />
                 </div>
                 {canEdit && draft.hospitalizations.length > 0 && (
                   <button

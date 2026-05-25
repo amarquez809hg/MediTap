@@ -140,6 +140,12 @@
   min-height: 40px;
 }
 
+.lab-panel-modal .lab-modal-select {
+  font-size: 0.8125rem;
+  color: var(--meditap-text-muted, #666);
+  background: #f6fafb;
+}
+
 .lab-panel-modal .lab-modal-select-follow {
   margin-top: 6px;
 }

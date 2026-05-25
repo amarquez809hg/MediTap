@@ -598,7 +598,7 @@ const Tab7: React.FC = () => {
                       }
                     }}
                   >
-                    <option value="">— Select common panel —</option>
+                    <option value="">Quick pick from library…</option>
                     {LAB_PANEL_OPTIONS.map((p) => (
                       <option key={p} value={p}>
                         {p}
@@ -774,7 +774,7 @@ const Tab7: React.FC = () => {
                               }
                             }}
                           >
-                            <option value="">— Select analyte —</option>
+                            <option value="">Quick pick from library…</option>
                             {analyteChoices.map((a) => (
                               <option key={a.name} value={a.name}>
                                 {a.name}

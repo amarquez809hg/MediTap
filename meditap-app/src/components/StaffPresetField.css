@@ -1,0 +1,27 @@
+.staff-preset-field__picker {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-size: 0.8125rem;
+  color: var(--meditap-text-muted, #666);
+  border: 1px solid var(--meditap-border, #d8e2e8);
+  border-radius: var(--meditap-radius-sm, 8px);
+  background: #f6fafb;
+  cursor: pointer;
+}
+
+.staff-preset-field__picker:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.staff-preset-field__picker:focus {
+  outline: 2px solid rgba(23, 162, 184, 0.35);
+  outline-offset: 1px;
+}
+
+.staff-preset-field input,
+.staff-preset-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
