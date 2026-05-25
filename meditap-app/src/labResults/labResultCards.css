@@ -200,15 +200,4 @@
   margin-right: 10px;
 }
 
-.lab-no-results {
-  text-align: center;
-  padding: 24px;
-  color: var(--meditap-text-muted, #666);
-  border: 1px dashed var(--meditap-border);
-  border-radius: var(--meditap-radius, 12px);
-  background: var(--meditap-surface, #fff);
-}
-
-.lab-no-results p {
-  margin: 0;
-}
+/* Empty state: .lab-no-results in theme/meditap-shared.css */

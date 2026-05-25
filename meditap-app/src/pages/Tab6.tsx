@@ -296,13 +296,21 @@ const Tab6: React.FC = () => {
   return (
     <div className="incident-records-container">
       <header className="incident-records-header">
-        <h1>
-          <i className="fas fa-clipboard-list"></i> Incident Records
-        </h1>
+        <div className="incident-records-header__title-block">
+          <h1>
+            <i className="fas fa-clipboard-list"></i> Incident Records
+          </h1>
+          {!canEditIncidents && (
+            <p className="record-tab-readonly-hint">
+              You can review incident history here. Logging or changing incidents requires staff
+              sign-in (record editor role).
+            </p>
+          )}
+        </div>
         <div className="incident-records-header__actions">
           <button
             type="button"
-            className="add-incident-btn incident-records-header__action-btn"
+            className="book-btn incident-records-header__action-btn"
             onClick={handleLogNewIncident}
             disabled={!patientId && !loading}
           >
@@ -345,15 +353,16 @@ const Tab6: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="no-incidents">
+          <div className="record-tab-empty">
             <p>No incident records found for this patient.</p>
             <button
               type="button"
-              className="add-incident-btn large-add-btn"
+              className="book-btn record-tab-empty-cta"
               onClick={handleLogNewIncident}
               disabled={!patientId}
             >
-              Log first incident
+              <i className="fas fa-plus" aria-hidden />
+              Log New Incident
             </button>
           </div>
         )}

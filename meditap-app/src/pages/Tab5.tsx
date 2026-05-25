@@ -247,14 +247,22 @@ const Tab5: React.FC = () => {
   return (
     <div className="chronic-conditions-container">
       <header className="chronic-conditions-header">
-        <h1>
-          <i className="fas fa-notes-medical" aria-hidden /> Chronic Conditions &amp;
-          History
-        </h1>
+        <div className="chronic-conditions-header__title-block">
+          <h1>
+            <i className="fas fa-notes-medical" aria-hidden /> Chronic Conditions &amp;
+            History
+          </h1>
+          {!canEdit && (
+            <p className="record-tab-readonly-hint">
+              You can review your conditions here. Adding or changing records requires staff
+              sign-in (record editor role).
+            </p>
+          )}
+        </div>
         <div className="chronic-conditions-header__actions">
           <button
             type="button"
-            className="book-btn chronic-conditions-header__action-btn add-condition-btn"
+            className="book-btn chronic-conditions-header__action-btn"
             onClick={handleAddNewClick}
           >
             <i className="fas fa-plus" aria-hidden />
@@ -286,14 +294,15 @@ const Tab5: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="no-conditions">
+          <div className="record-tab-empty">
             <p>No chronic conditions recorded.</p>
             <button
               type="button"
-              className="book-btn large-add-btn chronic-conditions-header__action-btn tab5-first-add-btn"
+              className="book-btn record-tab-empty-cta"
               onClick={handleAddNewClick}
             >
-              Add First Condition
+              <i className="fas fa-plus" aria-hidden />
+              Add New Condition
             </button>
           </div>
         )}

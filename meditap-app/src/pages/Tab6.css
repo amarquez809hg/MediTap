@@ -21,7 +21,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px 16px;
   padding: 10px 0 25px 0;
   border-bottom: 2px solid var(--meditap-border);
@@ -47,6 +47,7 @@
   gap: 10px;
   flex-shrink: 0;
   margin-left: auto;
+  align-self: center;
 }
 
 .incident-records-header__action-btn {
@@ -123,24 +124,3 @@
   overflow-y: auto;
 }
 
-/* --- No Incidents State --- */
-.no-incidents {
-  text-align: center;
-  padding: 50px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  margin: 50px auto;
-  max-width: 600px;
-}
-
-.no-incidents p {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 25px;
-}
-
-.large-add-btn {
-  padding: 12px 25px;
-  font-size: 18px;
-}

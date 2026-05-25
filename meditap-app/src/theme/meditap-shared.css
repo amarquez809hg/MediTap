@@ -717,3 +717,56 @@ ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-title {
     transition: background-color 0.22s ease;
   }
 }
+
+/* ---- Shared clinical tab layout (Lab Results pattern) ---- */
+.record-tab-header__title-block,
+.lab-results-header__title-block,
+.schedule-header__title-block,
+.chronic-conditions-header__title-block,
+.incident-records-header__title-block {
+  flex: 1;
+  min-width: min(100%, 280px);
+}
+
+.record-tab-readonly-hint,
+.lab-results-readonly-hint {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: rgba(248, 255, 253, 0.82);
+  max-width: 42rem;
+  line-height: 1.4;
+}
+
+.schedule-header,
+.chronic-conditions-header,
+.incident-records-header,
+.lab-results-header {
+  align-items: flex-start;
+}
+
+.schedule-header__actions,
+.chronic-conditions-header__actions,
+.incident-records-header__actions,
+.lab-results-header__actions {
+  align-self: center;
+}
+
+.record-tab-empty,
+.lab-no-results {
+  text-align: center;
+  padding: 24px;
+  color: var(--meditap-text-muted, #666);
+  border: 1px dashed var(--meditap-border);
+  border-radius: var(--meditap-radius, 12px);
+  background: var(--meditap-surface, #fff);
+}
+
+.record-tab-empty p,
+.lab-no-results p {
+  margin: 0;
+}
+
+.record-tab-empty-cta,
+.lab-results-empty-cta {
+  margin-top: 16px;
+}

@@ -49,14 +49,6 @@
   color: var(--meditap-accent);
 }
 
-.lab-results-readonly-hint {
-  margin: 8px 0 0;
-  font-size: 0.9rem;
-  color: var(--meditap-text-muted, #8a939e);
-  max-width: 42rem;
-  line-height: 1.4;
-}
-
 .lab-results-header__actions {
   display: flex;
   flex-direction: row;
@@ -120,10 +112,6 @@
   gap: 12px;
   padding: 48px 16px;
   color: var(--meditap-text-muted, #888);
-}
-
-.lab-results-empty-cta {
-  margin-top: 16px;
 }
 
 .lab-panel-modal {

@@ -179,7 +179,15 @@ const Tab4: React.FC = () => {
   return (
     <div className="schedule-container">
       <header className="schedule-header">
-        <h1><i className="fas fa-calendar-check"></i> Upcoming Appointments</h1>
+        <div className="schedule-header__title-block">
+          <h1><i className="fas fa-calendar-check"></i> Upcoming Appointments</h1>
+          {!canEditAppointments && (
+            <p className="record-tab-readonly-hint">
+              You can review upcoming appointments here. Booking or changing appointments
+              requires staff sign-in (record editor role).
+            </p>
+          )}
+        </div>
         <div className="schedule-header__actions">
           <button
             type="button"
@@ -207,14 +215,15 @@ const Tab4: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="no-appointments">
+          <div className="record-tab-empty">
             <p>You have no upcoming appointments.</p>
             <button
               type="button"
-              className="book-btn large-book-btn"
+              className="book-btn record-tab-empty-cta"
               onClick={handleBookNewAppointment}
             >
-              Book Now
+              <i className="fas fa-plus" aria-hidden />
+              Book New Appointment
             </button>
           </div>
         )}

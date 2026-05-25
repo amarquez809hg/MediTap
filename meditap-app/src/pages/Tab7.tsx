@@ -407,7 +407,7 @@ const Tab7: React.FC = () => {
                 Lab Results
               </h1>
               {!canEditLabs && (
-                <p className="lab-results-readonly-hint">
+                <p className="record-tab-readonly-hint">
                   You can review your results here. Adding or changing panels requires staff
                   sign-in (record editor role).
                 </p>
@@ -453,11 +453,11 @@ const Tab7: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="lab-no-results">
+              <div className="record-tab-empty lab-no-results">
                 <p>No lab reports found in your record.</p>
                 <button
                   type="button"
-                  className="book-btn lab-results-empty-cta"
+                  className="book-btn record-tab-empty-cta lab-results-empty-cta"
                   onClick={handleAddLabResult}
                 >
                   <i className="fas fa-plus" aria-hidden />

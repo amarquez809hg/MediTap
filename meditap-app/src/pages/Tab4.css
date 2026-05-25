@@ -21,7 +21,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px 16px;
     padding: 10px 0 20px 0;
     border-bottom: 2px solid var(--meditap-border);
@@ -48,6 +48,7 @@
     gap: 10px;
     flex-shrink: 0;
     margin-left: auto;
+    align-self: center;
 }
 
 .schedule-header__action-btn {
