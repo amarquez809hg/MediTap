@@ -310,10 +310,303 @@ function parsePatientFields(text: string): Tab14PatientFields {
   return pickDefined(out as Record<string, string>);
 }
 
-const SECTION_END = /^(insurance|allergies|medications?|medication\s*list|chronic|conditions?|problem\s*list|hospital|admission|visit\s*history|demographics|patient\s*information)\b/i;
+const SECTION_END =
+  /^(insurance|allergies|medications?|medication\s*list|chronic|conditions?|problem\s*list|hospital|admission|visit\s*history|demographics|patient\s*information|vitals|results|procedures|immunizations|social\s*history|care\s*team)\b/i;
+
+/** Athena / EHR "Data Portability" exports (table of contents + columnar sections). */
+export function isAthenaPortabilityDocument(text: string): boolean {
+  return (
+    /data\s+portability\s+for\b/i.test(text) &&
+    (/table\s+of\s+contents/i.test(text) || /demographics\s+sex\s+/i.test(text))
+  );
+}
+
+function splitDoubleSpacedColumns(line: string): string[] {
+  return line
+    .trim()
+    .split(/\s{2,}/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function parseAthenaPatientFields(text: string): Tab14PatientFields {
+  const out: Tab14PatientFields = {};
+
+  const title = text.match(
+    /data\s+portability\s+for\s+([^\n]+?)(?:\s+table\s+of\s+contents|\n)/i
+  );
+  if (title) {
+    const split = splitPersonName(title[1].trim());
+    if (split.given) out.givenName = split.given;
+    if (split.family) out.familyName = split.family;
+  }
+
+  const sexDob = text.match(
+    /\bsex\s+(male|female)\b[^.\n]{0,80}?\bd\.?o\.?b\.?\s+(\d{1,2}\/\d{1,2}\/\d{4})/i
+  );
+  if (sexDob) {
+    out.sexAtBirth =
+      sexDob[1].charAt(0).toUpperCase() + sexDob[1].slice(1).toLowerCase();
+    const iso = tryParseDateToIso(sexDob[2]);
+    if (iso) out.dateOfBirth = iso;
+  }
+
+  const phoneEmail = text.match(
+    /\bphone\s+(\(\d{3}\)\s*[\d-]+)\s+email\s+([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
+  );
+  if (phoneEmail) {
+    out.phoneNumber = phoneEmail[1].replace(/\s+/g, ' ').trim();
+    out.email = phoneEmail[2];
+  }
+
+  const em = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if (em && !out.email) out.email = em[0];
+
+  const bt = normalizeBloodType(text);
+  if (bt) out.bloodType = bt;
+
+  return pickDefined(out as Record<string, string>);
+}
+
+const ALLERGY_REACTION_WORDS =
+  'Rash|Hives|Congestion|Itching|Swelling|Nausea|Vomiting|Anaphylaxis|Shortness of breath|Diarrhea|Wheezing';
+
+function parseAthenaAllergyPair(raw: string): Tab14AllergyRow | null {
+  const cleaned = raw.split(/\s+medications\b/i)[0].trim();
+  const reactionMatch = cleaned.match(
+    new RegExp(`^(.+?)\\s+(?:${ALLERGY_REACTION_WORDS})\\s*$`, 'i')
+  );
+  let name: string;
+  let reaction: string;
+  if (reactionMatch) {
+    name = reactionMatch[1].trim();
+    reaction = cleaned.slice(name.length).trim();
+  } else {
+    const parts = splitDoubleSpacedColumns(cleaned);
+    if (parts.length < 2) return null;
+    name = parts[0].replace(/^(allergen|reaction)\s*/i, '').trim();
+    reaction = parts.slice(1).join(' ').trim();
+  }
+  if (name.length < 2 || name.length > 120) return null;
+  if (/^(allergen|reaction|none|n\/a)$/i.test(name)) return null;
+  return {
+    allergyName: name,
+    allergyType: guessAllergyType(name),
+    allergyTypeOther: '',
+    severity: '',
+    reactionNotes: reaction,
+    lastObserved: '',
+  };
+}
+
+function parseAthenaAllergies(text: string): Tab14AllergyRow[] {
+  const rows: Tab14AllergyRow[] = [];
+  const header = text.match(/allergies\s+allergen\s+reaction\s+([^\n]+)/i);
+  if (header) {
+    const first = parseAthenaAllergyPair(header[1]);
+    if (first) rows.push(first);
+  }
+
+  const blockM = text.match(
+    /allergies\s+allergen\s+reaction[\s\S]*?\n([\s\S]*?)(?=\n\s*medications\s+medication\s+instructions\b|\bmedications\s+medication\s+instructions\b)/i
+  );
+  const block = blockM ? blockM[1] : '';
+  for (const line of block.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || /^(allergen|reaction)\b/i.test(trimmed)) continue;
+    if (/^medications\b/i.test(trimmed)) break;
+    const row = parseAthenaAllergyPair(trimmed);
+    if (row && !rows.some((r) => r.allergyName === row.allergyName)) rows.push(row);
+  }
+  return rows;
+}
+
+function parseAthenaMedicationLine(line: string): Tab14MedicationRow | null {
+  const trimmed = line.trim();
+  if (!/\d+\s*mg\b/i.test(trimmed)) return null;
+  const m = trimmed.match(
+    /^([A-Za-z][A-Za-z0-9\s\-/]*?)\s+(\d+(?:\.\d+)?\s*mg)\s+(.+)$/i
+  );
+  if (!m) return null;
+  const notes = m[3].trim();
+  const freqM = notes.match(
+    /\b(once\s+daily|twice\s+daily|three\s+times\s+daily|daily|as\s+needed|at\s+onset\s+of\s+migraine|before\s+breakfast)\b/i
+  );
+  return {
+    genericName: collapseWs(m[1]),
+    brandName: '',
+    dosage: m[2].trim(),
+    route: '',
+    frequency: freqM ? freqM[1] : '',
+    startDate: '',
+    endDate: '',
+    purpose: '',
+    prescribingPhysician: '',
+    notesMedication: notes,
+  };
+}
+
+function parseAthenaMedications(text: string): Tab14MedicationRow[] {
+  const rows: Tab14MedicationRow[] = [];
+  let inSection = false;
+
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (/medications\s+medication\s+instructions/i.test(trimmed)) {
+      inSection = true;
+      const rest = trimmed.replace(/^.*medication\s+instructions\s*/i, '').trim();
+      if (rest) {
+        const row = parseAthenaMedicationLine(rest);
+        if (row) rows.push(row);
+      }
+      continue;
+    }
+    if (!inSection) continue;
+    if (/^\s*vitals\b/i.test(trimmed)) break;
+    if (/^\s*social\s+history\b/i.test(trimmed)) break;
+    const row = parseAthenaMedicationLine(trimmed);
+    if (row) rows.push(row);
+  }
+  return rows;
+}
+
+function parseAthenaProblemLine(line: string): Tab14ChronicRow | null {
+  const trimmed = line.split(/\s+procedures\b/i)[0].trim();
+  if (!trimmed || /^(condition|status)\b/i.test(trimmed)) return null;
+  const m =
+    trimmed.match(/^(.+?)\s{2,}(Active|Controlled|Resolved|Inactive)\s*$/i) ||
+    trimmed.match(/^(.+?)\s+(Active|Controlled|Resolved|Inactive)\s*$/i);
+  if (!m) return null;
+  const name = m[1].trim();
+  if (name.length < 3) return null;
+  return {
+    conditionName: name.slice(0, 200),
+    icdCode: '',
+    diagnosisDate: '',
+    severity: '',
+    prexisting: /^active$/i.test(m[2]) ? 'Yes' : '',
+    notesChronicConditions: `Status: ${m[2]}`,
+  };
+}
+
+function parseAthenaChronicConditions(text: string): Tab14ChronicRow[] {
+  const rows: Tab14ChronicRow[] = [];
+  let inSection = false;
+
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (/problems\s+condition\s+status/i.test(trimmed)) {
+      inSection = true;
+      const rest = trimmed.replace(/^.*status\s+/i, '').trim();
+      if (rest) {
+        const row = parseAthenaProblemLine(rest);
+        if (row) rows.push(row);
+      }
+      continue;
+    }
+    if (!inSection) continue;
+    if (/procedures\s+date\s+procedure/i.test(trimmed)) break;
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}\s+\S+\s+Completed/i.test(trimmed)) break;
+    const row = parseAthenaProblemLine(trimmed);
+    if (row) rows.push(row);
+  }
+  return rows;
+}
+
+function parseAthenaHospital(text: string): Tab14HospitalFields {
+  const out: Tab14HospitalFields = {};
+
+  const careTeam = text.match(
+    /primary\s+care\s+physician\s+((?:Dr\.?\s+)?[A-Za-z][^,\n]+(?:,\s*MD)?)\s{2,}([^\n]+)/i
+  );
+  if (careTeam) {
+    out.attendingPhysician = collapseWs(careTeam[1]).slice(0, 120);
+    out.facilityName = collapseWs(careTeam[2]).slice(0, 200);
+  }
+
+  const encounters = [
+    ...text.matchAll(
+      /(\d{1,2}\/\d{1,2}\/\d{4})\s*[–—-]\s*([^\n]+?)(?=\s+\d{1,2}\/\d{1,2}\/\d{4}\s*[–—-]|$)/g
+    ),
+  ];
+  if (encounters.length) {
+    const latest = encounters[encounters.length - 1];
+    const iso = tryParseDateToIso(latest[1]);
+    if (iso) out.visitDate = iso;
+    const reason = latest[2].trim();
+    out.reason = reason.slice(0, 300);
+    if (/wellness|annual\s+physical/i.test(reason)) out.visitType = 'Annual wellness';
+    else if (/follow-?up/i.test(reason)) out.visitType = 'Follow-up';
+    else out.visitType = 'Outpatient visit';
+  }
+
+  return pickDefined(out as Record<string, string>);
+}
+
+function parseAthenaPortabilityDocument(text: string): Tab14IntakeParseResult {
+  return {
+    patientFields: parseAthenaPatientFields(text),
+    noKnownDrugAllergies: false,
+    insurances: [],
+    allergies: parseAthenaAllergies(text),
+    medications: parseAthenaMedications(text),
+    chronicConditions: parseAthenaChronicConditions(text),
+    hospitalVisit: parseAthenaHospital(text),
+  };
+}
+
+function isPlausibleMedicationLine(line: string): boolean {
+  const raw = line.trim();
+  if (raw.length < 3) return false;
+  if (/^(vitals|results|observation|created\s+date|glucose|cholesterol|triglycerides|social\s+history)\b/i.test(raw)) {
+    return false;
+  }
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}\s/.test(raw) && !/\d+\s*mg\b/i.test(raw)) return false;
+  if (/\bmg\/dL\b/i.test(raw) || /\bcompleted\b/i.test(raw) && /\bnormal\b/i.test(raw)) return false;
+  return (
+    /\d+\s*mg\b/i.test(raw) ||
+    (/^(?:medication|drug|rx)\s*[:#]/i.test(raw) && raw.length > 8)
+  );
+}
+
+function mergeTab14ParseResults(
+  primary: Tab14IntakeParseResult,
+  fallback: Tab14IntakeParseResult
+): Tab14IntakeParseResult {
+  const patientFields = {
+    ...fallback.patientFields,
+    ...primary.patientFields,
+  };
+
+  const medications =
+    primary.medications.length > 0
+      ? primary.medications
+      : fallback.medications.filter((_, i, arr) => {
+          const line = arr[i]?.genericName ?? '';
+          return isPlausibleMedicationLine(line);
+        });
+
+  return {
+    patientFields,
+    noKnownDrugAllergies: primary.noKnownDrugAllergies || fallback.noKnownDrugAllergies,
+    insurances: primary.insurances.length ? primary.insurances : fallback.insurances,
+    allergies: primary.allergies.length ? primary.allergies : fallback.allergies,
+    medications,
+    chronicConditions: primary.chronicConditions.length
+      ? primary.chronicConditions
+      : fallback.chronicConditions,
+    hospitalVisit: {
+      ...fallback.hospitalVisit,
+      ...primary.hospitalVisit,
+    },
+  };
+}
 
 function sliceAfterHeader(lines: string[], headerRe: RegExp): string[] {
-  const idx = lines.findIndex((l) => headerRe.test(l));
+  let idx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (headerRe.test(lines[i])) idx = i;
+  }
   if (idx < 0) return [];
   const out: string[] = [];
   for (let i = idx + 1; i < lines.length; i++) {
@@ -372,6 +665,7 @@ function parseMedicationRows(sectionLines: string[]): Tab14MedicationRow[] {
     const m = raw.match(medLine);
     if (m) raw = (m[1] || m[2] || '').trim();
     if (raw.length < 3) continue;
+    if (!isPlausibleMedicationLine(raw)) continue;
     const dose = raw.match(/\b(\d+(?:\.\d+)?\s*(?:mg|mcg|g))\b/i);
     const routeM = raw.match(/\b(PO|ORAL|IV|IM|SUBQ|TOPICAL|INHALATION)\b/i);
     const freqM = raw.match(
@@ -499,10 +793,13 @@ function parseHospital(text: string): Tab14HospitalFields {
     if (iso) out.dischargeDate = iso;
   }
   const att = labelValue(text, [
-    /(?:attending|provider|physician)\s*[:#]?\s*([^\n]+)/i,
-    /\b(Dr\.?\s+[A-Za-z][^\n]{2,80})\b/,
+    /(?:attending|provider)\s*[:#]?\s*((?:Dr\.?\s+)?[A-Za-z][^,\n]{2,60}(?:,\s*MD)?)/i,
   ]);
   if (att) out.attendingPhysician = att.trim().slice(0, 120);
+  if (!out.attendingPhysician) {
+    const drOnly = text.match(/\b(Dr\.?\s+[A-Za-z][A-Za-z\s.'-]{1,40},\s*MD)\b/);
+    if (drOnly) out.attendingPhysician = drOnly[1].trim();
+  }
 
   const vt = labelValue(text, [/visit\s*type\s*[:#]?\s*([^\n]+)/i]);
   if (vt) out.visitType = vt.trim().slice(0, 120);
@@ -513,11 +810,7 @@ function parseHospital(text: string): Tab14HospitalFields {
   return pickDefined(out as Record<string, string>);
 }
 
-/**
- * Parse free-text (from PDF text layer or OCR) into Tab14-shaped structures.
- */
-export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
-  const text = normalizeExtractedDocumentText(raw.replace(/\r\n/g, '\n'));
+function parseGenericTab14Document(text: string): Tab14IntakeParseResult {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
@@ -560,4 +853,19 @@ export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
     chronicConditions,
     hospitalVisit: parseHospital(text),
   };
+}
+
+/**
+ * Parse free-text (from PDF text layer or OCR) into Tab14-shaped structures.
+ */
+export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
+  const rawText = raw.replace(/\r\n/g, '\n');
+  const text = normalizeExtractedDocumentText(rawText);
+  const generic = parseGenericTab14Document(text);
+  if (!isAthenaPortabilityDocument(rawText) && !isAthenaPortabilityDocument(text)) {
+    return generic;
+  }
+  // Athena exports use multi-space columns; parse before normalize collapses spacing.
+  const athena = parseAthenaPortabilityDocument(rawText);
+  return mergeTab14ParseResults(athena, generic);
 }

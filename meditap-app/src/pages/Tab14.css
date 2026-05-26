@@ -130,6 +130,27 @@ ion-page.ct-page.ct-tab14 ion-content {
   border-left-color: var(--meditap-accent);
 }
 
+/* Dark mode: sidebar + section nav (match dashboard profile-sidebar) */
+.ion-palette-dark .tab14-sidebar {
+  background: var(--meditap-surface-muted);
+  border-right-color: var(--meditap-border);
+}
+
+.ion-palette-dark .tab14-nav-item {
+  color: var(--meditap-text-secondary);
+}
+
+.ion-palette-dark .tab14-nav-item:hover {
+  background: rgba(61, 196, 217, 0.12);
+  color: var(--meditap-text);
+}
+
+.ion-palette-dark .tab14-nav-item.active {
+  background: rgba(61, 196, 217, 0.18);
+  color: var(--meditap-accent);
+  border-left-color: var(--meditap-accent);
+}
+
 .tab14-main-panel {
   flex: 1;
   min-width: 0;

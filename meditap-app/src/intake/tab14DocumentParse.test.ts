@@ -94,4 +94,45 @@ Blood Type: O+
     expect(r.patientFields.dateOfBirth).toBe('1970-01-01');
     expect(r.patientFields.bloodType).toBe('O+');
   });
+
+  it('parses Athena-style data portability PDF text (Riley Moore sample)', () => {
+    const text = `Data Portability for Riley Moore Table of Contents Demographics
+Allergies
+Medications
+Vitals
+Notes Demographics Sex  Male  DOB  03/22/1997
+Phone  (214) 555-0182  Email  riley.moore97@example.com
+Primary Care Physician  Dr. Marcus Hale, MD  Lakeside Family Medicine
+Problems Condition  Status Essential Hypertension  Active
+GERD  Active
+Allergies Allergen  Reaction Penicillin  Rash
+Pollen Extracts  Congestion Medications Medication  Instructions Lisinopril 10 mg  Take 1 tablet daily
+Omeprazole 20 mg  Take 1 capsule before breakfast
+Cetirizine 10 mg  Take daily as needed
+Sumatriptan 50 mg  Take at onset of migraine
+Vitals Date  BP  HR  Weight  BMI
+Past Encounters / Notes 01/12/2026 – Follow-up visit for hypertension management. 04/18/2026 – Patient reports improved migraine frequency.`;
+
+    const r = parseTab14IntakeDocument(text);
+    expect(r.patientFields.givenName).toBe('Riley');
+    expect(r.patientFields.familyName).toBe('Moore');
+    expect(r.patientFields.dateOfBirth).toBe('1997-03-22');
+    expect(r.patientFields.email).toContain('riley.moore97');
+    expect(r.patientFields.sexAtBirth).toBe('Male');
+
+    expect(r.allergies.length).toBe(2);
+    expect(r.allergies.some((a) => /penicillin/i.test(a.allergyName))).toBe(true);
+    expect(r.allergies.some((a) => /pollen/i.test(a.allergyName))).toBe(true);
+
+    expect(r.medications.length).toBe(4);
+    expect(r.medications[0].genericName).toMatch(/lisinopril/i);
+    expect(r.medications[0].dosage).toMatch(/10\s*mg/i);
+
+    expect(r.chronicConditions.length).toBeGreaterThanOrEqual(2);
+    expect(r.chronicConditions.some((c) => /hypertension/i.test(c.conditionName))).toBe(true);
+
+    expect(r.hospitalVisit.attendingPhysician).toMatch(/Marcus Hale/i);
+    expect(r.hospitalVisit.facilityName).toMatch(/Lakeside/i);
+    expect(r.hospitalVisit.visitDate).toBe('2026-04-18');
+  });
 });
