@@ -1272,6 +1272,224 @@ export type Tab14SaveInput = {
   noAllergies: boolean;
 };
 
+export type Tab14LoadResult = {
+  hasPatient: boolean;
+  patient: Tab14SavePatient;
+  insurances: Tab14SaveInsurance[];
+  allergies: Tab14SaveAllergy[];
+  medications: Tab14SaveMedication[];
+  chronicConditions: Tab14SaveChronic[];
+  hospitalVisit: Tab14SaveHospital;
+  noAllergies: boolean;
+};
+
+function dashToEmpty(v: string | null | undefined): string {
+  if (!v || v === '—' || v === 'N/A') return '';
+  return v;
+}
+
+function isoDateForInput(isoLike?: string | null): string {
+  const d = formatDate(isoLike);
+  return d === 'N/A' ? '' : d;
+}
+
+function allergyTypeFromLabel(typeLabel: string): {
+  allergyType: string;
+  allergyTypeOther: string;
+} {
+  const t = (typeLabel || '').trim();
+  if (!t || t === '—') return { allergyType: '', allergyTypeOther: '' };
+  const otherM = t.match(/^Other(?:\s*\((.+)\))?$/i);
+  if (otherM) {
+    return { allergyType: 'Other', allergyTypeOther: (otherM[1] || '').trim() };
+  }
+  return { allergyType: t, allergyTypeOther: '' };
+}
+
+/** Load Tab14 intake form state from the API for the signed-in user. */
+export async function loadTab14FromBackend(
+  username: string | null
+): Promise<Tab14LoadResult> {
+  const emptyHospital: Tab14SaveHospital = {
+    facilityName: '',
+    visitType: '',
+    reason: '',
+    visitDate: '',
+    dischargeDate: '',
+    attendingPhysician: '',
+    reportId: '',
+  };
+  const empty: Tab14LoadResult = {
+    hasPatient: false,
+    patient: {
+      givenName: '',
+      familyName: '',
+      dateOfBirth: '',
+      bloodType: '',
+      email: '',
+      phoneNumber: '',
+      sexAtBirth: '',
+    },
+    insurances: [],
+    allergies: [],
+    medications: [],
+    chronicConditions: [],
+    hospitalVisit: emptyHospital,
+    noAllergies: false,
+  };
+
+  const patients = await fetchAllPages<PatientApi>('/api/patients/');
+  const current = pickCurrentPatient(patients, username);
+  if (!current) return empty;
+
+  const pid = current.patient_id;
+  const [
+    allergyLinks,
+    medLinks,
+    insLinks,
+    chronicLinks,
+    incidents,
+    catalogsAllergies,
+    catalogsMeds,
+    catalogsDiseases,
+    policies,
+    providers,
+    hospitals,
+  ] = await Promise.all([
+    fetchAllPages<PatientAllergyApi>('/api/patient-allergies/'),
+    fetchAllPages<PatientMedicationApi>('/api/patient-medications/'),
+    fetchAllPages<PatientInsuranceApi>('/api/patient-insurances/'),
+    fetchAllPages<PatientChronicDiseaseApi>('/api/patient-chronic-diseases/'),
+    fetchAllPages<IncidentApi>('/api/incidents/'),
+    fetchAllPages<AllergyCatalogApi>('/api/allergy-catalog/'),
+    fetchAllPages<MedicationCatalogApi>('/api/medication-catalog/'),
+    fetchAllPages<ChronicDiseaseCatalogApi>('/api/chronic-disease-catalog/'),
+    fetchAllPages<InsurancePolicyApi>('/api/insurance-policies/'),
+    fetchAllPages<InsuranceProviderApi>('/api/insurance-providers/'),
+    fetchAllPages<HospitalApi>('/api/hospitals/'),
+  ]);
+
+  const allergyById = new Map(catalogsAllergies.map((a) => [a.allergy_id, a]));
+  const medById = new Map(catalogsMeds.map((m) => [m.medication_id, m]));
+  const chronicById = new Map(catalogsDiseases.map((d) => [d.disease_id, d]));
+  const policyById = new Map(policies.map((p) => [p.policy_id, p]));
+  const providerById = new Map(providers.map((p) => [p.provider_id, p]));
+  const hospitalById = new Map(hospitals.map((h) => [h.hospital_id, h]));
+
+  const allergies: Tab14SaveAllergy[] = allergyLinks
+    .filter((a) => a.patient === pid)
+    .map((row) => {
+      const cat = allergyById.get(row.allergy);
+      const parsed = parseAllergyNotes(row.reaction_notes);
+      const { allergyType, allergyTypeOther } = allergyTypeFromLabel(parsed.typeLabel);
+      return {
+        allergyName: dashToEmpty(cat?.name),
+        allergyType,
+        allergyTypeOther,
+        severity: dashToEmpty(row.severity),
+        reactionNotes: dashToEmpty(parsed.reaction),
+        lastObserved: dashToEmpty(parsed.lastObserved),
+      };
+    })
+    .filter((a) => a.allergyName);
+
+  const medications: Tab14SaveMedication[] = medLinks
+    .filter((m) => m.patient === pid)
+    .map((row) => {
+      const cat = medById.get(row.medication);
+      const extra = parseMedicationNotes(row.dosing_instructions, row.notes);
+      const notesOnly = (row.notes || '')
+        .replace(/Prescriber:\s*[^\n]+/gi, '')
+        .trim();
+      return {
+        genericName: dashToEmpty(cat?.generic_name),
+        brandName: dashToEmpty(cat?.brand_name),
+        dosage: dashToEmpty(row.dosage),
+        route: dashToEmpty(row.route),
+        frequency: dashToEmpty(row.frequency),
+        startDate: isoDateForInput(row.start_date),
+        endDate: isoDateForInput(row.end_date),
+        purpose: dashToEmpty(extra.purpose),
+        prescribingPhysician: dashToEmpty(extra.prescriber),
+        notesMedication: notesOnly,
+      };
+    })
+    .filter((m) => m.genericName);
+
+  const insurances: Tab14SaveInsurance[] = insLinks
+    .filter((i) => i.patient === pid)
+    .map((row) => {
+      const pol = policyById.get(row.policy);
+      const prov = pol ? providerById.get(pol.provider) : undefined;
+      const pg = parsePlanGroup(pol?.plan_name);
+      return {
+        providerName: dashToEmpty(prov?.name),
+        policyNumber: dashToEmpty(pol?.policy_number),
+        planName: dashToEmpty(pg.plan),
+        memberID: dashToEmpty(row.member_id),
+        groupNumber: dashToEmpty(pg.group),
+        startDate: isoDateForInput(row.start_date),
+        endDate: isoDateForInput(row.end_date),
+      };
+    })
+    .filter((i) => i.providerName || i.policyNumber);
+
+  const chronicConditions: Tab14SaveChronic[] = chronicLinks
+    .filter((c) => c.patient === pid)
+    .map((row) => {
+      const disease = chronicById.get(row.disease);
+      return {
+        conditionName: dashToEmpty(disease?.name),
+        icdCode: dashToEmpty(disease?.icd10_code),
+        diagnosisDate: isoDateForInput(row.diagnosis_date),
+        severity: dashToEmpty(row.severity),
+        prexisting: row.pre_existing ? 'Yes' : 'No',
+        notesChronicConditions: dashToEmpty(row.notes),
+      };
+    })
+    .filter((c) => c.conditionName);
+
+  const latest = incidents
+    .filter((i) => i.patient === pid)
+    .sort((a, b) => +new Date(b.occurred_at) - +new Date(a.occurred_at))[0];
+
+  let hospitalVisit = emptyHospital;
+  if (latest) {
+    const h = hospitalById.get(latest.hospital);
+    const notes = latest.clinical_notes || '';
+    const discM = notes.match(/Discharge:\s*([0-9-]+)/i);
+    const attM = notes.match(/Attending:\s*([^\n]+)/i);
+    hospitalVisit = {
+      facilityName: dashToEmpty(h?.name),
+      visitType: dashToEmpty(latest.incident_type),
+      reason: dashToEmpty(latest.summary),
+      visitDate: isoDateForInput(latest.occurred_at),
+      dischargeDate: discM?.[1]?.trim() || '',
+      attendingPhysician: attM?.[1]?.trim() || '',
+      reportId: dashToEmpty(latest.diagnosis_code),
+    };
+  }
+
+  return {
+    hasPatient: true,
+    patient: {
+      givenName: current.given_name || '',
+      familyName: current.family_name || '',
+      dateOfBirth: isoDateForInput(current.date_of_birth),
+      bloodType: dashToEmpty(current.blood_type),
+      email: current.email || '',
+      phoneNumber: current.phone || '',
+      sexAtBirth: current.sex_at_birth || '',
+    },
+    insurances,
+    allergies,
+    medications,
+    chronicConditions,
+    hospitalVisit,
+    noAllergies: allergies.length === 0,
+  };
+}
+
 async function ensureAllergyCatalog(name: string): Promise<string> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error('Allergy name is required.');

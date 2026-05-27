@@ -76,6 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     return subscribeSessionExpired(() => {
       clearMediTapWorkflowLocalState();
+      try {
+        sessionStorage.removeItem('meditap_last_username');
+      } catch {
+        /* ignore */
+      }
       clearStoredTokens();
       setIsAuthenticated(false);
       setUsername(null);
@@ -156,7 +161,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error(detail);
         }
         const data = (await r.json()) as { access: string; refresh: string };
-        clearMediTapWorkflowLocalState();
+        const nextUser = user.trim().toLowerCase();
+        const prevUser = sessionStorage.getItem('meditap_last_username');
+        if (!prevUser || prevUser !== nextUser) {
+          clearMediTapWorkflowLocalState();
+        }
+        sessionStorage.setItem('meditap_last_username', nextUser);
         setStoredTokens(data.access, data.refresh);
         setSessionExpired(false);
         setIsAuthenticated(true);
@@ -183,6 +193,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(() => {
     clearMediTapWorkflowLocalState();
+    try {
+      sessionStorage.removeItem('meditap_last_username');
+    } catch {
+      /* ignore */
+    }
     clearStoredTokens();
     setIsAuthenticated(false);
     setUsername(null);

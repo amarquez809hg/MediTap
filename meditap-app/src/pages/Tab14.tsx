@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Tab14.css';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
@@ -13,7 +13,12 @@ import {
     setMeditapIntakeElevationToken,
 } from '../auth/staffElevationStorage';
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
-import { requestPatientIntakeStaffElevation, saveTab14ToBackend } from '../api';
+import {
+    loadTab14FromBackend,
+    requestPatientIntakeStaffElevation,
+    saveTab14ToBackend,
+    type Tab14LoadResult,
+} from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
 import {
     augmentPdfTextWithFirstPageOcr,
@@ -262,7 +267,7 @@ const ALLERGY_SEVERITY_OPTIONS = [
 ] as const;
 
 const Tab14: React.FC = () => {
-    const { username, hasRealmRole } = useAuth();
+    const { username, hasRealmRole, authReady } = useAuth();
     const recordEditorRole = getMeditapRecordEditorRole();
     const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
@@ -322,32 +327,56 @@ const Tab14: React.FC = () => {
     const [noAllergies, setNoAllergies] = useState(false);
     const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
     const [uploadParsing, setUploadParsing] = useState(false);
+    const [loadingIntake, setLoadingIntake] = useState(true);
 
-    // local data
-    const storedPatientInfo = JSON.parse(localStorage.getItem('patientInfo') || 'null'); 
-    const storedInsurances = JSON.parse(localStorage.getItem('insurances') || 'null');
-    const storedAllergiesRaw = JSON.parse(localStorage.getItem('allergies') || 'null');
-    const storedMedications = JSON.parse(localStorage.getItem('medications') || 'null');
-    const storedChronicConditions = JSON.parse(localStorage.getItem('chronicConditions') || 'null');
-    const storedHospitalVisit = JSON.parse(localStorage.getItem('hospitalVisit') || 'null');
-    
-    const [patientInfo, setPatientInfo] = 
-        useState<PatientInfo>(storedPatientInfo && Object.keys(storedPatientInfo).length > 0 ? storedPatientInfo : defaultPatientInfo);
-    const [insurances, setInsurances] = 
-        useState<Insurance[]>(storedInsurances && storedInsurances.length > 0 ? storedInsurances : [defaultInsurance]);
-    const [allergies, setAllergies] = useState<Allergy[]>(() =>
-        mapStoredAllergies(storedAllergiesRaw)
-    );
-    const [medications, setMedications] = 
-        useState<Medication[]>(storedMedications && storedMedications.length > 0 ? storedMedications : [defaultMedication]);
-    const [chronicConditions, setChronicConditions] = 
-        useState<ChronicCondition[]>(storedChronicConditions && storedChronicConditions.length > 0 ? storedChronicConditions : [defaultChronicCondition]);
-    const [hospitalVisit, setHospitalVisit] =
-        useState<HospitalVisit>(
-            storedHospitalVisit && Object.keys(storedHospitalVisit).length > 0
-                ? storedHospitalVisit
+    const intakeHydratedRef = useRef(false);
+
+    const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
+    const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
+    const [allergies, setAllergies] = useState<Allergy[]>([defaultAllergy]);
+    const [medications, setMedications] = useState<Medication[]>([defaultMedication]);
+    const [chronicConditions, setChronicConditions] = useState<ChronicCondition[]>([
+        defaultChronicCondition,
+    ]);
+    const [hospitalVisit, setHospitalVisit] = useState<HospitalVisit>(defaultHospitalVisit);
+
+    const applyTab14Bundle = (bundle: Tab14LoadResult) => {
+        if (!bundle.hasPatient) return;
+        setPatientInfo(bundle.patient);
+        setInsurances(
+            bundle.insurances.length > 0 ? bundle.insurances : [defaultInsurance]
+        );
+        setAllergies(
+            bundle.allergies.length > 0
+                ? bundle.allergies.map((row) => ({
+                      ...defaultAllergy,
+                      ...row,
+                      allergyTypeOther: row.allergyTypeOther ?? '',
+                  }))
+                : [defaultAllergy]
+        );
+        setMedications(
+            bundle.medications.length > 0 ? bundle.medications : [defaultMedication]
+        );
+        setChronicConditions(
+            bundle.chronicConditions.length > 0
+                ? bundle.chronicConditions
+                : [defaultChronicCondition]
+        );
+        setHospitalVisit(
+            Object.values(bundle.hospitalVisit).some((v) => String(v).trim())
+                ? bundle.hospitalVisit
                 : defaultHospitalVisit
         );
+        setNoAllergies(bundle.noAllergies);
+
+        localStorage.setItem('patientInfo', JSON.stringify(bundle.patient));
+        localStorage.setItem('insurances', JSON.stringify(bundle.insurances));
+        localStorage.setItem('allergies', JSON.stringify(bundle.allergies));
+        localStorage.setItem('medications', JSON.stringify(bundle.medications));
+        localStorage.setItem('chronicConditions', JSON.stringify(bundle.chronicConditions));
+        localStorage.setItem('hospitalVisit', JSON.stringify(bundle.hospitalVisit));
+    };
 
     useEffect(() => {
         const first = String(patientInfo.givenName ?? '').trim();
@@ -598,47 +627,65 @@ const Tab14: React.FC = () => {
         setBackendError(null);
     };
 
-    // page refreshing (effects)
     useEffect(() => {
-        const savedPatientInfo = localStorage.getItem("patientInfo");
-        const savedAllergies = localStorage.getItem("allergies");
-        const savedMedications = localStorage.getItem("medications");
-        const savedInsurance = localStorage.getItem("insurances");
-        const savedChronicC = localStorage.getItem("chronicConditions");
-      
-        if (savedPatientInfo) setPatientInfo(JSON.parse(savedPatientInfo));
-        if (savedAllergies) setAllergies(mapStoredAllergies(JSON.parse(savedAllergies)));
-        if (savedMedications) setMedications(JSON.parse(savedMedications));
-        if (savedInsurance) setInsurances(JSON.parse(savedInsurance));
-        if (savedChronicC) setChronicConditions(JSON.parse(savedChronicC));
-        const hv = localStorage.getItem('hospitalVisit');
-        if (hv) setHospitalVisit(JSON.parse(hv));
-
-        setErrors({});
-        setSaveErrorMessage(false); 
-    }, []);
+        if (!authReady) return;
+        let cancelled = false;
+        (async () => {
+            setLoadingIntake(true);
+            setBackendError(null);
+            try {
+                const bundle = await loadTab14FromBackend(username);
+                if (cancelled) return;
+                if (bundle.hasPatient) {
+                    applyTab14Bundle(bundle);
+                }
+            } catch (e) {
+                if (!cancelled) {
+                    setBackendError(
+                        e instanceof Error
+                            ? e.message
+                            : 'Could not load your saved patient record.'
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    intakeHydratedRef.current = true;
+                    setLoadingIntake(false);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [authReady, username, elevationNonce]);
 
     useEffect(() => {
-        localStorage.setItem("patientInfo", JSON.stringify(patientInfo));
+        if (!intakeHydratedRef.current) return;
+        localStorage.setItem('patientInfo', JSON.stringify(patientInfo));
     }, [patientInfo]);
-      
+
     useEffect(() => {
-        localStorage.setItem("allergies", JSON.stringify(allergies));
+        if (!intakeHydratedRef.current) return;
+        localStorage.setItem('allergies', JSON.stringify(allergies));
     }, [allergies]);
-      
+
     useEffect(() => {
-        localStorage.setItem("medications", JSON.stringify(medications));
+        if (!intakeHydratedRef.current) return;
+        localStorage.setItem('medications', JSON.stringify(medications));
     }, [medications]);
-      
+
     useEffect(() => {
-        localStorage.setItem("insurances", JSON.stringify(insurances));
+        if (!intakeHydratedRef.current) return;
+        localStorage.setItem('insurances', JSON.stringify(insurances));
     }, [insurances]);
 
     useEffect(() => {
-        localStorage.setItem("chronicConditions", JSON.stringify(chronicConditions));
-    }, [chronicConditions]); 
+        if (!intakeHydratedRef.current) return;
+        localStorage.setItem('chronicConditions', JSON.stringify(chronicConditions));
+    }, [chronicConditions]);
 
     useEffect(() => {
+        if (!intakeHydratedRef.current) return;
         localStorage.setItem('hospitalVisit', JSON.stringify(hospitalVisit));
     }, [hospitalVisit]);
 
@@ -695,6 +742,11 @@ const Tab14: React.FC = () => {
                                 </nav>
                             </aside>
                             <div className="tab14-main-panel">
+                                {loadingIntake && (
+                                    <p className="tab14-loading-hint" role="status">
+                                        Loading your saved patient record…
+                                    </p>
+                                )}
                                 {staffElevationActive && (
                                     <div className="tab14-staff-elevation-banner" role="status">
                                         <p>

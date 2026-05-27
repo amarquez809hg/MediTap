@@ -17,6 +17,16 @@ ion-page.ct-page.ct-tab14 ion-content {
   flex-wrap: wrap;
 }
 
+.tab14-loading-hint {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(23, 162, 184, 0.12);
+  border: 1px solid rgba(23, 162, 184, 0.28);
+  color: var(--meditap-text-secondary, #a8b0bc);
+  font-size: 0.9rem;
+}
+
 .tab14-header-actions {
   display: flex;
   flex-wrap: wrap;
