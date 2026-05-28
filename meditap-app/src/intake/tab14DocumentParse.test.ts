@@ -1,5 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parseTab14IntakeDocument, tryParseDateToIso } from './tab14DocumentParse';
+
+const MEDITAP3_FIXTURE = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../tmp-meditap3-extract.txt'
+);
 
 describe('tryParseDateToIso', () => {
   it('parses ISO and US slash dates', () => {
@@ -134,5 +142,41 @@ Past Encounters / Notes 01/12/2026 – Follow-up visit for hypertension manageme
     expect(r.hospitalVisit.attendingPhysician).toMatch(/Marcus Hale/i);
     expect(r.hospitalVisit.facilityName).toMatch(/Lakeside/i);
     expect(r.hospitalVisit.visitDate).toBe('2026-04-18');
+  });
+
+  it('parses MediTap demo labeled PDF text (Riley Moore Meditap-3 sample)', () => {
+    const text = readFileSync(MEDITAP3_FIXTURE, 'utf8');
+    const r = parseTab14IntakeDocument(text);
+    expect(r.patientFields.givenName).toBe('Riley');
+    expect(r.patientFields.familyName).toBe('Moore');
+    expect(r.patientFields.dateOfBirth).toBe('1997-03-22');
+    expect(r.patientFields.email).toContain('riley.moore97');
+    expect(r.patientFields.bloodType).toBe('O+');
+    expect(r.patientFields.sexAtBirth).toBe('Male');
+
+    expect(r.allergies.length).toBe(2);
+    expect(r.allergies[0].allergyName).toMatch(/penicillin/i);
+    expect(r.allergies[0].severity).toMatch(/moderate/i);
+
+    expect(r.insurances.length).toBeGreaterThanOrEqual(1);
+    expect(r.insurances[0].providerName).toBe('Blue Cross Blue Shield of Texas');
+    expect(r.insurances[0].policyNumber).toBe('TX-BCBS-44281795');
+    expect(r.insurances[0].startDate).toBe('2025-01-01');
+    expect(r.insurances[0].endDate).toBe('2026-12-31');
+
+    expect(r.hospitalVisit.facilityName).toBe('Lakeside Family Medicine');
+    expect(r.hospitalVisit.visitType).toMatch(/outpatient/i);
+    expect(r.hospitalVisit.visitDate).toBe('2026-04-18');
+    expect(r.hospitalVisit.attendingPhysician).toMatch(/Marcus Hale/i);
+    expect(r.hospitalVisit.reportId).toBe('LH-2026-0418-RM');
+
+    expect(r.medications.length).toBeGreaterThanOrEqual(1);
+    expect(r.medications[0].genericName).toMatch(/lisinopril/i);
+
+    expect(r.chronicConditions.length).toBeGreaterThanOrEqual(4);
+    expect(r.chronicConditions[0].conditionName).toMatch(/essential hypertension/i);
+    expect(r.chronicConditions[0].icdCode).toBe('I10');
+    expect(r.chronicConditions[0].diagnosisDate).toBe('2025-01-12');
+    expect(r.chronicConditions[0].prexisting).toBe('Yes');
   });
 });

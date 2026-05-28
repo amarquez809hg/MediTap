@@ -24,7 +24,6 @@ import {
     augmentPdfTextWithFirstPageOcr,
     extractTextFromPdfContentItems,
     fileToDataUrl,
-    normalizeExtractedDocumentText,
     ocrImageDataUrl,
 } from '../intake/documentTextExtraction';
 import {
@@ -423,7 +422,8 @@ const Tab14: React.FC = () => {
                 fullText = await ocrImageDataUrl(dataUrl);
             }
 
-            fullText = normalizeExtractedDocumentText(fullText);
+            // parseTab14IntakeDocument normalizes for generic/Athena docs; MediTap demo
+            // forms use label-boundary parsing on raw extracted text.
             const bundle = parseTab14IntakeDocument(fullText);
 
             setPatientInfo((prev) => ({ ...prev, ...bundle.patientFields }));
@@ -439,6 +439,8 @@ const Tab14: React.FC = () => {
                         ...row,
                     }))
                 );
+            } else {
+                setNoAllergies(false);
             }
 
             if (bundle.insurances.length > 0) {
