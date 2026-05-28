@@ -37,6 +37,12 @@ describe('Meditap-3 PDF integration', () => {
     expect(r.patientFields.givenName).toBe('Riley');
     expect(r.patientFields.familyName).toBe('Moore');
     expect(r.patientFields.dateOfBirth).toBe('1997-03-22');
+    expect(r.patientFields.phoneNumber).toBe('(214) 555-0182');
+    expect(r.patientFields.address).toContain('1842 Westfield Ave');
+    expect(r.patientFields.race).toBe('White');
+    expect(r.patientFields.ethnicity).toMatch(/not hispanic/i);
+    expect(r.patientFields.preferredLanguage).toBe('English');
+    expect(r.patientFields.maritalStatus).toBe('Single');
     expect(r.noKnownDrugAllergies).toBe(false);
     expect(r.allergies.length).toBe(2);
     expect(r.medications.length).toBeGreaterThanOrEqual(4);

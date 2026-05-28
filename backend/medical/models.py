@@ -12,6 +12,11 @@ class Patient(models.Model):
     sex_at_birth = models.CharField(max_length=32, blank=True, null=True)
     email = models.EmailField(blank=True, null=True, unique=True)
     phone = models.CharField(max_length=32, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    race = models.CharField(max_length=100, blank=True, null=True)
+    ethnicity = models.CharField(max_length=100, blank=True, null=True)
+    preferred_language = models.CharField(max_length=64, blank=True, null=True)
+    marital_status = models.CharField(max_length=64, blank=True, null=True)
     # Portal account that owns this chart (null = legacy / demo rows not tied to a login).
     portal_user = models.OneToOneField(
         User,

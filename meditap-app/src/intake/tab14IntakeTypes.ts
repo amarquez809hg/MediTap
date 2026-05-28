@@ -7,6 +7,11 @@ export type Tab14PatientFields = Partial<{
   bloodType: string;
   email: string;
   phoneNumber: string;
+  address: string;
+  race: string;
+  ethnicity: string;
+  preferredLanguage: string;
+  maritalStatus: string;
   sexAtBirth: string;
 }>;
 

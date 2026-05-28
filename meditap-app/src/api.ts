@@ -23,6 +23,11 @@ export type PatientApi = {
   sex_at_birth: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  race: string | null;
+  ethnicity: string | null;
+  preferred_language: string | null;
+  marital_status: string | null;
 };
 
 export type AllergyCatalogApi = { allergy_id: string; name: string };
@@ -1206,6 +1211,11 @@ export type Tab14SavePatient = {
   bloodType: string;
   email: string;
   phoneNumber: string;
+  address: string;
+  race: string;
+  ethnicity: string;
+  preferredLanguage: string;
+  maritalStatus: string;
   sexAtBirth: string;
 };
 
@@ -1328,6 +1338,11 @@ export async function loadTab14FromBackend(
       bloodType: '',
       email: '',
       phoneNumber: '',
+      address: '',
+      race: '',
+      ethnicity: '',
+      preferredLanguage: '',
+      maritalStatus: '',
       sexAtBirth: '',
     },
     insurances: [],
@@ -1479,6 +1494,11 @@ export async function loadTab14FromBackend(
       bloodType: dashToEmpty(current.blood_type),
       email: current.email || '',
       phoneNumber: current.phone || '',
+      address: current.address || '',
+      race: current.race || '',
+      ethnicity: current.ethnicity || '',
+      preferredLanguage: current.preferred_language || '',
+      maritalStatus: current.marital_status || '',
       sexAtBirth: current.sex_at_birth || '',
     },
     insurances,
@@ -1736,6 +1756,11 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     sex_at_birth: input.patient.sexAtBirth.trim() || null,
     email: (input.patient.email || '').trim() || emailForMatch,
     phone: (input.patient.phoneNumber || '').trim() || null,
+    address: (input.patient.address || '').trim() || null,
+    race: (input.patient.race || '').trim() || null,
+    ethnicity: (input.patient.ethnicity || '').trim() || null,
+    preferred_language: (input.patient.preferredLanguage || '').trim() || null,
+    marital_status: (input.patient.maritalStatus || '').trim() || null,
   };
 
   if (patient) {

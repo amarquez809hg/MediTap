@@ -153,6 +153,11 @@ Past Encounters / Notes 01/12/2026 – Follow-up visit for hypertension manageme
     expect(r.patientFields.email).toContain('riley.moore97');
     expect(r.patientFields.bloodType).toBe('O+');
     expect(r.patientFields.sexAtBirth).toBe('Male');
+    expect(r.patientFields.phoneNumber).toBe('(214) 555-0182');
+    expect(r.patientFields.address).toContain('Dallas');
+    expect(r.patientFields.race).toBe('White');
+    expect(r.patientFields.preferredLanguage).toBe('English');
+    expect(r.patientFields.maritalStatus).toBe('Single');
 
     expect(r.allergies.length).toBe(2);
     expect(r.allergies[0].allergyName).toMatch(/penicillin/i);

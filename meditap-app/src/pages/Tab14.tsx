@@ -43,6 +43,11 @@ interface PatientInfo {
     bloodType: string;
     email: string;
     phoneNumber: string;
+    address: string;
+    race: string;
+    ethnicity: string;
+    preferredLanguage: string;
+    maritalStatus: string;
     sexAtBirth: string;
 };
 interface Insurance {
@@ -101,6 +106,11 @@ const defaultPatientInfo: PatientInfo = {
     bloodType: '', 
     email: '',
     phoneNumber: '',
+    address: '',
+    race: '',
+    ethnicity: '',
+    preferredLanguage: '',
+    maritalStatus: '',
     sexAtBirth:'', 
 };
 const defaultInsurance: Insurance = {
@@ -173,6 +183,11 @@ const samplePatientInfo: PatientInfo = {
     bloodType: 'O+',
     email: 'jordan.rivera@example.com',
     phoneNumber: '555-201-8844',
+    address: '1200 Market St, San Francisco, CA 94103',
+    race: 'Asian',
+    ethnicity: 'Not Hispanic or Latino',
+    preferredLanguage: 'English',
+    maritalStatus: 'Married',
     sexAtBirth: 'Female',
 };
 
@@ -889,6 +904,89 @@ const Tab14: React.FC = () => {
                                             setPatientInfo
                                         )}
                                     />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Address</label>
+                                    <input
+                                        value={patientInfo.address}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'address',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Race</label>
+                                    <input
+                                        value={patientInfo.race}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'race',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Ethnicity</label>
+                                    <input
+                                        value={patientInfo.ethnicity}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'ethnicity',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Preferred Language</label>
+                                    <input
+                                        value={patientInfo.preferredLanguage}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'preferredLanguage',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>Marital Status</label>
+                                    <select
+                                        value={patientInfo.maritalStatus}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'maritalStatus',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    >
+                                        <option value="">Select marital status</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                        <option value="Domestic Partnership">Domestic Partnership</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
                                 
                                 <div className="form-field">

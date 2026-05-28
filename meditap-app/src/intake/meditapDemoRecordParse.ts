@@ -45,7 +45,6 @@ export function preprocessGluedLabelText(text: string): string {
     'Allergen:',
     'Reaction:',
     'Severity:',
-    'Status:',
     'Provider Name:',
     'Policy Number:',
     'Plan Name:',
@@ -193,6 +192,11 @@ const DEMO_FIELDS: LabelDef[] = [
   { key: 'bloodType', pattern: /Blood Type:\s*/i },
   { key: 'email', pattern: /Email:\s*/i },
   { key: 'phoneNumber', pattern: /Phone Number:\s*/i },
+  { key: 'address', pattern: /Address:\s*/i },
+  { key: 'race', pattern: /Race:\s*/i },
+  { key: 'ethnicity', pattern: /Ethnicity:\s*/i },
+  { key: 'preferredLanguage', pattern: /Preferred Language:\s*/i },
+  { key: 'maritalStatus', pattern: /Marital Status:\s*/i },
 ];
 
 const ALLERGY_FIELDS: LabelDef[] = [
@@ -281,7 +285,14 @@ function parseDemoPatient(section: string): Tab14PatientFields {
   const bt = normalizeBloodType(f.bloodType || '');
   if (bt) out.bloodType = bt;
   if (f.email) out.email = f.email.split(/\s+Phone/i)[0].trim();
-  if (f.phoneNumber) out.phoneNumber = f.phoneNumber.replace(/\s+Address:/i, '').trim();
+  if (f.phoneNumber) out.phoneNumber = f.phoneNumber.split(/\s+Address:/i)[0].trim();
+  if (f.address) out.address = f.address.split(/\s+Race:/i)[0].trim();
+  if (f.race) out.race = f.race.split(/\s+Ethnicity:/i)[0].trim();
+  if (f.ethnicity) out.ethnicity = f.ethnicity.split(/\s+Preferred Language:/i)[0].trim();
+  if (f.preferredLanguage) {
+    out.preferredLanguage = f.preferredLanguage.split(/\s+Marital Status:/i)[0].trim();
+  }
+  if (f.maritalStatus) out.maritalStatus = f.maritalStatus.replace(/^\*+\s*/, '').replace(/\*+$/, '').trim();
   return out;
 }
 
