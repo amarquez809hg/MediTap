@@ -1,4 +1,4 @@
-/* Admin — high-contrast section headers, full width, scroll-safe */
+/* Admin Panel — glass header + grid layout (shortcuts + Epic sidebar) */
 
 ion-page.ct-page.ct-tab13 {
   --ion-background-color: var(--meditap-bg);
@@ -26,210 +26,353 @@ ion-page.ct-page.ct-tab13 ion-content {
 }
 
 .tab13-readonly-hint {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 0.9rem;
   color: var(--meditap-text-muted, #8a939e);
-  line-height: 1.4;
+  line-height: 1.45;
   padding: 0;
 }
 
 .tab13-staff-banner {
-  margin: 0 0 16px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: rgba(0, 128, 128, 0.12);
-  border: 1px solid var(--meditap-border, #ddd);
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: var(--meditap-radius-sm);
+  background: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.28);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 10px 14px;
 }
 
 .tab13-staff-banner__text {
   margin: 0;
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 220px;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
-.admin-header {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  padding: 24px 16px;
-  background: var(--meditap-surface);
-  border: 1px solid var(--meditap-border);
-  border-radius: var(--meditap-radius-sm);
-  margin: 0 0 12px 0;
-}
-
-.admin-header p {
-  margin: 0;
-  color: var(--meditap-text-muted);
-  font-size: 0.95rem;
-}
-
-.admin-main-icon {
-  font-size: 3.25rem;
-  color: var(--meditap-accent);
-}
-
-ion-page.ct-page.ct-tab13 .collapsible-container {
-  width: 100%;
-  margin-bottom: 4px;
-}
-
-/* Primary strip — always readable (teal bar + white label) */
-ion-page.ct-page.ct-tab13 .section-banner {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 14px 16px;
+/* Intro strip — horizontal, not centered hero */
+.tab13-intro {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--meditap-primary);
-  border: none;
-  border-radius: var(--meditap-radius-sm);
-  border-left: 4px solid var(--meditap-accent);
-}
-
-ion-page.ct-page.ct-tab13 .section-banner p {
-  margin: 0;
-  font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-ion-page.ct-page.ct-tab13 .section-banner.clickable {
-  cursor: pointer;
-  transition: filter 0.2s ease, transform 0.15s ease;
-}
-
-ion-page.ct-page.ct-tab13 .section-banner.clickable:hover {
-  filter: brightness(1.08);
-}
-
-ion-page.ct-page.ct-tab13 .section-banner.active {
-  filter: brightness(1.12);
-}
-
-ion-page.ct-page.ct-tab13 .toggle-icon {
-  font-size: 1.25rem;
-  color: #fff;
-}
-
-.collapsible-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.35s ease-in-out, opacity 0.2s ease;
-  opacity: 0;
-}
-
-.collapsible-content.is-open {
-  max-height: 2000px;
-  opacity: 1;
-}
-
-ion-page.ct-page.ct-tab13 .admin-list {
-  width: 100%;
-  margin: 8px 0 16px 0;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  margin: 0 0 18px;
   background: var(--meditap-surface);
   border: 1px solid var(--meditap-border);
   border-radius: var(--meditap-radius-sm);
+  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+}
+
+.tab13-intro__icon {
+  flex-shrink: 0;
+  font-size: 2rem;
+  color: var(--meditap-accent);
+  margin-top: 2px;
+}
+
+.tab13-intro__body h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--meditap-primary, #0d4a3f);
+}
+
+.tab13-intro__body p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--meditap-text-muted);
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
+/* Operations row */
+.tab13-ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 22px;
+}
+
+.tab13-ops__btn {
+  flex: 1 1 200px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--meditap-radius-sm);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+  color: var(--meditap-text);
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(8, 20, 18, 0.06);
+}
+
+.tab13-ops__btn:hover {
+  filter: brightness(0.98);
+  box-shadow: 0 2px 8px rgba(8, 20, 18, 0.08);
+}
+
+.tab13-ops__btn--primary {
+  background: linear-gradient(
+    135deg,
+    var(--meditap-header-glass-start, #17a2b8) 0%,
+    var(--meditap-header-glass-end, #1a6356) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fffd;
+}
+
+.tab13-ops__btn ion-icon {
+  font-size: 1.15rem;
+}
+
+/* Main two-column layout */
+.tab13-layout {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .tab13-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  }
+}
+
+.tab13-layout__main {
+  min-width: 0;
+}
+
+.tab13-layout__aside {
+  min-width: 0;
+}
+
+@media (max-width: 991px) {
+  .tab13-layout__aside {
+    order: -1;
+  }
+}
+
+/* Section cards grid */
+.tab13-sections-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .tab13-sections-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tab13-section-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--meditap-surface);
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius-sm);
+  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
   overflow: hidden;
 }
 
-ion-page.ct-page.ct-tab13 .admin-list ion-item {
-  --background: var(--meditap-surface);
-  --border-color: var(--meditap-border);
-  --inner-border-width: 0 0 1px 0;
-  --min-height: 52px;
-  color: var(--meditap-text);
+.tab13-section-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-primary, #0d4a3f) 0%,
+    var(--meditap-primary-tint, #1a6356) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-ion-page.ct-page.ct-tab13 .admin-list ion-item:last-child {
-  --inner-border-width: 0;
+.tab13-section-card__head ion-icon {
+  font-size: 1.25rem;
+  color: #f8fffd;
+  flex-shrink: 0;
 }
 
-ion-page.ct-page.ct-tab13 .admin-list ion-label {
-  color: var(--meditap-text);
-  font-weight: 500;
+.tab13-section-card__titles {
+  min-width: 0;
 }
 
-ion-page.ct-page.ct-tab13 ion-grid.ion-padding-horizontal {
+.tab13-section-card__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f8fffd;
+  line-height: 1.2;
+}
+
+.tab13-section-card__subtitle {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: rgba(248, 255, 253, 0.82);
+  line-height: 1.3;
+}
+
+.tab13-section-card__links {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+}
+
+.tab13-section-card__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  margin-bottom: 8px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--meditap-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--meditap-border);
+  transition: background 0.12s ease;
 }
 
-ion-page.ct-page.ct-tab13 ion-grid ion-col {
-  padding: 6px;
+.tab13-section-card__links li:last-child .tab13-section-card__link {
+  border-bottom: none;
 }
 
-ion-page.ct-page.ct-tab13 ion-toolbar .book-btn {
-  background: var(--meditap-accent) !important;
-  border: none !important;
-  color: #fff !important;
-  box-shadow: var(--meditap-shadow-sm) !important;
-  padding: 8px 14px !important;
-  font-size: 0.8rem !important;
-  border-radius: var(--meditap-radius-sm) !important;
+.tab13-section-card__link:hover {
+  background: rgba(23, 162, 184, 0.08);
 }
 
-ion-page.ct-page.ct-tab13 ion-toolbar .book-btn:hover {
-  background: var(--meditap-accent-hover) !important;
+.tab13-section-card__link ion-icon:first-child {
+  font-size: 1.1rem;
+  color: var(--meditap-accent);
+  flex-shrink: 0;
 }
 
-ion-page.ct-page.ct-tab13 ion-toolbar .book-btn a,
-ion-page.ct-page.ct-tab13 ion-toolbar .book-btn .nav-item {
-  color: #fff !important;
+.tab13-section-card__link-label {
+  flex: 1;
+  min-width: 0;
 }
 
+.tab13-section-card__link-chevron {
+  font-size: 1rem;
+  color: var(--meditap-text-muted);
+  flex-shrink: 0;
+}
+
+/* Epic integration card */
 .tab13-epic-card {
-  margin: 0 0 20px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  padding: 16px 18px;
+  border-radius: var(--meditap-radius-sm);
+  border: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+}
+
+@media (min-width: 992px) {
+  .tab13-epic-card {
+    position: sticky;
+    top: 12px;
+  }
+}
+
+.tab13-epic-card__badge {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(23, 162, 184, 0.15);
+  color: var(--meditap-primary, #0d4a3f);
 }
 
 .tab13-epic-card h2 {
   margin: 0 0 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--meditap-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--meditap-primary, #0d4a3f);
 }
 
-.tab13-epic-card p {
-  margin: 0 0 10px;
+.tab13-epic-card > p {
+  margin: 0 0 12px;
   font-size: 0.88rem;
-  color: var(--meditap-text-muted, #8a939e);
+  color: var(--meditap-text-muted);
   line-height: 1.45;
+}
+
+.tab13-epic-card__status {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--meditap-border);
+  font-size: 0.82rem;
+  color: var(--meditap-text-muted);
+  line-height: 1.45;
+}
+
+.ion-palette-dark .tab13-epic-card__status {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab13-epic-card__status strong {
+  color: var(--meditap-text);
 }
 
 .tab13-epic-card__meta {
   font-size: 0.82rem;
-  color: var(--meditap-text-muted, #8a939e);
-  margin-bottom: 10px;
+  color: var(--meditap-text-muted);
+  margin: 0 0 8px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.tab13-epic-card__meta code {
+  font-size: 0.78rem;
   word-break: break-all;
 }
 
 .tab13-epic-card__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
+}
+
+.tab13-epic-card__actions ion-button {
+  margin: 0;
+  width: 100%;
 }
 
 .tab13-epic-manual {
-  flex: 1 1 220px;
-  min-width: 0;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--meditap-border);
   --background: transparent;
   --padding-start: 0;
   --inner-padding-end: 0;
+}
+
+.tab13-epic-manual ion-label {
+  font-size: 0.8rem !important;
 }
 
 .tab13-epic-callback {
@@ -260,7 +403,7 @@ ion-page.ct-page.ct-tab13 ion-toolbar .book-btn .nav-item {
   margin-top: 20px;
   padding: 10px 18px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--meditap-border);
   background: transparent;
   color: var(--meditap-text);
   cursor: pointer;

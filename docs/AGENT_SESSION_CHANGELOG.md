@@ -888,6 +888,27 @@
 
 ---
 
+### 74) Tab13 — Admin Panel layout (grid cards + Epic sidebar)
+
+**Type:** UX  
+**Key:** `MT-AG-070`  
+
+**Summary:** Replace the full-width mobile accordion list with a desktop-friendly admin layout: intro strip, ops row, two-column grid of section cards, and a sticky Epic FHIR sidebar.  
+
+**What was done:**
+
+- Refactored **`Tab13.tsx`**: removed collapsible sections; added intro strip, native ops buttons (Add hospital / View logs), and **`tab13-layout`** main + aside.
+- Section shortcuts render as **cards** in a responsive grid (Dashboard, Quick Status, Chronic Conditions, Lab Results) with subtitles and link rows.
+- Moved Epic sandbox integration into the **right sidebar** on wide viewports (stacked below shortcuts on mobile).
+- **`Tab13.css`**: grid, card, intro, ops, and Epic sidebar styles aligned to MediTap design tokens.  
+
+**Outcome:** Admin Panel uses horizontal space on desktop; Epic block no longer dominates the top of a single column. Behavior unchanged (staff gate, hospital modal, OAuth, manual Epic id).
+
+**Primary paths:** `meditap-app/src/pages/Tab13.tsx`, `meditap-app/src/pages/Tab13.css`  
+**Commit:** *(pending)*
+
+---
+
 ## Set 6 — Summary table (quick Jira import)
 
 | # | Key | Epic | Type | Summary | Status |
@@ -901,6 +922,7 @@
 | 71 | MT-AG-067 | E-INTAKE-UX | Feature | Tab14 API hydrate after login (partial) | Partial |
 | 72 | MT-AG-068 | E-INTAKE-UX | Feature | MediTap demo PDF labeled-field parser | Done |
 | 73 | MT-AG-069 | E-INTAKE-UX | Feature | Patient demographics fields (DB + Tab14) | Done |
+| 74 | MT-AG-070 | E-ADMIN | UX | Admin Panel grid layout + Epic sidebar | Done |
 
 ### Still open from entry 65 (Sprint B/C)
 
@@ -909,8 +931,8 @@
 | **Sprint B** — Django appointments API (replace Tab4 `localStorage`; unify Dashboard + Quick Status counts) | **Not started** (`MT-AG-059`) |
 | **Sprint C** — Tab14 single API save path only (no dual `localStorage` + API) | **Partial** (entry 71; `MT-AG-061` still open) |
 
-**Next register entry:** **74** / **`MT-AG-070`**
+**Next register entry:** **75** / **`MT-AG-071`**
 
 ---
 
-*Last updated: Set 6 rewritten to full register format (entries 65–73); entries 66–73 expanded to match entry 65 detail level.*
+*Last updated: entry 74 (Tab13 admin layout); Set 6 entries 65–74.*

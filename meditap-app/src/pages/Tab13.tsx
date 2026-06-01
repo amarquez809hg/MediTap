@@ -5,15 +5,10 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
-  IonList,
   IonItem,
   IonLabel,
   IonIcon,
-  IonNote,
   IonButton,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonModal,
   IonInput,
   IonButtons,
@@ -36,8 +31,11 @@ import {
   pencilOutline,
   statsChartOutline,
   chevronForwardOutline,
-  chevronDownOutline,
   addOutline,
+  gridOutline,
+  speedometerOutline,
+  medkitOutline,
+  flaskOutline,
   settingsOutline,
 } from 'ionicons/icons';
 
@@ -79,8 +77,6 @@ const Tab13: React.FC = () => {
   const patientSub = typeof kcParsed?.sub === 'string' ? kcParsed.sub : undefined;
   const canEditAdmin =
     hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
-
-  const [openSection, setOpenSection] = useState<string | null>('MEDITAP DASHBOARD');
 
   const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [staffUsername, setStaffUsername] = useState('');
@@ -127,10 +123,6 @@ const Tab13: React.FC = () => {
   useEffect(() => {
     void reloadEpic();
   }, [reloadEpic]);
-
-  const toggleSection = (sectionName: string) => {
-    setOpenSection(openSection === sectionName ? null : sectionName);
-  };
 
   const submitStaffModal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,7 +175,9 @@ const Tab13: React.FC = () => {
 
   const sections = [
     {
-      title: 'MEDITAP DASHBOARD',
+      title: 'MediTap Dashboard',
+      subtitle: 'Patient snapshot and chart overview',
+      headIcon: gridOutline,
       items: [
         { label: 'Patient Name', icon: accessibilityOutline, path: 'patient-name' },
         { label: 'Patient ID', icon: peopleOutline, path: 'patient-id' },
@@ -195,7 +189,9 @@ const Tab13: React.FC = () => {
       ],
     },
     {
-      title: 'QUICK STATUS',
+      title: 'Quick Status',
+      subtitle: 'Triage metrics and next steps',
+      headIcon: speedometerOutline,
       items: [
         { label: 'Appointments', icon: easelOutline, path: 'appointments' },
         { label: 'Results Pending', icon: fileTrayFullOutline, path: 'pending' },
@@ -203,7 +199,9 @@ const Tab13: React.FC = () => {
       ],
     },
     {
-      title: 'CHRONIC CONDITIONS',
+      title: 'Chronic Conditions',
+      subtitle: 'Long-term diagnoses and care plans',
+      headIcon: medkitOutline,
       items: [
         { label: 'Modify Condition 1', icon: optionsOutline, path: 'cond-1' },
         { label: 'Modify Condition 2', icon: optionsSharp, path: 'cond-2' },
@@ -211,7 +209,9 @@ const Tab13: React.FC = () => {
       ],
     },
     {
-      title: 'LAB RESULTS',
+      title: 'Lab Results',
+      subtitle: 'Panels, components, and new orders',
+      headIcon: flaskOutline,
       items: [
         { label: 'Modify Lab Result 1', icon: statsChartOutline, path: 'lab-1' },
         { label: 'Log New Lab Result', icon: pencilOutline, path: 'add-lab' },
@@ -240,9 +240,15 @@ const Tab13: React.FC = () => {
           </header>
 
           <main className="admin-panel-main">
-            <div className="admin-header">
-              <IonIcon icon={keyOutline} className="admin-main-icon" />
-              <p>Shortcuts to patient data tabs. Destructive API actions require staff access.</p>
+            <div className="tab13-intro">
+              <IonIcon icon={keyOutline} className="tab13-intro__icon" aria-hidden />
+              <div className="tab13-intro__body">
+                <h2>Administration &amp; shortcuts</h2>
+                <p>
+                  Jump to patient tabs, run facility operations, and manage Epic sandbox linkage.
+                  Destructive API actions require staff access.
+                </p>
+              </div>
             </div>
 
             {!canEditAdmin && (
@@ -270,219 +276,227 @@ const Tab13: React.FC = () => {
               </div>
             )}
 
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    onClick={() => {
-                      if (!canEditAdmin) {
-                        setStaffModalOpen(true);
-                        return;
-                      }
-                      setHospitalMessage(null);
-                      setHospitalName('');
-                      setHospitalModalOpen(true);
-                    }}
-                  >
-                    <IonIcon slot="start" icon={addOutline} /> ADD HOSPITAL
-                  </IonButton>
-                </IonCol>
-                <IonCol size="12" sizeMd="6">
-                  <IonButton
-                    expand="block"
-                    fill="outline"
-                    onClick={() =>
-                      window.alert(
-                        'Operational logs are not connected to an API in this build. Use Django admin or server logging.'
-                      )
-                    }
-                  >
-                    <IonIcon slot="start" icon={settingsOutline} /> LOGS
-                  </IonButton>
-                </IonCol>
-              </IonRow>
-            </IonGrid>
+            <div className="tab13-ops" role="group" aria-label="Admin operations">
+              <button
+                type="button"
+                className="tab13-ops__btn tab13-ops__btn--primary"
+                onClick={() => {
+                  if (!canEditAdmin) {
+                    setStaffModalOpen(true);
+                    return;
+                  }
+                  setHospitalMessage(null);
+                  setHospitalName('');
+                  setHospitalModalOpen(true);
+                }}
+              >
+                <IonIcon icon={addOutline} aria-hidden />
+                Add hospital
+              </button>
+              <button
+                type="button"
+                className="tab13-ops__btn"
+                onClick={() =>
+                  window.alert(
+                    'Operational logs are not connected to an API in this build. Use Django admin or server logging.'
+                  )
+                }
+              >
+                <IonIcon icon={settingsOutline} aria-hidden />
+                View logs
+              </button>
+            </div>
 
-            <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
-              <h2 id="tab13-epic-title">Epic FHIR (read-only sandbox)</h2>
-              <p>
-                Link the current MediTap patient chart to an Epic sandbox patient for SMART OAuth
-                demos. The backend does not store Epic access tokens—only linkage metadata after a
-                successful code exchange.
-              </p>
-              {epicLoading && <p className="tab13-epic-card__meta">Loading…</p>}
-              {epicErr && <p className="tab13-epic-card__meta">{epicErr}</p>}
-              {!epicLoading && epicCfg && (
-                <>
-                  <p className="tab13-epic-card__meta">
-                    OAuth ready: {epicCfg.integration_enabled ? 'yes' : 'no'}
-                    {epicCfg.hint ? ` — ${epicCfg.hint}` : ''}
-                  </p>
-                  {!epicPatientId && (
-                    <p className="tab13-epic-card__meta">
-                      No MediTap patient record matches this sign-in yet. Complete intake (Tab 14) or
-                      ensure a patient row exists before linking.
-                    </p>
-                  )}
-                  {epicLink && (
-                    <p className="tab13-epic-card__meta">
-                      Status: <strong>{epicLink.status}</strong>
-                      {epicLink.epic_patient_fhir_id
-                        ? ` · Epic Patient.id: ${epicLink.epic_patient_fhir_id}`
-                        : ''}
-                    </p>
-                  )}
-                  <div className="tab13-epic-card__actions">
-                    <IonButton
-                      size="small"
-                      disabled={
-                        !epicCfg.integration_enabled || !epicPatientId || epicLoading
-                      }
-                      onClick={() => {
-                        void (async () => {
-                          if (!epicPatientId) return;
-                          try {
-                            const { authorize_url } =
-                              await prepareEpicPatientAuthorize(epicPatientId);
-                            window.location.assign(authorize_url);
-                          } catch (e) {
-                            setEpicErr(
-                              formatSessionOrTokenErrorForUi(
-                                e instanceof Error ? e.message : 'Could not start Epic OAuth.'
-                              )
-                            );
-                          }
-                        })();
-                      }}
-                    >
-                      Connect Epic (sandbox)
-                    </IonButton>
-                    <IonButton
-                      size="small"
-                      fill="outline"
-                      disabled={epicLoading}
-                      onClick={() => void reloadEpic()}
-                    >
-                      Refresh status
-                    </IonButton>
-                    {epicPatientId && epicLink?.status === 'connected' && (
-                      <IonButton
-                        size="small"
-                        fill="clear"
-                        color="medium"
-                        disabled={!canEditAdmin || epicLoading}
-                        onClick={() => {
-                          void (async () => {
-                            if (!epicPatientId) return;
-                            try {
-                              const next = await patchPatientEpicLink(epicPatientId, {
-                                status: 'disconnected',
-                                epic_patient_fhir_id: '',
-                              });
-                              setEpicLink(next);
-                              setEpicManualId('');
-                            } catch (e) {
-                              setEpicErr(
-                                formatSessionOrTokenErrorForUi(
-                                  e instanceof Error ? e.message : 'Could not clear link.'
-                                )
-                              );
-                            }
-                          })();
-                        }}
-                      >
-                        Clear link
-                      </IonButton>
-                    )}
-                  </div>
-                  {canEditAdmin && epicPatientId && (
-                    <div style={{ marginTop: 14, width: '100%' }}>
-                      <IonItem lines="none" className="tab13-epic-manual">
-                        <IonLabel position="stacked">Demo: Epic Patient.id (manual)</IonLabel>
-                        <IonInput
-                          value={epicManualId}
-                          placeholder="e.g. eH-XXXXXXXX"
-                          onIonInput={(e) => setEpicManualId(e.detail.value ?? '')}
-                        />
-                      </IonItem>
-                      <IonButton
-                        size="small"
-                        className="ion-margin-top"
-                        disabled={epicSavingManual || !epicManualId.trim()}
-                        onClick={() => {
-                          void (async () => {
-                            if (!epicPatientId) return;
-                            setEpicSavingManual(true);
-                            setEpicErr(null);
-                            try {
-                              const next = await patchPatientEpicLink(epicPatientId, {
-                                epic_patient_fhir_id: epicManualId.trim(),
-                                status: 'connected',
-                              });
-                              setEpicLink(next);
-                              setEpicManualId('');
-                            } catch (e) {
-                              setEpicErr(
-                                formatSessionOrTokenErrorForUi(
-                                  e instanceof Error ? e.message : 'Could not save manual id.'
-                                )
-                              );
-                            } finally {
-                              setEpicSavingManual(false);
-                            }
-                          })();
-                        }}
-                      >
-                        {epicSavingManual ? 'Saving…' : 'Save manual id'}
-                      </IonButton>
-                    </div>
-                  )}
-                  <p className="tab13-epic-card__meta" style={{ marginTop: 12 }}>
-                    Redirect URI for Epic on FHIR:{' '}
-                    <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
-                  </p>
-                </>
-              )}
-            </section>
-
-            {sections.map((section) => (
-              <div key={section.title} className="collapsible-container">
-                <div
-                  className={`section-banner clickable ${openSection === section.title ? 'active' : ''}`}
-                  onClick={() => toggleSection(section.title)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleSection(section.title);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <p>{section.title}</p>
-                  <IonIcon
-                    icon={openSection === section.title ? chevronDownOutline : chevronForwardOutline}
-                    className="toggle-icon"
-                  />
-                </div>
-
-                <div className={`collapsible-content ${openSection === section.title ? 'is-open' : ''}`}>
-                  <IonList lines="none" className="admin-list">
-                    {section.items.map((item, idx) => (
-                      <IonItem key={idx} button onClick={() => navigateToAdminSection(item.path)}>
-                        <IonIcon slot="start" icon={item.icon} color="medium" />
-                        <IonLabel>{item.label}</IonLabel>
-                        <IonNote slot="end">
-                          <IonIcon icon={chevronForwardOutline} />
-                        </IonNote>
-                      </IonItem>
-                    ))}
-                  </IonList>
+            <div className="tab13-layout">
+              <div className="tab13-layout__main">
+                <div className="tab13-sections-grid">
+                  {sections.map((section) => (
+                    <article key={section.title} className="tab13-section-card">
+                      <header className="tab13-section-card__head">
+                        <IonIcon icon={section.headIcon} aria-hidden />
+                        <div className="tab13-section-card__titles">
+                          <h3 className="tab13-section-card__title">{section.title}</h3>
+                          <p className="tab13-section-card__subtitle">{section.subtitle}</p>
+                        </div>
+                      </header>
+                      <ul className="tab13-section-card__links">
+                        {section.items.map((item) => (
+                          <li key={item.path}>
+                            <button
+                              type="button"
+                              className="tab13-section-card__link"
+                              onClick={() => navigateToAdminSection(item.path)}
+                            >
+                              <IonIcon icon={item.icon} aria-hidden />
+                              <span className="tab13-section-card__link-label">{item.label}</span>
+                              <IonIcon
+                                icon={chevronForwardOutline}
+                                className="tab13-section-card__link-chevron"
+                                aria-hidden
+                              />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
                 </div>
               </div>
-            ))}
+
+              <aside className="tab13-layout__aside">
+                <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
+                  <span className="tab13-epic-card__badge">Integration</span>
+                  <h2 id="tab13-epic-title">Epic FHIR sandbox</h2>
+                  <p>
+                    Link the current MediTap patient chart to an Epic sandbox patient for SMART
+                    OAuth demos. The backend stores linkage metadata only—not Epic access tokens.
+                  </p>
+                  {epicLoading && <p className="tab13-epic-card__meta">Loading…</p>}
+                  {epicErr && <p className="tab13-epic-card__meta">{epicErr}</p>}
+                  {!epicLoading && epicCfg && (
+                    <>
+                      <div className="tab13-epic-card__status">
+                        OAuth ready:{' '}
+                        <strong>{epicCfg.integration_enabled ? 'Yes' : 'No'}</strong>
+                        {epicLink && (
+                          <>
+                            <br />
+                            Status: <strong>{epicLink.status}</strong>
+                            {epicLink.epic_patient_fhir_id ? (
+                              <>
+                                <br />
+                                Epic Patient.id:{' '}
+                                <strong>{epicLink.epic_patient_fhir_id}</strong>
+                              </>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                      {epicCfg.hint ? <p className="tab13-epic-card__meta">{epicCfg.hint}</p> : null}
+                      {!epicPatientId && (
+                        <p className="tab13-epic-card__meta">
+                          No MediTap patient record for this sign-in. Complete intake (Tab 14)
+                          first.
+                        </p>
+                      )}
+                      <div className="tab13-epic-card__actions">
+                        <IonButton
+                          expand="block"
+                          disabled={
+                            !epicCfg.integration_enabled || !epicPatientId || epicLoading
+                          }
+                          onClick={() => {
+                            void (async () => {
+                              if (!epicPatientId) return;
+                              try {
+                                const { authorize_url } =
+                                  await prepareEpicPatientAuthorize(epicPatientId);
+                                window.location.assign(authorize_url);
+                              } catch (e) {
+                                setEpicErr(
+                                  formatSessionOrTokenErrorForUi(
+                                    e instanceof Error
+                                      ? e.message
+                                      : 'Could not start Epic OAuth.'
+                                  )
+                                );
+                              }
+                            })();
+                          }}
+                        >
+                          Connect Epic (sandbox)
+                        </IonButton>
+                        <IonButton
+                          expand="block"
+                          fill="outline"
+                          disabled={epicLoading}
+                          onClick={() => void reloadEpic()}
+                        >
+                          Refresh status
+                        </IonButton>
+                        {epicPatientId && epicLink?.status === 'connected' && (
+                          <IonButton
+                            expand="block"
+                            fill="clear"
+                            color="medium"
+                            disabled={!canEditAdmin || epicLoading}
+                            onClick={() => {
+                              void (async () => {
+                                if (!epicPatientId) return;
+                                try {
+                                  const next = await patchPatientEpicLink(epicPatientId, {
+                                    status: 'disconnected',
+                                    epic_patient_fhir_id: '',
+                                  });
+                                  setEpicLink(next);
+                                  setEpicManualId('');
+                                } catch (e) {
+                                  setEpicErr(
+                                    formatSessionOrTokenErrorForUi(
+                                      e instanceof Error ? e.message : 'Could not clear link.'
+                                    )
+                                  );
+                                }
+                              })();
+                            }}
+                          >
+                            Clear link
+                          </IonButton>
+                        )}
+                      </div>
+                      {canEditAdmin && epicPatientId && (
+                        <>
+                          <IonItem lines="none" className="tab13-epic-manual">
+                            <IonLabel position="stacked">Demo: Epic Patient.id (manual)</IonLabel>
+                            <IonInput
+                              value={epicManualId}
+                              placeholder="e.g. eH-XXXXXXXX"
+                              onIonInput={(e) => setEpicManualId(e.detail.value ?? '')}
+                            />
+                          </IonItem>
+                          <IonButton
+                            expand="block"
+                            className="ion-margin-top"
+                            disabled={epicSavingManual || !epicManualId.trim()}
+                            onClick={() => {
+                              void (async () => {
+                                if (!epicPatientId) return;
+                                setEpicSavingManual(true);
+                                setEpicErr(null);
+                                try {
+                                  const next = await patchPatientEpicLink(epicPatientId, {
+                                    epic_patient_fhir_id: epicManualId.trim(),
+                                    status: 'connected',
+                                  });
+                                  setEpicLink(next);
+                                  setEpicManualId('');
+                                } catch (e) {
+                                  setEpicErr(
+                                    formatSessionOrTokenErrorForUi(
+                                      e instanceof Error
+                                        ? e.message
+                                        : 'Could not save manual id.'
+                                    )
+                                  );
+                                } finally {
+                                  setEpicSavingManual(false);
+                                }
+                              })();
+                            }}
+                          >
+                            {epicSavingManual ? 'Saving…' : 'Save manual id'}
+                          </IonButton>
+                        </>
+                      )}
+                      <p className="tab13-epic-card__meta">
+                        Redirect URI:{' '}
+                        <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
+                      </p>
+                    </>
+                  )}
+                </section>
+              </aside>
+            </div>
           </main>
         </div>
       </IonContent>
