@@ -1,15 +1,14 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `38` (`MT-AG-061`)
-- Next register entry should start at: `39` (`MT-AG-062`)
-- Checkpoint date: `2026-05-22`
-- Scope baseline (Set 5 — since entry 20):
-  - Public pages (About, Support, Terms, Privacy) + login nav fix
-  - Phase 1: password reset, support API, onboarding, forgot/reset pages
-  - DEBUG from env; VM deploy runbook (session)
-  - Dashboard Phase A: hero, next steps, empty states, metrics row
-  - Dashboard: staff-gated add entry, section actions, glass UI, brief subtitles
-  - Appointments: quick-pick field library (`appointmentFieldLibrary`)
-  - Quick Status Sprint A: 6 KPI cards, profile %, urgency next steps
-  - Backlog captured: appointments API, Tab5/6/7 presets, Tab14 API unification
-- Full detail: `docs/AGENT_SESSION_CHANGELOG.md` — **Set 5**
+- Last completed register entry: `73` (`MT-AG-069`)
+- Next register entry should start at: `74` (`MT-AG-070`)
+- Checkpoint date: `2026-05-30`
+- Scope baseline (Set 6 — since entry 65):
+  - Sprint C (partial): staff quick-pick on Tab5/6/7 (`StaffPresetField`, field libraries)
+  - Tab4/5/6 unified empty-state layout with Lab Results
+  - Tab14 PDF: extraction pass 1, Athena portability, MediTap demo labeled-field parser
+  - Tab14: API hydrate after login/logout (partial — full API-only save still open)
+  - Patient demographics: Address, Race, Ethnicity, Preferred Language, Marital Status (DB + UI)
+  - Public pages: Support/FAQ scroll fix
+  - Still backlog: Sprint B appointments API (`MT-AG-059`), Tab14 single save path (`MT-AG-061`)
+- Full detail: `docs/AGENT_SESSION_CHANGELOG.md` — **Set 6** (entries 66–73); Sets 1–5 unchanged

@@ -1,0 +1,51 @@
+---
+description: MediTap primary agent — architecture, register workflow, staff patterns, backlog
+alwaysApply: true
+---
+
+# MediTap modification agent (persistent)
+
+You are the **dedicated MediTap agent** for this repo. Treat every session as a continuation of prior MediTap work unless the user starts a new product.
+
+## Read first (session start)
+
+1. `meditap-app/REGISTER_CHECKPOINT.md` — last register entry and **next** entry number/key.
+2. `docs/MEDITAP_AGENT_HANDOFF.md` — architecture, tab map, conventions, open backlog.
+3. `docs/AGENT_SESSION_CHANGELOG.md` — full history (Sets 1–6); append new work here.
+
+## After completing work
+
+1. Add a register entry in the user's format: **Type**, **Summary**, **What was done**, **Outcome** (see Set 6 in changelog for examples).
+2. Increment entry number and `MT-AG-###` in `REGISTER_CHECKPOINT.md`.
+3. Offer Word export: `./.docgen-venv/bin/python docs/scripts/changelog_to_docx.py`
+
+**Next register:** entry **74** / **`MT-AG-070`** (as of checkpoint 2026-05-30).
+
+## Stack (do not reinvent)
+
+- **Frontend:** `meditap-app/` — Ionic React + Vite; tabs `Tab1`–`Tab14`, routes in `App.tsx`.
+- **Backend:** `backend/` — Django REST `medapp` + `medical`; run migrations for model changes.
+- **Auth:** Native Django JWT + staff elevation (`requestPatientIntakeStaffElevation`, `X-Meditap-Elevation`, `staffElevationStorage.ts`). Patient session stays active during staff unlock.
+- **Docker:** `docker/docker-compose.yml` for local stack.
+
+## Staff / edit patterns (reuse, don't duplicate)
+
+- Elevation: `StaffElevationModal`, `useStaffElevationGate`, `openAddEntry.ts` (dashboard add).
+- Quick-pick fields: `StaffPresetField` + per-tab libraries (`appointmentFieldLibrary`, `chronicFieldLibrary`, `incidentFieldLibrary`, `labResultFieldCatalog`).
+- Glass headers: `meditap-shared.css` — `patient-insurance-header`, `admin-panel-header`, `settings-header`, `lab-results-header` pattern; `fullAppUrl('/tab1')` for dashboard links.
+
+## Open backlog (from entry 65 — not done)
+
+- **Sprint B:** Django appointments API — replace Tab4 `localStorage`; unify Dashboard + Quick Status.
+- **Sprint C (remainder):** Tab14 **API-only** persistence — no dual `localStorage` + API (entry 71 partial).
+
+## Scope boundaries
+
+- **MediTap** work lives in this repo + `docs/AGENT_SESSION_CHANGELOG.md`.
+- **Lomont Vista** is a separate **Jira** project (`LV-*` on `ninskers.atlassian.net`) — not the same register file.
+- Minimize unrelated diffs; match existing naming and file layout.
+
+## If the user says the agent "reset" or chat is empty
+
+- Prior chat may be gone; **git + register docs are source of truth**.
+- Old transcript may exist under `~/.cursor/projects/Users-amarquez-Desktop-MediTap/agent-transcripts/` but do not rely on UI history alone.

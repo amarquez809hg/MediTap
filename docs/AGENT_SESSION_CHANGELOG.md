@@ -1,6 +1,7 @@
 # MediTap — Agent session change register (Jira-style)
 
 **Purpose:** Single register of work attributed to Cursor agent sessions on this MediTap codebase.  
+**Agent continuity:** Read **`docs/MEDITAP_AGENT_HANDOFF.md`** and **`meditap-app/REGISTER_CHECKPOINT.md`** at session start (see also **`AGENTS.md`** and **`.cursor/rules/meditap-agent.mdc`**).  
 **Word export:** Open **`docs/AGENT_SESSION_CHANGELOG.docx`** in Microsoft Word (same content as this file). Regenerate after editing this Markdown:
 
 `./.docgen-venv/bin/python docs/scripts/changelog_to_docx.py`  
@@ -690,4 +691,226 @@
 
 ---
 
-*Last updated: added Set 5 (MT-AG-044–061, register entries 21–38) since checkpoint entry 20.*
+---
+
+## Set 6 — Detailed register (after entry 65 — week of 2026-05-22 → 2026-05-28)
+
+**Baseline:** Register entry **65** = Sprint B/C planning only (not built).  
+**This set:** entries **66–73** (`MT-AG-062`–`MT-AG-069`).  
+**Git range:** `20170dd` → `8f2c818` on `main`.
+
+**Register format (canonical — match entry 65 and Sets 3–4):** Each item uses **Type**, **Summary** (one intent sentence), **What was done** (concrete deliverables + context), **Outcome** (user/QA/engineering result and what remains open). Optional: **Primary paths**, **Commit**.
+
+---
+
+### 65) Product Backlog — Sprint B/C (Captured, Not Built)
+
+**Type:** Spike / Planning  
+
+**Summary:** Record next competitive milestones identified after Quick Status Sprint A.  
+
+**What was done:**
+
+- **Sprint B:** Django appointments API so Tab4, Dashboard, and Quick Status share server-backed visits (replace `localStorage`).
+- **Sprint C:** Quick-pick libraries on Chronic (Tab5), Incidents (Tab6), Labs (Tab7); Tab14 single API save path instead of dual `localStorage` + API.  
+
+**Outcome:** Clear P0/P1 backlog for engineering and Jira epic creation without mixing into “done” work.
+
+---
+
+### 66) Sprint C (Delivered) — Staff Quick-Pick Libraries on Tab5, Tab6, and Tab7
+
+**Type:** Feature / UX  
+**Key:** `MT-AG-062`  
+
+**Summary:** Implement the Sprint C “quick-pick” goal for chronic conditions, incident records, and lab results so staff charting speed matches the Appointments tab (entry 61).  
+
+**What was done:**
+
+- Introduced a shared **`StaffPresetField`** component (“Quick pick from library” + free-text/textarea) reused across clinical modals, with dedicated styling in `StaffPresetField.css`.
+- Added curated **`chronicFieldLibrary.ts`** (conditions, severity, status, facilities, notes) and wired **Tab5** create/edit modals to preset dropdowns per field.
+- Added **`incidentFieldLibrary.ts`** (incident types, locations, severity, disposition, narrative presets) and wired **Tab6** modals the same way.
+- Expanded **`labResultFieldCatalog.ts`** (panels, analytes, units, reference ranges, statuses, interpretations) and aligned **Tab7** lab modal dropdown labels/copy with the appointment booking pattern from Tab4.
+- Refactored Tab5/6/7 so staff can still type custom values when a library option does not fit—parity with `AppointmentPresetField` behavior.  
+
+**Outcome:** Sprint C quick-pick work for **Tab5, Tab6, and Tab7 is complete**; staff spend fewer clicks per record. Does **not** include Sprint B (appointments API) or full Tab14 API-only persistence (see entries 71 and backlog below).
+
+**Primary paths:** `components/StaffPresetField.tsx`, `chronic/chronicFieldLibrary.ts`, `incidents/incidentFieldLibrary.ts`, `labResults/labResultFieldCatalog.ts`, `Tab5.tsx`, `Tab6.tsx`, `Tab7.tsx`  
+**Commit:** `43ef7ef` (2026-05-25)
+
+---
+
+### 67) Clinical Tabs — Unified Empty-State and Header Pattern (Tab4, Tab5, Tab6)
+
+**Type:** UX  
+**Key:** `MT-AG-063`  
+
+**Summary:** Make Appointments, Chronic Conditions, and Incident Records visually and behaviorally consistent with Lab Results (Tab7) so the app feels like one product, not four different layouts.  
+
+**What was done:**
+
+- Centralized dashed **empty-state** card styling and **staff-readonly header hints** in `meditap-shared.css` (same language as Lab Results).
+- Updated **Tab4**, **Tab5**, and **Tab6** page markup to use the shared empty-state blocks and hint copy when the user cannot edit.
+- Removed duplicated/conflicting empty-state CSS from Tab5/Tab6/Tab7 stylesheets so future tab changes happen in one place.
+- Kept Lab Results as the reference pattern; appointments/chronic/incidents now match spacing, borders, and “no data yet” CTAs.  
+
+**Outcome:** Patients and staff see a consistent clinical-tab experience; QA can test one empty-state pattern instead of four. No backend or permission changes in this entry.
+
+**Primary paths:** `theme/meditap-shared.css`, `Tab4.tsx`, `Tab4.css`, `Tab5.tsx`, `Tab5.css`, `Tab6.tsx`, `Tab6.css`, `labResults/labResultCards.css`  
+**Commit:** `97f950a` (2026-05-25)
+
+---
+
+### 68) Tab14 Patient Information — PDF Text Extraction and Parsing (Pass 1)
+
+**Type:** Feature / Bug Fix  
+**Key:** `MT-AG-064`  
+
+**Summary:** Improve the first pass of PDF upload on Tab14 so extracted text reliably fills **Patient Information** before adding vendor-specific parsers (Athena, MediTap demo).  
+
+**What was done:**
+
+- Added **`documentTextExtraction.ts`** to normalize extracted PDF text (whitespace, line breaks) before heuristics run.
+- Tightened **`tab14DocumentParse.ts`** rules for patient name, DOB, contact fields, and labeled lines; reduced mis-mapping into wrong slots.
+- Extended unit tests in **`tab14DocumentParse.test.ts`** for common PDF text shapes.
+- Adjusted Tab14 upload handler wiring so parsed personal-info fields populate the form in one pass after extraction.  
+
+**Outcome:** More uploaded PDFs populate personal info correctly on first try; foundation for Athena (69) and MediTap demo (72) parsers. Does not add new demographic columns yet (see entry 73).
+
+**Primary paths:** `intake/documentTextExtraction.ts`, `intake/tab14DocumentParse.ts`, `intake/tab14DocumentParse.test.ts`, `Tab14.tsx`  
+**Commit:** `b93da83` (2026-05-25)
+
+---
+
+### 69) Tab14 — Athena Data-Portability PDF Import + Section Sidebar Dark Mode
+
+**Type:** Feature / UX  
+**Key:** `MT-AG-065`  
+
+**Summary:** Support real-world **Athena** export PDFs on Patient Information and fix Tab14’s left section sidebar when **Dark Mode** is enabled.  
+
+**What was done:**
+
+- Extended **`tab14DocumentParse.ts`** to detect Athena portability sections (allergies, medications, problems, encounters) and map them into the correct Tab14 intake subsections.
+- Added regression tests in **`tab14DocumentParse.test.ts`** using Athena-style text samples.
+- Updated **Tab14 sidebar** styles so section labels and active states remain readable on dark backgrounds.
+- Hooked dark-mode tokens in **`meditap-ion-dark-overrides.css`** and **`variables.css`** for Tab14-specific sidebar colors.  
+
+**Outcome:** Users can upload Athena exports and see structured data in intake sections; sidebar navigation is usable in dark mode. Separate from MediTap-branded demo PDF layout (entry 72).
+
+**Primary paths:** `intake/tab14DocumentParse.ts`, `intake/tab14DocumentParse.test.ts`, `Tab14.css`, `theme/meditap-ion-dark-overrides.css`, `theme/variables.css`  
+**Commit:** `f059410` (2026-05-26)
+
+---
+
+### 70) Public Site — Fix Scrolling on Support and Long Public Pages
+
+**Type:** Bug / UX  
+**Key:** `MT-AG-066`  
+
+**Summary:** Fix Support (FAQ), About, Terms, and Privacy pages where content was clipped and could not be scrolled to the bottom inside the Ionic shell.  
+
+**What was done:**
+
+- Updated **`PublicPageLayout.css`** so the public page shell scrolls inside the router outlet instead of trapping overflow.
+- Verified long FAQ blocks and the Support contact form remain reachable on typical mobile viewport heights.
+- No copy or API changes—layout/scroll behavior only.  
+
+**Outcome:** Public compliance and support content is fully readable on meditap.ai; reduces “stuck page” reports on Support. Does not change authenticated app tabs.
+
+**Primary paths:** `components/PublicPageLayout.css`, `components/PublicPageLayout.tsx` (consumer pages: Tab8, Tab10, Terms, Privacy)  
+**Commit:** `6ada584` (2026-05-27)
+
+---
+
+### 71) Tab14 — Restore Patient Intake from API After Login and Logout (Partial Sprint C)
+
+**Type:** Feature / Data Integrity  
+**Key:** `MT-AG-067`  
+
+**Summary:** Address Sprint C’s “single source of truth” goal for Tab14 by loading saved patient intake from the **Django API** when the page opens, and stop wiping drafts on every logout when the same user returns.  
+
+**What was done:**
+
+- Expanded **`api.ts`** Tab14 load/save helpers so Patient Information can hydrate from server-backed patient, allergy, medication, insurance, and chronic payloads where available.
+- Updated **`Tab14.tsx`** to fetch and display API data on mount (with loading/error states) instead of relying only on browser `localStorage`.
+- Changed **`AuthContext.tsx`** so local Tab14 draft state is cleared only when **switching accounts**, not on every logout—preserves in-progress work for the same user in the same browser.
+- Added Tab14 CSS/messaging so users understand when data came from the server vs. local draft.  
+
+**Outcome:** Records saved to the backend reappear after sign-in again; major step toward Sprint C Tab14 unification. **Still open:** remove dual-write / `localStorage` fallback entirely (`MT-AG-061`; planned as a future register entry). Sprint B appointments API unchanged.
+
+**Primary paths:** `api.ts`, `contexts/AuthContext.tsx`, `pages/Tab14.tsx`, `pages/Tab14.css`  
+**Commit:** `6e70869` (2026-05-27)
+
+---
+
+### 72) Tab14 — MediTap Demo PDF Labeled-Field Parser (`meditap-3`)
+
+**Type:** Feature  
+**Key:** `MT-AG-068`  
+
+**Summary:** Add a dedicated parser for the **MediTap demo/training PDF** layout (explicit `Label: value` lines) so demo uploads populate every intake section correctly, including fixes for fields that were spilling into **Phone Number**.  
+
+**What was done:**
+
+- Implemented **`meditapDemoRecordParse.ts`** for labeled-field extraction (patient, hospital visit, allergies, meds, insurance, chronic conditions).
+- Added **`intakeDateParse.ts`** and shared **`tab14IntakeTypes.ts`** so parsers share one typed intake shape.
+- Refactored **`tab14DocumentParse.ts`** to route MediTap-demo PDFs to the dedicated parser before generic heuristics.
+- Added **`meditap3Pdf.integration.test.ts`** and fixture **`Riley-Moore-Meditap-3.pdf`** for repeatable QA.
+- Fixed preprocessor bug where **`Marital Status:`** was split incorrectly because a generic **`Status:`** break label matched first.  
+
+**Outcome:** Demo PDF used in sales/training fills Tab14 in the right fields; phone number no longer absorbs address/race/ethnicity/language/marital data (those get their own fields in entry 73). Athena parsing (69) remains separate code path.
+
+**Primary paths:** `intake/meditapDemoRecordParse.ts`, `intake/intakeDateParse.ts`, `intake/tab14IntakeTypes.ts`, `intake/tab14DocumentParse.ts`, `intake/meditap3Pdf.integration.test.ts`, `test-fixtures/Riley-Moore-Meditap-3.pdf`  
+**Commit:** `d8b8cde` (2026-05-28)
+
+---
+
+### 73) Tab14 + Backend — Patient Demographics Fields (Address, Race, Ethnicity, Language, Marital Status)
+
+**Type:** Feature  
+**Key:** `MT-AG-069`  
+
+**Summary:** Add the missing Patient Information fields required by demo PDFs and real charts so extra demographics are not forced into **Phone Number** or other unrelated inputs.  
+
+**What was done:**
+
+- Added Django migration **`0009_patient_demographics_fields.py`** and columns on **`Patient`**: address, race, ethnicity, preferred language, marital status.
+- Extended **`api.ts`** Tab14 save/load payloads to read and write the new fields against `/api/patients/`.
+- Built Tab14 form inputs for all five fields with the same staff-elevation / read-only rules as existing patient info.
+- Updated **`meditapDemoRecordParse.ts`** and types so MediTap demo PDF labeled lines map one-to-one into the new fields.
+- Extended integration tests to assert demographics survive parse → form → API round-trip.  
+
+**Outcome:** “Everything is working” on demo PDF import with correct field placement; backend and UI stay aligned for production deploy (`migrate` on VM). Does not complete Sprint B or full Tab14 localStorage removal.
+
+**Primary paths:** `backend/medical/models.py`, `backend/medical/migrations/0009_patient_demographics_fields.py`, `meditap-app/src/api.ts`, `meditap-app/src/pages/Tab14.tsx`, `meditap-app/src/intake/meditapDemoRecordParse.ts`, `meditap-app/src/intake/tab14IntakeTypes.ts`  
+**Commit:** `8f2c818` (2026-05-28)
+
+---
+
+## Set 6 — Summary table (quick Jira import)
+
+| # | Key | Epic | Type | Summary | Status |
+|---|-----|------|------|---------|--------|
+| 65 | — | E-PRODUCT | Spike | Sprint B/C backlog captured | Planning |
+| 66 | MT-AG-062 | E-CLINICAL-UX | Feature | Quick-pick libraries Tab5/6/7 | Done |
+| 67 | MT-AG-063 | E-CLINICAL-UX | UX | Tab4/5/6 layout matches Lab Results | Done |
+| 68 | MT-AG-064 | E-INTAKE-UX | Feature | Tab14 PDF extraction pass 1 | Done |
+| 69 | MT-AG-065 | E-INTAKE-UX | Feature | Athena PDF import + Tab14 dark sidebar | Done |
+| 70 | MT-AG-066 | E-PUBLIC | Bug | Public pages scroll fix | Done |
+| 71 | MT-AG-067 | E-INTAKE-UX | Feature | Tab14 API hydrate after login (partial) | Partial |
+| 72 | MT-AG-068 | E-INTAKE-UX | Feature | MediTap demo PDF labeled-field parser | Done |
+| 73 | MT-AG-069 | E-INTAKE-UX | Feature | Patient demographics fields (DB + Tab14) | Done |
+
+### Still open from entry 65 (Sprint B/C)
+
+| Backlog item | Status after Set 6 |
+|--------------|-------------------|
+| **Sprint B** — Django appointments API (replace Tab4 `localStorage`; unify Dashboard + Quick Status counts) | **Not started** (`MT-AG-059`) |
+| **Sprint C** — Tab14 single API save path only (no dual `localStorage` + API) | **Partial** (entry 71; `MT-AG-061` still open) |
+
+**Next register entry:** **74** / **`MT-AG-070`**
+
+---
+
+*Last updated: Set 6 rewritten to full register format (entries 65–73); entries 66–73 expanded to match entry 65 detail level.*
