@@ -240,117 +240,148 @@ const Tab13: React.FC = () => {
           </header>
 
           <main className="admin-panel-main">
-            <div className="tab13-intro">
-              <IonIcon icon={keyOutline} className="tab13-intro__icon" aria-hidden />
-              <div className="tab13-intro__body">
-                <h2>Administration &amp; shortcuts</h2>
-                <p>
-                  Jump to patient tabs, run facility operations, and manage Epic sandbox linkage.
-                  Destructive API actions require staff access.
-                </p>
-              </div>
-            </div>
+            <div className="tab13-page">
+              <section
+                className="tab13-zone tab13-zone--overview"
+                aria-labelledby="tab13-overview-heading"
+              >
+                <div className="tab13-intro">
+                  <IonIcon icon={keyOutline} className="tab13-intro__icon" aria-hidden />
+                  <div className="tab13-intro__body">
+                    <h2 id="tab13-overview-heading">Administration &amp; shortcuts</h2>
+                    <p>
+                      Jump to patient tabs, run facility operations, and manage Epic sandbox
+                      linkage. Destructive API actions require staff access.
+                    </p>
+                  </div>
+                </div>
 
-            {!canEditAdmin && (
-              <p className="tab13-readonly-hint">
-                Sign in with staff credentials to use admin shortcuts and add hospitals.
-              </p>
-            )}
-            {canEditAdmin && (
-              <div className="tab13-staff-banner">
-                <p className="tab13-staff-banner__text">
-                  Staff mode active (or record editor role). Hospital creation uses the live API.
-                </p>
-                {!hasEditorRealmRole && (
-                  <IonButton
-                    size="small"
-                    fill="outline"
+                {!canEditAdmin && (
+                  <p className="tab13-readonly-hint">
+                    Sign in with staff credentials to use admin shortcuts and add hospitals.
+                  </p>
+                )}
+                {canEditAdmin && (
+                  <div className="tab13-staff-banner">
+                    <p className="tab13-staff-banner__text">
+                      Staff mode active (or record editor role). Hospital creation uses the live
+                      API.
+                    </p>
+                    {!hasEditorRealmRole && (
+                      <IonButton
+                        size="small"
+                        fill="outline"
+                        onClick={() => {
+                          clearMeditapIntakeElevation();
+                          setElevationNonce((n) => n + 1);
+                        }}
+                      >
+                        End staff mode
+                      </IonButton>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <section className="tab13-zone tab13-zone--facility" aria-labelledby="tab13-facility-heading">
+                <h2 className="tab13-zone__label" id="tab13-facility-heading">
+                  Facility operations
+                </h2>
+                <div className="tab13-ops" role="group" aria-label="Admin operations">
+                  <button
+                    type="button"
+                    className="tab13-ops__btn tab13-ops__btn--primary"
                     onClick={() => {
-                      clearMeditapIntakeElevation();
-                      setElevationNonce((n) => n + 1);
+                      if (!canEditAdmin) {
+                        setStaffModalOpen(true);
+                        return;
+                      }
+                      setHospitalMessage(null);
+                      setHospitalName('');
+                      setHospitalModalOpen(true);
                     }}
                   >
-                    End staff mode
-                  </IonButton>
-                )}
-              </div>
-            )}
-
-            <div className="tab13-ops" role="group" aria-label="Admin operations">
-              <button
-                type="button"
-                className="tab13-ops__btn tab13-ops__btn--primary"
-                onClick={() => {
-                  if (!canEditAdmin) {
-                    setStaffModalOpen(true);
-                    return;
-                  }
-                  setHospitalMessage(null);
-                  setHospitalName('');
-                  setHospitalModalOpen(true);
-                }}
-              >
-                <IonIcon icon={addOutline} aria-hidden />
-                Add hospital
-              </button>
-              <button
-                type="button"
-                className="tab13-ops__btn"
-                onClick={() =>
-                  window.alert(
-                    'Operational logs are not connected to an API in this build. Use Django admin or server logging.'
-                  )
-                }
-              >
-                <IonIcon icon={settingsOutline} aria-hidden />
-                View logs
-              </button>
-            </div>
-
-            <div className="tab13-layout">
-              <div className="tab13-layout__main">
-                <div className="tab13-sections-grid">
-                  {sections.map((section) => (
-                    <article key={section.title} className="tab13-section-card">
-                      <header className="tab13-section-card__head">
-                        <IonIcon icon={section.headIcon} aria-hidden />
-                        <div className="tab13-section-card__titles">
-                          <h3 className="tab13-section-card__title">{section.title}</h3>
-                          <p className="tab13-section-card__subtitle">{section.subtitle}</p>
-                        </div>
-                      </header>
-                      <ul className="tab13-section-card__links">
-                        {section.items.map((item) => (
-                          <li key={item.path}>
-                            <button
-                              type="button"
-                              className="tab13-section-card__link"
-                              onClick={() => navigateToAdminSection(item.path)}
-                            >
-                              <IonIcon icon={item.icon} aria-hidden />
-                              <span className="tab13-section-card__link-label">{item.label}</span>
-                              <IonIcon
-                                icon={chevronForwardOutline}
-                                className="tab13-section-card__link-chevron"
-                                aria-hidden
-                              />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </article>
-                  ))}
+                    <IonIcon icon={addOutline} aria-hidden />
+                    Add hospital
+                  </button>
+                  <button
+                    type="button"
+                    className="tab13-ops__btn"
+                    onClick={() =>
+                      window.alert(
+                        'Operational logs are not connected to an API in this build. Use Django admin or server logging.'
+                      )
+                    }
+                  >
+                    <IonIcon icon={settingsOutline} aria-hidden />
+                    View logs
+                  </button>
                 </div>
-              </div>
+              </section>
 
-              <aside className="tab13-layout__aside">
-                <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
-                  <span className="tab13-epic-card__badge">Integration</span>
-                  <h2 id="tab13-epic-title">Epic FHIR sandbox</h2>
-                  <p>
-                    Link the current MediTap patient chart to an Epic sandbox patient for SMART
-                    OAuth demos. The backend stores linkage metadata only—not Epic access tokens.
-                  </p>
+              <section
+                className="tab13-zone tab13-zone--workspace"
+                aria-labelledby="tab13-shortcuts-heading"
+              >
+                <div className="tab13-workspace">
+                  <div className="tab13-workspace__shortcuts">
+                    <h2 className="tab13-zone__label" id="tab13-shortcuts-heading">
+                      Patient &amp; chart shortcuts
+                    </h2>
+                    <div className="tab13-shortcuts-grid">
+                      {sections.map((section) => (
+                        <article key={section.title} className="tab13-section-card">
+                          <header className="tab13-section-card__head">
+                            <IonIcon icon={section.headIcon} aria-hidden />
+                            <div className="tab13-section-card__titles">
+                              <h3 className="tab13-section-card__title">{section.title}</h3>
+                              <p className="tab13-section-card__subtitle">{section.subtitle}</p>
+                            </div>
+                          </header>
+                          <ul className="tab13-section-card__links">
+                            {section.items.map((item) => (
+                              <li key={item.path}>
+                                <button
+                                  type="button"
+                                  className="tab13-section-card__link"
+                                  onClick={() => navigateToAdminSection(item.path)}
+                                >
+                                  <IonIcon icon={item.icon} aria-hidden />
+                                  <span className="tab13-section-card__link-label">
+                                    {item.label}
+                                  </span>
+                                  <IonIcon
+                                    icon={chevronForwardOutline}
+                                    className="tab13-section-card__link-chevron"
+                                    aria-hidden
+                                  />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    className="tab13-workspace__integrations"
+                    aria-labelledby="tab13-integrations-heading"
+                  >
+                    <h2 className="tab13-zone__label" id="tab13-integrations-heading">
+                      Integrations
+                    </h2>
+                    <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
+                      <header className="tab13-epic-card__head">
+                        <span className="tab13-epic-card__badge">Epic FHIR</span>
+                        <h3 id="tab13-epic-title">Sandbox linkage</h3>
+                      </header>
+                      <div className="tab13-epic-card__body">
+                        <p className="tab13-epic-card__lead">
+                          Link the current MediTap patient chart to an Epic sandbox patient for
+                          SMART OAuth demos. The backend stores linkage metadata only—not Epic
+                          access tokens.
+                        </p>
                   {epicLoading && <p className="tab13-epic-card__meta">Loading…</p>}
                   {epicErr && <p className="tab13-epic-card__meta">{epicErr}</p>}
                   {!epicLoading && epicCfg && (
@@ -488,14 +519,17 @@ const Tab13: React.FC = () => {
                           </IonButton>
                         </>
                       )}
-                      <p className="tab13-epic-card__meta">
-                        Redirect URI:{' '}
-                        <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
-                      </p>
-                    </>
-                  )}
-                </section>
-              </aside>
+                        <p className="tab13-epic-card__meta">
+                          Redirect URI:{' '}
+                          <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
+                        </p>
+                      </>
+                    )}
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </section>
             </div>
           </main>
         </div>
