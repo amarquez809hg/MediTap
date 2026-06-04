@@ -923,9 +923,52 @@
 - **Tab4** loads/saves via API (staff elevation for writes); one-time **localStorage → API** import when staff opens Tab4 and server list is empty.
 - **Tab1** and **Tab2** load appointments from the same API (window focus refresh on dashboard / quick status).  
 
-**Outcome:** Appointment data is server-backed; dashboard KPIs and Quick Status match Tab4. Legacy browser cache migrates once under staff sign-in. Does not complete Tab14 single-save (Sprint C remainder).
+**Outcome:** Appointment data is server-backed; dashboard KPIs and Quick Status match Tab4. Legacy browser cache migrates once under staff sign-in.
 
 **Primary paths:** `backend/medical/models.py`, `migrations/0010_patient_appointment.py`, `views.py`, `serializers.py`, `meditap-app/src/api.ts`, `appointments/usePatientAppointments.ts`, `pages/Tab4.tsx`, `Tab1.tsx`, `Tab2.tsx`  
+**Commit:** *(pending)*
+
+---
+
+### 76) Sprint C — Tab14 single API save path (remove localStorage dual-write)
+
+**Type:** Feature  
+**Key:** `MT-AG-072`  
+
+**Summary:** Complete Sprint C data-integrity goal: Tab14 reads and writes only through the Django API; dashboard and Quick Status profile checks use server-backed chart data.  
+
+**What was done:**
+
+- Removed all Tab14 **`localStorage`** auto-save and post-save dual writes (`patientInfo`, allergies, meds, etc.).
+- After **Save**, form re-hydrates from **`loadTab14FromBackend`** so UI matches server IDs and counts.
+- **`tab14LegacyStorage.ts`**: one-time import of legacy browser cache when staff opens Tab4 and API chart is empty.
+- **`patientHasBasicProfile(detail)`** replaces **`patientInfoLooksComplete()`** (localStorage) in **`nextSteps.ts`** and onboarding uses API load.
+- Logout still clears legacy keys via **`clearWorkflowLocalState`** for hygiene.  
+
+**Outcome:** Single source of truth for intake; cross-device sync requires **Save** to API (not silent local draft). Completes **`MT-AG-061`** / entry 71 partial hydrate follow-up.
+
+**Primary paths:** `meditap-app/src/pages/Tab14.tsx`, `intake/tab14LegacyStorage.ts`, `dashboard/nextSteps.ts`, `onboarding/onboardingStorage.ts`, `pages/OnboardingPage.tsx`, `auth/clearWorkflowLocalState.ts`  
+**Commit:** *(pending)*
+
+---
+
+### 77) Riverbend HIE PDF parser (synthetic test packets)
+
+**Type:** Bug  
+**Key:** `MT-AG-073`  
+
+**Summary:** Fix Tab14 PDF extraction for Riverbend Health Information Exchange synthetic exports (pediatric, oncology, cardiology, mixed-provider test PDFs).  
+
+**What was done:**
+
+- Added **`riverbendHieParse.ts`**: detects Riverbend / MediTap synthetic records, splits glued single-space column text from pdf.js, maps demographics (`Child Name`, `Name`, `DOB`, `Sex`, `Phone`, `Blood Type`, `Address`, etc.), problems/diagnosis, medications, allergies, and hospital/urgent-care visits.
+- Wired into **`tab14DocumentParse.ts`** after MediTap demo check, before generic/Athena parsers.
+- Bounded generic **`parsePatientFields`** name capture to stop greedy runs into the rest of the document.
+- Integration tests for all four **`test-fixtures/riverbend/`** PDFs (Lucas Martinez, Amina Hassan, Rafael Santos, Tessa Robinson).  
+
+**Outcome:** Uploading the Riverbend test PDFs populates Given/Family name, DOB, sex, and section data correctly instead of dumping the whole document into one field.
+
+**Primary paths:** `meditap-app/src/intake/riverbendHieParse.ts`, `tab14DocumentParse.ts`, `test-fixtures/riverbend/`, `riverbendHiePdf.integration.test.ts`  
 **Commit:** *(pending)*
 
 ---
@@ -940,21 +983,23 @@
 | 68 | MT-AG-064 | E-INTAKE-UX | Feature | Tab14 PDF extraction pass 1 | Done |
 | 69 | MT-AG-065 | E-INTAKE-UX | Feature | Athena PDF import + Tab14 dark sidebar | Done |
 | 70 | MT-AG-066 | E-PUBLIC | Bug | Public pages scroll fix | Done |
-| 71 | MT-AG-067 | E-INTAKE-UX | Feature | Tab14 API hydrate after login (partial) | Partial |
+| 71 | MT-AG-067 | E-INTAKE-UX | Feature | Tab14 API hydrate after login (partial) | Done |
 | 72 | MT-AG-068 | E-INTAKE-UX | Feature | MediTap demo PDF labeled-field parser | Done |
 | 73 | MT-AG-069 | E-INTAKE-UX | Feature | Patient demographics fields (DB + Tab14) | Done |
 | 74 | MT-AG-070 | E-ADMIN | UX | Admin Panel grid layout + Epic sidebar | Done |
 | 75 | MT-AG-071 | E-APPOINTMENTS | Feature | Server-backed appointments API (Sprint B) | Done |
+| 76 | MT-AG-072 | E-INTAKE-UX | Feature | Tab14 API-only save (Sprint C) | Done |
+| 77 | MT-AG-073 | E-INTAKE-UX | Bug | Riverbend HIE synthetic PDF parser | Done |
 
 ### Still open from entry 65 (Sprint B/C)
 
 | Backlog item | Status after Set 6 |
 |--------------|-------------------|
-| **Sprint B** — Django appointments API (replace Tab4 `localStorage`; unify Dashboard + Quick Status counts) | **Done** (entry 75; `MT-AG-059` / `MT-AG-071`) |
-| **Sprint C** — Tab14 single API save path only (no dual `localStorage` + API) | **Partial** (entry 71; `MT-AG-061` still open) |
+| **Sprint B** — Django appointments API | **Done** (entry 75) |
+| **Sprint C** — Tab14 single API save path | **Done** (entry 76; closes `MT-AG-061`) |
 
-**Next register entry:** **76** / **`MT-AG-072`**
+**Next register entry:** **78** / **`MT-AG-074`**
 
 ---
 
-*Last updated: entry 75 (Sprint B appointments API); Set 6 entries 65–75.*
+*Last updated: entry 77 (Riverbend HIE PDF parser); Set 6 entries 65–77.*

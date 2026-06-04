@@ -9,6 +9,10 @@ import {
   isMeditapDemoRecordDocument,
   parseMeditapDemoRecordDocument,
 } from './meditapDemoRecordParse';
+import {
+  isRiverbendHieDocument,
+  parseRiverbendHieDocument,
+} from './riverbendHieParse';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -58,8 +62,19 @@ function normalizeBloodType(text: string): string | undefined {
   return undefined;
 }
 
-/** Capture stays on one line — avoids greedy `.+` swallowing the whole document. */
-const LINE_VALUE = '([^\\n]+)';
+/** Stop greedy name captures when PDF text lacks line breaks. */
+const DEMO_FIELD_BOUNDARY =
+  '\\s{2,}(?:DOB|Date of Birth|Sex|Guardian|School|Insurance|Phone|Blood Type|Address|MRN|Preferred Language)\\b';
+
+function labelValueBounded(text: string, labelPattern: string): string | undefined {
+  const re = new RegExp(
+    `${labelPattern}\\s*[:#]?\\s*(.+?)(?=${DEMO_FIELD_BOUNDARY}|\\n|$)`,
+    'i'
+  );
+  const m = text.match(re);
+  if (m?.[1]) return collapseWs(m[1]);
+  return undefined;
+}
 
 function labelValue(text: string, labels: RegExp[]): string | undefined {
   const lines = text.split(/\r?\n/).map((l) => l.trim());
@@ -71,6 +86,9 @@ function labelValue(text: string, labels: RegExp[]): string | undefined {
   }
   return undefined;
 }
+
+/** Capture stays on one line — avoids greedy `.+` swallowing the whole document. */
+const LINE_VALUE = '([^\\n]+)';
 
 /** "Maria Elena Rodriguez" → given "Maria Elena", family "Rodriguez". */
 function splitPersonName(full: string): { given?: string; family?: string } {
@@ -101,9 +119,11 @@ function parsePatientFields(text: string): Tab14PatientFields {
   if (given) out.givenName = given;
   if (family) out.familyName = family;
 
-  const fullNameLine = labelValue(t, [
-    new RegExp(`(?:patient\\s*name|full\\s*name|name)\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
-  ]);
+  const fullNameLine =
+    labelValueBounded(t, '(?:patient\\s*name|full\\s*name|(?:child\\s*)?name)') ||
+    labelValue(t, [
+      new RegExp(`(?:patient\\s*name|full\\s*name|(?:child\\s*)?name)\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
+    ]);
   if (fullNameLine) {
     const split = splitPersonName(fullNameLine);
     if (!out.givenName && split.given) out.givenName = split.given;
@@ -735,6 +755,9 @@ export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
   const rawText = raw.replace(/\r\n/g, '\n');
   if (isMeditapDemoRecordDocument(rawText)) {
     return parseMeditapDemoRecordDocument(rawText);
+  }
+  if (isRiverbendHieDocument(rawText)) {
+    return parseRiverbendHieDocument(rawText);
   }
   const text = normalizeExtractedDocumentText(rawText);
   const generic = parseGenericTab14Document(text);

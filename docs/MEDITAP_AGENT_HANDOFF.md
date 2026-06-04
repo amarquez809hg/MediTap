@@ -35,8 +35,8 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 74+)
 
-- **Last entry:** 75 (`MT-AG-071`) — server-backed appointments API
-- **Next entry:** 76 (`MT-AG-072`)
+- **Last entry:** 77 (`MT-AG-073`) — Riverbend HIE synthetic PDF parser
+- **Next entry:** 78 (`MT-AG-074`)
 - **Checkpoint date:** 2026-05-30
 
 ---
@@ -97,7 +97,9 @@ Full text of entries 65–73 is in **Set 6** of `AGENT_SESSION_CHANGELOG.md`.
 
 ## Open backlog (do not mark done until shipped)
 
-1. **Sprint C — Tab14 single save** (`MT-AG-061`): Remove dual `localStorage` + API writes; one persistence path; Quick Status and dashboard trust API counts for intake fields.
+_Sprint B (appointments API) and Sprint C Tab14 single-save are complete as of entries 75–76._
+
+Next competitive milestones from product roadmap (entry 58): vitals/BMI, Epic FHIR import, document storage, audit log, hospital portal.
 
 ---
 

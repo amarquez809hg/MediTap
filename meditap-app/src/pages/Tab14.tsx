@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Tab14.css';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
@@ -20,6 +20,10 @@ import {
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
+import {
+    loadTab14LegacyFromLocalStorage,
+    tab14LegacyToSaveInput,
+} from '../intake/tab14LegacyStorage';
 import {
     augmentPdfTextWithFirstPageOcr,
     extractTextFromPdfContentItems,
@@ -343,8 +347,6 @@ const Tab14: React.FC = () => {
     const [uploadParsing, setUploadParsing] = useState(false);
     const [loadingIntake, setLoadingIntake] = useState(true);
 
-    const intakeHydratedRef = useRef(false);
-
     const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
     const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
     const [allergies, setAllergies] = useState<Allergy[]>([defaultAllergy]);
@@ -383,13 +385,6 @@ const Tab14: React.FC = () => {
                 : defaultHospitalVisit
         );
         setNoAllergies(bundle.noAllergies);
-
-        localStorage.setItem('patientInfo', JSON.stringify(bundle.patient));
-        localStorage.setItem('insurances', JSON.stringify(bundle.insurances));
-        localStorage.setItem('allergies', JSON.stringify(bundle.allergies));
-        localStorage.setItem('medications', JSON.stringify(bundle.medications));
-        localStorage.setItem('chronicConditions', JSON.stringify(bundle.chronicConditions));
-        localStorage.setItem('hospitalVisit', JSON.stringify(bundle.hospitalVisit));
     };
 
     useEffect(() => {
@@ -441,7 +436,8 @@ const Tab14: React.FC = () => {
             // forms use label-boundary parsing on raw extracted text.
             const bundle = parseTab14IntakeDocument(fullText);
 
-            setPatientInfo((prev) => ({ ...prev, ...bundle.patientFields }));
+            // Replace demographics from PDF — do not merge with stale API values (e.g. old email).
+            setPatientInfo({ ...defaultPatientInfo, ...bundle.patientFields });
 
             if (bundle.noKnownDrugAllergies) {
                 setNoAllergies(true);
@@ -602,12 +598,11 @@ const Tab14: React.FC = () => {
                 hospitalVisit,
                 noAllergies,
             });
-            localStorage.setItem('patientInfo', JSON.stringify(patientInfo));
-            localStorage.setItem("insurances", JSON.stringify(insurances));
-            localStorage.setItem('allergies', JSON.stringify(allergies));
-            localStorage.setItem('medications', JSON.stringify(medications));
-            localStorage.setItem('chronicConditions', JSON.stringify(chronicConditions));
-            localStorage.setItem('hospitalVisit', JSON.stringify(hospitalVisit));
+            clearTab14DraftKeysOnly();
+            const refreshed = await loadTab14FromBackend(username);
+            if (refreshed.hasPatient) {
+                applyTab14Bundle(refreshed);
+            }
             setSaveMessage(true);
             setTimeout(() => setSaveMessage(false), 2000);
         } catch (e) {
@@ -651,7 +646,22 @@ const Tab14: React.FC = () => {
             setLoadingIntake(true);
             setBackendError(null);
             try {
-                const bundle = await loadTab14FromBackend(username);
+                let bundle = await loadTab14FromBackend(username);
+                if (cancelled) return;
+
+                if (!bundle.hasPatient) {
+                    const legacy = loadTab14LegacyFromLocalStorage();
+                    if (legacy && canEditPatientRecords) {
+                        await saveTab14ToBackend(tab14LegacyToSaveInput(username, legacy));
+                        clearTab14DraftKeysOnly();
+                        bundle = await loadTab14FromBackend(username);
+                    } else if (legacy && !canEditPatientRecords) {
+                        setBackendError(
+                            'This browser has unsaved intake data. Staff sign-in is required to sync it to your chart.'
+                        );
+                    }
+                }
+
                 if (cancelled) return;
                 if (bundle.hasPatient) {
                     applyTab14Bundle(bundle);
@@ -666,7 +676,6 @@ const Tab14: React.FC = () => {
                 }
             } finally {
                 if (!cancelled) {
-                    intakeHydratedRef.current = true;
                     setLoadingIntake(false);
                 }
             }
@@ -674,37 +683,7 @@ const Tab14: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [authReady, username, elevationNonce]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('patientInfo', JSON.stringify(patientInfo));
-    }, [patientInfo]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('allergies', JSON.stringify(allergies));
-    }, [allergies]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('medications', JSON.stringify(medications));
-    }, [medications]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('insurances', JSON.stringify(insurances));
-    }, [insurances]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('chronicConditions', JSON.stringify(chronicConditions));
-    }, [chronicConditions]);
-
-    useEffect(() => {
-        if (!intakeHydratedRef.current) return;
-        localStorage.setItem('hospitalVisit', JSON.stringify(hospitalVisit));
-    }, [hospitalVisit]);
+    }, [authReady, username, elevationNonce, canEditPatientRecords]);
 
     return (
         <IonPage className="ct-page ct-tab14">
