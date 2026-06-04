@@ -295,3 +295,47 @@ class EpicPatientLink(models.Model):
 
     def __str__(self):
         return f"EpicLink({self.patient_id}, {self.status})"
+
+
+# ---------- Appointments (Tab4; server-backed schedule) ----------
+class PatientAppointment(models.Model):
+    """Scheduled visit for a patient — replaces Tab4 localStorage."""
+
+    appointment_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="appointments"
+    )
+    display_code = models.CharField(
+        max_length=40,
+        blank=True,
+        help_text="Human-readable id shown in the app, e.g. APPT-24001",
+    )
+    date_label = models.CharField(
+        max_length=120, help_text="Display date, e.g. Wednesday, Nov 27"
+    )
+    time_label = models.CharField(
+        max_length=32, help_text="Display time, e.g. 10:00 AM"
+    )
+    specialist = models.CharField(max_length=200)
+    department = models.CharField(max_length=120, blank=True)
+    visit_type = models.CharField(max_length=64, default="In-Office Visit")
+    status = models.CharField(max_length=32, default="Pending")
+    reason_for_visit = models.TextField(blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    duration = models.CharField(max_length=32, blank=True)
+    patient_instructions = models.TextField(blank=True)
+    clinical_notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        code = self.display_code or str(self.appointment_id)[:8]
+        return f"{code} — {self.specialist}"

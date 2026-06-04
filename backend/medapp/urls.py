@@ -40,6 +40,7 @@ router.register(r'chronic-disease-catalog', mviews.ChronicDiseaseCatalogViewSet)
 router.register(r'patient-chronic-diseases', mviews.PatientChronicDiseaseViewSet)
 router.register(r'lab-results', mviews.LabResultViewSet)
 router.register(r'patient-lab-panels', mviews.PatientLabPanelViewSet)
+router.register(r'patient-appointments', mviews.PatientAppointmentViewSet)
 
 urlpatterns = [
     path("", healthz),  # returns {"status":"ok"}

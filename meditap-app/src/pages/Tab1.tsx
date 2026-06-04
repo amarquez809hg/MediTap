@@ -41,10 +41,7 @@ import {
   mapPatientLabPanelToRow,
   type LabResultRow,
 } from '../labResults/labResultModel';
-import {
-  loadAppointmentsFromStorage,
-  type Appointment,
-} from '../appointments/appointmentStorage';
+import { usePatientAppointments } from '../appointments/usePatientAppointments';
 
 const defaultUserProfile = {
   name: 'Patient',
@@ -154,8 +151,8 @@ const Tab1: React.FC = () => {
   const [detail, setDetail] = React.useState<DashboardDetail | null>(null);
   const [loadingSummary, setLoadingSummary] = React.useState(true);
   const [summaryError, setSummaryError] = React.useState<string | null>(null);
-  const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [dashboardRefreshKey, setDashboardRefreshKey] = React.useState(0);
+  const { appointments } = usePatientAppointments(username, dashboardRefreshKey);
   const [chronicConditions, setChronicConditions] = React.useState<
     Tab5ChronicCondition[]
   >([]);
@@ -186,11 +183,6 @@ const Tab1: React.FC = () => {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
-
-  React.useEffect(() => {
-    const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? []);
-  }, [username, dashboardRefreshKey]);
 
   React.useEffect(() => {
     let cancelled = false;

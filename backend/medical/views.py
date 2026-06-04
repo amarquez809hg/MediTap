@@ -148,3 +148,29 @@ class PatientLabPanelViewSet(viewsets.ModelViewSet):
         if panel_id:
             return qs.filter(lab_panel_id=panel_id)
         return qs.none()
+
+
+class PatientAppointmentViewSet(viewsets.ModelViewSet):
+    """
+    Patients may list/retrieve their appointments via ?patient=.
+    Creates/updates/deletes require superuser, meditap-record-editor, or staff elevation.
+    """
+
+    queryset = models.PatientAppointment.objects.select_related("patient").all()
+    serializer_class = serializers.PatientAppointmentSerializer
+    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    lookup_field = "appointment_id"
+
+    def get_queryset(self):
+        qs = filter_by_allowed_patients(
+            self.request, super().get_queryset(), "patient_id"
+        )
+        if self.action == "list":
+            patient_id = self.request.query_params.get("patient")
+            if patient_id:
+                return qs.filter(patient_id=patient_id)
+            return qs.none()
+        appointment_id = self.kwargs.get("appointment_id")
+        if appointment_id:
+            return qs.filter(appointment_id=appointment_id)
+        return qs.none()

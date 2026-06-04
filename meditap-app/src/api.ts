@@ -127,6 +127,40 @@ export type PatientLabPanelWriteBody = {
   components: PatientLabPanelComponentApi[];
 };
 
+/** Tab4 — matches Django PatientAppointment serializer JSON. */
+export type PatientAppointmentApi = {
+  appointment_id: string;
+  patient: string;
+  appointmentId: string;
+  date: string;
+  time: string;
+  specialist: string;
+  department: string;
+  type: string;
+  status: string;
+  reasonForVisit: string;
+  location: string;
+  duration: string;
+  patientInstructions: string;
+  clinicalNotes: string;
+};
+
+export type PatientAppointmentWriteBody = {
+  patient: string;
+  appointmentId?: string;
+  date: string;
+  time: string;
+  specialist: string;
+  department?: string;
+  type: string;
+  status: string;
+  reasonForVisit?: string;
+  location?: string;
+  duration?: string;
+  patientInstructions?: string;
+  clinicalNotes?: string;
+};
+
 /** Epic sandbox SMART linking (read-only; backend never stores Epic access tokens). */
 export type EpicOAuthConfigApi = {
   integration_enabled: boolean;
@@ -1671,6 +1705,54 @@ export async function updatePatientLabPanel(
 
 export async function deletePatientLabPanel(labPanelId: string): Promise<void> {
   await apiRequest(`/api/patient-lab-panels/${labPanelId}/`, {
+    method: 'DELETE',
+  });
+}
+
+export async function fetchPatientAppointments(
+  username: string | null
+): Promise<{ patientId: string | null; appointments: PatientAppointmentApi[] }> {
+  const patients = await fetchAllPages<PatientApi>('/api/patients/');
+  let current = pickCurrentPatient(patients, username);
+  if (!current) {
+    current = await ensurePatientForCurrentSession(username, patients);
+  }
+  if (!current) {
+    return { patientId: null, appointments: [] };
+  }
+  const q = encodeURIComponent(current.patient_id);
+  const appointments = await fetchAllPages<PatientAppointmentApi>(
+    `/api/patient-appointments/?patient=${q}`
+  );
+  return { patientId: current.patient_id, appointments };
+}
+
+export async function createPatientAppointment(
+  body: PatientAppointmentWriteBody
+): Promise<PatientAppointmentApi> {
+  return requestJson<PatientAppointmentApi>('/api/patient-appointments/', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updatePatientAppointment(
+  appointmentId: string,
+  body: Partial<Omit<PatientAppointmentWriteBody, 'patient'>>
+): Promise<PatientAppointmentApi> {
+  return requestJson<PatientAppointmentApi>(
+    `/api/patient-appointments/${appointmentId}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+export async function deletePatientAppointment(
+  appointmentId: string
+): Promise<void> {
+  await apiRequest(`/api/patient-appointments/${appointmentId}/`, {
     method: 'DELETE',
   });
 }

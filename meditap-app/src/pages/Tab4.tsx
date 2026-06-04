@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './Tab4.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -10,7 +10,11 @@ import {
   setMeditapIntakeElevationToken,
 } from '../auth/staffElevationStorage';
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
-import { requestPatientIntakeStaffElevation } from '../api';
+import {
+  createPatientAppointment,
+  requestPatientIntakeStaffElevation,
+  updatePatientAppointment,
+} from '../api';
 import AppointmentCard from '../appointments/AppointmentCard';
 import AppointmentPresetField from '../appointments/AppointmentPresetField';
 import {
@@ -29,27 +33,28 @@ import {
   buildAppointmentDatePresets,
   suggestAppointmentId,
 } from '../appointments/appointmentFieldLibrary';
+import {
+  appointmentDraftToWriteBody,
+  mapPatientAppointmentApiToRow,
+} from '../appointments/appointmentModel';
 import type { Appointment } from '../appointments/appointmentStorage';
 import {
-  appointmentsStorageKey,
   emptyAppointmentDraft,
-  loadAppointmentsFromStorage,
+  NEW_APPOINTMENT_DRAFT_ID,
 } from '../appointments/appointmentStorage';
+import { usePatientAppointments } from '../appointments/usePatientAppointments';
 
 const Tab4: React.FC = () => {
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
-  const storageKey = useMemo(() => appointmentsStorageKey(username), [username]);
-
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [appointmentsHydrated, setAppointmentsHydrated] = useState(false);
-  const skipNextAppointmentsPersist = useRef(false);
   const [draftAppointment, setDraftAppointment] = useState<Appointment | null>(null);
   const [isNewAppointment, setIsNewAppointment] = useState(false);
   const [pendingAfterStaff, setPendingAfterStaff] = useState<'book' | null>(null);
   const [deferOpenNewAfterStaff, setDeferOpenNewAfterStaff] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const [staffModalOpen, setStaffModalOpen] = useState(false);
   const [staffUsername, setStaffUsername] = useState('');
@@ -65,11 +70,22 @@ const Tab4: React.FC = () => {
   const canEditAppointments =
     hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
 
+  const {
+    appointments,
+    setAppointments,
+    patientId,
+    loading,
+    error: loadError,
+  } = usePatientAppointments(username, elevationNonce, {
+    migrateLegacyIfEmpty: canEditAppointments,
+  });
+
   const appointmentDatePresets = useMemo(() => buildAppointmentDatePresets(), []);
 
   const beginNewAppointmentDraft = useCallback(() => {
     setIsNewAppointment(true);
     setDraftAppointment(emptyAppointmentDraft());
+    setSaveError(null);
   }, []);
 
   useEffect(() => {
@@ -78,26 +94,6 @@ const Tab4: React.FC = () => {
       beginNewAppointmentDraft();
     }
   }, [deferOpenNewAfterStaff, canEditAppointments, beginNewAppointmentDraft]);
-
-  useEffect(() => {
-    skipNextAppointmentsPersist.current = true;
-    const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? []);
-    setAppointmentsHydrated(true);
-  }, [storageKey, username]);
-
-  useEffect(() => {
-    if (!appointmentsHydrated) return;
-    if (skipNextAppointmentsPersist.current) {
-      skipNextAppointmentsPersist.current = false;
-      return;
-    }
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(appointments));
-    } catch {
-      /* quota / private mode */
-    }
-  }, [appointments, appointmentsHydrated, storageKey]);
 
   const submitStaffModal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,6 +122,7 @@ const Tab4: React.FC = () => {
   const openManageModal = (appt: Appointment) => {
     setIsNewAppointment(false);
     setDraftAppointment({ ...appt });
+    setSaveError(null);
   };
 
   const handleBookNewAppointment = () => {
@@ -147,33 +144,48 @@ const Tab4: React.FC = () => {
   const closeManageModal = () => {
     setDraftAppointment(null);
     setIsNewAppointment(false);
+    setSaveError(null);
   };
 
   const updateDraft = (field: keyof Appointment, value: string) => {
     setDraftAppointment((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  const saveAppointmentChanges = () => {
-    if (!draftAppointment || !canEditAppointments) return;
-    if (isNewAppointment) {
-      const nextId =
-        appointments.length > 0 ? Math.max(...appointments.map((a) => a.id)) + 1 : 1;
-      const appointmentId =
-        draftAppointment.appointmentId.trim() ||
-        `APPT-${String(nextId).padStart(5, '0')}`;
-      const newRow: Appointment = {
-        ...draftAppointment,
-        id: nextId,
-        appointmentId,
-      };
-      setAppointments((prev) => [...prev, newRow]);
-      setIsNewAppointment(false);
-      setDraftAppointment(newRow);
-      return;
+  const saveAppointmentChanges = async () => {
+    if (!draftAppointment || !canEditAppointments || !patientId) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const body = appointmentDraftToWriteBody(patientId, draftAppointment);
+      if (
+        isNewAppointment ||
+        !draftAppointment.id ||
+        draftAppointment.id === NEW_APPOINTMENT_DRAFT_ID
+      ) {
+        const nextSeq = appointments.length + 1;
+        if (!body.appointmentId) {
+          body.appointmentId = suggestAppointmentId(nextSeq);
+        }
+        const created = await createPatientAppointment(body);
+        const row = mapPatientAppointmentApiToRow(created);
+        setAppointments((prev) => [...prev, row]);
+        setIsNewAppointment(false);
+        setDraftAppointment(row);
+        return;
+      }
+      const updated = await updatePatientAppointment(draftAppointment.id, body);
+      const row = mapPatientAppointmentApiToRow(updated);
+      setAppointments((prev) =>
+        prev.map((item) => (item.id === draftAppointment.id ? row : item))
+      );
+      setDraftAppointment(row);
+    } catch (e) {
+      setSaveError(
+        e instanceof Error ? e.message : 'Could not save appointment.'
+      );
+    } finally {
+      setSaving(false);
     }
-    setAppointments((prev) =>
-      prev.map((row) => (row.id === draftAppointment.id ? draftAppointment : row))
-    );
   };
 
   return (
@@ -208,7 +220,14 @@ const Tab4: React.FC = () => {
       </header>
 
       <main className="schedule-main">
-        {appointments.length > 0 ? (
+        {loadError && (
+          <p className="record-tab-readonly-hint" role="alert">
+            {loadError}
+          </p>
+        )}
+        {loading ? (
+          <p className="record-tab-empty">Loading appointments…</p>
+        ) : appointments.length > 0 ? (
           <div className="appointments-list">
             {appointments.map((appt) => (
               <AppointmentCard key={appt.id} appt={appt} onManage={openManageModal} />
@@ -289,6 +308,12 @@ const Tab4: React.FC = () => {
               </div>
             )}
 
+            {saveError && (
+              <p className="tab14-staff-modal__error" role="alert">
+                {saveError}
+              </p>
+            )}
+
             <div className="appt-modal__form-grid">
               <AppointmentPresetField
                 label="Appointment ID"
@@ -296,11 +321,10 @@ const Tab4: React.FC = () => {
                 options={APPOINTMENT_ID_PRESETS}
                 onChange={(v) => {
                   if (v === APPOINTMENT_ID_AUTO_LABEL) {
-                    const nextId =
-                      appointments.length > 0
-                        ? Math.max(...appointments.map((a) => a.id)) + 1
-                        : 1;
-                    updateDraft('appointmentId', suggestAppointmentId(nextId));
+                    updateDraft(
+                      'appointmentId',
+                      suggestAppointmentId(appointments.length + 1)
+                    );
                     return;
                   }
                   updateDraft('appointmentId', v);
@@ -426,10 +450,14 @@ const Tab4: React.FC = () => {
               <button
                 type="button"
                 className="save-button"
-                disabled={!canEditAppointments}
-                onClick={saveAppointmentChanges}
+                disabled={!canEditAppointments || saving || !patientId}
+                onClick={() => void saveAppointmentChanges()}
               >
-                {isNewAppointment ? 'Create appointment' : 'Save Changes'}
+                {saving
+                  ? 'Saving…'
+                  : isNewAppointment
+                    ? 'Create appointment'
+                    : 'Save Changes'}
               </button>
             </div>
           </div>

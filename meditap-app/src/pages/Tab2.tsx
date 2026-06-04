@@ -39,10 +39,7 @@ import {
   type DashboardDetail,
   type PatientLabPanelApi,
 } from '../api';
-import {
-  loadAppointmentsFromStorage,
-  type Appointment,
-} from '../appointments/appointmentStorage';
+import { usePatientAppointments } from '../appointments/usePatientAppointments';
 import {
   buildNextSteps,
   computeProfileCompleteness,
@@ -115,19 +112,14 @@ const Tab2: React.FC = () => {
   const [incidentCount, setIncidentCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { appointments } = usePatientAppointments(username, refreshKey);
 
   useEffect(() => {
     const onFocus = () => setRefreshKey((k) => k + 1);
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
-
-  useEffect(() => {
-    const stored = loadAppointmentsFromStorage(username);
-    setAppointments(stored ?? []);
-  }, [username, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -288,8 +280,8 @@ const Tab2: React.FC = () => {
 
           {loadError && (
             <p className="tab2-inline-warning" role="status">
-              Live summary unavailable: {loadError}. Appointment counts use this
-              device until server sync is enabled.
+              Live summary unavailable: {loadError}. Appointment counts still
+              load from the server when available.
             </p>
           )}
 

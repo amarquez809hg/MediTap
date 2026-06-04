@@ -35,8 +35,8 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 74+)
 
-- **Last entry:** 73 (`MT-AG-069`) — patient demographics on Tab14 + backend
-- **Next entry:** 74 (`MT-AG-070`)
+- **Last entry:** 75 (`MT-AG-071`) — server-backed appointments API
+- **Next entry:** 76 (`MT-AG-072`)
 - **Checkpoint date:** 2026-05-30
 
 ---
@@ -59,7 +59,7 @@ Outcome: What improved; what is explicitly NOT included / still open.
 |-------|-----|---------|
 | `/tab1` | Dashboard | Home, previews, staff-gated add |
 | `/tab2` | Quick Status | KPI cards, urgent next steps |
-| `/tab4` | Appointments | Cards + modal; **localStorage** today |
+| `/tab4` | Appointments | Cards + modal; **Django API** (`patient-appointments`) |
 | `/tab5` | Chronic conditions | API + staff quick-pick |
 | `/tab6` | Incident records | API + staff quick-pick |
 | `/tab7` | Lab results | `PatientLabPanel` API + quick-pick |
@@ -97,9 +97,7 @@ Full text of entries 65–73 is in **Set 6** of `AGENT_SESSION_CHANGELOG.md`.
 
 ## Open backlog (do not mark done until shipped)
 
-1. **Sprint B — Appointments API** (`MT-AG-059`): Django model + API; Tab4, Tab1, Tab2 read same server data; deprecate `appointmentStorage.ts` local-only path.
-
-2. **Sprint C — Tab14 single save** (`MT-AG-061`): Remove dual `localStorage` + API writes; one persistence path; Quick Status and dashboard trust API counts.
+1. **Sprint C — Tab14 single save** (`MT-AG-061`): Remove dual `localStorage` + API writes; one persistence path; Quick Status and dashboard trust API counts for intake fields.
 
 ---
 

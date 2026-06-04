@@ -123,3 +123,52 @@ class EpicPatientLinkSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("patient", "last_error", "created_at", "updated_at")
+
+
+class PatientAppointmentSerializer(serializers.ModelSerializer):
+    """JSON shape matches Tab4 Appointment fields (camelCase mapped in the SPA)."""
+
+    date = serializers.CharField(source="date_label")
+    time = serializers.CharField(source="time_label")
+    type = serializers.CharField(source="visit_type")
+    reasonForVisit = serializers.CharField(
+        source="reason_for_visit", required=False, allow_blank=True
+    )
+    appointmentId = serializers.CharField(
+        source="display_code", required=False, allow_blank=True
+    )
+    patientInstructions = serializers.CharField(
+        source="patient_instructions", required=False, allow_blank=True
+    )
+    clinicalNotes = serializers.CharField(
+        source="clinical_notes", required=False, allow_blank=True
+    )
+
+    class Meta:
+        model = models.PatientAppointment
+        fields = (
+            "appointment_id",
+            "patient",
+            "appointmentId",
+            "date",
+            "time",
+            "specialist",
+            "department",
+            "type",
+            "status",
+            "reasonForVisit",
+            "location",
+            "duration",
+            "patientInstructions",
+            "clinicalNotes",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("appointment_id", "created_at", "updated_at")
+        extra_kwargs = {"created_by": {"write_only": True, "required": False}}
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            validated_data.setdefault("created_by", request.user)
+        return super().create(validated_data)

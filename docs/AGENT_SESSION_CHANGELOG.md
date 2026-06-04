@@ -909,6 +909,27 @@
 
 ---
 
+### 75) Sprint B — Server-backed appointments (Tab4 / Dashboard / Quick Status)
+
+**Type:** Feature  
+**Key:** `MT-AG-071`  
+
+**Summary:** Replace Tab4 `localStorage` appointments with a Django API so visits sync across devices and Tab1, Tab2, and Tab4 show the same counts.  
+
+**What was done:**
+
+- Added **`PatientAppointment`** model + migration **`0010_patient_appointment.py`**, serializer, viewset (`/api/patient-appointments/?patient=`), admin registration.
+- Frontend: **`fetchPatientAppointments`**, create/update/delete API helpers, **`usePatientAppointments`** hook, **`appointmentModel.ts`** mapper.
+- **Tab4** loads/saves via API (staff elevation for writes); one-time **localStorage → API** import when staff opens Tab4 and server list is empty.
+- **Tab1** and **Tab2** load appointments from the same API (window focus refresh on dashboard / quick status).  
+
+**Outcome:** Appointment data is server-backed; dashboard KPIs and Quick Status match Tab4. Legacy browser cache migrates once under staff sign-in. Does not complete Tab14 single-save (Sprint C remainder).
+
+**Primary paths:** `backend/medical/models.py`, `migrations/0010_patient_appointment.py`, `views.py`, `serializers.py`, `meditap-app/src/api.ts`, `appointments/usePatientAppointments.ts`, `pages/Tab4.tsx`, `Tab1.tsx`, `Tab2.tsx`  
+**Commit:** *(pending)*
+
+---
+
 ## Set 6 — Summary table (quick Jira import)
 
 | # | Key | Epic | Type | Summary | Status |
@@ -923,16 +944,17 @@
 | 72 | MT-AG-068 | E-INTAKE-UX | Feature | MediTap demo PDF labeled-field parser | Done |
 | 73 | MT-AG-069 | E-INTAKE-UX | Feature | Patient demographics fields (DB + Tab14) | Done |
 | 74 | MT-AG-070 | E-ADMIN | UX | Admin Panel grid layout + Epic sidebar | Done |
+| 75 | MT-AG-071 | E-APPOINTMENTS | Feature | Server-backed appointments API (Sprint B) | Done |
 
 ### Still open from entry 65 (Sprint B/C)
 
 | Backlog item | Status after Set 6 |
 |--------------|-------------------|
-| **Sprint B** — Django appointments API (replace Tab4 `localStorage`; unify Dashboard + Quick Status counts) | **Not started** (`MT-AG-059`) |
+| **Sprint B** — Django appointments API (replace Tab4 `localStorage`; unify Dashboard + Quick Status counts) | **Done** (entry 75; `MT-AG-059` / `MT-AG-071`) |
 | **Sprint C** — Tab14 single API save path only (no dual `localStorage` + API) | **Partial** (entry 71; `MT-AG-061` still open) |
 
-**Next register entry:** **75** / **`MT-AG-071`**
+**Next register entry:** **76** / **`MT-AG-072`**
 
 ---
 
-*Last updated: entry 74 (Tab13 admin layout); Set 6 entries 65–74.*
+*Last updated: entry 75 (Sprint B appointments API); Set 6 entries 65–75.*
