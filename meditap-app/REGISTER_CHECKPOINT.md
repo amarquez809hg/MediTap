@@ -4,7 +4,7 @@
 - Next register entry should start at: `78` (`MT-AG-074`)
 - Checkpoint date: `2026-05-30`
 - Scope baseline (Set 6 — since entry 65):
-  - Riverbend HIE synthetic PDF parser for Tab14 upload (`MT-AG-073`)
+  - General intake recognition engine for Tab14 PDF upload (`MT-AG-073`)
   - Sprint B: server-backed appointments — Tab4/Tab1/Tab2 share API (`MT-AG-071`)
   - Sprint C: Tab14 API-only save path; no dual localStorage (`MT-AG-072`)
   - Tab13 Admin Panel grid layout (`MT-AG-070`)

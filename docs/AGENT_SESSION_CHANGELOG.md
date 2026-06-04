@@ -952,23 +952,25 @@
 
 ---
 
-### 77) Riverbend HIE PDF parser (synthetic test packets)
+### 77) General intake recognition engine + Riverbend PDF support
 
-**Type:** Bug  
+**Type:** Feature  
 **Key:** `MT-AG-073`  
 
-**Summary:** Fix Tab14 PDF extraction for Riverbend Health Information Exchange synthetic exports (pediatric, oncology, cardiology, mixed-provider test PDFs).  
+**Summary:** Replace format-specific PDF routing with a unified label-scanning intake engine that works across colon forms, space-column exports, EHR portability dumps, and narrative clinical PDFs.  
 
 **What was done:**
 
-- Added **`riverbendHieParse.ts`**: detects Riverbend / MediTap synthetic records, splits glued single-space column text from pdf.js, maps demographics (`Child Name`, `Name`, `DOB`, `Sex`, `Phone`, `Blood Type`, `Address`, etc.), problems/diagnosis, medications, allergies, and hospital/urgent-care visits.
-- Wired into **`tab14DocumentParse.ts`** after MediTap demo check, before generic/Athena parsers.
-- Bounded generic **`parsePatientFields`** name capture to stop greedy runs into the rest of the document.
-- Integration tests for all four **`test-fixtures/riverbend/`** PDFs (Lucas Martinez, Amina Hassan, Rafael Santos, Tessa Robinson).  
+- Added **`intakeFieldLabels.ts`**: canonical label registry, section boundaries, and validators (rejects clinical sentences as names, future DOB from encounter notes, etc.).
+- Added **`generalIntakeExtract.ts`**: format-agnostic extractor — preprocesses glued PDF text, scans labeled fields, maps sections (allergies, meds, chronic, hospital, insurance), merges with specialized parsers.
+- Refactored **`tab14DocumentParse.ts`**: general engine runs first; MediTap demo / Riverbend / Athena parsers enhance (not replace) results; specialized parsers receive raw text.
+- **`riverbendHieParse.ts`** + integration tests for four synthetic Riverbend PDF fixtures.
+- **Tab14 upload** replaces demographics from PDF instead of merging stale server values.
+- 19 intake unit/integration tests passing (Jane Doe summary, Riley Moore, Athena, Meditap-3 PDF, all four Riverbend packets).  
 
-**Outcome:** Uploading the Riverbend test PDFs populates Given/Family name, DOB, sex, and section data correctly instead of dumping the whole document into one field.
+**Outcome:** Uploading Lucas Martinez (or any supported PDF) populates Given/Family name, DOB, sex, and section data correctly instead of dumping clinical narrative into name fields.
 
-**Primary paths:** `meditap-app/src/intake/riverbendHieParse.ts`, `tab14DocumentParse.ts`, `test-fixtures/riverbend/`, `riverbendHiePdf.integration.test.ts`  
+**Primary paths:** `meditap-app/src/intake/intakeFieldLabels.ts`, `generalIntakeExtract.ts`, `tab14DocumentParse.ts`, `riverbendHieParse.ts`, `pages/Tab14.tsx`, `test-fixtures/riverbend/`  
 **Commit:** *(pending)*
 
 ---
@@ -989,7 +991,7 @@
 | 74 | MT-AG-070 | E-ADMIN | UX | Admin Panel grid layout + Epic sidebar | Done |
 | 75 | MT-AG-071 | E-APPOINTMENTS | Feature | Server-backed appointments API (Sprint B) | Done |
 | 76 | MT-AG-072 | E-INTAKE-UX | Feature | Tab14 API-only save (Sprint C) | Done |
-| 77 | MT-AG-073 | E-INTAKE-UX | Bug | Riverbend HIE synthetic PDF parser | Done |
+| 77 | MT-AG-073 | E-INTAKE-UX | Feature | General intake recognition engine + Riverbend PDFs | Done |
 
 ### Still open from entry 65 (Sprint B/C)
 

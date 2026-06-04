@@ -4,6 +4,11 @@
  */
 
 import { normalizeExtractedDocumentText } from './documentTextExtraction';
+import {
+  mergeIntakeParseResults,
+  parseGeneralIntakeDocument,
+  preprocessIntakeDocumentText,
+} from './generalIntakeExtract';
 import { tryParseDateToIso } from './intakeDateParse';
 import {
   isMeditapDemoRecordDocument,
@@ -146,7 +151,7 @@ function parsePatientFields(text: string): Tab14PatientFields {
   if (!out.givenName || !out.familyName) {
     const m2 = t.match(
       new RegExp(
-        `(?:^|\\n)\\s*(?:name|patient)\\s*[:#]\\s*([${NAME_CHARS}]+)\\s+([${NAME_CHARS}]+(?:\\s+[${NAME_CHARS}]+)*)\\s*(?:\\n|$)`,
+        `(?:^|\\n)\\s*(?<!Given\\s)(?<!Family\\s)(?<!Last\\s)(?<!First\\s)(?<!Full\\s)(?<!Child\\s)(?:name|patient)\\s*[:#]\\s*([${NAME_CHARS}]+)\\s+([${NAME_CHARS}]+(?:\\s+[${NAME_CHARS}]+)*)\\s*(?:\\n|$)`,
         'im'
       )
     );
@@ -750,21 +755,30 @@ function parseGenericTab14Document(text: string): Tab14IntakeParseResult {
 
 /**
  * Parse free-text (from PDF text layer or OCR) into Tab14-shaped structures.
+ * Uses the format-agnostic general extractor first, then merges specialized parsers.
  */
 export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
   const rawText = raw.replace(/\r\n/g, '\n');
+  const preprocessed = preprocessIntakeDocumentText(rawText);
+
+  const general = parseGeneralIntakeDocument(preprocessed);
+
+  const specialized: Tab14IntakeParseResult[] = [];
   if (isMeditapDemoRecordDocument(rawText)) {
-    return parseMeditapDemoRecordDocument(rawText);
+    specialized.push(parseMeditapDemoRecordDocument(rawText));
   }
   if (isRiverbendHieDocument(rawText)) {
-    return parseRiverbendHieDocument(rawText);
+    specialized.push(parseRiverbendHieDocument(rawText));
   }
-  const text = normalizeExtractedDocumentText(rawText);
-  const generic = parseGenericTab14Document(text);
-  if (!isAthenaPortabilityDocument(rawText) && !isAthenaPortabilityDocument(text)) {
-    return generic;
+  if (isAthenaPortabilityDocument(rawText) || isAthenaPortabilityDocument(preprocessed)) {
+    specialized.push(parseAthenaPortabilityDocument(rawText));
   }
-  // Athena exports use multi-space columns; parse before normalize collapses spacing.
-  const athena = parseAthenaPortabilityDocument(rawText);
-  return mergeTab14ParseResults(athena, generic);
+
+  if (specialized.length === 0) {
+    const text = normalizeExtractedDocumentText(preprocessed);
+    const generic = parseGenericTab14Document(text);
+    return mergeIntakeParseResults(generic, general);
+  }
+
+  return mergeIntakeParseResults(general, ...specialized);
 }

@@ -35,7 +35,7 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 74+)
 
-- **Last entry:** 77 (`MT-AG-073`) — Riverbend HIE synthetic PDF parser
+- **Last entry:** 77 (`MT-AG-073`) — General intake recognition engine + Riverbend PDFs
 - **Next entry:** 78 (`MT-AG-074`)
 - **Checkpoint date:** 2026-05-30
 

@@ -4,6 +4,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { normalizeBloodType } from './intakeFieldLabels';
 import type {
   Tab14ChronicRow,
   Tab14HospitalFields,
@@ -156,15 +157,19 @@ function parseDemographics(text: string): Tab14PatientFields {
   if (phone) out.phoneNumber = phone;
 
   const bt = fields['blood type'];
-  if (bt && /^[ABO]{1,2}[+-]$/i.test(bt.replace(/\s/g, ''))) {
-    out.bloodType = bt.toUpperCase();
+  if (bt) {
+    const normalized = normalizeBloodType(bt) ?? normalizeBloodType(bt.split(/\s+/)[0] ?? '');
+    if (normalized) out.bloodType = normalized;
   }
 
   const addr = fields.address;
   if (addr) out.address = addr;
 
   const lang = fields['preferred language'];
-  if (lang) out.preferredLanguage = lang;
+  if (lang) {
+    const cleaned = lang.split(/\s+(?=Interpreter Needed\b)/i)[0]?.trim() ?? lang;
+    if (cleaned) out.preferredLanguage = cleaned;
+  }
 
   return out;
 }
