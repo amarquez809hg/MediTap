@@ -9,7 +9,7 @@ import { resolvePortalPatientEmail } from './api';
 
 describe('resolvePortalPatientEmail', () => {
   it('uses valid form email when present', () => {
-    vi.mocked(getAccessTokenPayload).mockReturnValue(undefined);
+    vi.mocked(getAccessTokenPayload).mockReturnValue(null);
     expect(
       resolvePortalPatientEmail('rafael.santos@example.com', 'patient1')
     ).toBe('rafael.santos@example.com');
