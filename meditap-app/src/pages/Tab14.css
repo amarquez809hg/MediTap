@@ -167,6 +167,16 @@ ion-page.ct-page.ct-tab14 ion-content {
   display: flex;
   flex-direction: column;
   background: var(--meditap-surface);
+  overflow: visible;
+}
+
+.tab14-panel-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+  overflow: visible;
+  position: relative;
+  z-index: 2;
 }
 
 .tab14-view-only-banner {
@@ -450,12 +460,6 @@ ion-page.ct-page.ct-tab14 ion-content {
   border-radius: 0;
 }
 
-.tab14-panel-footer {
-  padding: 16px 24px 24px;
-  border-top: 1px solid var(--meditap-border);
-  background: var(--meditap-surface);
-}
-
 @media (max-width: 768px) {
   .tab14-layout {
     flex-direction: column;
@@ -714,6 +718,58 @@ ion-page.ct-page.ct-tab14 ion-content {
   width: 18px;
   height: 18px;
   margin-top: 2px;
+}
+
+.clear-button:disabled,
+.clear-button--staff-locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clear-button--staff-locked {
+  pointer-events: auto;
+}
+
+.save-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Clear Form staff-only hint (React popup; wrapper receives hover, not disabled buttons) */
+.tab14-clear-tooltip-host {
+  display: inline-flex;
+  position: relative;
+}
+
+.tab14-clear-tooltip-popup {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 100;
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 12px;
+  border-radius: var(--meditap-radius-sm);
+  background: var(--meditap-text);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  white-space: normal;
+}
+
+.tab14-clear-tooltip-popup::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: var(--meditap-text);
 }
 
 .bottom-buttons {

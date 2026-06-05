@@ -346,6 +346,7 @@ const Tab14: React.FC = () => {
     const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
     const [uploadParsing, setUploadParsing] = useState(false);
     const [loadingIntake, setLoadingIntake] = useState(true);
+    const [clearFormHintVisible, setClearFormHintVisible] = useState(false);
 
     const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
     const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
@@ -570,17 +571,17 @@ const Tab14: React.FC = () => {
     // save form
     // checks if form is valid (saves) or not (error message) 
     const saveForm = async () => {
-        if (!canEditPatientRecords) {
-            setBackendError('You do not have permission to save patient records.');
-            return;
-        }
         const isValid = checkForm();
-      
+
         if (!isValid) {
             setSaveErrorMessage(true);
-
-            // console.log("Validation Errors:", errors); // temp 
-
+            if (
+                !patientInfo.givenName.trim() ||
+                !patientInfo.familyName.trim() ||
+                !patientInfo.dateOfBirth
+            ) {
+                setActiveSection(0);
+            }
             return;
         }
 
@@ -597,6 +598,7 @@ const Tab14: React.FC = () => {
                 chronicConditions,
                 hospitalVisit,
                 noAllergies,
+                allowStaffOnlySections: canEditPatientRecords,
             });
             clearTab14DraftKeysOnly();
             const refreshed = await loadTab14FromBackend(username);
@@ -616,6 +618,7 @@ const Tab14: React.FC = () => {
 
     // clear form 
     const clearForm = () => {
+        if (!canEditPatientRecords) return;
         clearTab14DraftKeysOnly();
         setPatientInfo(defaultPatientInfo);
         setInsurances([defaultInsurance]);
@@ -765,11 +768,9 @@ const Tab14: React.FC = () => {
                                 {!canEditPatientRecords && (
                                     <div className="tab14-view-only-banner" role="status">
                                         <p>
-                                            You can review this patient information. You may{' '}
-                                            <strong>upload a PDF or image</strong> below to extract text into these
-                                            fields; use <strong>Staff sign-in</strong> if you need to edit values or
-                                            save to the server. Staff can unlock editing without signing the patient
-                                            out.
+                                            You can <strong>upload a PDF or image</strong> to fill these fields, then{' '}
+                                            <strong>Save</strong> to your chart. Fields are read-only here — use{' '}
+                                            <strong>Staff sign-in</strong> to edit manually or clear the form.
                                         </p>
                                         <button
                                             type="button"
@@ -1523,6 +1524,8 @@ const Tab14: React.FC = () => {
 
                                 </div>
 
+                                </fieldset>
+
                                 <div className="tab14-panel-footer">
 
                     <div className = "bottom-buttons">
@@ -1531,26 +1534,54 @@ const Tab14: React.FC = () => {
                             className = "save-button"
                             type = "button"
                             onClick = {() => void saveForm()}
-                            disabled={saving || !canEditPatientRecords}
+                            disabled={saving || !authReady}
                         >
                             {saving ? 'Saving…' : 'Save'}
                         </button>
 
-                        <button
-                            className = "clear-button"
-                            type = "button"
-                            onClick = {clearForm}
-                            disabled={!canEditPatientRecords}
+                        <span
+                            className={`tab14-clear-tooltip-host${canEditPatientRecords ? '' : ' tab14-clear-tooltip-host--locked'}`}
+                            onMouseEnter={() => {
+                                if (!canEditPatientRecords) setClearFormHintVisible(true);
+                            }}
+                            onMouseLeave={() => setClearFormHintVisible(false)}
+                            onFocus={() => {
+                                if (!canEditPatientRecords) setClearFormHintVisible(true);
+                            }}
+                            onBlur={() => setClearFormHintVisible(false)}
                         >
-                            Clear Form
-                        </button>
+                            <button
+                                className={`clear-button${canEditPatientRecords ? '' : ' clear-button--staff-locked'}`}
+                                type="button"
+                                onClick={() => {
+                                    if (!canEditPatientRecords) return;
+                                    clearForm();
+                                }}
+                                aria-disabled={!canEditPatientRecords}
+                                title={
+                                    canEditPatientRecords
+                                        ? undefined
+                                        : 'Staff sign-in required to clear the form.'
+                                }
+                            >
+                                Clear Form
+                            </button>
+                            {!canEditPatientRecords && clearFormHintVisible && (
+                                <span className="tab14-clear-tooltip-popup" role="tooltip">
+                                    Staff sign-in required to clear the form.
+                                </span>
+                            )}
+                        </span>
 
                     </div>
 
                     <div className = "form"> 
                         {saveErrorMessage && (
                             <span className = "save-error-message">
-                                Unable to save form. Please enter all required fields.
+                                Unable to save. Upload a PDF or ensure{' '}
+                                <strong>Given Name</strong>, <strong>Family Name</strong>, and{' '}
+                                <strong>Date of Birth</strong> are filled (Patient Information
+                                section).
                             </span>
                         )}
                         {backendError && (
@@ -1567,9 +1598,7 @@ const Tab14: React.FC = () => {
 
                     </div>
 
-                                </fieldset>
-
-                    {/* Outside fieldset: patients can upload; fieldset disables manual edits + Save/Clear for non-editors */}
+                    {/* Upload works for patients; Save is outside fieldset so it stays clickable */}
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
                             Upload File (PDF, JPEG, PNG)

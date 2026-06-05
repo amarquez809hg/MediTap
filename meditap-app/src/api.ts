@@ -1314,6 +1314,8 @@ export type Tab14SaveInput = {
   chronicConditions: Tab14SaveChronic[];
   hospitalVisit: Tab14SaveHospital;
   noAllergies: boolean;
+  /** When false (patient portal), skip insurance/hospital writes that require staff permissions. */
+  allowStaffOnlySections?: boolean;
 };
 
 export type Tab14LoadResult = {
@@ -1810,6 +1812,7 @@ export async function patchPatientEpicLink(
 }
 
 export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
+  const allowStaffOnlySections = input.allowStaffOnlySections ?? true;
   const emailForMatch = (input.patient.email || '').trim()
     ? (input.patient.email || '').trim()
     : (input.username || '').includes('@')
@@ -1909,17 +1912,21 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
   for (const row of pmRows.filter((r) => r.patient === pid)) {
     if (row.id != null) await deleteById('/api/patient-medications/', row.id);
   }
-  for (const row of piRows.filter((r) => r.patient === pid)) {
-    if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
+  if (allowStaffOnlySections) {
+    for (const row of piRows.filter((r) => r.patient === pid)) {
+      if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
+    }
   }
   for (const row of pcRows.filter((r) => r.patient === pid)) {
     if (row.id != null)
       await deleteById('/api/patient-chronic-diseases/', row.id);
   }
-  for (const row of incRows.filter((r) => r.patient === pid)) {
-    await apiRequest(`/api/incidents/${row.incident_id}/`, {
-      method: 'DELETE',
-    });
+  if (allowStaffOnlySections) {
+    for (const row of incRows.filter((r) => r.patient === pid)) {
+      await apiRequest(`/api/incidents/${row.incident_id}/`, {
+        method: 'DELETE',
+      });
+    }
   }
 
   if (!input.noAllergies) {
@@ -1986,10 +1993,11 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     });
   }
 
-  for (const ins of input.insurances) {
-    if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
-      continue;
-    const provId = await ensureInsuranceProvider(ins.providerName);
+  if (allowStaffOnlySections) {
+    for (const ins of input.insurances) {
+      if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
+        continue;
+      const provId = await ensureInsuranceProvider(ins.providerName);
     let planName = (ins.planName || '').trim();
     if ((ins.groupNumber || '').trim()) {
       planName = planName
@@ -2038,6 +2046,7 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
         coverage_details: preserved,
       }),
     });
+    }
   }
 
   for (const c of input.chronicConditions) {
@@ -2061,7 +2070,11 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
   }
 
   const hv = input.hospitalVisit;
-  if ((hv.facilityName || '').trim() && (hv.visitDate || '').trim()) {
+  if (
+    allowStaffOnlySections &&
+    (hv.facilityName || '').trim() &&
+    (hv.visitDate || '').trim()
+  ) {
     const hid = await ensureHospital(hv.facilityName);
     const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
     const disc = (hv.dischargeDate || '').trim();
