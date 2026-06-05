@@ -684,6 +684,56 @@ function parseNameFromAccessTokenClaims(
   return { given: 'Patient', family: 'User' };
 }
 
+function isValidEmailFormat(v: string): boolean {
+  const s = v.trim();
+  return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(s);
+}
+
+/** Portal-safe email for Patient API (Django rejects bare domains like user@local). */
+export function resolvePortalPatientEmail(
+  formEmail: string | undefined,
+  username: string | null
+): string {
+  const fromForm = (formEmail || '').trim();
+  if (fromForm && isValidEmailFormat(fromForm)) return fromForm;
+
+  const parsed = getAccessTokenPayload();
+  const tokenEmail =
+    typeof parsed?.email === 'string' ? parsed.email.trim() : '';
+  if (tokenEmail && isValidEmailFormat(tokenEmail)) return tokenEmail;
+
+  const preferred =
+    (typeof parsed?.preferred_username === 'string' &&
+      parsed.preferred_username.trim()) ||
+    username?.trim() ||
+    '';
+  if (preferred.includes('@') && isValidEmailFormat(preferred)) return preferred;
+
+  const sub = typeof parsed?.sub === 'string' ? parsed.sub : '';
+  if (sub) {
+    const safe = sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 48) || 'user';
+    return `${safe}@meditap.local`;
+  }
+  const safePreferred = preferred.replace(/[^a-zA-Z0-9._-]/g, '_') || 'patient';
+  return `${safePreferred}@meditap.local`;
+}
+
+function resolveTab14SaveEmail(
+  formEmail: string,
+  username: string | null,
+  existingPatient: PatientApi | null
+): string {
+  const trimmed = formEmail.trim();
+  if (isValidEmailFormat(trimmed)) return trimmed;
+  if (
+    existingPatient?.email &&
+    isValidEmailFormat(existingPatient.email)
+  ) {
+    return existingPatient.email.trim();
+  }
+  return resolvePortalPatientEmail(undefined, username);
+}
+
 /**
  * When the API has no Patient rows yet, create one from the JWT access token claims
  * so tabs like Lab Results can attach data (same idea as completing Tab14, but minimal).
@@ -703,26 +753,8 @@ export async function ensurePatientForCurrentSession(
 
   const parsed = getAccessTokenPayload();
   if (!parsed) return null;
-  const emailFromToken =
-    typeof parsed.email === 'string' ? parsed.email.trim() : '';
-  const preferred =
-    (typeof parsed.preferred_username === 'string' &&
-      parsed.preferred_username.trim()) ||
-    username?.trim() ||
-    'patient';
-  const sub = typeof parsed.sub === 'string' ? parsed.sub : '';
 
-  let emailForPatient = emailFromToken;
-  if (!emailForPatient) {
-    if (preferred.includes('@')) {
-      emailForPatient = preferred;
-    } else if (sub) {
-      const safe = sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 48) || 'user';
-      emailForPatient = `${safe}@meditap.local`;
-    } else {
-      emailForPatient = `${preferred.replace(/[^a-zA-Z0-9._-]/g, '_')}@meditap.local`;
-    }
-  }
+  const emailForPatient = resolvePortalPatientEmail(undefined, username);
 
   const { given, family } = parseNameFromAccessTokenClaims(parsed);
 
@@ -1813,11 +1845,6 @@ export async function patchPatientEpicLink(
 
 export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
   const allowStaffOnlySections = input.allowStaffOnlySections ?? true;
-  const emailForMatch = (input.patient.email || '').trim()
-    ? (input.patient.email || '').trim()
-    : (input.username || '').includes('@')
-      ? (input.username || '').trim()
-      : `${(input.username || '').trim()}@local`;
 
   const patients = await fetchAllPages<PatientApi>('/api/patients/');
   let patient = pickCurrentPatient(patients, input.username);
@@ -1833,13 +1860,19 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       ) || null;
   }
 
+  const saveEmail = resolveTab14SaveEmail(
+    input.patient.email || '',
+    input.username,
+    patient
+  );
+
   const body = {
     given_name: input.patient.givenName.trim(),
     family_name: input.patient.familyName.trim(),
     date_of_birth: input.patient.dateOfBirth,
     blood_type: input.patient.bloodType.trim() || null,
     sex_at_birth: input.patient.sexAtBirth.trim() || null,
-    email: (input.patient.email || '').trim() || emailForMatch,
+    email: saveEmail,
     phone: (input.patient.phoneNumber || '').trim() || null,
     address: (input.patient.address || '').trim() || null,
     race: (input.patient.race || '').trim() || null,
