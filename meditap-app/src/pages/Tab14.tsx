@@ -728,6 +728,132 @@ const Tab14: React.FC = () => {
         };
     }, [authReady, username, elevationNonce, canEditPatientRecords]);
 
+    const renderPatientVitalsFields = (extended: boolean) => (
+        <>
+            <div className="form-field">
+                <label>Height (inches)</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={96}
+                    step={0.1}
+                    inputMode="decimal"
+                    placeholder={'e.g. 70 for 5\'10"'}
+                    value={patientInfo.heightInches}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'heightInches',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            <div className="form-field">
+                <label>Weight (lb)</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    step={0.1}
+                    inputMode="decimal"
+                    placeholder="e.g. 180"
+                    value={patientInfo.weightLbs}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'weightLbs',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            {extended && (
+                <>
+                    <div className="form-field">
+                        <label>Blood pressure (systolic)</label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={300}
+                            inputMode="numeric"
+                            placeholder="e.g. 120"
+                            value={patientInfo.systolicBp}
+                            onChange={(e) =>
+                                handleSingleChange(
+                                    'systolicBp',
+                                    e.target.value,
+                                    patientInfo,
+                                    setPatientInfo
+                                )
+                            }
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label>Blood pressure (diastolic)</label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={200}
+                            inputMode="numeric"
+                            placeholder="e.g. 80"
+                            value={patientInfo.diastolicBp}
+                            onChange={(e) =>
+                                handleSingleChange(
+                                    'diastolicBp',
+                                    e.target.value,
+                                    patientInfo,
+                                    setPatientInfo
+                                )
+                            }
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label>Heart rate (bpm)</label>
+                        <input
+                            type="number"
+                            min={1}
+                            max={250}
+                            inputMode="numeric"
+                            placeholder="e.g. 72"
+                            value={patientInfo.heartRate}
+                            onChange={(e) =>
+                                handleSingleChange(
+                                    'heartRate',
+                                    e.target.value,
+                                    patientInfo,
+                                    setPatientInfo
+                                )
+                            }
+                        />
+                    </div>
+                </>
+            )}
+
+            {(() => {
+                const hi = Number(patientInfo.heightInches);
+                const wl = Number(patientInfo.weightLbs);
+                const bmi = computeBmiFromMetric(
+                    Number.isFinite(hi) && hi > 0 ? inchesToCm(hi) : null,
+                    Number.isFinite(wl) && wl > 0 ? lbsToKg(wl) : null
+                );
+                if (bmi == null) return null;
+                return (
+                    <p className="tab14-vitals-bmi-preview" role="status">
+                        Calculated BMI: <strong>{formatBmiDisplay(bmi)}</strong> (
+                        {bmiCategoryLabel(bmi)})
+                    </p>
+                );
+            })()}
+        </>
+    );
+
     return (
         <IonPage className="ct-page ct-tab14">
             <IonContent>
@@ -830,147 +956,18 @@ const Tab14: React.FC = () => {
                                     <p className="tab14-panel-sub">
                                         {activeSection === 6
                                             ? 'Enter height and weight to calculate BMI on your dashboard and Quick Status, then Save.'
-                                            : 'Use the menu to switch sections. Save applies to the entire patient record.'}
+                                            : activeSection === 0
+                                              ? 'Demographics from your chart or PDF. Scroll down for height and weight (Vitals).'
+                                              : 'Use the menu to switch sections. Save applies to the entire patient record.'}
                                     </p>
                                 </div>
                                 <div className="tab14-panel-body">
-                        {activeSection === 6 && (
-                            <div className="tab14-section-card tab14-vitals-section">
-                                <div className="tab14-vitals-heading">
-                                    <h3>Height &amp; weight</h3>
-                                    <p>
-                                        MyChart-style summary: these values drive your BMI on the dashboard and Quick
-                                        Status.
-                                    </p>
-                                </div>
-
-                                <div className="form-field">
-                                    <label>Height (inches)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={96}
-                                        step={0.1}
-                                        inputMode="decimal"
-                                        placeholder="e.g. 70 for 5'10&quot;"
-                                        value={patientInfo.heightInches}
-                                        onChange={(e) =>
-                                            handleSingleChange(
-                                                'heightInches',
-                                                e.target.value,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="form-field">
-                                    <label>Weight (lb)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={999}
-                                        step={0.1}
-                                        inputMode="decimal"
-                                        placeholder="e.g. 180"
-                                        value={patientInfo.weightLbs}
-                                        onChange={(e) =>
-                                            handleSingleChange(
-                                                'weightLbs',
-                                                e.target.value,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="form-field">
-                                    <label>Blood pressure (systolic)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={300}
-                                        inputMode="numeric"
-                                        placeholder="e.g. 120"
-                                        value={patientInfo.systolicBp}
-                                        onChange={(e) =>
-                                            handleSingleChange(
-                                                'systolicBp',
-                                                e.target.value,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="form-field">
-                                    <label>Blood pressure (diastolic)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={200}
-                                        inputMode="numeric"
-                                        placeholder="e.g. 80"
-                                        value={patientInfo.diastolicBp}
-                                        onChange={(e) =>
-                                            handleSingleChange(
-                                                'diastolicBp',
-                                                e.target.value,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="form-field">
-                                    <label>Heart rate (bpm)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={250}
-                                        inputMode="numeric"
-                                        placeholder="e.g. 72"
-                                        value={patientInfo.heartRate}
-                                        onChange={(e) =>
-                                            handleSingleChange(
-                                                'heartRate',
-                                                e.target.value,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                {(() => {
-                                    const hi = Number(patientInfo.heightInches);
-                                    const wl = Number(patientInfo.weightLbs);
-                                    const bmi = computeBmiFromMetric(
-                                        Number.isFinite(hi) && hi > 0 ? inchesToCm(hi) : null,
-                                        Number.isFinite(wl) && wl > 0 ? lbsToKg(wl) : null
-                                    );
-                                    if (bmi == null) return null;
-                                    return (
-                                        <p className="tab14-vitals-bmi-preview" role="status">
-                                            Calculated BMI:{' '}
-                                            <strong>{formatBmiDisplay(bmi)}</strong>{' '}
-                                            ({bmiCategoryLabel(bmi)})
-                                        </p>
-                                    );
-                                })()}
-                            </div>
-                        )}
-
-                        {activeSection !== 6 && (
+                        {activeSection === 0 && (
+                            <>
                                 <fieldset
                                     className="tab14-record-fieldset"
                                     disabled={!canEditPatientRecords}
                                 >
-                        {activeSection === 0 && (
                             <div className="tab14-section-card">
 
                                 <div className="form-field">
@@ -1177,7 +1174,45 @@ const Tab14: React.FC = () => {
                                 </div>
 
                             </div>
+                                </fieldset>
+                                <div className="tab14-vitals-section tab14-section-card tab14-vitals-section--inline">
+                                    <div className="tab14-vitals-heading">
+                                        <h3>Vitals</h3>
+                                        <p>
+                                            Enter height and weight for your dashboard BMI. These fields stay editable
+                                            even when demographics are read-only.
+                                        </p>
+                                    </div>
+                                    {renderPatientVitalsFields(false)}
+                                    <button
+                                        type="button"
+                                        className="tab14-vitals-more-btn"
+                                        onClick={() => setActiveSection(6)}
+                                    >
+                                        Optional: blood pressure &amp; heart rate
+                                    </button>
+                                </div>
+                            </>
                         )}
+
+                        {activeSection === 6 && (
+                            <div className="tab14-section-card tab14-vitals-section">
+                                <div className="tab14-vitals-heading">
+                                    <h3>Height &amp; weight</h3>
+                                    <p>
+                                        MyChart-style summary: these values drive your BMI on the dashboard and Quick
+                                        Status.
+                                    </p>
+                                </div>
+                                {renderPatientVitalsFields(true)}
+                            </div>
+                        )}
+
+                        {activeSection >= 1 && activeSection <= 5 && (
+                                <fieldset
+                                    className="tab14-record-fieldset"
+                                    disabled={!canEditPatientRecords}
+                                >
 
                     {/* Insurance */}
                         {activeSection === 4 && (
