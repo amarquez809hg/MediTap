@@ -486,7 +486,7 @@ const Tab1: React.FC = () => {
                 {loadingSummary ? ' (syncing…)' : ''}.
                 {hs.bmi !== 'N/A' && hs.bmiCategory !== 'Not recorded'
                   ? ` BMI ${hs.bmi} (${hs.bmiCategory}).`
-                  : ' Add height and weight in Patient Information for BMI.'}
+                  : ' Add height and weight under Patient Information → Vitals, then Save.'}
                 {' '}Open other tabs for full detail.
               </p>
             </div>

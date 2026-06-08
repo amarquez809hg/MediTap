@@ -293,9 +293,9 @@ const Tab2: React.FC = () => {
                 subtitle={
                   detail?.healthSummary.bmi !== 'N/A'
                     ? `${detail?.healthSummary.bmiCategory ?? '—'} · ${detail?.healthSummary.heightDisplay ?? '—'} · ${detail?.healthSummary.weightDisplay ?? '—'}`
-                    : 'Add height & weight in Patient Information'
+                    : 'Open Vitals to add height & weight'
                 }
-                href="/tab14"
+                href="/tab14?section=vitals"
                 highlightClass="highlight-1"
                 onNavigate={go}
                 loading={loading}
