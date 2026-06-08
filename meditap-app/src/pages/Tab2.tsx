@@ -288,6 +288,21 @@ const Tab2: React.FC = () => {
           <IonRow className="ion-margin-bottom tab2-kpi-grid">
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
+                title="BMI"
+                value={detail?.healthSummary.bmi ?? (loading ? '—' : 'N/A')}
+                subtitle={
+                  detail?.healthSummary.bmi !== 'N/A'
+                    ? `${detail?.healthSummary.bmiCategory ?? '—'} · ${detail?.healthSummary.heightDisplay ?? '—'} · ${detail?.healthSummary.weightDisplay ?? '—'}`
+                    : 'Add height & weight in Patient Information'
+                }
+                href="/tab14"
+                highlightClass="highlight-1"
+                onNavigate={go}
+                loading={loading}
+              />
+            </IonCol>
+            <IonCol size="6" sizeMd="4">
+              <StatusKpiCard
                 title="Profile complete"
                 value={`${profileCompleteness.percent}%`}
                 subtitle={profileCompleteness.subtitle}

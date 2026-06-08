@@ -50,6 +50,11 @@ const defaultUserProfile = {
   avatarUrl: 'https://placehold.co/100x100/17A2B8/FFFFFF?text=PT',
   healthSummary: {
     bmi: 'N/A' as string | number,
+    bmiCategory: 'Not recorded',
+    heightDisplay: '—',
+    weightDisplay: '—',
+    bloodPressure: '—',
+    heartRate: '—',
     lmd: '—',
     lastVisit: '—',
     allergies: 0,
@@ -478,8 +483,11 @@ const Tab1: React.FC = () => {
               </h1>
               <p className="dashboard-tab-section__subtitle">
                 At-a-glance summary from your record
-                {loadingSummary ? ' (syncing…)' : ''}. Open other tabs for full
-                detail.
+                {loadingSummary ? ' (syncing…)' : ''}.
+                {hs.bmi !== 'N/A' && hs.bmiCategory !== 'Not recorded'
+                  ? ` BMI ${hs.bmi} (${hs.bmiCategory}).`
+                  : ' Add height and weight in Patient Information for BMI.'}
+                {' '}Open other tabs for full detail.
               </p>
             </div>
           </header>
@@ -497,9 +505,30 @@ const Tab1: React.FC = () => {
                 value={hs.bmi}
               />
               <MetricTile
+                iconClass="fas fa-ruler-vertical"
+                title="Height"
+                value={hs.heightDisplay}
+              />
+              <MetricTile
+                iconClass="fas fa-weight"
+                title="Weight"
+                value={hs.weightDisplay}
+              />
+              <MetricTile
                 iconClass="fas fa-heartbeat"
-                title="BMI Last Mod. by"
+                title="Vitals updated"
                 value={hs.lmd}
+              />
+              <MetricTile
+                iconClass="fas fa-tachometer-alt"
+                title="BP / Heart rate"
+                value={
+                  hs.bloodPressure !== '—'
+                    ? hs.bloodPressure
+                    : hs.heartRate !== '—'
+                      ? hs.heartRate
+                      : '—'
+                }
               />
               <MetricTile
                 iconClass="fas fa-calendar-alt"

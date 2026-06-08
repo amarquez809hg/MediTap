@@ -272,6 +272,8 @@ function extractPatientFieldsFromLabels(text: string): Tab14PatientFields {
     'ethnicity',
     'preferredLanguage',
     'maritalStatus',
+    'heightInches',
+    'weightLbs',
   ] as const) {
     const raw = rawByField.get(key);
     if (!raw) continue;

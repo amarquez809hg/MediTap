@@ -13,6 +13,8 @@ export type Tab14PatientFields = Partial<{
   preferredLanguage: string;
   maritalStatus: string;
   sexAtBirth: string;
+  heightInches: string;
+  weightLbs: string;
 }>;
 
 export type Tab14InsuranceRow = {

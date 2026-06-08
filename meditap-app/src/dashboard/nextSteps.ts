@@ -297,6 +297,7 @@ export function computeProfileCompleteness(
     fieldFilled(p.bloodType),
     fieldFilled(p.sexAtBirth),
     detail.insurance.length > 0,
+    detail.healthSummary.bmi !== 'N/A',
   ];
   const passed = checks.filter(Boolean).length;
   const percent = Math.round((passed / checks.length) * 100);

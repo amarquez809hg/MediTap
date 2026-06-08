@@ -6,6 +6,20 @@ import { getAuthHeaders } from './auth/getAuthHeaders';
 import { emitSessionExpired } from './auth/sessionEvents';
 import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage';
 import type { IncidentRecord } from './incidents/incidentModel';
+import {
+  bmiCategoryLabel,
+  cmToInches,
+  computeBmiFromMetric,
+  formatBloodPressure,
+  formatBmiDisplay,
+  formatHeightFromInches,
+  formatWeightLbs,
+  inchesToCm,
+  kgToLbs,
+  lbsToKg,
+  parseOptionalPositiveInt,
+  parseOptionalPositiveNumber,
+} from './vitals/bmi';
 
 type Paginated<T> = {
   count: number;
@@ -28,6 +42,12 @@ export type PatientApi = {
   ethnicity: string | null;
   preferred_language: string | null;
   marital_status: string | null;
+  height_cm: string | null;
+  weight_kg: string | null;
+  systolic_bp: number | null;
+  diastolic_bp: number | null;
+  heart_rate_bpm: number | null;
+  vitals_recorded_at: string | null;
 };
 
 export type AllergyCatalogApi = { allergy_id: string; name: string };
@@ -457,6 +477,11 @@ export type DashboardSummary = {
   email: string;
   healthSummary: {
     bmi: string;
+    bmiCategory: string;
+    heightDisplay: string;
+    weightDisplay: string;
+    bloodPressure: string;
+    heartRate: string;
     lmd: string;
     lastVisit: string;
     allergies: number;
@@ -779,6 +804,19 @@ export async function ensurePatientForCurrentSession(
 export async function fetchDashboardSummary(
   username: string | null
 ): Promise<DashboardSummary> {
+  const emptyHealthSummary = (): DashboardSummary['healthSummary'] => ({
+    bmi: 'N/A',
+    bmiCategory: 'Not recorded',
+    heightDisplay: '—',
+    weightDisplay: '—',
+    bloodPressure: '—',
+    heartRate: '—',
+    lmd: 'Not recorded',
+    lastVisit: 'N/A',
+    allergies: 0,
+    medications: 0,
+  });
+
   const patientsPage = await requestJson<Paginated<PatientApi>>(
     '/api/patients/'
   );
@@ -789,13 +827,7 @@ export async function fetchDashboardSummary(
       name: safeFirstNameFromUsername(username),
       id: 'Not created yet',
       email: username || 'Not available',
-      healthSummary: {
-        bmi: 'N/A',
-        lmd: 'No patient record yet',
-        lastVisit: 'N/A',
-        allergies: 0,
-        medications: 0,
-      },
+      healthSummary: emptyHealthSummary(),
     };
   }
 
@@ -820,13 +852,52 @@ export async function fetchDashboardSummary(
     name: `${currentPatient.given_name} ${currentPatient.family_name}`.trim(),
     id: currentPatient.patient_id.slice(0, 8).toUpperCase(),
     email: currentPatient.email || username || 'Not available',
-    healthSummary: {
-      bmi: 'N/A',
-      lmd: 'MediTap record',
-      lastVisit: formatDate(mostRecentIncident?.occurred_at),
-      allergies: allergyCount,
-      medications: medicationCount,
-    },
+    healthSummary: buildHealthSummaryFromPatient(
+      currentPatient,
+      allergyCount,
+      medicationCount,
+      formatDate(mostRecentIncident?.occurred_at)
+    ),
+  };
+}
+
+function buildHealthSummaryFromPatient(
+  patient: PatientApi,
+  allergyCount: number,
+  medicationCount: number,
+  lastVisit: string
+): DashboardSummary['healthSummary'] {
+  const heightCm =
+    patient.height_cm != null && patient.height_cm !== ''
+      ? Number(patient.height_cm)
+      : null;
+  const weightKg =
+    patient.weight_kg != null && patient.weight_kg !== ''
+      ? Number(patient.weight_kg)
+      : null;
+  const bmi = computeBmiFromMetric(heightCm, weightKg);
+  const heightIn = heightCm != null ? cmToInches(heightCm) : null;
+  const weightLb = weightKg != null ? kgToLbs(weightKg) : null;
+
+  return {
+    bmi: formatBmiDisplay(bmi),
+    bmiCategory: bmiCategoryLabel(bmi),
+    heightDisplay: heightIn != null ? formatHeightFromInches(heightIn) : '—',
+    weightDisplay: weightLb != null ? formatWeightLbs(weightLb) : '—',
+    bloodPressure: formatBloodPressure(
+      patient.systolic_bp,
+      patient.diastolic_bp
+    ),
+    heartRate:
+      patient.heart_rate_bpm != null && patient.heart_rate_bpm > 0
+        ? `${patient.heart_rate_bpm} bpm`
+        : '—',
+    lmd: patient.vitals_recorded_at
+      ? formatDate(patient.vitals_recorded_at)
+      : 'Not recorded',
+    lastVisit,
+    allergies: allergyCount,
+    medications: medicationCount,
   };
 }
 
@@ -1283,6 +1354,11 @@ export type Tab14SavePatient = {
   preferredLanguage: string;
   maritalStatus: string;
   sexAtBirth: string;
+  heightInches: string;
+  weightLbs: string;
+  systolicBp: string;
+  diastolicBp: string;
+  heartRate: string;
 };
 
 export type Tab14SaveInsurance = {
@@ -1384,6 +1460,65 @@ function allergyTypeFromLabel(typeLabel: string): {
   return { allergyType: t, allergyTypeOther: '' };
 }
 
+function patientVitalsFromApi(
+  p: PatientApi
+): Pick<
+  Tab14SavePatient,
+  'heightInches' | 'weightLbs' | 'systolicBp' | 'diastolicBp' | 'heartRate'
+> {
+  const heightCm =
+    p.height_cm != null && p.height_cm !== '' ? Number(p.height_cm) : null;
+  const weightKg =
+    p.weight_kg != null && p.weight_kg !== '' ? Number(p.weight_kg) : null;
+  return {
+    heightInches:
+      heightCm != null && heightCm > 0
+        ? String(Math.round(cmToInches(heightCm) * 10) / 10)
+        : '',
+    weightLbs:
+      weightKg != null && weightKg > 0
+        ? String(Math.round(kgToLbs(weightKg) * 10) / 10)
+        : '',
+    systolicBp:
+      p.systolic_bp != null && p.systolic_bp > 0 ? String(p.systolic_bp) : '',
+    diastolicBp:
+      p.diastolic_bp != null && p.diastolic_bp > 0
+        ? String(p.diastolic_bp)
+        : '',
+    heartRate:
+      p.heart_rate_bpm != null && p.heart_rate_bpm > 0
+        ? String(p.heart_rate_bpm)
+        : '',
+  };
+}
+
+function vitalsPayloadFromTab14Patient(
+  patient: Tab14SavePatient
+): Record<string, unknown> {
+  const heightIn = parseOptionalPositiveNumber(patient.heightInches);
+  const weightLb = parseOptionalPositiveNumber(patient.weightLbs);
+  const sys = parseOptionalPositiveInt(patient.systolicBp);
+  const dia = parseOptionalPositiveInt(patient.diastolicBp);
+  const hr = parseOptionalPositiveInt(patient.heartRate);
+  const hasVitals =
+    heightIn != null ||
+    weightLb != null ||
+    sys != null ||
+    dia != null ||
+    hr != null;
+
+  return {
+    height_cm:
+      heightIn != null ? Math.round(inchesToCm(heightIn) * 100) / 100 : null,
+    weight_kg:
+      weightLb != null ? Math.round(lbsToKg(weightLb) * 100) / 100 : null,
+    systolic_bp: sys,
+    diastolic_bp: dia,
+    heart_rate_bpm: hr,
+    vitals_recorded_at: hasVitals ? new Date().toISOString() : null,
+  };
+}
+
 /** Load Tab14 intake form state from the API for the signed-in user. */
 export async function loadTab14FromBackend(
   username: string | null
@@ -1412,6 +1547,11 @@ export async function loadTab14FromBackend(
       preferredLanguage: '',
       maritalStatus: '',
       sexAtBirth: '',
+      heightInches: '',
+      weightLbs: '',
+      systolicBp: '',
+      diastolicBp: '',
+      heartRate: '',
     },
     insurances: [],
     allergies: [],
@@ -1568,6 +1708,7 @@ export async function loadTab14FromBackend(
       preferredLanguage: current.preferred_language || '',
       maritalStatus: current.marital_status || '',
       sexAtBirth: current.sex_at_birth || '',
+      ...patientVitalsFromApi(current),
     },
     insurances,
     allergies,
@@ -1879,6 +2020,7 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     ethnicity: (input.patient.ethnicity || '').trim() || null,
     preferred_language: (input.patient.preferredLanguage || '').trim() || null,
     marital_status: (input.patient.maritalStatus || '').trim() || null,
+    ...vitalsPayloadFromTab14Patient(input.patient),
   };
 
   if (patient) {

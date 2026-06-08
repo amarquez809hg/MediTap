@@ -59,7 +59,9 @@ export type DemographicFieldKey =
   | 'race'
   | 'ethnicity'
   | 'preferredLanguage'
-  | 'maritalStatus';
+  | 'maritalStatus'
+  | 'heightInches'
+  | 'weightLbs';
 
 export type DemographicLabelDef = {
   field: DemographicFieldKey;
@@ -81,6 +83,8 @@ export const DEMOGRAPHIC_LABELS: DemographicLabelDef[] = [
   { field: 'ethnicity', aliases: ['Ethnicity'] },
   { field: 'preferredLanguage', aliases: ['Preferred Language', 'Language'] },
   { field: 'maritalStatus', aliases: ['Marital Status'] },
+  { field: 'heightInches', aliases: ['Height', 'Ht', 'Stature'] },
+  { field: 'weightLbs', aliases: ['Weight', 'Wt', 'Body Weight'] },
 ];
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
@@ -178,6 +182,32 @@ export function validateDemographicValue(
       if (v.length < 2 || v.length > 80) return undefined;
       if (CLINICAL_NAME_NOISE.test(v)) return undefined;
       return v;
+    case 'heightInches': {
+      const ftIn = v.match(/(\d+)\s*['′]?\s*(\d+)\s*(?:in|"|'')?/);
+      if (ftIn) {
+        const total = Number(ftIn[1]) * 12 + Number(ftIn[2]);
+        if (total > 0 && total <= 96) return String(total);
+      }
+      const inches = v.match(/(\d+(?:\.\d+)?)\s*(?:in|inches|"|'')?\b/i);
+      if (inches) {
+        const n = Number(inches[1]);
+        if (n > 0 && n <= 96) return String(Math.round(n * 10) / 10);
+      }
+      const plain = v.match(/^(\d+(?:\.\d+)?)$/);
+      if (plain) {
+        const n = Number(plain[1]);
+        if (n > 0 && n <= 96) return String(n);
+      }
+      return undefined;
+    }
+    case 'weightLbs': {
+      const m = v.match(/(\d+(?:\.\d+)?)\s*(?:lb|lbs|pounds)?\b/i);
+      if (m) {
+        const n = Number(m[1]);
+        if (n > 0 && n <= 999) return String(Math.round(n * 10) / 10);
+      }
+      return undefined;
+    }
     default:
       return v;
   }

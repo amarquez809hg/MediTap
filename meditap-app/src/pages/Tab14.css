@@ -179,7 +179,34 @@ ion-page.ct-page.ct-tab14 ion-content {
   z-index: 2;
 }
 
-.tab14-view-only-banner {
+.tab14-vitals-heading {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--meditap-border);
+}
+
+.tab14-vitals-heading h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: var(--meditap-primary);
+}
+
+.tab14-vitals-heading p {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  color: var(--meditap-text-muted, #5f6368);
+}
+
+.tab14-vitals-bmi-preview {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--meditap-radius-sm);
+  background: rgba(38, 198, 218, 0.1);
+  font-size: 0.9rem;
+}
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;

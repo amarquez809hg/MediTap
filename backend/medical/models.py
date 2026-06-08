@@ -17,6 +17,13 @@ class Patient(models.Model):
     ethnicity = models.CharField(max_length=100, blank=True, null=True)
     preferred_language = models.CharField(max_length=64, blank=True, null=True)
     marital_status = models.CharField(max_length=64, blank=True, null=True)
+    # Latest vitals snapshot (MyChart-style summary on dashboard / Quick Status).
+    height_cm = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    weight_kg = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    systolic_bp = models.PositiveSmallIntegerField(blank=True, null=True)
+    diastolic_bp = models.PositiveSmallIntegerField(blank=True, null=True)
+    heart_rate_bpm = models.PositiveSmallIntegerField(blank=True, null=True)
+    vitals_recorded_at = models.DateTimeField(blank=True, null=True)
     # Portal account that owns this chart (null = legacy / demo rows not tied to a login).
     portal_user = models.OneToOneField(
         User,
