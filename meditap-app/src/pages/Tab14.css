@@ -179,6 +179,13 @@ ion-page.ct-page.ct-tab14 ion-content {
   z-index: 2;
 }
 
+.tab14-vitals-section {
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius-sm);
+  padding: 16px;
+  background: var(--meditap-surface);
+}
+
 .tab14-vitals-section--inline {
   margin-top: 16px;
   border: 2px solid var(--meditap-accent);
@@ -198,12 +205,6 @@ ion-page.ct-page.ct-tab14 ion-content {
 
 .tab14-vitals-more-btn:hover {
   background: rgba(38, 198, 218, 0.1);
-}
-
-  border: 1px solid var(--meditap-border);
-  border-radius: var(--meditap-radius-sm);
-  padding: 16px;
-  background: var(--meditap-surface);
 }
 
 .tab14-vitals-section .tab14-vitals-heading {
