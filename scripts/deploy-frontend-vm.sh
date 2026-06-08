@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 # Deploy latest MediTap on the production VM.
-# Resets local edits (Tab14.tsx/css, etc.) that block git pull — VM should match GitHub only.
+# Resets code to origin/main but preserves the local SQLite database (never in git).
 set -euo pipefail
 cd ~/MediTap
+DB=backend/db.sqlite3
+DB_BAK=/tmp/meditap-db-pre-deploy.sqlite3
+if [[ -f "$DB" ]]; then
+  cp -a "$DB" "$DB_BAK"
+fi
 git fetch origin main
 git reset --hard origin/main
+if [[ -f "$DB_BAK" ]]; then
+  mv "$DB_BAK" "$DB"
+fi
 cd backend
 source ~/MediTap/venv/bin/activate
 python manage.py migrate
