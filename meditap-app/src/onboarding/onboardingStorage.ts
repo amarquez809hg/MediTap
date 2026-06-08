@@ -84,20 +84,3 @@ export function shouldShowDashboardOnboardingBanner(username: string | null): bo
   if (rec.skipped || rec.steps.finished) return false;
   return !(rec.steps.profile && rec.steps.upload);
 }
-
-export function patientInfoLooksComplete(): boolean {
-  try {
-    const raw = localStorage.getItem('patientInfo');
-    if (!raw) return false;
-    const info = JSON.parse(raw) as Record<string, unknown>;
-    const first = String(
-      info.givenName ?? info.firstName ?? info.first_name ?? ''
-    ).trim();
-    const last = String(
-      info.familyName ?? info.lastName ?? info.last_name ?? ''
-    ).trim();
-    return Boolean(first && last);
-  } catch {
-    return false;
-  }
-}

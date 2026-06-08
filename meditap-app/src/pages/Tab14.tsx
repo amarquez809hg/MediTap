@@ -654,14 +654,21 @@ const Tab14: React.FC = () => {
 
                 if (!bundle.hasPatient) {
                     const legacy = loadTab14LegacyFromLocalStorage();
-                    if (legacy && canEditPatientRecords) {
-                        await saveTab14ToBackend(tab14LegacyToSaveInput(username, legacy));
-                        clearTab14DraftKeysOnly();
-                        bundle = await loadTab14FromBackend(username);
-                    } else if (legacy && !canEditPatientRecords) {
-                        setBackendError(
-                            'This browser has unsaved intake data. Staff sign-in is required to sync it to your chart.'
-                        );
+                    if (legacy) {
+                        try {
+                            await saveTab14ToBackend({
+                                ...tab14LegacyToSaveInput(username, legacy),
+                                allowStaffOnlySections: canEditPatientRecords,
+                            });
+                            clearTab14DraftKeysOnly();
+                            bundle = await loadTab14FromBackend(username);
+                        } catch (e) {
+                            setBackendError(
+                                e instanceof Error
+                                    ? e.message
+                                    : 'Could not sync saved browser intake to your chart.'
+                            );
+                        }
                     }
                 }
 

@@ -1,6 +1,6 @@
 import type { DashboardDetail } from '../api';
 import type { Appointment } from '../appointments/appointmentStorage';
-import { loadOnboarding, patientInfoLooksComplete } from '../onboarding/onboardingStorage';
+import { loadOnboarding } from '../onboarding/onboardingStorage';
 
 export type NextStepTone = 'primary' | 'warning' | 'danger' | 'neutral';
 
@@ -56,7 +56,7 @@ export function buildNextSteps(
   const missing = isPatientMissing(detail);
   const onDashboard = options.surface === 'dashboard';
 
-  if (missing || !patientInfoLooksComplete()) {
+  if (missing || !patientHasBasicProfile(detail)) {
     steps.push({
       id: 'profile',
       title: 'Complete your patient profile',
@@ -78,7 +78,9 @@ export function buildNextSteps(
 
   if (onDashboard) {
     const onboarding = loadOnboarding(options.username ?? null);
-    const needsUpload = onboarding ? !onboarding.steps.upload : !patientInfoLooksComplete();
+    const needsUpload = onboarding
+      ? !onboarding.steps.upload
+      : !patientHasBasicProfile(detail);
     if (needsUpload && !missing) {
       steps.push({
         id: 'upload-doc',
@@ -264,6 +266,17 @@ function fieldFilled(value: string | undefined | null): boolean {
   return Boolean(value?.trim()) && value!.trim() !== '—';
 }
 
+/** Name + DOB present on the server-backed patient chart. */
+export function patientHasBasicProfile(detail: DashboardDetail | null): boolean {
+  if (!detail || isPatientMissing(detail)) return false;
+  const p = detail.patientProfile;
+  return (
+    fieldFilled(p.fullName) &&
+    fieldFilled(p.dateOfBirth) &&
+    detail.name.trim().toLowerCase() !== 'patient'
+  );
+}
+
 /** Seven chart fields: intake, demographics, contact, and insurance on file. */
 export function computeProfileCompleteness(
   detail: DashboardDetail | null
@@ -277,7 +290,7 @@ export function computeProfileCompleteness(
 
   const p = detail.patientProfile;
   const checks = [
-    patientInfoLooksComplete(),
+    patientHasBasicProfile(detail),
     fieldFilled(p.dateOfBirth),
     fieldFilled(p.email),
     fieldFilled(p.phone),

@@ -1,7 +1,7 @@
 import { APPOINTMENTS_STORAGE_PREFIX } from '../appointments/appointmentStorage';
 import { clearMeditapIntakeElevation } from './staffElevationStorage';
 
-/** Keys used by Tab14 intake draft persistence (not namespaced per user). */
+/** Legacy Tab14 keys cleared on logout; intake persists on the Django API only. */
 const TAB14_WORKFLOW_KEYS = [
   'patientInfo',
   'insurances',
@@ -44,7 +44,8 @@ export function clearMediTapWorkflowLocalState(): void {
 }
 
 /**
- * Tab14 “Clear form” must not wipe JWT or global settings (avoid `localStorage.clear()`).
+ * Clears legacy Tab14 localStorage keys only (pre–API-only builds).
+ * Does not delete server data — use Tab14 “Clear form” for in-memory reset.
  */
 export function clearTab14DraftKeysOnly(): void {
   if (typeof window === 'undefined') return;

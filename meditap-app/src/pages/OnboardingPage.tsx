@@ -5,11 +5,11 @@ import {
   isOnboardingComplete,
   loadOnboarding,
   markOnboardingStep,
-  patientInfoLooksComplete,
   skipOnboarding,
   startOnboardingForNewUser,
   type OnboardingSteps,
 } from '../onboarding/onboardingStorage';
+import { loadTab14FromBackend } from '../api';
 import './OnboardingPage.css';
 
 const STEPS = [
@@ -49,19 +49,36 @@ const OnboardingPage: React.FC = () => {
 
   useEffect(() => {
     if (!authReady || !isAuthenticated) return;
-    let rec = loadOnboarding(username);
-    if (!rec && username) {
-      startOnboardingForNewUser(username);
-      rec = loadOnboarding(username);
-    }
-    if (rec) {
-      const next = { ...rec.steps };
-      if (patientInfoLooksComplete() && !next.profile) {
-        markOnboardingStep(username, 'profile', true);
-        next.profile = true;
+    let cancelled = false;
+    (async () => {
+      let rec = loadOnboarding(username);
+      if (!rec && username) {
+        startOnboardingForNewUser(username);
+        rec = loadOnboarding(username);
       }
-      setSteps(next);
-    }
+      if (!rec) return;
+
+      const next = { ...rec.steps };
+      try {
+        const bundle = await loadTab14FromBackend(username);
+        if (
+          !cancelled &&
+          bundle.hasPatient &&
+          bundle.patient.givenName.trim() &&
+          bundle.patient.familyName.trim() &&
+          !next.profile
+        ) {
+          markOnboardingStep(username, 'profile', true);
+          next.profile = true;
+        }
+      } catch {
+        /* onboarding can still render without API */
+      }
+      if (!cancelled) setSteps(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [authReady, isAuthenticated, username]);
 
   useEffect(() => {
@@ -77,8 +94,25 @@ const OnboardingPage: React.FC = () => {
   }, [username]);
 
   const refreshSteps = () => {
-    const rec = loadOnboarding(username);
-    if (rec) setSteps({ ...rec.steps });
+    void (async () => {
+      const rec = loadOnboarding(username);
+      if (!rec) return;
+      const next = { ...rec.steps };
+      try {
+        const bundle = await loadTab14FromBackend(username);
+        if (
+          bundle.hasPatient &&
+          bundle.patient.givenName.trim() &&
+          bundle.patient.familyName.trim()
+        ) {
+          if (!next.profile) markOnboardingStep(username, 'profile', true);
+          next.profile = true;
+        }
+      } catch {
+        /* keep cached onboarding steps */
+      }
+      setSteps(next);
+    })();
   };
 
   const finishAndGoDashboard = () => {
