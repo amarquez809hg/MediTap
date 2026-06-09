@@ -952,7 +952,7 @@ const Tab14: React.FC = () => {
                                     </div>
                                 )}
                                 <div className="tab14-panel-header">
-                                    <h2>{TAB14_SECTIONS[activeSection]?.label}</h2>
+                                    <h2>{TAB14_SECTIONS.find((s) => s.id === activeSection)?.label}</h2>
                                     <p className="tab14-panel-sub">
                                         {activeSection === 6
                                             ? 'Enter height and weight to calculate BMI on your dashboard and Quick Status, then Save.'
