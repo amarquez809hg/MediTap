@@ -18,6 +18,7 @@ source ~/MediTap/venv/bin/activate
 python manage.py migrate
 deactivate
 cd ../meditap-app
+npm install
 npm run build
 sudo systemctl reload nginx
 echo ""
