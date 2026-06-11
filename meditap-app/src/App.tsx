@@ -29,6 +29,8 @@ import Tab14 from './pages/Tab14';
 import EpicCallback from './pages/EpicCallback';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
 
@@ -74,6 +76,7 @@ const RootRoute: React.FC = () => {
 };
 
 const AppRoutes: React.FC = () => {
+  const { t } = useTranslation();
   const { authReady } = useAuth();
   const { dark } = useDarkMode();
   const ionAppClass = dark ? 'ion-palette-dark' : undefined;
@@ -98,7 +101,7 @@ const AppRoutes: React.FC = () => {
             }}
           >
             <IonSpinner name="crescent" />
-            <p style={{ marginTop: 16 }}>Loading…</p>
+            <p style={{ marginTop: 16 }}>{t('app.loading')}</p>
           </div>
         </IonContent>
       </IonApp>
@@ -208,11 +211,13 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <DarkModeProvider>
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
-  </DarkModeProvider>
+  <LanguageProvider>
+    <DarkModeProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </DarkModeProvider>
+  </LanguageProvider>
 );
 
 export default App;

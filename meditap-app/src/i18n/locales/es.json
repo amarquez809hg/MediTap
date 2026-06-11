@@ -1,0 +1,78 @@
+{
+  "language": {
+    "label": "Idioma",
+    "choose": "Elegir idioma",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "logout": "Cerrar sesión",
+    "goBackToDashboard": "Volver al panel"
+  },
+  "app": {
+    "loading": "Cargando…"
+  },
+  "sessionExpired": {
+    "title": "Sesión finalizada",
+    "message": "Su sesión ha expirado o ya no es válida. Inicie sesión de nuevo para continuar en MediTap.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "settings": {
+    "title": "Configuración",
+    "generalPreferences": "Preferencias generales",
+    "pushNotifications": "Notificaciones push",
+    "darkMode": "Modo oscuro",
+    "administration": "Administración",
+    "djangoAdmin": "Admin de Django",
+    "djangoAdminNote": "Inicio de sesión aparte en el host de la API",
+    "superuser": "Superusuario",
+    "superuserNote": "Acceso completo a API y admin",
+    "securityPrivacy": "Seguridad y privacidad",
+    "password": "Contraseña",
+    "passwordNote": "Pida a un administrador que restablezca su contraseña de Django",
+    "biometricLock": "Bloqueo biométrico",
+    "biometricNote": "No disponible en esta aplicación web",
+    "appInformation": "Información de la app",
+    "version": "Versión",
+    "aboutMediTap": "Acerca de MediTap",
+    "privacyPolicy": "Política de privacidad",
+    "reportCardLost": "Reportar tarjeta perdida",
+    "confirmLogoutTitle": "Confirmar cierre de sesión",
+    "confirmLogoutMessage": "¿Está seguro de que desea cerrar sesión?",
+    "confirmLogoutButton": "Cerrar sesión"
+  },
+  "login": {
+    "aboutUs": "Acerca de nosotros",
+    "support": "Soporte",
+    "sloganLine1": "Sus datos listos.",
+    "sloganLine2": "Admisión al instante",
+    "heroHighlightsAria": "Aspectos destacados de MediTap",
+    "heroPoint1": "Complete la admisión desde PDF e imágenes en minutos",
+    "heroPoint2": "Listo para Epic FHIR sandbox en sistemas de salud",
+    "heroPoint3": "Flujos seguros para pacientes y personal en un solo lugar",
+    "badge": "¿Ya tiene una cuenta?",
+    "title": "Iniciar sesión en MediTap",
+    "subtitle": "Use su <1>nombre de usuario</1> o <2>correo</2> y contraseña de MediTap. ¿Necesita una cuenta? Use <3>Crear una cuenta</3> abajo.",
+    "loginProblem": "Problema de inicio de sesión",
+    "usernameOrEmail": "Usuario o correo",
+    "usernamePlaceholder": "Usuario o correo",
+    "password": "Contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "loggingIn": "Iniciando sesión…",
+    "logIn": "Iniciar sesión",
+    "newHere": "¿Es nuevo?",
+    "createAccount": "Crear una cuenta",
+    "termsPrefix": "Al continuar acepta nuestros",
+    "termsOfService": "Términos de servicio",
+    "and": "y",
+    "privacyPolicy": "Política de privacidad",
+    "credentialsRequired": "Ingrese usuario (o correo) y contraseña."
+  }
+}

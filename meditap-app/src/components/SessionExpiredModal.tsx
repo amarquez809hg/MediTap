@@ -1,5 +1,6 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import './SessionExpiredModal.css';
 
@@ -7,6 +8,7 @@ import './SessionExpiredModal.css';
  * Shown when the JWT can no longer be refreshed or API returns 401.
  */
 const SessionExpiredModal: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const { authReady, sessionExpired, dismissSessionExpired } = useAuth();
 
@@ -26,19 +28,16 @@ const SessionExpiredModal: React.FC = () => {
     >
       <div className="session-expired-card">
         <h2 id="session-expired-title" className="session-expired-title">
-          Session ended
+          {t('sessionExpired.title')}
         </h2>
-        <p className="session-expired-text">
-          Your login session has expired or is no longer valid. Log in again to continue working in
-          MediTap.
-        </p>
+        <p className="session-expired-text">{t('sessionExpired.message')}</p>
         <div className="session-expired-actions">
           <button
             type="button"
             className="session-expired-btn session-expired-btn--primary"
             onClick={handleGoToLoginPage}
           >
-            Back to log in
+            {t('sessionExpired.backToLogin')}
           </button>
         </div>
       </div>

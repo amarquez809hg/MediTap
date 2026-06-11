@@ -1,0 +1,78 @@
+{
+  "language": {
+    "label": "Language",
+    "choose": "Choose language",
+    "english": "English",
+    "spanish": "Español"
+  },
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "logout": "Log out",
+    "goBackToDashboard": "Go back to dashboard"
+  },
+  "app": {
+    "loading": "Loading…"
+  },
+  "sessionExpired": {
+    "title": "Session ended",
+    "message": "Your login session has expired or is no longer valid. Log in again to continue working in MediTap.",
+    "backToLogin": "Back to log in"
+  },
+  "settings": {
+    "title": "Settings",
+    "generalPreferences": "General Preferences",
+    "pushNotifications": "Push Notifications",
+    "darkMode": "Dark Mode",
+    "administration": "Administration",
+    "djangoAdmin": "Django Admin",
+    "djangoAdminNote": "Separate sign-in on API host",
+    "superuser": "Superuser",
+    "superuserNote": "Full API + admin access",
+    "securityPrivacy": "Security & Privacy",
+    "password": "Password",
+    "passwordNote": "Ask an administrator to reset your Django user password",
+    "biometricLock": "Enable Biometric Lock",
+    "biometricNote": "Not available in this web app",
+    "appInformation": "App Information",
+    "version": "Version",
+    "aboutMediTap": "About MediTap",
+    "privacyPolicy": "Privacy Policy",
+    "reportCardLost": "Report card as lost",
+    "confirmLogoutTitle": "Confirm Logout",
+    "confirmLogoutMessage": "Are you sure you want to log out of your account?",
+    "confirmLogoutButton": "Logout"
+  },
+  "login": {
+    "aboutUs": "About us",
+    "support": "Support",
+    "sloganLine1": "Your data ready.",
+    "sloganLine2": "Instant intake",
+    "heroHighlightsAria": "MediTap highlights",
+    "heroPoint1": "Fill intake from PDFs and images in minutes",
+    "heroPoint2": "Epic FHIR sandbox–ready for health systems",
+    "heroPoint3": "Secure patient and staff workflows in one place",
+    "badge": "Already have an account",
+    "title": "Log in to MediTap",
+    "subtitle": "Use the <1>username</1> or <2>email</2> and password for your existing MediTap account. Need an account? Use <3>Create an account</3> below.",
+    "loginProblem": "Login problem",
+    "usernameOrEmail": "Username or email",
+    "usernamePlaceholder": "Username or email",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "show": "Show",
+    "hide": "Hide",
+    "forgotPassword": "Forgot password?",
+    "loggingIn": "Logging in…",
+    "logIn": "Log in",
+    "newHere": "New here?",
+    "createAccount": "Create an account",
+    "termsPrefix": "By continuing you agree to our",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "credentialsRequired": "Enter username (or email) and password."
+  }
+}
