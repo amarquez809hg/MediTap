@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
@@ -46,7 +46,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 import worker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-GlobalWorkerOptions.workerSrc = worker;
+GlobalWorkerOptions.workerSrc = `${worker}?v=nginx-mjs-mime`;
 
 interface PatientInfo {
     givenName: string;
@@ -374,12 +374,18 @@ const Tab14: React.FC = () => {
     const [saveErrorMessage, setSaveErrorMessage] = useState(false); 
     const [backendError, setBackendError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
-    // allergy handling 
+    // no-known handling 
     const [noAllergies, setNoAllergies] = useState(false);
+    const [noMedications, setNoMedications] = useState(false);
+    const [noChronicConditions, setNoChronicConditions] = useState(false);
     const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
     const [uploadParsing, setUploadParsing] = useState(false);
     const [loadingIntake, setLoadingIntake] = useState(true);
     const [clearFormHintVisible, setClearFormHintVisible] = useState(false);
+    const [savedFormSnapshot, setSavedFormSnapshot] = useState('');
+    const [showUnsavedLeavePrompt, setShowUnsavedLeavePrompt] = useState(false);
+    const [pendingLeaveUrl, setPendingLeaveUrl] = useState<string | null>(null);
+    const suppressUnsavedPromptRef = useRef(false);
 
     const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
     const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
@@ -389,6 +395,69 @@ const Tab14: React.FC = () => {
         defaultChronicCondition,
     ]);
     const [hospitalVisit, setHospitalVisit] = useState<HospitalVisit>(defaultHospitalVisit);
+
+    const formSnapshot = useMemo(
+        () =>
+            JSON.stringify({
+                patientInfo,
+                insurances,
+                allergies,
+                medications,
+                chronicConditions,
+                hospitalVisit,
+                noAllergies,
+                noMedications,
+                noChronicConditions,
+            }),
+        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisit, noAllergies, noMedications, noChronicConditions]
+    );
+
+    const hasUnsavedChanges =
+        !loadingIntake && savedFormSnapshot !== '' && formSnapshot !== savedFormSnapshot;
+
+    const navigateAwayFromTab14 = (url: string) => {
+        suppressUnsavedPromptRef.current = true;
+        window.location.assign(url);
+    };
+
+    useEffect(() => {
+        if (!loadingIntake && savedFormSnapshot === '') {
+            setSavedFormSnapshot(formSnapshot);
+        }
+    }, [formSnapshot, loadingIntake, savedFormSnapshot]);
+
+    useEffect(() => {
+        const beforeUnload = (event: BeforeUnloadEvent) => {
+            if (!hasUnsavedChanges || suppressUnsavedPromptRef.current) return;
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        const clickGuard = (event: MouseEvent) => {
+            if (!hasUnsavedChanges || suppressUnsavedPromptRef.current) return;
+            if (!(event.target instanceof Element)) return;
+
+            const target = event.target.closest('a[href], ion-item[router-link], ion-router-link[href]');
+            if (!target) return;
+
+            const rawUrl = target.getAttribute('href') || target.getAttribute('router-link');
+            if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('mailto:') || rawUrl.startsWith('tel:')) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            setPendingLeaveUrl(rawUrl);
+            setShowUnsavedLeavePrompt(true);
+        };
+
+        window.addEventListener('beforeunload', beforeUnload);
+        document.addEventListener('click', clickGuard, true);
+        return () => {
+            window.removeEventListener('beforeunload', beforeUnload);
+            document.removeEventListener('click', clickGuard, true);
+        };
+    }, [hasUnsavedChanges]);
 
     const applyTab14Bundle = (bundle: Tab14LoadResult) => {
         if (!bundle.hasPatient) return;
@@ -419,6 +488,8 @@ const Tab14: React.FC = () => {
                 : defaultHospitalVisit
         );
         setNoAllergies(bundle.noAllergies);
+        setNoMedications(bundle.medications.length === 0);
+        setNoChronicConditions(bundle.chronicConditions.length === 0);
     };
 
     useEffect(() => {
@@ -586,7 +657,7 @@ const Tab14: React.FC = () => {
         });
 
         // dont let medication dates start after they end 
-        medications.forEach((med, index) => {
+        if (!noMedications) medications.forEach((med, index) => {
             if (med.startDate && med.endDate) {
                 const start = new Date(med.startDate);
                 const end = new Date(med.endDate);
@@ -603,7 +674,7 @@ const Tab14: React.FC = () => {
 
     // save form
     // checks if form is valid (saves) or not (error message) 
-    const saveForm = async () => {
+    const saveForm = async (): Promise<boolean> => {
         const isValid = checkForm();
 
         if (!isValid) {
@@ -615,7 +686,7 @@ const Tab14: React.FC = () => {
             ) {
                 setActiveSection(0);
             }
-            return;
+            return false;
         }
 
         setSaveErrorMessage(false);
@@ -627,8 +698,8 @@ const Tab14: React.FC = () => {
                 patient: patientInfo,
                 insurances,
                 allergies: noAllergies ? [] : allergies,
-                medications,
-                chronicConditions,
+                medications: noMedications ? [] : medications,
+                chronicConditions: noChronicConditions ? [] : chronicConditions,
                 hospitalVisit,
                 noAllergies,
                 allowStaffOnlySections: canEditPatientRecords,
@@ -638,15 +709,40 @@ const Tab14: React.FC = () => {
             if (refreshed.hasPatient) {
                 applyTab14Bundle(refreshed);
             }
+            setSavedFormSnapshot(formSnapshot);
             setSaveMessage(true);
             setTimeout(() => setSaveMessage(false), 2000);
+            return true;
         } catch (e) {
             setBackendError(
                 e instanceof Error ? e.message : 'Could not save to server.'
             );
+            return false;
         } finally {
             setSaving(false);
         }
+    };
+
+    const saveAndLeavePage = async () => {
+        if (!pendingLeaveUrl) return;
+        const destination = pendingLeaveUrl;
+        const saved = await saveForm();
+        if (!saved) {
+            setShowUnsavedLeavePrompt(false);
+            return;
+        }
+        setShowUnsavedLeavePrompt(false);
+        setPendingLeaveUrl(null);
+        navigateAwayFromTab14(destination);
+    };
+
+    const leaveWithoutSaving = () => {
+        if (!pendingLeaveUrl) return;
+        const destination = pendingLeaveUrl;
+        setSavedFormSnapshot(formSnapshot);
+        setShowUnsavedLeavePrompt(false);
+        setPendingLeaveUrl(null);
+        navigateAwayFromTab14(destination);
     };
 
     // clear form 
@@ -660,6 +756,8 @@ const Tab14: React.FC = () => {
         setChronicConditions([defaultChronicCondition]);
         setHospitalVisit(defaultHospitalVisit);
         setNoAllergies(false);
+        setNoMedications(false);
+        setNoChronicConditions(false);
     };
 
     const loadSampleData = () => {
@@ -670,6 +768,8 @@ const Tab14: React.FC = () => {
         setChronicConditions([{ ...sampleChronicCondition }]);
         setHospitalVisit({ ...sampleHospitalVisit });
         setNoAllergies(false);
+        setNoMedications(false);
+        setNoChronicConditions(false);
         setErrors({});
         setSaveErrorMessage(false);
         setBackendError(null);
@@ -1436,7 +1536,20 @@ const Tab14: React.FC = () => {
                     {/* Medications */}
                         {activeSection === 3 && (
                             <div className="tab14-section-card">
-                                {medications.map((med, index) => (
+                                <label className="no-allergies-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={noMedications}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setNoMedications(checked);
+                                            setMedications(checked ? [] : [defaultMedication]);
+                                        }}
+                                    />
+                                    Click here if no known medications are present
+                                </label>
+
+                                {!noMedications && medications.map((med, index) => (
                                     <div key={index} className="section-block">
                                         <h3>Medication {index + 1}</h3>
 
@@ -1547,12 +1660,14 @@ const Tab14: React.FC = () => {
                                     </div>
                                 ))}
 
-                                <button
-                                    className="add-section-button"
-                                    type="button"
-                                    onClick={() => handleAddSection(medications, setMedications, defaultMedication)}>
-                                    + Add Another Medication
-                                </button>
+                                {!noMedications && (
+                                    <button
+                                        className="add-section-button"
+                                        type="button"
+                                        onClick={() => handleAddSection(medications, setMedications, defaultMedication)}>
+                                        + Add Another Medication
+                                    </button>
+                                )}
 
                             </div>
                         )}
@@ -1560,7 +1675,20 @@ const Tab14: React.FC = () => {
                     {/* Chronic Conditions */}
                         {activeSection === 5 && (
                             <div className="tab14-section-card">
-                                {chronicConditions.map((condition, index) => (
+                                <label className="no-allergies-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={noChronicConditions}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setNoChronicConditions(checked);
+                                            setChronicConditions(checked ? [] : [defaultChronicCondition]);
+                                        }}
+                                    />
+                                    Click here if no known chronic conditions are present
+                                </label>
+
+                                {!noChronicConditions && chronicConditions.map((condition, index) => (
                                     <div key={index} className="section-block">
 
                                         <h3>Chronic Conditions {index + 1}</h3>
@@ -1846,6 +1974,49 @@ const Tab14: React.FC = () => {
                         </div>
                     </main>
                 </div>
+
+                {showUnsavedLeavePrompt && (
+                    <div className="tab14-unsaved-modal" role="presentation">
+                        <div
+                            className="tab14-unsaved-modal__panel"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="tab14-unsaved-title"
+                        >
+                            <h2 id="tab14-unsaved-title">Unsaved changes</h2>
+                            <p>You have modified patient information. What would you like to do before leaving this page?</p>
+                            <div className="tab14-unsaved-modal__actions">
+                                <button
+                                    type="button"
+                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--primary"
+                                    onClick={() => void saveAndLeavePage()}
+                                    disabled={saving}
+                                >
+                                    {saving ? 'Saving...' : 'Save'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--danger"
+                                    onClick={leaveWithoutSaving}
+                                    disabled={saving}
+                                >
+                                    Dont save
+                                </button>
+                                <button
+                                    type="button"
+                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--secondary"
+                                    onClick={() => {
+                                        setShowUnsavedLeavePrompt(false);
+                                        setPendingLeaveUrl(null);
+                                    }}
+                                    disabled={saving}
+                                >
+                                    Go back
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {staffModalOpen && (
                     <div

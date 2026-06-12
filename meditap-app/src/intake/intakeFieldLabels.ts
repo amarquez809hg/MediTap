@@ -117,10 +117,14 @@ export function splitPersonName(full: string): { given?: string; family?: string
   };
 }
 
+function bloodTypeTokenRe(bt: string): RegExp {
+  return new RegExp(`(^|[^A-Z0-9])${escapeRe(bt)}(?=$|[^A-Z0-9])`);
+}
+
 export function normalizeBloodType(text: string): string | undefined {
   const t = collapseWs(text).toUpperCase();
   for (const bt of ['AB+', 'AB-', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-'] as const) {
-    if (t.includes(bt)) return bt;
+    if (bloodTypeTokenRe(bt).test(t)) return bt;
   }
   const m = t.match(/\b(TYPE\s*)?(A|B|AB|O)\s*([+-])\b/);
   if (m) {

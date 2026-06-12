@@ -167,53 +167,6 @@ ion-page.ct-page.ct-tab14 ion-content {
   display: flex;
   flex-direction: column;
   background: var(--meditap-surface);
-  overflow: visible;
-}
-
-.tab14-panel-footer {
-  padding: 16px 24px 24px;
-  border-top: 1px solid var(--meditap-border);
-  background: var(--meditap-surface);
-  overflow: visible;
-  position: relative;
-  z-index: 2;
-}
-
-.tab14-vitals-section {
-  border: 1px solid var(--meditap-border);
-  border-radius: var(--meditap-radius-sm);
-  padding: 16px;
-  background: var(--meditap-surface);
-}
-
-.tab14-vitals-section .tab14-vitals-heading {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
-}
-
-.tab14-vitals-heading {
-  margin: 0 0 12px;
-}
-
-.tab14-vitals-heading h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-  color: var(--meditap-primary);
-}
-
-.tab14-vitals-heading p {
-  margin: 0 0 8px;
-  font-size: 0.875rem;
-  color: var(--meditap-text-muted, #5f6368);
-}
-
-.tab14-vitals-bmi-preview {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: var(--meditap-radius-sm);
-  background: rgba(38, 198, 218, 0.1);
-  font-size: 0.9rem;
 }
 
 .tab14-view-only-banner {
@@ -497,6 +450,12 @@ ion-page.ct-page.ct-tab14 ion-content {
   border-radius: 0;
 }
 
+.tab14-panel-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--meditap-border);
+  background: var(--meditap-surface);
+}
+
 @media (max-width: 768px) {
   .tab14-layout {
     flex-direction: column;
@@ -715,7 +674,7 @@ ion-page.ct-page.ct-tab14 ion-content {
 }
 
 .file-upload-section {
-  margin-top: 30px;
+  margin: 8px auto 22px;
   text-align: center;
   width: 100%;
 }
@@ -757,56 +716,12 @@ ion-page.ct-page.ct-tab14 ion-content {
   margin-top: 2px;
 }
 
-.clear-button:disabled,
-.clear-button--staff-locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.clear-button--staff-locked {
-  pointer-events: auto;
-}
-
-.save-button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Clear Form staff-only hint (React popup; wrapper receives hover, not disabled buttons) */
-.tab14-clear-tooltip-host {
-  display: inline-flex;
-  position: relative;
-}
-
-.tab14-clear-tooltip-popup {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 10px);
-  transform: translateX(-50%);
-  z-index: 100;
-  width: max-content;
-  max-width: 260px;
-  padding: 8px 12px;
-  border-radius: var(--meditap-radius-sm);
-  background: var(--meditap-text);
-  color: #fff;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.35;
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
-  white-space: normal;
-}
-
-.tab14-clear-tooltip-popup::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-bottom-color: var(--meditap-text);
+.tab14-panel-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px 30px;
 }
 
 .bottom-buttons {
@@ -816,7 +731,7 @@ ion-page.ct-page.ct-tab14 ion-content {
   align-items: center;
   gap: 16px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .remove-file-button {
@@ -845,4 +760,92 @@ ion-page.ct-page.ct-tab14 ion-content {
 .tab14-upload-parse--muted {
   color: rgba(255, 255, 255, 0.75);
   font-style: italic;
+}
+
+
+.required-indicator {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.clear-button[aria-disabled='true'] {
+  opacity: 0.78;
+}
+
+.file-upload-section {
+  margin-top: 18px;
+  margin-bottom: 28px;
+  padding-bottom: 8px;
+}
+
+.tab14-panel-footer + .file-upload-section {
+  margin-top: 14px;
+}
+
+
+.tab14-unsaved-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.tab14-unsaved-modal__panel {
+  width: min(440px, 100%);
+  border-radius: 18px;
+  background: var(--meditap-card-bg, #fff);
+  color: var(--meditap-text, #102a43);
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.28);
+  padding: 24px;
+  text-align: center;
+}
+
+.tab14-unsaved-modal__panel h2 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.tab14-unsaved-modal__panel p {
+  margin: 0 0 20px;
+  color: var(--meditap-muted, #52616b);
+  line-height: 1.45;
+}
+
+.tab14-unsaved-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tab14-unsaved-modal__btn {
+  border: 0;
+  border-radius: var(--meditap-radius-sm, 10px);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tab14-unsaved-modal__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.tab14-unsaved-modal__btn--primary {
+  background: var(--meditap-accent, #00a5b5);
+  color: #fff;
+}
+
+.tab14-unsaved-modal__btn--danger {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.tab14-unsaved-modal__btn--secondary {
+  background: rgba(148, 163, 184, 0.22);
+  color: var(--meditap-text, #102a43);
 }

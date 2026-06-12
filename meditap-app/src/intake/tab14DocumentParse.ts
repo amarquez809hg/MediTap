@@ -200,10 +200,8 @@ function parsePatientFields(text: string): Tab14PatientFields {
     const n = normalizeBloodType(bt);
     if (n) out.bloodType = n;
   }
-  if (!out.bloodType) {
-    const n2 = normalizeBloodType(t);
-    if (n2) out.bloodType = n2;
-  }
+  // Avoid whole-document blood-type scans: text like "No blood type" or OCR noise can
+  // contain incidental O/A/B tokens. Only labeled Blood Type values should populate this field.
 
   return pickDefined(out as Record<string, string>);
 }

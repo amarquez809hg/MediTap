@@ -104,7 +104,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--meditap-text, #1f2933);
 }
 
 .form-group input,
@@ -113,17 +113,39 @@
   box-sizing: border-box;
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.25);
-  color: #fff;
+  border: 1px solid var(--meditap-border, rgba(15, 23, 42, 0.16));
+  background: var(--meditap-surface, #ffffff);
+  color: var(--meditap-text, #1f2933);
   font-size: 1rem;
   font-family: inherit;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--meditap-text-secondary, #5f6b7a);
+  opacity: 1;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: 2px solid rgba(23, 162, 184, 0.45);
-  border-color: rgba(23, 162, 184, 0.5);
+  border-color: var(--meditap-accent, #17a2b8);
+}
+
+.ion-palette-dark .tab8-contact-wrap .form-group label {
+  color: var(--meditap-text, #e8eaed);
+}
+
+.ion-palette-dark .tab8-contact-wrap .form-group input,
+.ion-palette-dark .tab8-contact-wrap .form-group textarea {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--meditap-text, #fff);
+}
+
+.ion-palette-dark .tab8-contact-wrap .form-group input::placeholder,
+.ion-palette-dark .tab8-contact-wrap .form-group textarea::placeholder {
+  color: var(--meditap-text-secondary, #a8b0bc);
 }
 
 .submit-button {
@@ -157,3 +179,5 @@
 .tab8-mail-link:hover {
   text-decoration: underline;
 }
+
+

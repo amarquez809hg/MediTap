@@ -876,7 +876,7 @@ export function mergeIntakeParseResults(
 
   return {
     patientFields,
-    noKnownDrugAllergies: results.some((r) => r.noKnownDrugAllergies),
+    noKnownDrugAllergies: allergies.length === 0 && results.some((r) => r.noKnownDrugAllergies),
     insurances,
     allergies,
     medications,

@@ -231,6 +231,28 @@ ion-page.ct-page.ct-tab11 .settings-page-content {
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
+.settings-footer-btn--found {
+  border: 1px solid rgba(20, 184, 166, 0.38);
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.12);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.12);
+}
+
+.settings-footer-btn--found ion-icon {
+  color: #0f766e;
+}
+
+.ion-palette-dark .settings-footer-btn--found {
+  color: #ccfbf1;
+  background: rgba(45, 212, 191, 0.16);
+  border-color: rgba(153, 246, 228, 0.26);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+}
+
+.ion-palette-dark .settings-footer-btn--found ion-icon {
+  color: #99f6e4;
+}
+
 /* Red glass — saturated red (IonButton ::part was not reliably painting) */
 .settings-footer-btn--logout {
   border: 1px solid rgba(255, 255, 255, 0.38);
@@ -259,4 +281,83 @@ ion-page.ct-page.ct-tab11 .settings-page-content {
   box-shadow:
     0 8px 22px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+
+.settings-card-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--meditap-border);
+}
+
+.settings-card-status--active {
+  color: #0f766e;
+  background: rgba(20, 184, 166, 0.14);
+  border-color: rgba(15, 118, 110, 0.25);
+}
+
+.settings-card-status--reported_lost,
+.settings-card-status--inactive {
+  color: #b42318;
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(180, 35, 24, 0.25);
+}
+
+.settings-item code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82em;
+}
+
+.settings-card-demo-note {
+  margin: 8px 4px 0;
+  color: var(--meditap-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.settings-footer-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  filter: grayscale(0.15);
+}
+
+.ion-palette-dark .settings-card-status--active {
+  color: #99f6e4;
+  background: rgba(45, 212, 191, 0.18);
+  border-color: rgba(153, 246, 228, 0.28);
+}
+
+.ion-palette-dark .settings-card-status--reported_lost,
+.ion-palette-dark .settings-card-status--inactive {
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(254, 202, 202, 0.28);
+}
+
+
+ion-item.settings-item:has(.settings-card-status) {
+  align-items: flex-start;
+}
+
+.settings-item ion-note.settings-card-status {
+  align-self: flex-start;
+  margin-top: 12px;
+  margin-inline-start: 12px;
+  line-height: 1.2;
+  min-height: 32px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.settings-item:has(.settings-card-status) ion-label p {
+  margin-top: 2px;
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { IonAlert } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
@@ -173,6 +174,7 @@ const Tab1: React.FC = () => {
   const [incidentLoading, setIncidentLoading] = React.useState(true);
   const [incidentError, setIncidentError] = React.useState<string | null>(null);
   const [onboardingBannerKey, setOnboardingBannerKey] = React.useState(0);
+  const [showLogoutAlert, setShowLogoutAlert] = React.useState(false);
 
   const onboardingRecord = React.useMemo(
     () => loadOnboarding(username),
@@ -345,6 +347,10 @@ const Tab1: React.FC = () => {
     Boolean(summaryError)
   );
 
+  const handleLogout = () => {
+    void logout();
+  };
+
   const requestAddEntry = (path: OpenAddEntryPath, hint: string) => {
     staffGate.gateEdit(() => {
       queueOpenAddEntry(path);
@@ -361,10 +367,22 @@ const Tab1: React.FC = () => {
             {username}
           </span>
         )}
-        <button type="button" className="logout-btn" onClick={logout}>
+        <button type="button" className="logout-btn" onClick={() => setShowLogoutAlert(true)}>
           <i className="fas fa-sign-out-alt"></i> Logout
         </button>
       </header>
+
+      <IonAlert
+        isOpen={showLogoutAlert}
+        onDidDismiss={() => setShowLogoutAlert(false)}
+        header="Confirm Logout"
+        message="Are you sure you want to log out of your account?"
+        buttons={[
+          { text: 'Cancel', role: 'cancel', cssClass: 'secondary' },
+          { text: 'Logout', handler: handleLogout },
+        ]}
+      />
+
 
       <main className="profile-main">
         <aside className="profile-sidebar profile-sidebar--compact">
