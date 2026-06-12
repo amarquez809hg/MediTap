@@ -1,6 +1,7 @@
 import React from 'react';
 import { IonAlert } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
 import { queueOpenAddEntry, type OpenAddEntryPath } from '../auth/openAddEntry';
@@ -150,6 +151,7 @@ function sidebarIdentityFromDashboard(
 }
 
 const Tab1: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const history = useHistory();
   const { logout, username } = useAuth();
   const staffGate = useStaffElevationGate();
@@ -327,7 +329,8 @@ const Tab1: React.FC = () => {
         appointments,
         labAttention.pending,
         labAttention.newPanels,
-        { surface: 'dashboard', username }
+        { surface: 'dashboard', username },
+        t
       ),
       4
     );
@@ -338,13 +341,16 @@ const Tab1: React.FC = () => {
     labAttention.pending,
     labAttention.newPanels,
     username,
+    t,
+    i18n.language,
   ]);
 
-  const welcomeGreeting = greetingForDisplayName(user.name);
+  const welcomeGreeting = greetingForDisplayName(user.name, t);
   const welcomeContext = welcomeContextLine(
     appointments,
     loadingSummary,
-    Boolean(summaryError)
+    Boolean(summaryError),
+    t
   );
 
   const handleLogout = () => {
@@ -361,25 +367,25 @@ const Tab1: React.FC = () => {
   return (
     <div className="profile-container">
       <header className="profile-header">
-        <div className="logo">MediTap Dashboard</div>
+        <div className="logo">{t('dashboard.title')}</div>
         {username && (
           <span style={{ marginRight: 12, fontSize: '0.9rem', opacity: 0.9 }}>
             {username}
           </span>
         )}
         <button type="button" className="logout-btn" onClick={() => setShowLogoutAlert(true)}>
-          <i className="fas fa-sign-out-alt"></i> Logout
+          <i className="fas fa-sign-out-alt"></i> {t('common.logout')}
         </button>
       </header>
 
       <IonAlert
         isOpen={showLogoutAlert}
         onDidDismiss={() => setShowLogoutAlert(false)}
-        header="Confirm Logout"
-        message="Are you sure you want to log out of your account?"
+        header={t('settings.confirmLogoutTitle')}
+        message={t('settings.confirmLogoutMessage')}
         buttons={[
-          { text: 'Cancel', role: 'cancel', cssClass: 'secondary' },
-          { text: 'Logout', handler: handleLogout },
+          { text: t('common.cancel'), role: 'cancel', cssClass: 'secondary' },
+          { text: t('settings.confirmLogoutButton'), handler: handleLogout },
         ]}
       />
 
@@ -400,68 +406,66 @@ const Tab1: React.FC = () => {
             />
             <h2 className="user-name">{user.name}</h2>
             <p className="user-id">{user.id}</p>
-            <div className="patient-mini-profile" aria-label="Patient summary">
-              <h3 className="patient-mini-profile__title">Patient Snapshot</h3>
+            <div className="patient-mini-profile" aria-label={t('dashboard.patientSummaryAria')}>
+              <h3 className="patient-mini-profile__title">{t('dashboard.patientSnapshot')}</h3>
               <div className="patient-mini-profile__grid">
-                <span className="patient-mini-profile__label">DOB</span>
+                <span className="patient-mini-profile__label">{t('dashboard.dob')}</span>
                 <span className="patient-mini-profile__value">
                   {detail?.patientProfile.dateOfBirth || '—'}
                 </span>
-                <span className="patient-mini-profile__label">Blood</span>
+                <span className="patient-mini-profile__label">{t('dashboard.blood')}</span>
                 <span className="patient-mini-profile__value">
                   {detail?.patientProfile.bloodType || '—'}
                 </span>
-                <span className="patient-mini-profile__label">Sex</span>
+                <span className="patient-mini-profile__label">{t('dashboard.sex')}</span>
                 <span className="patient-mini-profile__value">
                   {detail?.patientProfile.sexAtBirth || '—'}
                 </span>
-                <span className="patient-mini-profile__label">Phone</span>
+                <span className="patient-mini-profile__label">{t('dashboard.phone')}</span>
                 <span className="patient-mini-profile__value">
                   {detail?.patientProfile.phone || '—'}
                 </span>
                 <div className="patient-mini-profile__email-row">
-                  <span className="patient-mini-profile__label">Email</span>
+                  <span className="patient-mini-profile__label">{t('dashboard.email')}</span>
                   <span className="patient-mini-profile__value patient-mini-profile__value--email">
                     {detail?.patientProfile.email || user.email || '—'}
                   </span>
                 </div>
               </div>
             </div>
-            <p className="user-card__hint">
-              Care overview and schedules — details live in each section.
-            </p>
+            <p className="user-card__hint">{t('dashboard.careOverviewHint')}</p>
             <a href="/tab14" className="user-card__profile-link">
-              Update patient information
+              {t('dashboard.updatePatientInfo')}
             </a>
           </div>
 
           <nav className="profile-nav">
             <a href="/tab1" className="nav-item active" aria-current="page">
-              <i className="fas fa-home"></i> Dashboard
+              <i className="fas fa-home"></i> {t('nav.dashboard')}
             </a>
             <a href="/tab2" className="nav-item">
-              <i className="fas fa-chart-line"></i> Quick Status
+              <i className="fas fa-chart-line"></i> {t('nav.quickStatus')}
             </a>
             <a href="/tab4" className="nav-item">
-              <i className="fas fa-calendar-check"></i> Appointments
+              <i className="fas fa-calendar-check"></i> {t('nav.appointments')}
             </a>
             <a href="/tab7" className="nav-item">
-              <i className="fas fa-vial"></i> Lab Results
+              <i className="fas fa-vial"></i> {t('nav.labResults')}
             </a>
             <a href="/tab6" className="nav-item">
-              <i className="fas fa-clipboard-list"></i> Incident Records
+              <i className="fas fa-clipboard-list"></i> {t('nav.incidentRecords')}
             </a>
             <a href="/tab5" className="nav-item">
-              <i className="fas fa-notes-medical"></i> Patient History
+              <i className="fas fa-notes-medical"></i> {t('nav.patientHistory')}
             </a>
             <a href="/tab12" className="nav-item">
-              <i className="fas fa-id-card"></i> Patient Insurance
+              <i className="fas fa-id-card"></i> {t('nav.patientInsurance')}
             </a>
             <a href="/tab13" className="nav-item">
-              <i className="fas fa-user-shield"></i> Admin Panel
+              <i className="fas fa-user-shield"></i> {t('nav.adminPanel')}
             </a>
             <a href="/tab11" className="nav-item">
-              <i className="fas fa-cog"></i> Settings
+              <i className="fas fa-cog"></i> {t('nav.settings')}
             </a>
           </nav>
         </aside>
@@ -483,13 +487,10 @@ const Tab1: React.FC = () => {
           <DashboardNextSteps steps={dashboardNextSteps} loading={loadingSummary} />
 
           {!loadingSummary && healthSummaryNeedsSetup(hs) && (
-            <div className="dashboard-setup-strip" role="region" aria-label="Get started">
-              <p>
-                Your health summary is still empty. Complete patient intake or upload a document
-                to populate BMI, allergies, medications, and more.
-              </p>
+            <div className="dashboard-setup-strip" role="region" aria-label={t('dashboard.getStartedAria')}>
+              <p>{t('dashboard.setupStrip')}</p>
               <a href="/tab14" className="book-btn dashboard-setup-strip__btn">
-                Complete intake
+                {t('dashboard.completeIntake')}
               </a>
             </div>
           )}
@@ -497,49 +498,34 @@ const Tab1: React.FC = () => {
           <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h1 className="dashboard-tab-section__title">
-                <i className="fas fa-heartbeat"></i> Health metrics
+                <i className="fas fa-heartbeat"></i> {t('dashboard.healthMetrics')}
               </h1>
               <p className="dashboard-tab-section__subtitle">
-                At-a-glance summary from your record
-                {loadingSummary ? ' (syncing…)' : ''}.
+                {t('dashboard.healthMetricsSubtitle')}
+                {loadingSummary ? ` ${t('dashboard.healthMetricsSyncing')}` : ''}.
                 {hs.bmi !== 'N/A' && hs.bmiCategory !== 'Not recorded'
-                  ? ` BMI ${hs.bmi} (${hs.bmiCategory}).`
-                  : ' Add height and weight under Patient Information → Vitals, then Save.'}
-                {' '}Open other tabs for full detail.
+                  ? ` ${t('dashboard.bmiRecorded', { bmi: hs.bmi, category: hs.bmiCategory })}`
+                  : ` ${t('dashboard.bmiHint')}`}
+                {' '}
+                {t('dashboard.openOtherTabs')}
               </p>
             </div>
           </header>
           {summaryError && (
             <p className="tab1-api-warning" role="alert">
-              Could not load live summary: {summaryError}
+              {t('dashboard.summaryError', { error: summaryError })}
             </p>
           )}
 
           <div className="metrics-grid-scroll">
-            <div className="metrics-grid" role="list" aria-label="Health metrics summary">
-              <MetricTile
-                iconClass="fas fa-heartbeat"
-                title="BMI Score"
-                value={hs.bmi}
-              />
-              <MetricTile
-                iconClass="fas fa-ruler-vertical"
-                title="Height"
-                value={hs.heightDisplay}
-              />
-              <MetricTile
-                iconClass="fas fa-weight"
-                title="Weight"
-                value={hs.weightDisplay}
-              />
-              <MetricTile
-                iconClass="fas fa-heartbeat"
-                title="Vitals updated"
-                value={hs.lmd}
-              />
+            <div className="metrics-grid" role="list" aria-label={t('dashboard.metricsAria')}>
+              <MetricTile iconClass="fas fa-heartbeat" title={t('dashboard.bmiScore')} value={hs.bmi} />
+              <MetricTile iconClass="fas fa-ruler-vertical" title={t('dashboard.height')} value={hs.heightDisplay} />
+              <MetricTile iconClass="fas fa-weight" title={t('dashboard.weight')} value={hs.weightDisplay} />
+              <MetricTile iconClass="fas fa-heartbeat" title={t('dashboard.vitalsUpdated')} value={hs.lmd} />
               <MetricTile
                 iconClass="fas fa-tachometer-alt"
-                title="BP / Heart rate"
+                title={t('dashboard.bpHeartRate')}
                 value={
                   hs.bloodPressure !== '—'
                     ? hs.bloodPressure
@@ -548,42 +534,27 @@ const Tab1: React.FC = () => {
                       : '—'
                 }
               />
-              <MetricTile
-                iconClass="fas fa-calendar-alt"
-                title="Last Visit"
-                value={hs.lastVisit}
-              />
-              <MetricTile
-                iconClass="fas fa-allergies"
-                title="Known Allergies"
-                value={hs.allergies}
-              />
-              <MetricTile
-                iconClass="fas fa-pills"
-                title="Active Meds"
-                value={hs.medications}
-              />
+              <MetricTile iconClass="fas fa-calendar-alt" title={t('dashboard.lastVisit')} value={hs.lastVisit} />
+              <MetricTile iconClass="fas fa-allergies" title={t('dashboard.knownAllergies')} value={hs.allergies} />
+              <MetricTile iconClass="fas fa-pills" title={t('dashboard.activeMeds')} value={hs.medications} />
             </div>
           </div>
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-calendar-check"></i> Upcoming appointments
+                <i className="fas fa-calendar-check"></i> {t('dashboard.upcomingAppointments')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Your next scheduled visits with provider, date, and location.
+                {t('dashboard.appointmentsSubtitle')}
               </p>
             </div>
             <DashboardSectionActions
               viewHref="/tab4"
-              viewLabel="Appointments tab"
-              addLabel="Add appointment"
+              viewLabel={t('dashboard.appointmentsTab')}
+              addLabel={t('dashboard.addAppointment')}
               onAddEntry={() =>
-                requestAddEntry(
-                  '/tab4',
-                  'Only staff or admin users can book appointments. Enter those credentials to add a new visit.'
-                )
+                requestAddEntry('/tab4', t('dashboard.staffHintAppointments'))
               }
             />
           </header>
@@ -595,42 +566,38 @@ const Tab1: React.FC = () => {
                   key={appt.id}
                   appt={appt}
                   manageHref="/tab4"
-                  manageLabel="Manage"
+                  manageLabel={t('common.manage')}
                 />
               ))}
             </div>
           ) : (
             <div className="dashboard-empty-strip">
-              <p>No upcoming appointments. Use the buttons above to open the tab or add one with staff sign-in.</p>
+              <p>{t('dashboard.noAppointmentsExtended')}</p>
             </div>
           )}
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-vial"></i> Lab results
+                <i className="fas fa-vial"></i> {t('dashboard.labResults')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Recent lab panels and collection dates; open a row on the full
-                tab for individual results and reference ranges.
+                {t('dashboard.labResultsSubtitleLong')}
               </p>
             </div>
             <DashboardSectionActions
               viewHref="/tab7"
-              viewLabel="Lab results tab"
-              addLabel="Add lab result"
+              viewLabel={t('dashboard.labResultsTab')}
+              addLabel={t('dashboard.addLabResult')}
               onAddEntry={() =>
-                requestAddEntry(
-                  '/tab7',
-                  'Only staff or admin users can add lab results. Enter those credentials to create a new panel.'
-                )
+                requestAddEntry('/tab7', t('dashboard.staffHintLabs'))
               }
             />
           </header>
 
           {labLoading && (
             <p className="content-subtitle dashboard-preview-block">
-              Loading lab results…
+              {t('dashboard.loadingLabs')}
             </p>
           )}
           {labError && !labLoading && (
@@ -650,36 +617,32 @@ const Tab1: React.FC = () => {
           )}
           {!labLoading && !labError && labRows.length === 0 && (
             <div className="dashboard-empty-strip dashboard-preview-block">
-              <p>No lab reports in your record yet. Use the buttons above to view labs or add a result with staff sign-in.</p>
+              <p>{t('dashboard.noLabsExtended')}</p>
             </div>
           )}
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-clipboard-list"></i> Incident records
+                <i className="fas fa-clipboard-list"></i> {t('dashboard.incidentRecords')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Injuries, accidents, and other clinical events logged in your
-                chart with date and summary.
+                {t('dashboard.incidentSubtitleLong')}
               </p>
             </div>
             <DashboardSectionActions
               viewHref="/tab6"
-              viewLabel="Incidents tab"
-              addLabel="Log incident"
+              viewLabel={t('dashboard.incidentsTab')}
+              addLabel={t('dashboard.logIncident')}
               onAddEntry={() =>
-                requestAddEntry(
-                  '/tab6',
-                  'Only staff or admin users can log incidents. Enter those credentials to add a new record.'
-                )
+                requestAddEntry('/tab6', t('dashboard.staffHintIncidents'))
               }
             />
           </header>
 
           {incidentLoading && (
             <p className="content-subtitle dashboard-preview-block">
-              Loading incident records…
+              {t('dashboard.loadingIncidents')}
             </p>
           )}
           {incidentError && !incidentLoading && (
@@ -699,36 +662,32 @@ const Tab1: React.FC = () => {
           )}
           {!incidentLoading && !incidentError && incidentRows.length === 0 && (
             <div className="dashboard-empty-strip">
-              <p>No incident records to show. Use the buttons above to open the tab or log one with staff sign-in.</p>
+              <p>{t('dashboard.noIncidentsExtended')}</p>
             </div>
           )}
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-notes-medical"></i> Chronic conditions
+                <i className="fas fa-notes-medical"></i> {t('dashboard.chronicConditions')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                Ongoing and historical diagnoses with status and notes from your
-                medical record.
+                {t('dashboard.chronicSubtitleLong')}
               </p>
             </div>
             <DashboardSectionActions
               viewHref="/tab5"
-              viewLabel="Chronic tab"
-              addLabel="Add condition"
+              viewLabel={t('dashboard.chronicTab')}
+              addLabel={t('dashboard.addCondition')}
               onAddEntry={() =>
-                requestAddEntry(
-                  '/tab5',
-                  'Only staff or admin users can add chronic conditions. Enter those credentials to create a new entry.'
-                )
+                requestAddEntry('/tab5', t('dashboard.staffHintChronic'))
               }
             />
           </header>
 
           {chronicLoading && (
             <p className="content-subtitle dashboard-preview-block">
-              Loading chronic conditions…
+              {t('dashboard.loadingChronic')}
             </p>
           )}
           {chronicError && !chronicLoading && (
@@ -750,14 +709,14 @@ const Tab1: React.FC = () => {
                   }
                   condition={c}
                   manageHref="/tab5"
-                  manageLabel="Manage"
+                  manageLabel={t('common.manage')}
                 />
               ))}
             </div>
           )}
           {!chronicLoading && !chronicError && chronicConditions.length === 0 && (
             <div className="dashboard-empty-strip">
-              <p>No chronic conditions on file yet. Use the buttons above to open the tab or add one with staff sign-in.</p>
+              <p>{t('dashboard.noChronicExtended')}</p>
             </div>
           )}
         </section>

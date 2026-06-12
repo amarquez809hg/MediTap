@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
@@ -269,14 +270,14 @@ const sampleHospitalVisit: HospitalVisit = {
     reportId: 'HPT-49202',
 };
 
-const TAB14_SECTIONS: { id: number; label: string; icon: string }[] = [
-    { id: 0, label: 'Patient Information', icon: 'fa-id-card' },
-    { id: 6, label: 'Vitals', icon: 'fa-heartbeat' },
-    { id: 1, label: 'Hospital visit', icon: 'fa-hospital' },
-    { id: 2, label: 'Allergies', icon: 'fa-exclamation-triangle' },
-    { id: 3, label: 'Medications', icon: 'fa-pills' },
-    { id: 4, label: 'Insurance', icon: 'fa-file-medical' },
-    { id: 5, label: 'Chronic Conditions', icon: 'fa-notes-medical' },
+const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
+    { id: 0, labelKey: 'patientIntake.sections.patientInfo', icon: 'fa-id-card' },
+    { id: 6, labelKey: 'patientIntake.sections.vitals', icon: 'fa-heartbeat' },
+    { id: 1, labelKey: 'patientIntake.sections.hospitalVisit', icon: 'fa-hospital' },
+    { id: 2, labelKey: 'patientIntake.sections.allergies', icon: 'fa-exclamation-triangle' },
+    { id: 3, labelKey: 'patientIntake.sections.medications', icon: 'fa-pills' },
+    { id: 4, labelKey: 'patientIntake.sections.insurance', icon: 'fa-file-medical' },
+    { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
 ];
 
 function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
@@ -309,6 +310,7 @@ const ALLERGY_SEVERITY_OPTIONS = [
 ] as const;
 
 const Tab14: React.FC = () => {
+    const { t } = useTranslation();
     const location = useLocation();
     const { username, hasRealmRole, authReady } = useAuth();
     const recordEditorRole = getMeditapRecordEditorRole();
@@ -956,7 +958,7 @@ const Tab14: React.FC = () => {
                 <div className="chronic-conditions-container tab14-add-patient">
                     <header className="chronic-conditions-header">
                         <h1>
-                            <i className="fas fa-user-plus" aria-hidden /> Add Patient Information
+                            <i className="fas fa-user-plus" aria-hidden /> {t('patientIntake.title')}
                         </h1>
                         <div className="tab14-header-actions">
                             <button
@@ -966,7 +968,7 @@ const Tab14: React.FC = () => {
                                 disabled={!canEditPatientRecords}
                             >
                                 <i className="fas fa-flask" aria-hidden />
-                                Load sample data
+                                {t('patientIntake.loadSample')}
                             </button>
                             <button type="button" className="book-btn">
                                 <a
@@ -979,7 +981,7 @@ const Tab14: React.FC = () => {
                                     }}
                                 >
                                     <i className="fas fa-arrow-left" aria-hidden />
-                                    Go back to dashboard
+                                    {t('common.goBackToDashboard')}
                                 </a>
                             </button>
                         </div>
@@ -987,7 +989,7 @@ const Tab14: React.FC = () => {
 
                     <main className="chronic-conditions-main tab14-master">
                         <div className="tab14-layout">
-                            <aside className="tab14-sidebar" aria-label="Form sections">
+                            <aside className="tab14-sidebar" aria-label={t('patientIntake.sectionsAria')}>
                                 <nav className="tab14-nav">
                                     {TAB14_SECTIONS.map((s) => (
                                         <button
@@ -997,7 +999,7 @@ const Tab14: React.FC = () => {
                                             onClick={() => setActiveSection(s.id)}
                                         >
                                             <i className={`fas ${s.icon}`} aria-hidden />
-                                            <span>{s.label}</span>
+                                            <span>{t(s.labelKey)}</span>
                                         </button>
                                     ))}
                                 </nav>
@@ -1005,15 +1007,13 @@ const Tab14: React.FC = () => {
                             <div className="tab14-main-panel">
                                 {loadingIntake && (
                                     <p className="tab14-loading-hint" role="status">
-                                        Loading your saved patient record…
+                                        {t('patientIntake.loadingRecord')}
                                     </p>
                                 )}
                                 {staffElevationActive && (
                                     <div className="tab14-staff-elevation-banner" role="status">
                                         <p>
-                                            Staff editing is active for this patient. The patient stays signed
-                                            in. When you’re done, use <strong>End staff mode</strong> to return
-                                            this form to view-only.
+                                            {t('patientIntake.staffActiveBanner')}
                                         </p>
                                         <button
                                             type="button"
@@ -1023,17 +1023,14 @@ const Tab14: React.FC = () => {
                                                 setElevationNonce((n) => n + 1);
                                             }}
                                         >
-                                            End staff mode
+                                            {t('common.endStaffMode')}
                                         </button>
                                     </div>
                                 )}
                                 {!canEditPatientRecords && (
                                     <div className="tab14-view-only-banner" role="status">
                                         <p>
-                                            You can <strong>upload a PDF or image</strong> to fill these fields, then{' '}
-                                            <strong>Save</strong> to your chart. Open the <strong>Vitals</strong>{' '}
-                                            section to enter height and weight for your BMI. Other fields are read-only
-                                            here — use <strong>Staff sign-in</strong> to edit manually or clear the form.
+                                            {t('patientIntake.viewOnlyBanner')}
                                         </p>
                                         <button
                                             type="button"
@@ -1043,18 +1040,23 @@ const Tab14: React.FC = () => {
                                                 setStaffModalOpen(true);
                                             }}
                                         >
-                                            Staff sign-in
+                                            {t('common.staffSignIn')}
                                         </button>
                                     </div>
                                 )}
                                 <div className="tab14-panel-header">
-                                    <h2>{TAB14_SECTIONS.find((s) => s.id === activeSection)?.label}</h2>
+                                    <h2>
+                                        {t(
+                                            TAB14_SECTIONS.find((s) => s.id === activeSection)?.labelKey ??
+                                                'patientIntake.sections.patientInfo'
+                                        )}
+                                    </h2>
                                     <p className="tab14-panel-sub">
                                         {activeSection === 6
-                                            ? 'Enter height and weight to calculate BMI on your dashboard and Quick Status, then Save.'
+                                            ? t('patientIntake.vitalsPanelSub')
                                             : activeSection === 0
-                                              ? 'Demographics from your chart or PDF. Use the Vitals tab for height, weight, and BMI.'
-                                              : 'Use the menu to switch sections. Save applies to the entire patient record.'}
+                                              ? t('patientIntake.demographicsSub')
+                                              : t('patientIntake.defaultPanelSub')}
                                     </p>
                                 </div>
                                 <div className="tab14-panel-body">
@@ -1277,10 +1279,9 @@ const Tab14: React.FC = () => {
                         {activeSection === 6 && (
                             <div className="tab14-section-card tab14-vitals-section">
                                 <div className="tab14-vitals-heading">
-                                    <h3>Height &amp; weight</h3>
+                                    <h3>{t('patientIntake.heightWeightHeading')}</h3>
                                     <p>
-                                        MyChart-style summary: these values drive your BMI on the dashboard and Quick
-                                        Status.
+                                        {t('patientIntake.heightWeightSub')}
                                     </p>
                                 </div>
                                 {renderPatientVitalsFields()}
@@ -1854,7 +1855,7 @@ const Tab14: React.FC = () => {
                             onClick = {() => void saveForm()}
                             disabled={saving || !authReady}
                         >
-                            {saving ? 'Saving…' : 'Save'}
+                            {saving ? t('patientIntake.saving') : t('patientIntake.save')}
                         </button>
 
                         <span
@@ -1879,14 +1880,14 @@ const Tab14: React.FC = () => {
                                 title={
                                     canEditPatientRecords
                                         ? undefined
-                                        : 'Staff sign-in required to clear the form.'
+                                        : t('patientIntake.clearFormStaffHint')
                                 }
                             >
-                                Clear Form
+                                {t('patientIntake.clearForm')}
                             </button>
                             {!canEditPatientRecords && clearFormHintVisible && (
                                 <span className="tab14-clear-tooltip-popup" role="tooltip">
-                                    Staff sign-in required to clear the form.
+                                    {t('patientIntake.clearFormStaffHint')}
                                 </span>
                             )}
                         </span>
@@ -1911,7 +1912,7 @@ const Tab14: React.FC = () => {
 
                     {saveMessage && 
                     <div className = "saved-message">
-                        Data Saved
+                        {t('patientIntake.dataSaved')}
                     </div>}
 
                     </div>
@@ -1919,11 +1920,11 @@ const Tab14: React.FC = () => {
                     {/* Upload works for patients; Save is outside fieldset so it stays clickable */}
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
-                            Upload File (PDF, JPEG, PNG)
+                            {t('patientIntake.uploadFile')}
                             <input type = "file" accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
                         </label>
                         {uploadParsing && (
-                            <p className="tab14-upload-parse tab14-upload-parse--muted">Reading document… (OCR on images may take a minute.)</p>
+                            <p className="tab14-upload-parse tab14-upload-parse--muted">{t('patientIntake.readingDocument')}</p>
                         )}
                         {!uploadParsing && uploadParseMessage && (
                             <p className="tab14-upload-parse">{uploadParseMessage}</p>
@@ -2028,21 +2029,20 @@ const Tab14: React.FC = () => {
                         <button
                             type="button"
                             className="tab14-staff-modal__backdrop"
-                            aria-label="Close dialog"
+                            aria-label={t('common.closeDialog')}
                             disabled={staffSubmitting}
                             onClick={() => {
                                 if (!staffSubmitting) setStaffModalOpen(false);
                             }}
                         />
                         <div className="tab14-staff-modal__panel">
-                            <h2 id="tab14-staff-modal-title">Staff sign-in</h2>
+                            <h2 id="tab14-staff-modal-title">{t('common.staffSignIn')}</h2>
                             <p className="tab14-staff-modal__hint">
-                                The patient stays signed in on this device. Enter your staff username and password
-                                to unlock editing in this tab.
+                                {t('patientIntake.staffModalHint')}
                             </p>
                             <form onSubmit={(e) => void submitStaffModal(e)}>
                                 <div className="form-field">
-                                    <label htmlFor="tab14-staff-user">Staff username</label>
+                                    <label htmlFor="tab14-staff-user">{t('common.staffUsername')}</label>
                                     <input
                                         id="tab14-staff-user"
                                         name="username"
@@ -2053,7 +2053,7 @@ const Tab14: React.FC = () => {
                                     />
                                 </div>
                                 <div className="form-field">
-                                    <label htmlFor="tab14-staff-pass">Password</label>
+                                    <label htmlFor="tab14-staff-pass">{t('common.password')}</label>
                                     <input
                                         id="tab14-staff-pass"
                                         name="password"
@@ -2074,14 +2074,14 @@ const Tab14: React.FC = () => {
                                         disabled={staffSubmitting}
                                         onClick={() => setStaffModalOpen(false)}
                                     >
-                                        Cancel
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         type="submit"
                                         className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                                         disabled={staffSubmitting}
                                     >
-                                        {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                                        {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                                     </button>
                                 </div>
                             </form>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IonContent,
   IonHeader,
@@ -69,6 +70,7 @@ function fullAppUrl(path: string) {
 }
 
 const Tab13: React.FC = () => {
+  const { t } = useTranslation();
   const ionRouter = useIonRouter();
   const { hasRealmRole, username } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
@@ -226,7 +228,7 @@ const Tab13: React.FC = () => {
           <header className="admin-panel-header">
             <h1>
               <i className="fas fa-user-shield" aria-hidden />
-              Admin Panel
+              {t('admin.title')}
             </h1>
             <div className="admin-panel-header__actions">
               <a
@@ -234,7 +236,7 @@ const Tab13: React.FC = () => {
                 className="book-btn patient-insurance-header__action-btn"
               >
                 <i className="fas fa-arrow-left" aria-hidden />
-                Go back to dashboard
+                {t('common.goBackToDashboard')}
               </a>
             </div>
           </header>
@@ -248,24 +250,22 @@ const Tab13: React.FC = () => {
                 <div className="tab13-intro">
                   <IonIcon icon={keyOutline} className="tab13-intro__icon" aria-hidden />
                   <div className="tab13-intro__body">
-                    <h2 id="tab13-overview-heading">Administration &amp; shortcuts</h2>
+                    <h2 id="tab13-overview-heading">{t('admin.introTitle')}</h2>
                     <p>
-                      Jump to patient tabs, run facility operations, and manage Epic sandbox
-                      linkage. Destructive API actions require staff access.
+                      {t('admin.introBody')}
                     </p>
                   </div>
                 </div>
 
                 {!canEditAdmin && (
                   <p className="tab13-readonly-hint">
-                    Sign in with staff credentials to use admin shortcuts and add hospitals.
+                    {t('admin.readonlyHint')}
                   </p>
                 )}
                 {canEditAdmin && (
                   <div className="tab13-staff-banner">
                     <p className="tab13-staff-banner__text">
-                      Staff mode active (or record editor role). Hospital creation uses the live
-                      API.
+                      {t('admin.staffBanner')}
                     </p>
                     {!hasEditorRealmRole && (
                       <IonButton
@@ -276,7 +276,7 @@ const Tab13: React.FC = () => {
                           setElevationNonce((n) => n + 1);
                         }}
                       >
-                        End staff mode
+                        {t('common.endStaffMode')}
                       </IonButton>
                     )}
                   </div>
@@ -285,7 +285,7 @@ const Tab13: React.FC = () => {
 
               <section className="tab13-zone tab13-zone--facility" aria-labelledby="tab13-facility-heading">
                 <h2 className="tab13-zone__label" id="tab13-facility-heading">
-                  Facility operations
+                  {t('admin.facilityOps')}
                 </h2>
                 <div className="tab13-ops" role="group" aria-label="Admin operations">
                   <button
@@ -302,7 +302,7 @@ const Tab13: React.FC = () => {
                     }}
                   >
                     <IonIcon icon={addOutline} aria-hidden />
-                    Add hospital
+                    {t('admin.addHospital')}
                   </button>
                   <button
                     type="button"
@@ -314,7 +314,7 @@ const Tab13: React.FC = () => {
                     }
                   >
                     <IonIcon icon={settingsOutline} aria-hidden />
-                    View logs
+                    {t('admin.viewLogs')}
                   </button>
                 </div>
               </section>
@@ -538,9 +538,9 @@ const Tab13: React.FC = () => {
       <IonModal isOpen={hospitalModalOpen} onDidDismiss={() => setHospitalModalOpen(false)}>
         <IonHeader>
           <IonToolbar>
-            <IonTitle>Add hospital</IonTitle>
+            <IonTitle>{t('admin.addHospital')}</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={() => setHospitalModalOpen(false)}>Close</IonButton>
+              <IonButton onClick={() => setHospitalModalOpen(false)}>{t('common.close')}</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -590,20 +590,20 @@ const Tab13: React.FC = () => {
           <button
             type="button"
             className="tab14-staff-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             disabled={staffSubmitting}
             onClick={() => {
               if (!staffSubmitting) setStaffModalOpen(false);
             }}
           />
           <div className="tab14-staff-modal__panel">
-            <h2 id="tab13-staff-modal-title">Staff sign-in</h2>
+            <h2 id="tab13-staff-modal-title">{t('common.staffSignIn')}</h2>
             <p className="tab14-staff-modal__hint">
-              Staff access is required to run admin shortcuts and create hospitals.
+              {t('admin.readonlyHint')}
             </p>
             <form onSubmit={(e) => void submitStaffModal(e)}>
               <div className="form-field">
-                <label htmlFor="tab13-staff-user">Staff username</label>
+                <label htmlFor="tab13-staff-user">{t('common.staffUsername')}</label>
                 <input
                   id="tab13-staff-user"
                   name="username"
@@ -614,7 +614,7 @@ const Tab13: React.FC = () => {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="tab13-staff-pass">Password</label>
+                <label htmlFor="tab13-staff-pass">{t('common.password')}</label>
                 <input
                   id="tab13-staff-pass"
                   name="password"
@@ -635,14 +635,14 @@ const Tab13: React.FC = () => {
                   disabled={staffSubmitting}
                   onClick={() => setStaffModalOpen(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                   disabled={staffSubmitting}
                 >
-                  {staffSubmitting ? 'Signing in…' : 'Unlock'}
+                  {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                 </button>
               </div>
             </form>

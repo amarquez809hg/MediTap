@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Tab6.css';
 import './Tab4.css';
 import './Tab14.css';
@@ -110,6 +111,7 @@ function draftToPatchPayload(d: IncidentDraft): Partial<Tab6IncidentPayload> {
 }
 
 const Tab6: React.FC = () => {
+  const { t } = useTranslation();
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
@@ -267,11 +269,11 @@ const Tab6: React.FC = () => {
   const saveIncident = async () => {
     if (!draft || !canEditIncidents) return;
     if (!draft.hospitalId.trim()) {
-      setSaveError('Select a facility / hospital.');
+      setSaveError(t('incidents.facilityRequired'));
       return;
     }
     if (!draft.incidentType.trim() || !draft.details.trim()) {
-      setSaveError('Incident type and detailed summary are required.');
+      setSaveError(t('incidents.fieldsRequired'));
       return;
     }
     setSaveError(null);
@@ -298,12 +300,11 @@ const Tab6: React.FC = () => {
       <header className="incident-records-header">
         <div className="incident-records-header__title-block">
           <h1>
-            <i className="fas fa-clipboard-list"></i> Incident Records
+            <i className="fas fa-clipboard-list"></i> {t('incidents.title')}
           </h1>
           {!canEditIncidents && (
             <p className="record-tab-readonly-hint">
-              You can review incident history here. Logging or changing incidents requires staff
-              sign-in (record editor role).
+              {t('incidents.readonlyHint')}
             </p>
           )}
         </div>
@@ -314,14 +315,14 @@ const Tab6: React.FC = () => {
             onClick={handleLogNewIncident}
             disabled={!patientId && !loading}
           >
-            <i className="fas fa-plus"></i> Log New Incident
+            <i className="fas fa-plus"></i> {t('incidents.logNew')}
           </button>
           <a
             href="/tab1"
             className="book-btn incident-records-header__action-btn"
           >
             <i className="fas fa-arrow-left"></i>
-            Go back to dashboard
+            {t('common.goBackToDashboard')}
           </a>
         </div>
       </header>
@@ -334,14 +335,13 @@ const Tab6: React.FC = () => {
 
       {!patientId && !loading && !listError && (
         <p className="tab6-inline-hint">
-          No patient record is linked to this account yet. Add patient
-          information first; then incident history will load here.
+          {t('incidents.noPatient')}
         </p>
       )}
 
       <main className="incident-records-main">
         {loading ? (
-          <p className="tab6-inline-hint">Loading incidents…</p>
+          <p className="tab6-inline-hint">{t('incidents.loading')}</p>
         ) : incidents.length > 0 ? (
           <div className="incidents-list">
             {incidents.map((incident) => (
@@ -354,7 +354,7 @@ const Tab6: React.FC = () => {
           </div>
         ) : (
           <div className="record-tab-empty">
-            <p>No incident records found for this patient.</p>
+            <p>{t('incidents.empty')}</p>
             <button
               type="button"
               className="book-btn record-tab-empty-cta"
@@ -362,7 +362,7 @@ const Tab6: React.FC = () => {
               disabled={!patientId}
             >
               <i className="fas fa-plus" aria-hidden />
-              Log New Incident
+              {t('incidents.logNew')}
             </button>
           </div>
         )}
@@ -378,13 +378,13 @@ const Tab6: React.FC = () => {
           <button
             type="button"
             className="appt-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             onClick={closeModal}
           />
           <div className="appt-modal__panel">
             <div className="appt-modal__header">
               <h2 id="incident-modal-title">
-                {isNewIncident ? 'Log New Incident' : 'Incident Management'}
+                {isNewIncident ? t('incidents.logNew') : t('incidents.manageTitle')}
               </h2>
               <button
                 type="button"
@@ -416,14 +416,14 @@ const Tab6: React.FC = () => {
                     setStaffModalOpen(true);
                   }}
                 >
-                  Staff sign-in
+                  {t('common.staffSignIn')}
                 </button>
               </div>
             )}
 
             {canEditIncidents && (
               <div className="appt-modal__lock-banner appt-modal__lock-banner--active">
-                <p>Staff editing is active for this patient session.</p>
+                <p>{t('appointments.staffBanner')}</p>
                 <button
                   type="button"
                   className="book-btn"
@@ -432,7 +432,7 @@ const Tab6: React.FC = () => {
                     setElevationNonce((n) => n + 1);
                   }}
                 >
-                  End staff mode
+                  {t('common.endStaffMode')}
                 </button>
               </div>
             )}
@@ -549,7 +549,7 @@ const Tab6: React.FC = () => {
                 className="clear-button"
                 onClick={closeModal}
               >
-                Close
+                {t('common.close')}
               </button>
               <button
                 type="button"
@@ -558,10 +558,10 @@ const Tab6: React.FC = () => {
                 onClick={() => void saveIncident()}
               >
                 {saving
-                  ? 'Saving…'
+                  ? t('common.saving')
                   : isNewIncident
-                    ? 'Create incident'
-                    : 'Save changes'}
+                    ? t('incidents.createIncident')
+                    : t('incidents.saveChanges')}
               </button>
             </div>
           </div>
@@ -578,7 +578,7 @@ const Tab6: React.FC = () => {
           <button
             type="button"
             className="tab14-staff-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             disabled={staffSubmitting}
             onClick={() => {
               if (!staffSubmitting) {
@@ -589,15 +589,13 @@ const Tab6: React.FC = () => {
             }}
           />
           <div className="tab14-staff-modal__panel">
-            <h2 id="tab6-staff-modal-title">Staff sign-in</h2>
+            <h2 id="tab6-staff-modal-title">{t('common.staffSignIn')}</h2>
             <p className="tab14-staff-modal__hint">
-              {pendingAfterStaff === 'new'
-                ? 'Enter staff credentials to log a new incident.'
-                : 'Enter staff credentials to unlock incident editing.'}
+              {t('incidents.staffHint')}
             </p>
             <form onSubmit={(e) => void submitStaffModal(e)}>
               <div className="form-field">
-                <label htmlFor="tab6-staff-user">Staff username</label>
+                <label htmlFor="tab6-staff-user">{t('common.staffUsername')}</label>
                 <input
                   id="tab6-staff-user"
                   name="username"
@@ -608,7 +606,7 @@ const Tab6: React.FC = () => {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="tab6-staff-pass">Password</label>
+                <label htmlFor="tab6-staff-pass">{t('common.password')}</label>
                 <input
                   id="tab6-staff-pass"
                   name="password"
@@ -633,14 +631,14 @@ const Tab6: React.FC = () => {
                     setDeferOpenNewAfterStaff(false);
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                   disabled={staffSubmitting}
                 >
-                  {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                  {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                 </button>
               </div>
             </form>

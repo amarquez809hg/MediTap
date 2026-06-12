@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,6 +34,7 @@ function formatRegisterApiErrors(body: Record<string, unknown>): string {
 }
 
 const Tab9: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const { authReady, isAuthenticated, loginWithPassword } = useAuth();
   const [accUsername, setAccUsername] = useState('');
@@ -121,11 +123,11 @@ const Tab9: React.FC = () => {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <header className="header">
-        <div className="logo">MediTap</div>
+        <div className="logo">{t('common.meditap')}</div>
         <nav className="nav" aria-label="Site">
-          <Link to="/tab3">Log in</Link>
-          <Link to="/tab10">About us</Link>
-          <Link to="/tab8">Support</Link>
+          <Link to="/tab3">{t('login.logIn')}</Link>
+          <Link to="/tab10">{t('login.aboutUs')}</Link>
+          <Link to="/tab8">{t('login.support')}</Link>
         </nav>
       </header>
 
@@ -133,9 +135,9 @@ const Tab9: React.FC = () => {
         <div className="overlay">
           <div className="text-section">
             <div className="slogan">
-              Start your journey.
+              {t('register.heroLine1')}
               <br />
-              One secure account
+              {t('register.heroLine2')}
             </div>
           </div>
 
@@ -147,9 +149,9 @@ const Tab9: React.FC = () => {
             <div className="login-card__accent" aria-hidden="true" />
 
             <div className="login-card__header">
-              <span className="login-card__badge">New account</span>
+              <span className="login-card__badge">{t('register.badge')}</span>
               <h2 id="register-card-title" className="login-card__title">
-                Create your MediTap account
+                {t('register.title')}
               </h2>
               <p className="login-card__subtitle">
                 Choose your own username, email, and password. Username and email must each be
@@ -165,7 +167,7 @@ const Tab9: React.FC = () => {
                   !
                 </span>
                 <div className="login-card__alert-body">
-                  <strong>Could not create account</strong>
+                  <strong>{t('register.couldNotCreate')}</strong>
                   <p>{accError}</p>
                   <button
                     type="button"
@@ -180,7 +182,7 @@ const Tab9: React.FC = () => {
 
             <form className="login-card__actions" onSubmit={registerMediTapAccount}>
               <label className="login-card__field">
-                <span className="login-card__field-label">Username</span>
+                <span className="login-card__field-label">{t('register.username')}</span>
                 <input
                   className="login-card__input"
                   id="accUsername"
@@ -191,7 +193,7 @@ const Tab9: React.FC = () => {
                 />
               </label>
               <label className="login-card__field">
-                <span className="login-card__field-label">Email</span>
+                <span className="login-card__field-label">{t('register.email')}</span>
                 <input
                   className="login-card__input"
                   id="accEmail"
@@ -203,7 +205,7 @@ const Tab9: React.FC = () => {
                 />
               </label>
               <label className="login-card__field">
-                <span className="login-card__field-label">Password</span>
+                <span className="login-card__field-label">{t('login.password')}</span>
                 <div className="login-card__password-wrap">
                   <input
                     className="login-card__input login-card__input--password"
@@ -223,12 +225,12 @@ const Tab9: React.FC = () => {
                     aria-label={showAccPassword ? 'Hide password' : 'Show password'}
                     aria-pressed={showAccPassword}
                   >
-                    {showAccPassword ? 'Hide' : 'Show'}
+                    {showAccPassword ? t('login.hide') : t('login.show')}
                   </button>
                 </div>
               </label>
               <label className="login-card__field">
-                <span className="login-card__field-label">Confirm password</span>
+                <span className="login-card__field-label">{t('register.confirmPassword')}</span>
                 <div className="login-card__password-wrap">
                   <input
                     className="login-card__input login-card__input--password"
@@ -248,7 +250,7 @@ const Tab9: React.FC = () => {
                     aria-label={showAccPasswordConfirm ? 'Hide confirm password' : 'Show confirm password'}
                     aria-pressed={showAccPasswordConfirm}
                   >
-                    {showAccPasswordConfirm ? 'Hide' : 'Show'}
+                    {showAccPasswordConfirm ? t('login.hide') : t('login.show')}
                   </button>
                 </div>
               </label>
@@ -259,12 +261,16 @@ const Tab9: React.FC = () => {
                 disabled={!authReady || accSubmitting}
               >
                 <span className="login-card__btn-label">
-                  {accSubmitting ? 'Creating account…' : authReady ? 'Create account' : 'Loading…'}
+                  {accSubmitting
+                    ? t('register.creating')
+                    : authReady
+                      ? t('register.createAccount')
+                      : t('common.loading')}
                 </span>
               </button>
 
               <div className="login-card__divider">
-                <span>Already registered?</span>
+                <span>{t('register.alreadyRegistered')}</span>
               </div>
 
               <Link
@@ -272,7 +278,7 @@ const Tab9: React.FC = () => {
                 className="login-card__btn login-card__btn--secondary"
                 style={{ textDecoration: 'none', textAlign: 'center', display: 'block' }}
               >
-                <span className="login-card__btn-label">Back to log in</span>
+                <span className="login-card__btn-label">{t('common.backToLogin')}</span>
               </Link>
             </form>
 
@@ -329,9 +335,9 @@ const Tab9: React.FC = () => {
             </div>
 
             <p className="login-card__terms">
-              By continuing you agree to our{' '}
-              <Link to="/terms">Terms of Service</Link> and{' '}
-              <Link to="/privacy">Privacy Policy</Link>.
+              {t('login.termsPrefix')}{' '}
+              <Link to="/terms">{t('login.termsOfService')}</Link> {t('login.and')}{' '}
+              <Link to="/privacy">{t('login.privacyPolicy')}</Link>.
             </p>
           </aside>
         </div>

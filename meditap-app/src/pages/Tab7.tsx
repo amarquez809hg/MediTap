@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonContent, IonPage, IonSpinner } from '@ionic/react';
+import { useTranslation } from 'react-i18next';
 import './Tab7.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -96,6 +97,7 @@ function draftToRow(d: LabPanelDraft): LabResultRow {
 }
 
 const Tab7: React.FC = () => {
+  const { t } = useTranslation();
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
@@ -382,12 +384,7 @@ const Tab7: React.FC = () => {
     }
   };
 
-  const staffHint =
-    pendingLabOpen?.kind === 'new'
-      ? 'Enter staff credentials to add a lab result.'
-      : pendingLabOpen?.kind === 'edit'
-        ? 'Enter staff credentials to edit lab results.'
-        : 'Enter staff credentials to unlock lab editing.';
+  const staffHint = t('labs.staffHint');
 
   const analyteChoices = useMemo(
     () => (draft ? getAnalytesForPanel(draft.testName) : []),
@@ -404,12 +401,11 @@ const Tab7: React.FC = () => {
             <div className="lab-results-header__title-block">
               <h1>
                 <i className="fas fa-vial" aria-hidden />
-                Lab Results
+                {t('labs.title')}
               </h1>
               {!canEditLabs && (
                 <p className="record-tab-readonly-hint">
-                  You can review your results here. Adding or changing panels requires staff
-                  sign-in (record editor role).
+                  {t('labs.readonlyHint')}
                 </p>
               )}
             </div>
@@ -420,11 +416,11 @@ const Tab7: React.FC = () => {
                 onClick={handleAddLabResult}
               >
                 <i className="fas fa-plus" aria-hidden />
-                Add Lab Result
+                {t('labs.addNew')}
               </button>
               <a href="/tab1" className="book-btn lab-results-header__action-btn">
                 <i className="fas fa-arrow-left" aria-hidden />
-                Go back to dashboard
+                {t('common.goBackToDashboard')}
               </a>
             </div>
           </header>
@@ -439,7 +435,7 @@ const Tab7: React.FC = () => {
             {loading ? (
               <div className="lab-results-loading">
                 <IonSpinner name="crescent" />
-                <p>Loading lab results…</p>
+                <p>{t('labs.loading')}</p>
               </div>
             ) : rows.length > 0 ? (
               <div className="results-list">
@@ -454,14 +450,14 @@ const Tab7: React.FC = () => {
               </div>
             ) : (
               <div className="record-tab-empty lab-no-results">
-                <p>No lab reports found in your record.</p>
+                <p>{t('labs.empty')}</p>
                 <button
                   type="button"
                   className="book-btn record-tab-empty-cta lab-results-empty-cta"
                   onClick={handleAddLabResult}
                 >
                   <i className="fas fa-plus" aria-hidden />
-                  Add Lab Result
+                  {t('labs.addNew')}
                 </button>
               </div>
             )}
@@ -473,13 +469,13 @@ const Tab7: React.FC = () => {
             <button
               type="button"
               className="appt-modal__backdrop"
-              aria-label="Close lab panel dialog"
+              aria-label={t('common.closeDialog')}
               onClick={closeDraft}
             />
             <div className="appt-modal__panel lab-panel-modal">
               <div className="appt-modal__header">
                 <h2 id="lab-modal-title">
-                  {isNewPanel ? 'Add Lab Result' : 'Manage Lab Result'}
+                  {isNewPanel ? t('labs.addNew') : t('labs.manageTitle')}
                 </h2>
                 <button type="button" className="appt-modal__close" onClick={closeDraft}>
                   <i className="fas fa-times" aria-hidden />
@@ -506,14 +502,14 @@ const Tab7: React.FC = () => {
                       setStaffModalOpen(true);
                     }}
                   >
-                    Staff sign-in
+                    {t('common.staffSignIn')}
                   </button>
                 </div>
               )}
 
               {canEditLabs && (
                 <div className="appt-modal__lock-banner appt-modal__lock-banner--active">
-                  <p>Staff editing is active for this patient session.</p>
+                  <p>{t('appointments.staffBanner')}</p>
                   <button
                     type="button"
                     className="book-btn"
@@ -522,7 +518,7 @@ const Tab7: React.FC = () => {
                       setElevationNonce((n) => n + 1);
                     }}
                   >
-                    End staff mode
+                    {t('common.endStaffMode')}
                   </button>
                 </div>
               )}
@@ -945,7 +941,7 @@ const Tab7: React.FC = () => {
                           disabled={!canEditLabs}
                           onClick={() => removeComponent(i)}
                         >
-                          Remove
+                          {t('labs.remove')}
                         </button>
                       </div>
                     );
@@ -967,11 +963,11 @@ const Tab7: React.FC = () => {
                     disabled={!canEditLabs || saving}
                     onClick={() => void removePanel()}
                   >
-                    Delete panel
+                    {t('labs.deletePanel')}
                   </button>
                 )}
                 <button type="button" className="clear-button" onClick={closeDraft}>
-                  Close
+                  {t('common.close')}
                 </button>
                 <button
                   type="button"
@@ -979,7 +975,11 @@ const Tab7: React.FC = () => {
                   disabled={!canEditLabs || saving}
                   onClick={() => void saveDraft()}
                 >
-                  {saving ? 'Saving…' : isNewPanel ? 'Create lab panel' : 'Save changes'}
+                  {saving
+                    ? t('common.saving')
+                    : isNewPanel
+                      ? t('labs.createPanel')
+                      : t('labs.saveChanges')}
                 </button>
               </div>
             </div>
@@ -996,7 +996,7 @@ const Tab7: React.FC = () => {
             <button
               type="button"
               className="tab14-staff-modal__backdrop"
-              aria-label="Close dialog"
+              aria-label={t('common.closeDialog')}
               disabled={staffSubmitting}
               onClick={() => {
                 if (!staffSubmitting) {
@@ -1006,11 +1006,11 @@ const Tab7: React.FC = () => {
               }}
             />
             <div className="tab14-staff-modal__panel">
-              <h2 id="tab7-staff-modal-title">Staff sign-in</h2>
+              <h2 id="tab7-staff-modal-title">{t('common.staffSignIn')}</h2>
               <p className="tab14-staff-modal__hint">{staffHint}</p>
               <form onSubmit={(e) => void submitStaffModal(e)}>
                 <div className="form-field">
-                  <label htmlFor="tab7-staff-user">Staff username</label>
+                  <label htmlFor="tab7-staff-user">{t('common.staffUsername')}</label>
                   <input
                     id="tab7-staff-user"
                     name="username"
@@ -1021,7 +1021,7 @@ const Tab7: React.FC = () => {
                   />
                 </div>
                 <div className="form-field">
-                  <label htmlFor="tab7-staff-pass">Password</label>
+                  <label htmlFor="tab7-staff-pass">{t('common.password')}</label>
                   <input
                     id="tab7-staff-pass"
                     name="password"
@@ -1045,14 +1045,14 @@ const Tab7: React.FC = () => {
                       setPendingLabOpen(null);
                     }}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                     disabled={staffSubmitting}
                   >
-                    {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                    {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                   </button>
                 </div>
               </form>

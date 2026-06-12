@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Tab4.css';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -45,6 +46,7 @@ import {
 import { usePatientAppointments } from '../appointments/usePatientAppointments';
 
 const Tab4: React.FC = () => {
+  const { t } = useTranslation();
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
@@ -181,7 +183,7 @@ const Tab4: React.FC = () => {
       setDraftAppointment(row);
     } catch (e) {
       setSaveError(
-        e instanceof Error ? e.message : 'Could not save appointment.'
+        e instanceof Error ? e.message : t('appointments.saveError')
       );
     } finally {
       setSaving(false);
@@ -192,11 +194,10 @@ const Tab4: React.FC = () => {
     <div className="schedule-container">
       <header className="schedule-header">
         <div className="schedule-header__title-block">
-          <h1><i className="fas fa-calendar-check"></i> Upcoming Appointments</h1>
+          <h1><i className="fas fa-calendar-check"></i> {t('appointments.title')}</h1>
           {!canEditAppointments && (
             <p className="record-tab-readonly-hint">
-              You can review upcoming appointments here. Booking or changing appointments
-              requires staff sign-in (record editor role).
+              {t('appointments.readonlyHint')}
             </p>
           )}
         </div>
@@ -207,14 +208,14 @@ const Tab4: React.FC = () => {
             onClick={handleBookNewAppointment}
           >
             <i className="fas fa-plus" aria-hidden />
-            Book New Appointment
+            {t('appointments.bookNew')}
           </button>
           <a
             href="/tab1"
             className="book-btn schedule-header__action-btn"
           >
             <i className="fas fa-arrow-left" aria-hidden />
-            Go back to dashboard
+            {t('common.goBackToDashboard')}
           </a>
         </div>
       </header>
@@ -226,7 +227,7 @@ const Tab4: React.FC = () => {
           </p>
         )}
         {loading ? (
-          <p className="record-tab-empty">Loading appointments…</p>
+          <p className="record-tab-empty">{t('appointments.loading')}</p>
         ) : appointments.length > 0 ? (
           <div className="appointments-list">
             {appointments.map((appt) => (
@@ -235,14 +236,14 @@ const Tab4: React.FC = () => {
           </div>
         ) : (
           <div className="record-tab-empty">
-            <p>You have no upcoming appointments.</p>
+            <p>{t('appointments.empty')}</p>
             <button
               type="button"
               className="book-btn record-tab-empty-cta"
               onClick={handleBookNewAppointment}
             >
               <i className="fas fa-plus" aria-hidden />
-              Book New Appointment
+              {t('appointments.bookNew')}
             </button>
           </div>
         )}
@@ -253,13 +254,13 @@ const Tab4: React.FC = () => {
           <button
             type="button"
             className="appt-modal__backdrop"
-            aria-label="Close appointment modal"
+            aria-label={t('common.closeDialog')}
             onClick={closeManageModal}
           />
           <div className="appt-modal__panel">
             <div className="appt-modal__header">
               <h2 id="appt-modal-title">
-                {isNewAppointment ? 'Book New Appointment' : 'Appointment Management'}
+                {isNewAppointment ? t('appointments.bookNew') : t('appointments.manageTitle')}
               </h2>
               <button type="button" className="appt-modal__close" onClick={closeManageModal}>
                 <i className="fas fa-times" aria-hidden />
@@ -268,16 +269,16 @@ const Tab4: React.FC = () => {
 
             <p className="appt-modal__sub">
               {isNewAppointment
-                ? 'Fill in appointment details. Staff access is required to create. Use Quick pick from library on each field for common values, or type your own.'
-                : 'Review complete appointment details. Editing requires staff access. Use Quick pick from library for common values.'}
+                ? t('appointments.modalNewSub')
+                : t('appointments.modalManageSub')}
             </p>
 
             {!canEditAppointments && (
               <div className="appt-modal__lock-banner">
                 <p>
                   {isNewAppointment
-                    ? 'Sign in with staff credentials to create this appointment.'
-                    : 'This appointment is view-only. Use staff sign-in to unlock editing.'}
+                    ? t('appointments.staffCreate')
+                    : t('appointments.staffEdit')}
                 </p>
                 <button
                   type="button"
@@ -287,14 +288,14 @@ const Tab4: React.FC = () => {
                     setStaffModalOpen(true);
                   }}
                 >
-                  Staff sign-in
+                  {t('common.staffSignIn')}
                 </button>
               </div>
             )}
 
             {canEditAppointments && (
               <div className="appt-modal__lock-banner appt-modal__lock-banner--active">
-                <p>Staff editing is active for this patient session.</p>
+                <p>{t('appointments.staffBanner')}</p>
                 <button
                   type="button"
                   className="book-btn"
@@ -303,7 +304,7 @@ const Tab4: React.FC = () => {
                     setElevationNonce((n) => n + 1);
                   }}
                 >
-                  End staff mode
+                  {t('common.endStaffMode')}
                 </button>
               </div>
             )}
@@ -445,7 +446,7 @@ const Tab4: React.FC = () => {
 
             <div className="appt-modal__actions">
               <button type="button" className="clear-button" onClick={closeManageModal}>
-                Close
+                {t('common.close')}
               </button>
               <button
                 type="button"
@@ -454,10 +455,10 @@ const Tab4: React.FC = () => {
                 onClick={() => void saveAppointmentChanges()}
               >
                 {saving
-                  ? 'Saving…'
+                  ? t('common.saving')
                   : isNewAppointment
-                    ? 'Create appointment'
-                    : 'Save Changes'}
+                    ? t('appointments.createAppointment')
+                    : t('appointments.saveChanges')}
               </button>
             </div>
           </div>
@@ -474,7 +475,7 @@ const Tab4: React.FC = () => {
           <button
             type="button"
             className="tab14-staff-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             disabled={staffSubmitting}
             onClick={() => {
               if (!staffSubmitting) {
@@ -485,15 +486,13 @@ const Tab4: React.FC = () => {
             }}
           />
           <div className="tab14-staff-modal__panel">
-            <h2 id="tab4-staff-modal-title">Staff sign-in</h2>
+            <h2 id="tab4-staff-modal-title">{t('common.staffSignIn')}</h2>
             <p className="tab14-staff-modal__hint">
-              {pendingAfterStaff === 'book'
-                ? 'Enter staff credentials to book a new appointment.'
-                : 'Enter staff credentials to unlock appointment editing.'}
+              {t('appointments.staffHint')}
             </p>
             <form onSubmit={(e) => void submitStaffModal(e)}>
               <div className="form-field">
-                <label htmlFor="tab4-staff-user">Staff username</label>
+                <label htmlFor="tab4-staff-user">{t('common.staffUsername')}</label>
                 <input
                   id="tab4-staff-user"
                   name="username"
@@ -504,7 +503,7 @@ const Tab4: React.FC = () => {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="tab4-staff-pass">Password</label>
+                <label htmlFor="tab4-staff-pass">{t('common.password')}</label>
                 <input
                   id="tab4-staff-pass"
                   name="password"
@@ -529,14 +528,14 @@ const Tab4: React.FC = () => {
                     setDeferOpenNewAfterStaff(false);
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                   disabled={staffSubmitting}
                 >
-                  {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                  {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                 </button>
               </div>
             </form>

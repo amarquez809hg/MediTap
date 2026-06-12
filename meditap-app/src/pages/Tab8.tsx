@@ -1,4 +1,5 @@
 import React, { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import PublicPageLayout from '../components/PublicPageLayout';
 import { submitSupportContact } from '../api/publicContact';
 import './Tab8.css';
@@ -27,6 +28,7 @@ const faqData = [
 ];
 
 const Tab8: React.FC = () => {
+  const { t } = useTranslation();
   const faqListId = useId();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -61,12 +63,12 @@ const Tab8: React.FC = () => {
 
   return (
     <PublicPageLayout
-      title="Support & Help"
-      subtitle="Answers to common questions and a direct line to our team."
+      title={t('support.title')}
+      subtitle={t('support.subtitle')}
       activeNav="support"
     >
       <section className="public-page__card tab8-faq-wrap">
-        <h2>Frequently asked questions</h2>
+        <h2>{t('support.faqTitle')}</h2>
         <div className="faq-list" id={faqListId}>
           {faqData.map((item, index) => {
             const expanded = activeFaq === index;
@@ -97,9 +99,9 @@ const Tab8: React.FC = () => {
       </section>
 
       <section className="public-page__card tab8-contact-wrap">
-        <h2>Contact support</h2>
+        <h2>{t('support.contactTitle')}</h2>
         <p className="tab8-contact-lead">
-          Cannot find your answer? Send us a message—we aim to reply within one business day.
+          {t('support.contactLead')}
         </p>
         {formError && (
           <p className="tab8-error" role="alert">
@@ -113,7 +115,7 @@ const Tab8: React.FC = () => {
         )}
         <form className="contact-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="support-name">Your name</label>
+            <label htmlFor="support-name">{t('support.yourName')}</label>
             <input
               type="text"
               id="support-name"
@@ -125,7 +127,7 @@ const Tab8: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="support-email">Email</label>
+            <label htmlFor="support-email">{t('support.email')}</label>
             <input
               type="email"
               id="support-email"
@@ -137,7 +139,7 @@ const Tab8: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="support-subject">Subject</label>
+            <label htmlFor="support-subject">{t('support.subject')}</label>
             <input
               type="text"
               id="support-subject"
@@ -149,7 +151,7 @@ const Tab8: React.FC = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="support-message">Message</label>
+            <label htmlFor="support-message">{t('support.message')}</label>
             <textarea
               id="support-message"
               name="message"
@@ -161,13 +163,13 @@ const Tab8: React.FC = () => {
             />
           </div>
           <button type="submit" className="submit-button" disabled={submitting}>
-            {submitting ? 'Sending…' : 'Send message'}
+            {submitting ? t('support.sending') : t('support.sendMessage')}
           </button>
         </form>
       </section>
 
       <section className="public-page__card">
-        <h2>Other resources</h2>
+        <h2>{t('support.otherResources')}</h2>
         <p>
           Email:{' '}
           <a href="mailto:support@meditap.ai" className="tab8-mail-link">

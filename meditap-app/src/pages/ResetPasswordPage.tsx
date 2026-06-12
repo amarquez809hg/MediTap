@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PublicPageLayout from '../components/PublicPageLayout';
 import { confirmPasswordReset } from '../api/publicContact';
 import './AuthPublicPages.css';
 
 const ResetPasswordPage: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -25,7 +27,7 @@ const ResetPasswordPage: React.FC = () => {
     setError(null);
     setSuccess(null);
     if (password !== passwordConfirm) {
-      setError('Passwords do not match.');
+      setError(t('resetPassword.passwordMismatch'));
       return;
     }
     setSubmitting(true);
@@ -47,14 +49,14 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <PublicPageLayout
-      title="Choose a new password"
-      subtitle="Enter and confirm your new password below."
+      title={t('resetPassword.title')}
+      subtitle={t('resetPassword.subtitle')}
     >
       <section className="public-page__card auth-public-card">
         {linkInvalid && (
           <p className="auth-public-alert auth-public-alert--error" role="alert">
-            This reset link is incomplete or expired.{' '}
-            <Link to="/forgot-password">Request a new link</Link>.
+            {t('resetPassword.linkInvalid')}{' '}
+            <Link to="/forgot-password">{t('resetPassword.requestNew')}</Link>.
           </p>
         )}
         {error && (
@@ -64,13 +66,13 @@ const ResetPasswordPage: React.FC = () => {
         )}
         {success && (
           <p className="auth-public-alert auth-public-alert--success" role="status">
-            {success} Redirecting to log in…
+            {success} {t('resetPassword.redirecting')}
           </p>
         )}
         {!linkInvalid && !success && (
           <form className="auth-public-form" onSubmit={onSubmit}>
             <label className="auth-public-field">
-              <span>New password</span>
+              <span>{t('resetPassword.newPassword')}</span>
               <div className="auth-public-password-row">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -87,12 +89,12 @@ const ResetPasswordPage: React.FC = () => {
                   onClick={() => setShowPassword((v) => !v)}
                   aria-pressed={showPassword}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? t('login.hide') : t('login.show')}
                 </button>
               </div>
             </label>
             <label className="auth-public-field">
-              <span>Confirm password</span>
+              <span>{t('resetPassword.confirmPassword')}</span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password_confirm"
@@ -104,12 +106,12 @@ const ResetPasswordPage: React.FC = () => {
               />
             </label>
             <button type="submit" className="auth-public-submit" disabled={submitting}>
-              {submitting ? 'Updating…' : 'Update password'}
+              {submitting ? t('resetPassword.updating') : t('resetPassword.updatePassword')}
             </button>
           </form>
         )}
         <p className="auth-public-footer-link">
-          <Link to="/tab3">Back to log in</Link>
+          <Link to="/tab3">{t('common.backToLogin')}</Link>
         </p>
       </section>
     </PublicPageLayout>

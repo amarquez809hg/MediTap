@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { DashboardDetail } from '../api';
 import type { Appointment } from '../appointments/appointmentStorage';
 import { loadOnboarding } from '../onboarding/onboardingStorage';
@@ -50,7 +51,8 @@ export function buildNextSteps(
   appointments: Appointment[],
   pendingLabs: number,
   newLabPanels: number,
-  options: BuildNextStepsOptions
+  options: BuildNextStepsOptions,
+  t: TFunction
 ): NextStepItem[] {
   const steps: NextStepItem[] = [];
   const missing = isPatientMissing(detail);
@@ -59,8 +61,8 @@ export function buildNextSteps(
   if (missing || !patientHasBasicProfile(detail)) {
     steps.push({
       id: 'profile',
-      title: 'Complete your patient profile',
-      subtitle: 'Add name, date of birth, and contact details in Patient Information.',
+      title: t('nextSteps.completeProfile'),
+      subtitle: t('nextSteps.completeProfileSub'),
       href: '/tab14',
       tone: 'primary',
       priority: 10,
@@ -68,8 +70,8 @@ export function buildNextSteps(
   } else if (profileFieldsIncomplete(detail)) {
     steps.push({
       id: 'profile-fields',
-      title: 'Finish profile details',
-      subtitle: 'Add phone, blood type, or sex at birth so your chart is complete.',
+      title: t('nextSteps.finishProfile'),
+      subtitle: t('nextSteps.finishProfileSub'),
       href: '/tab14',
       tone: 'primary',
       priority: 15,
@@ -84,8 +86,8 @@ export function buildNextSteps(
     if (needsUpload && !missing) {
       steps.push({
         id: 'upload-doc',
-        title: 'Upload medical records',
-        subtitle: 'PDF or photo of labs, visit summaries, or intake forms—we can pre-fill fields.',
+        title: t('nextSteps.uploadRecords'),
+        subtitle: t('nextSteps.uploadRecordsSub'),
         href: '/tab14',
         tone: 'primary',
         priority: 20,
@@ -96,12 +98,11 @@ export function buildNextSteps(
   if (pendingLabs > 0) {
     steps.push({
       id: 'labs-pending',
-      title:
-        pendingLabs === 1 ? '1 lab panel still pending' : `${pendingLabs} lab panels pending`,
+      title: t('nextSteps.labsPending', { count: pendingLabs }),
       subtitle:
         newLabPanels > 0
-          ? `${newLabPanels} panel(s) have new or partial results to review.`
-          : 'Open Lab Results to track status.',
+          ? t('nextSteps.labsPendingSubNew', { count: newLabPanels })
+          : t('nextSteps.labsPendingSub'),
       href: '/tab7',
       tone: 'warning',
       priority: 30,
@@ -109,8 +110,8 @@ export function buildNextSteps(
   } else if (newLabPanels > 0) {
     steps.push({
       id: 'labs-new',
-      title: 'New lab results to review',
-      subtitle: 'Open Lab Results for details and reference ranges.',
+      title: t('nextSteps.labsNew'),
+      subtitle: t('nextSteps.labsNewSub'),
       href: '/tab7',
       tone: 'primary',
       priority: 35,
@@ -121,11 +122,8 @@ export function buildNextSteps(
   if (pendingAppts > 0) {
     steps.push({
       id: 'appts-pending',
-      title:
-        pendingAppts === 1
-          ? '1 appointment needs attention'
-          : `${pendingAppts} appointments need attention`,
-      subtitle: 'Confirm or update visits on the Appointments tab.',
+      title: t('nextSteps.apptsPending', { count: pendingAppts }),
+      subtitle: t('nextSteps.apptsPendingSub'),
       href: '/tab4',
       tone: 'warning',
       priority: 40,
@@ -136,8 +134,8 @@ export function buildNextSteps(
   if (detail && !missing && medCount === 0) {
     steps.push({
       id: 'meds',
-      title: 'Add your medications',
-      subtitle: 'Document prescriptions in Patient Information for safer care.',
+      title: t('nextSteps.addMeds'),
+      subtitle: t('nextSteps.addMedsSub'),
       href: '/tab14',
       tone: 'neutral',
       priority: 50,
@@ -148,8 +146,8 @@ export function buildNextSteps(
   if (detail && !missing && insCount === 0) {
     steps.push({
       id: 'insurance',
-      title: 'Add insurance on file',
-      subtitle: 'Speeds check-in and claims on the Patient Insurance tab.',
+      title: t('nextSteps.addInsurance'),
+      subtitle: t('nextSteps.addInsuranceSub'),
       href: '/tab12',
       tone: 'neutral',
       priority: 55,
@@ -160,8 +158,8 @@ export function buildNextSteps(
   if (detail && !missing && chronicCount > 0) {
     steps.push({
       id: 'chronic',
-      title: 'Review chronic conditions',
-      subtitle: `${chronicCount} condition(s) on file — keep history current.`,
+      title: t('nextSteps.reviewChronic'),
+      subtitle: t('nextSteps.reviewChronicSub', { count: chronicCount }),
       href: '/tab5',
       tone: 'primary',
       priority: 60,
@@ -176,8 +174,8 @@ export function buildNextSteps(
     if (severe) {
       steps.push({
         id: 'allergies',
-        title: 'Review allergy documentation',
-        subtitle: 'Severe allergies on file — confirm details in Patient Information.',
+        title: t('nextSteps.reviewAllergies'),
+        subtitle: t('nextSteps.reviewAllergiesSub'),
         href: '/tab14',
         tone: 'danger',
         priority: 25,
@@ -188,8 +186,8 @@ export function buildNextSteps(
   if (detail && !missing && appointments.length === 0) {
     steps.push({
       id: 'book',
-      title: 'Schedule your next visit',
-      subtitle: 'No upcoming appointments — add one on the Appointments tab.',
+      title: t('nextSteps.scheduleVisit'),
+      subtitle: t('nextSteps.scheduleVisitSub'),
       href: '/tab4',
       tone: 'primary',
       priority: 45,
@@ -199,8 +197,8 @@ export function buildNextSteps(
   if (!onDashboard && detail && !missing && medCount > 0) {
     steps.push({
       id: 'meds-review',
-      title: 'Medication list on your record',
-      subtitle: `${medCount} active medication(s). Update anytime in Patient Information.`,
+      title: t('nextSteps.medsReview'),
+      subtitle: t('nextSteps.medsReviewSub', { count: medCount }),
       href: '/tab14',
       tone: 'primary',
       priority: 70,
@@ -210,8 +208,8 @@ export function buildNextSteps(
   if (!onDashboard) {
     steps.push({
       id: 'dashboard',
-      title: 'Full health overview',
-      subtitle: 'See metrics, labs, incidents, and more on the main dashboard.',
+      title: t('nextSteps.fullOverview'),
+      subtitle: t('nextSteps.fullOverviewSub'),
       href: '/tab1',
       tone: 'neutral',
       priority: 90,
@@ -279,12 +277,13 @@ export function patientHasBasicProfile(detail: DashboardDetail | null): boolean 
 
 /** Seven chart fields: intake, demographics, contact, and insurance on file. */
 export function computeProfileCompleteness(
-  detail: DashboardDetail | null
+  detail: DashboardDetail | null,
+  t: TFunction
 ): ProfileCompleteness {
   if (!detail || isPatientMissing(detail)) {
     return {
       percent: 0,
-      subtitle: 'Create your patient chart in Patient Information',
+      subtitle: t('nextSteps.profileCreate'),
     };
   }
 
@@ -303,15 +302,15 @@ export function computeProfileCompleteness(
   const percent = Math.round((passed / checks.length) * 100);
 
   if (percent >= 100) {
-    return { percent: 100, subtitle: 'Chart basics complete — keep details current' };
+    return { percent: 100, subtitle: t('nextSteps.profileComplete') };
   }
   if (percent >= 70) {
-    return { percent, subtitle: 'Almost there — finish remaining profile fields' };
+    return { percent, subtitle: t('nextSteps.profileAlmost') };
   }
   if (percent >= 40) {
-    return { percent, subtitle: 'Add missing contact and insurance details' };
+    return { percent, subtitle: t('nextSteps.profileMissing') };
   }
-  return { percent, subtitle: 'Start in Patient Information to build your chart' };
+  return { percent, subtitle: t('nextSteps.profileStart') };
 }
 
 export function countSevereAllergies(detail: DashboardDetail | null): number {
@@ -321,34 +320,40 @@ export function countSevereAllergies(detail: DashboardDetail | null): number {
   ).length;
 }
 
-export function greetingForDisplayName(displayName: string): string {
+export function greetingForDisplayName(displayName: string, t: TFunction): string {
   const hour = new Date().getHours();
-  const period = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const first = displayName.trim().split(/\s+/)[0] || displayName.trim() || 'there';
+  const period =
+    hour < 12
+      ? t('nextSteps.greetingMorning')
+      : hour < 17
+        ? t('nextSteps.greetingAfternoon')
+        : t('nextSteps.greetingEvening');
+  const first = displayName.trim().split(/\s+/)[0] || displayName.trim() || t('nextSteps.greetingFallback');
   return `${period}, ${first}.`;
 }
 
 export function welcomeContextLine(
   appointments: Appointment[],
   loading: boolean,
-  hasSummaryError: boolean
+  hasSummaryError: boolean,
+  t: TFunction
 ): string {
-  if (loading) return 'Syncing your health record…';
-  if (hasSummaryError) return 'Some live data could not be loaded — steps below still apply.';
+  if (loading) return t('nextSteps.syncingRecord');
+  if (hasSummaryError) return t('nextSteps.summaryPartialError');
 
   const pending = appointments.filter((a) => a.status.toLowerCase() === 'pending').length;
   const confirmed = appointments.filter((a) => a.status.toLowerCase() === 'confirmed').length;
 
   if (appointments.length === 0) {
-    return 'No upcoming appointments on file.';
+    return t('nextSteps.noAppointmentsFile');
   }
   if (pending > 0) {
-    return `${appointments.length} appointment(s) · ${pending} need your attention`;
+    return t('nextSteps.appointmentsAttention', { total: appointments.length, pending });
   }
   if (confirmed > 0) {
-    return `${confirmed} confirmed visit(s) on your schedule`;
+    return t('nextSteps.confirmedVisits', { count: confirmed });
   }
-  return `${appointments.length} appointment(s) on your schedule`;
+  return t('nextSteps.appointmentsOnSchedule', { count: appointments.length });
 }
 
 /** Font Awesome classes for dashboard next-step cards */

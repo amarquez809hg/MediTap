@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +54,7 @@ const emptyConditionDraft = (): Tab5ChronicCondition => ({
 });
 
 const Tab5: React.FC = () => {
+  const { t } = useTranslation();
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
@@ -202,7 +204,7 @@ const Tab5: React.FC = () => {
   const saveDraft = async () => {
     if (!draft || !canEdit) return;
     if (!(draft.name || '').trim()) {
-      setModalError('Condition name is required.');
+      setModalError(t('chronic.nameRequired'));
       return;
     }
     setModalError(null);
@@ -224,7 +226,7 @@ const Tab5: React.FC = () => {
     if (!draft?.apiId || !canEdit) return;
     if (
       !window.confirm(
-        'Delete this chronic condition from the patient record? This cannot be undone.'
+        t('chronic.deleteConfirm')
       )
     ) {
       return;
@@ -249,13 +251,11 @@ const Tab5: React.FC = () => {
       <header className="chronic-conditions-header">
         <div className="chronic-conditions-header__title-block">
           <h1>
-            <i className="fas fa-notes-medical" aria-hidden /> Chronic Conditions &amp;
-            History
+            <i className="fas fa-notes-medical" aria-hidden /> {t('chronic.title')}
           </h1>
           {!canEdit && (
             <p className="record-tab-readonly-hint">
-              You can review your conditions here. Adding or changing records requires staff
-              sign-in (record editor role).
+              {t('chronic.readonlyHint')}
             </p>
           )}
         </div>
@@ -266,11 +266,11 @@ const Tab5: React.FC = () => {
             onClick={handleAddNewClick}
           >
             <i className="fas fa-plus" aria-hidden />
-            Add New Condition
+            {t('chronic.addNew')}
           </button>
           <a href="/tab1" className="book-btn chronic-conditions-header__action-btn">
             <i className="fas fa-arrow-left" aria-hidden />
-            Go back to dashboard
+            {t('common.goBackToDashboard')}
           </a>
         </div>
       </header>
@@ -282,7 +282,7 @@ const Tab5: React.FC = () => {
           </p>
         )}
         {loading ? (
-          <p className="tab5-loading">Loading conditions…</p>
+          <p className="tab5-loading">{t('chronic.loading')}</p>
         ) : conditions.length > 0 ? (
           <div className="conditions-list">
             {conditions.map((condition) => (
@@ -295,14 +295,14 @@ const Tab5: React.FC = () => {
           </div>
         ) : (
           <div className="record-tab-empty">
-            <p>No chronic conditions recorded.</p>
+            <p>{t('chronic.empty')}</p>
             <button
               type="button"
               className="book-btn record-tab-empty-cta"
               onClick={handleAddNewClick}
             >
               <i className="fas fa-plus" aria-hidden />
-              Add New Condition
+              {t('chronic.addNew')}
             </button>
           </div>
         )}
@@ -318,13 +318,13 @@ const Tab5: React.FC = () => {
           <button
             type="button"
             className="cc-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             onClick={closeModal}
           />
           <div className="cc-modal__panel">
             <div className="cc-modal__header">
               <h2 id="cc-modal-title">
-                {isNewCondition ? 'Add Chronic Condition' : 'Manage Chronic Condition'}
+                {isNewCondition ? t('chronic.addTitle') : t('chronic.manageTitle')}
               </h2>
               <button type="button" className="cc-modal__close" onClick={closeModal}>
                 <i className="fas fa-times" aria-hidden />
@@ -350,14 +350,14 @@ const Tab5: React.FC = () => {
                     setStaffModalOpen(true);
                   }}
                 >
-                  Staff sign-in
+                  {t('common.staffSignIn')}
                 </button>
               </div>
             )}
 
             {canEdit && (
               <div className="cc-modal__lock-banner cc-modal__lock-banner--active">
-                <p>Staff editing is active for this patient session.</p>
+                <p>{t('appointments.staffBanner')}</p>
                 <button
                   type="button"
                   className="book-btn"
@@ -366,7 +366,7 @@ const Tab5: React.FC = () => {
                     setElevationNonce((n) => n + 1);
                   }}
                 >
-                  End staff mode
+                  {t('common.endStaffMode')}
                 </button>
               </div>
             )}
@@ -530,7 +530,7 @@ const Tab5: React.FC = () => {
                 onClick={closeModal}
                 disabled={saving}
               >
-                Close
+                {t('common.close')}
               </button>
               {!isNewCondition && draft.apiId != null && (
                 <button
@@ -539,7 +539,7 @@ const Tab5: React.FC = () => {
                   onClick={() => void removeCondition()}
                   disabled={!canEdit || saving}
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               )}
               <button
@@ -548,7 +548,11 @@ const Tab5: React.FC = () => {
                 disabled={!canEdit || saving}
                 onClick={() => void saveDraft()}
               >
-                {saving ? 'Saving…' : isNewCondition ? 'Create condition' : 'Save changes'}
+                {saving
+                  ? t('common.saving')
+                  : isNewCondition
+                    ? t('chronic.createCondition')
+                    : t('chronic.saveChanges')}
               </button>
             </div>
           </div>
@@ -565,7 +569,7 @@ const Tab5: React.FC = () => {
           <button
             type="button"
             className="tab14-staff-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             disabled={staffSubmitting}
             onClick={() => {
               if (!staffSubmitting) {
@@ -576,15 +580,13 @@ const Tab5: React.FC = () => {
             }}
           />
           <div className="tab14-staff-modal__panel">
-            <h2 id="tab5-staff-modal-title">Staff sign-in</h2>
+            <h2 id="tab5-staff-modal-title">{t('common.staffSignIn')}</h2>
             <p className="tab14-staff-modal__hint">
-              {pendingAfterStaff === 'add'
-                ? 'Enter staff credentials to add a chronic condition.'
-                : 'Enter staff credentials to unlock editing.'}
+              {t('chronic.staffHint')}
             </p>
             <form onSubmit={(e) => void submitStaffModal(e)}>
               <div className="form-field">
-                <label htmlFor="tab5-staff-user">Staff username</label>
+                <label htmlFor="tab5-staff-user">{t('common.staffUsername')}</label>
                 <input
                   id="tab5-staff-user"
                   name="username"
@@ -595,7 +597,7 @@ const Tab5: React.FC = () => {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="tab5-staff-pass">Password</label>
+                <label htmlFor="tab5-staff-pass">{t('common.password')}</label>
                 <input
                   id="tab5-staff-pass"
                   name="password"
@@ -620,14 +622,14 @@ const Tab5: React.FC = () => {
                     setDeferOpenNewAfterStaff(false);
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                   disabled={staffSubmitting}
                 >
-                  {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                  {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                 </button>
               </div>
             </form>

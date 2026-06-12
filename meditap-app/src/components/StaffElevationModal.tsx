@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './StaffElevationModal.css';
 
 type StaffElevationModalProps = {
@@ -28,6 +29,8 @@ const StaffElevationModal: React.FC<StaffElevationModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
@@ -35,16 +38,16 @@ const StaffElevationModal: React.FC<StaffElevationModalProps> = ({
       <button
         type="button"
         className="staff-elevation-modal__backdrop"
-        aria-label="Close dialog"
+        aria-label={t('common.closeDialog')}
         disabled={submitting}
         onClick={onClose}
       />
       <div className="staff-elevation-modal__panel">
-        <h2 id={titleId}>Staff sign-in required</h2>
+        <h2 id={titleId}>{t('common.staffSignInRequired')}</h2>
         <p className="staff-elevation-modal__hint">{hint}</p>
         <form onSubmit={onSubmit}>
           <div className="form-field">
-            <label htmlFor={`${titleId}-user`}>Staff username</label>
+            <label htmlFor={`${titleId}-user`}>{t('common.staffUsername')}</label>
             <input
               id={`${titleId}-user`}
               name="username"
@@ -55,7 +58,7 @@ const StaffElevationModal: React.FC<StaffElevationModalProps> = ({
             />
           </div>
           <div className="form-field">
-            <label htmlFor={`${titleId}-pass`}>Password</label>
+            <label htmlFor={`${titleId}-pass`}>{t('common.password')}</label>
             <input
               id={`${titleId}-pass`}
               name="password"
@@ -78,14 +81,14 @@ const StaffElevationModal: React.FC<StaffElevationModalProps> = ({
               disabled={submitting}
               onClick={onClose}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               className="staff-elevation-modal__btn staff-elevation-modal__btn--primary"
               disabled={submitting}
             >
-              {submitting ? 'Signing in…' : 'Unlock and continue'}
+              {submitting ? t('common.signingIn') : t('common.unlockAndContinue')}
             </button>
           </div>
         </form>

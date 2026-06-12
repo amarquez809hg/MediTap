@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './Tab2.css';
 import './Tab5.css';
 import {
@@ -105,6 +106,7 @@ function toTab2Steps(
 }
 
 const Tab2: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const { username } = useAuth();
   const [detail, setDetail] = useState<DashboardDetail | null>(null);
@@ -177,8 +179,8 @@ const Tab2: React.FC = () => {
   }, [appointments]);
 
   const profileCompleteness = useMemo(
-    () => computeProfileCompleteness(detail),
-    [detail]
+    () => computeProfileCompleteness(detail, t),
+    [detail, t]
   );
 
   const chronicCount = detail?.chronicConditions.length ?? null;
@@ -188,10 +190,15 @@ const Tab2: React.FC = () => {
 
   const allNextSteps = useMemo(() => {
     if (loading) return [];
-    return buildNextSteps(detail, appointments, labStats.pending, labStats.newPanels, {
-      surface: 'quick-status',
-    });
-  }, [loading, detail, appointments, labStats.pending, labStats.newPanels]);
+    return buildNextSteps(
+      detail,
+      appointments,
+      labStats.pending,
+      labStats.newPanels,
+      { surface: 'quick-status' },
+      t
+    );
+  }, [loading, detail, appointments, labStats.pending, labStats.newPanels, t]);
 
   const nextSteps = useMemo(
     () => toTab2Steps(trimNextStepsForQuickStatus(allNextSteps, 6)),

@@ -1,5 +1,6 @@
 // src/pages/Tab12.tsx — Patient insurance from API + edit modal
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IonButton,
   IonButtons,
@@ -84,6 +85,7 @@ function emptyPolicyShell(): Tab12InsurancePolicyUi {
 }
 
 const Tab12: React.FC = () => {
+  const { t } = useTranslation();
   const { username, hasRealmRole } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
@@ -369,7 +371,7 @@ const Tab12: React.FC = () => {
           onClick={() => tryOpenEdit(meta, policy)}
         >
           <IonIcon slot="start" icon={createOutline} />
-          Edit this policy
+          {t('insurance.editThisPolicy')}
         </IonButton>
       </IonItem>
     </IonList>
@@ -385,7 +387,7 @@ const Tab12: React.FC = () => {
           <header className="patient-insurance-header">
             <h1>
               <i className="fas fa-shield-alt" aria-hidden />
-              Patient Insurance
+              {t('insurance.title')}
             </h1>
             <div className="patient-insurance-header__actions">
               <a
@@ -393,14 +395,14 @@ const Tab12: React.FC = () => {
                 className="add-policy-header-btn patient-insurance-header__action-btn"
               >
                 <i className="fas fa-plus" aria-hidden />
-                Add new policy
+                {t('insurance.addPolicy')}
               </a>
               <a
                 href={fullAppUrl('/tab1')}
                 className="book-btn patient-insurance-header__action-btn"
               >
                 <i className="fas fa-arrow-left" aria-hidden />
-                Go back to dashboard
+                {t('common.goBackToDashboard')}
               </a>
             </div>
           </header>
@@ -409,7 +411,7 @@ const Tab12: React.FC = () => {
             <main className="patient-insurance-main">
               <div className="tab12-center">
                 <IonSpinner name="crescent" />
-                <p>Loading insurance…</p>
+                <p>{t('insurance.loading')}</p>
               </div>
             </main>
           )}
@@ -426,9 +428,7 @@ const Tab12: React.FC = () => {
             <main className="patient-insurance-main">
               {!canEditInsurance && (
                 <p className="tab12-readonly-hint">
-                  You can review coverage here. Editing saved policies requires staff sign-in
-                  (record editor role) or use Patient Information with staff access to add
-                  policies.
+                  {t('insurance.readonlyHint')}
                 </p>
               )}
               {canEditInsurance && (
@@ -443,7 +443,7 @@ const Tab12: React.FC = () => {
                         setElevationNonce((n) => n + 1);
                       }}
                     >
-                      End staff mode
+                      {t('common.endStaffMode')}
                     </IonButton>
                   )}
                 </div>
@@ -468,23 +468,20 @@ const Tab12: React.FC = () => {
                   }
                 >
                   <IonIcon slot="start" icon={createOutline} />
-                  Edit policy
+                  {t('insurance.editPolicy')}
                 </IonButton>
               </div>
 
               {view.rows.length === 0 && (
                 <p className="ion-text-center tab12-hint tab12-hint--spaced">
-                  No insurance on file yet. Use{' '}
-                  <strong>Add new policy</strong> in the header to open Patient
-                  Information and save coverage there, or ask your care team to
-                  add it.
+                  {t('insurance.empty')}
                 </p>
               )}
 
               {primary && (
                 <>
                   <div className="section-banner">
-                    <p>PRIMARY INSURANCE POLICY</p>
+                    <p>{t('insurance.primaryBanner')}</p>
                   </div>
                   {renderPolicyDetails(
                     primary.policy,
@@ -497,7 +494,7 @@ const Tab12: React.FC = () => {
               {secondary && (
                 <>
                   <div className="section-banner">
-                    <p>SECONDARY INSURANCE POLICY</p>
+                    <p>{t('insurance.secondaryBanner')}</p>
                   </div>
                   {renderPolicyDetails(
                     secondary.policy,
@@ -509,9 +506,7 @@ const Tab12: React.FC = () => {
 
               {view.rows.length > 2 && (
                 <p className="tab12-hint tab12-hint--spaced">
-                  Additional policies ({view.rows.length - 2}) are on file;
-                  only the first two are shown here. Remove extras in Patient
-                  Information if needed.
+                  {t('insurance.additionalPolicies', { count: view.rows.length - 2 })}
                 </p>
               )}
             </main>
@@ -522,9 +517,9 @@ const Tab12: React.FC = () => {
       <IonModal isOpen={editOpen} onDidDismiss={closeEdit}>
         <IonHeader>
           <IonToolbar>
-            <IonTitle>Edit insurance</IonTitle>
+            <IonTitle>{t('insurance.editInsurance')}</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={closeEdit}>Close</IonButton>
+              <IonButton onClick={closeEdit}>{t('common.close')}</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -757,7 +752,7 @@ const Tab12: React.FC = () => {
             onClick={() => void saveEdit()}
             disabled={!canEditInsurance || saving}
           >
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? t('common.saving') : t('insurance.saveChanges')}
           </IonButton>
         </IonContent>
       </IonModal>
@@ -772,7 +767,7 @@ const Tab12: React.FC = () => {
           <button
             type="button"
             className="tab14-staff-modal__backdrop"
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             disabled={staffSubmitting}
             onClick={() => {
               if (!staffSubmitting) {
@@ -782,13 +777,13 @@ const Tab12: React.FC = () => {
             }}
           />
           <div className="tab14-staff-modal__panel">
-            <h2 id="tab12-staff-modal-title">Staff sign-in</h2>
+            <h2 id="tab12-staff-modal-title">{t('common.staffSignIn')}</h2>
             <p className="tab14-staff-modal__hint">
-              Enter staff credentials to unlock insurance edits for this patient session.
+              {t('insurance.staffHint')}
             </p>
             <form onSubmit={(e) => void submitStaffModal(e)}>
               <div className="form-field">
-                <label htmlFor="tab12-staff-user">Staff username</label>
+                <label htmlFor="tab12-staff-user">{t('common.staffUsername')}</label>
                 <input
                   id="tab12-staff-user"
                   name="username"
@@ -799,7 +794,7 @@ const Tab12: React.FC = () => {
                 />
               </div>
               <div className="form-field">
-                <label htmlFor="tab12-staff-pass">Password</label>
+                <label htmlFor="tab12-staff-pass">{t('common.password')}</label>
                 <input
                   id="tab12-staff-pass"
                   name="password"
@@ -823,14 +818,14 @@ const Tab12: React.FC = () => {
                     setPendingInsuranceEdit(null);
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                   disabled={staffSubmitting}
                 >
-                  {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
+                  {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
                 </button>
               </div>
             </form>

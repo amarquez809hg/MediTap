@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import {
   isOnboardingComplete,
@@ -12,34 +13,34 @@ import {
 import { loadTab14FromBackend } from '../api';
 import './OnboardingPage.css';
 
-const STEPS = [
-  {
-    id: 'profile' as const,
-    title: 'Complete your profile',
-    body: 'Add your name, date of birth, and contact details so your care team recognizes you.',
-    href: '/tab14',
-    cta: 'Open patient information',
-  },
-  {
-    id: 'upload' as const,
-    title: 'Upload a medical document',
-    body: 'Bring a PDF or photo of records, labs, or a visit summary—we can help pre-fill your intake.',
-    href: '/tab14',
-    cta: 'Upload on intake form',
-  },
-  {
-    id: 'finished' as const,
-    title: 'You are ready',
-    body: 'Your dashboard shows health metrics, appointments, and records. You can update intake anytime.',
-    href: '/tab1',
-    cta: 'Go to dashboard',
-  },
-];
-
 const OnboardingPage: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const { username, authReady, isAuthenticated } = useAuth();
   const [steps, setSteps] = useState<OnboardingSteps | null>(null);
+  const onboardingSteps = [
+    {
+      id: 'profile' as const,
+      title: t('onboarding.stepProfileTitle'),
+      body: t('onboarding.stepProfileBody'),
+      href: '/tab14',
+      cta: t('onboarding.stepProfileCta'),
+    },
+    {
+      id: 'upload' as const,
+      title: t('onboarding.stepUploadTitle'),
+      body: t('onboarding.stepUploadBody'),
+      href: '/tab14',
+      cta: t('onboarding.stepUploadCta'),
+    },
+    {
+      id: 'finished' as const,
+      title: t('onboarding.stepReadyTitle'),
+      body: t('onboarding.stepReadyBody'),
+      href: '/tab1',
+      cta: t('onboarding.stepReadyCta'),
+    },
+  ];
 
   useEffect(() => {
     if (authReady && !isAuthenticated) {
@@ -128,7 +129,7 @@ const OnboardingPage: React.FC = () => {
   if (!steps) {
     return (
       <div className="onboarding-page">
-        <p className="onboarding-page__loading">Loading…</p>
+        <p className="onboarding-page__loading">{t('onboarding.loading')}</p>
       </div>
     );
   }
@@ -139,21 +140,21 @@ const OnboardingPage: React.FC = () => {
     <div className="onboarding-page">
       <header className="onboarding-page__header">
         <Link to="/tab1" className="onboarding-page__logo">
-          MediTap
+          {t('common.meditap')}
         </Link>
         <button type="button" className="onboarding-page__skip" onClick={onSkip}>
-          Skip for now
+          {t('onboarding.skipForNow')}
         </button>
       </header>
 
       <main className="onboarding-page__main">
-        <h1 className="onboarding-page__title">Welcome to MediTap</h1>
+        <h1 className="onboarding-page__title">{t('onboarding.welcome')}</h1>
         <p className="onboarding-page__subtitle">
-          Three quick steps to get the most from your account ({completedCount} of 2 done).
+          {t('onboarding.progress', { done: completedCount })}
         </p>
 
         <ol className="onboarding-steps">
-          {STEPS.map((step, index) => {
+          {onboardingSteps.map((step, index) => {
             const done =
               step.id === 'profile'
                 ? steps.profile
@@ -208,10 +209,7 @@ const OnboardingPage: React.FC = () => {
           })}
         </ol>
 
-        <p className="onboarding-page__hint">
-          Need help? Visit <Link to="/tab8">Support</Link> or email{' '}
-          <a href="mailto:support@meditap.ai">support@meditap.ai</a>.
-        </p>
+        <p className="onboarding-page__hint">{t('onboarding.needHelp')}</p>
       </main>
     </div>
   );

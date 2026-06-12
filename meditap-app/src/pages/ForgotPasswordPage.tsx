@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PublicPageLayout from '../components/PublicPageLayout';
 import { requestPasswordReset } from '../api/publicContact';
 import './AuthPublicPages.css';
 
 const ForgotPasswordPage: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +18,7 @@ const ForgotPasswordPage: React.FC = () => {
     setSuccess(null);
     const em = email.trim();
     if (!em) {
-      setError('Enter the email address for your MediTap account.');
+      setError(t('forgotPassword.emailRequired'));
       return;
     }
     setSubmitting(true);
@@ -33,8 +35,8 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (
     <PublicPageLayout
-      title="Forgot password"
-      subtitle="We will email you a secure link to choose a new password."
+      title={t('forgotPassword.title')}
+      subtitle={t('forgotPassword.subtitle')}
     >
       <section className="public-page__card auth-public-card">
         {error && (
@@ -49,7 +51,7 @@ const ForgotPasswordPage: React.FC = () => {
         )}
         <form className="auth-public-form" onSubmit={onSubmit}>
           <label className="auth-public-field">
-            <span>Email address</span>
+            <span>{t('forgotPassword.emailAddress')}</span>
             <input
               type="email"
               name="email"
@@ -61,11 +63,11 @@ const ForgotPasswordPage: React.FC = () => {
             />
           </label>
           <button type="submit" className="auth-public-submit" disabled={submitting}>
-            {submitting ? 'Sending…' : 'Send reset link'}
+            {submitting ? t('forgotPassword.sending') : t('forgotPassword.sendLink')}
           </button>
         </form>
         <p className="auth-public-footer-link">
-          <Link to="/tab3">Back to log in</Link>
+          <Link to="/tab3">{t('common.backToLogin')}</Link>
         </p>
       </section>
     </PublicPageLayout>
