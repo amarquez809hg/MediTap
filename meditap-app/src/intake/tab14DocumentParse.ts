@@ -15,6 +15,10 @@ import {
   parseMeditapDemoRecordDocument,
 } from './meditapDemoRecordParse';
 import {
+  isEpicHealthSummaryDocument,
+  parseEpicHealthSummaryDocument,
+} from './epicHealthSummaryParse';
+import {
   isRiverbendHieDocument,
   parseRiverbendHieDocument,
 } from './riverbendHieParse';
@@ -767,6 +771,9 @@ export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
   }
   if (isRiverbendHieDocument(rawText)) {
     specialized.push(parseRiverbendHieDocument(rawText));
+  }
+  if (isEpicHealthSummaryDocument(rawText)) {
+    specialized.push(parseEpicHealthSummaryDocument(rawText));
   }
   if (isAthenaPortabilityDocument(rawText) || isAthenaPortabilityDocument(preprocessed)) {
     specialized.push(parseAthenaPortabilityDocument(rawText));
