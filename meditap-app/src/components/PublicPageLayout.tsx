@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './PublicPageLayout.css';
@@ -19,6 +19,18 @@ const PublicPageLayout: React.FC<PublicPageLayoutProps> = ({
   children,
 }) => {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const onWheel = (event: WheelEvent) => {
+      if (!document.querySelector('.public-page')) return;
+      const outlet = document.querySelector('ion-router-outlet');
+      if (!outlet || outlet.scrollHeight <= outlet.clientHeight) return;
+      outlet.scrollTop += event.deltaY;
+      event.preventDefault();
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, []);
 
   return (
     <div className="public-page">

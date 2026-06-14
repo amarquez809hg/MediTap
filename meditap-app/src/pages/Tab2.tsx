@@ -220,7 +220,9 @@ const Tab2: React.FC = () => {
   const appointmentsSubtitle =
     appointmentStats.total === 0
       ? 'None scheduled — tap to open Appointments'
-      : `${appointmentStats.confirmed} confirmed · ${appointmentStats.pending} pending`;
+      : appointmentStats.confirmed + appointmentStats.pending > 0
+        ? `${appointmentStats.confirmed} confirmed · ${appointmentStats.pending} pending`
+        : `${appointmentStats.total} on file — tap to review`;
 
   const labsPrimary = labStats.needsAttention;
   const labsSubtitle =
