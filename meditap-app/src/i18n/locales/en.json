@@ -259,6 +259,7 @@
     "openVitals": "Open Vitals to add height & weight",
     "apptsNone": "None scheduled — tap to open Appointments",
     "apptsStats": "{{confirmed}} confirmed · {{pending}} pending",
+    "apptsOnFile": "{{count}} on file — tap to review",
     "labsCaughtUp": "All caught up — tap to open Lab Results",
     "labsPendingNew": "{{pending}} pending · {{new}} new — tap to review",
     "labsPendingOnly": "{{pending}} awaiting results — tap to review",
@@ -276,7 +277,7 @@
     "allergiesCount": "{{count}} on file — tap to review",
     "needsAttention": "Needs attention today",
     "yourNextSteps": "Your next steps",
-    "prioritizedHint": "Prioritized actions from your live chart, appointments, and labs.",
+    "prioritizedHint": "Prioritized actions from your live chart, labs, and schedule. Tap a metric above or a step below to open the right tab.",
     "buildingSteps": "Building your next steps…",
     "caughtUp": "You are caught up for now. Open the dashboard for your full health overview."
   },
@@ -331,7 +332,18 @@
     "saveChanges": "Save changes",
     "deleteConfirm": "Delete this chronic condition from the patient record? This cannot be undone.",
     "nameRequired": "Condition name is required.",
-    "staffHint": "Enter staff credentials to add or edit chronic conditions for this patient."
+    "staffHint": "Enter staff credentials to add or edit chronic conditions for this patient.",
+    "card": {
+      "diagnosed": "Diagnosed:",
+      "currentTreatment": "Current Treatment:",
+      "hospitalizationHistory": "Hospitalization History ({{count}} times):",
+      "admission": "Admission:",
+      "discharge": "Discharge:",
+      "reason": "Reason:",
+      "facility": "Facility:",
+      "physician": "Physician:",
+      "noHospitalizations": "No related hospitalizations recorded."
+    }
   },
   "incidents": {
     "title": "Incident Records",
@@ -374,7 +386,41 @@
     "additionalPolicies": "Additional policies ({{count}}) are on file in your chart.",
     "editInsurance": "Edit insurance",
     "saveChanges": "Save changes",
-    "staffHint": "Enter staff credentials to edit insurance for this patient."
+    "staffHint": "Enter staff credentials to edit insurance for this patient.",
+    "staffActiveBanner": "Staff editing is active for this session (or you have the record editor role).",
+    "editHint": "Carrier name and policy ID are tied to your enrollment record; change those on the Patient Information tab if needed.",
+    "fields": {
+      "memberId": "Member ID",
+      "memberName": "Member name",
+      "carrier": "Insurance carrier",
+      "carrierReadOnly": "Insurance carrier (read-only)",
+      "carrierPhone": "Carrier phone",
+      "carrierEmail": "Carrier email",
+      "planType": "Plan type",
+      "copayPrimary": "Co-pay (primary care)",
+      "copaySpecialty": "Co-pay (specialty)",
+      "copayErUrgent": "Co-pay (emergency / urgent care)",
+      "prescriptionPlan": "Prescription drug plan",
+      "planWebsite": "Plan website",
+      "inNetwork": "In-network deductible / coinsurance",
+      "outOfNetwork": "Out-of-network deductible / coinsurance",
+      "planContact": "Plan contact information",
+      "policyPeriod": "Policy period",
+      "ongoing": "Ongoing",
+      "deductible": "Deductible",
+      "maxOutOfPocket": "Max out-of-pocket",
+      "status": "Status",
+      "policyIdReadOnly": "Policy / plan ID (read-only)",
+      "subscriberName": "Member / subscriber name",
+      "groupNumber": "Group number",
+      "coverageType": "Coverage type (e.g. PPO)",
+      "copayPrimaryShort": "Co-pay — primary care",
+      "copaySpecialtyShort": "Co-pay — specialty",
+      "copayErShort": "Co-pay — ER / urgent care",
+      "prescriptionPlanShort": "Prescription plan",
+      "startDate": "Start date (YYYY-MM-DD)",
+      "endDate": "End date (YYYY-MM-DD)"
+    }
   },
   "support": {
     "title": "Support & Help",
@@ -458,7 +504,17 @@
     "staffModalHint": "Staff can edit demographics and clear the form while the patient stays signed in.",
     "readingDocumentProgress": "Reading {{name}} ({{current}} of {{total}})...",
     "uploadFileTypeError": "Please upload PDF, JPEG, or PNG files only.",
-    "clearUploadedFiles": "Clear all uploaded files"
+    "clearUploadedFiles": "Clear all uploaded files",
+    "fields": {
+      "insuranceN": "Insurance {{n}}",
+      "providerName": "Provider Name",
+      "policyNumber": "Policy Number",
+      "planName": "Plan Name",
+      "memberId": "Member ID",
+      "groupNumber": "Group number",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    }
   },
   "admin": {
     "title": "Admin Panel",
@@ -472,6 +528,65 @@
     "shortcuts": "Patient & chart shortcuts",
     "integrations": "Integrations",
     "epicFhir": "Epic FHIR",
-    "sandboxLinkage": "Sandbox linkage"
+    "sandboxLinkage": "Sandbox linkage",
+    "facilityName": "Facility name",
+    "createInApi": "Create in API",
+    "hospitalSaved": "Saved: {{name}}",
+    "viewLogsAlert": "Operational logs are not connected to an API in this build. Use Django admin or server logging.",
+    "shortcutSections": {
+      "dashboard": {
+        "title": "MediTap Dashboard",
+        "subtitle": "Patient snapshot and chart overview",
+        "patientName": "Patient Name",
+        "patientId": "Patient ID",
+        "patientEmail": "Patient e-mail",
+        "bmiScore": "BMI Score",
+        "lastVisit": "Last Visit",
+        "knownAllergies": "Known Allergies",
+        "activeMeds": "Active Meds"
+      },
+      "quickStatus": {
+        "title": "Quick Status",
+        "subtitle": "Triage metrics and next steps",
+        "appointments": "Appointments",
+        "resultsPending": "Results Pending",
+        "medications": "Medications"
+      },
+      "chronic": {
+        "title": "Chronic Conditions",
+        "subtitle": "Long-term diagnoses and care plans",
+        "modify1": "Modify Condition 1",
+        "modify2": "Modify Condition 2",
+        "addNew": "Add New Condition"
+      },
+      "labs": {
+        "title": "Lab Results",
+        "subtitle": "Panels, components, and new orders",
+        "modify1": "Modify Lab Result 1",
+        "addNew": "Log New Lab Result"
+      }
+    },
+    "epic": {
+      "lead": "Link the current MediTap patient chart to an Epic sandbox patient for SMART OAuth demos. The backend stores linkage metadata only—not Epic access tokens.",
+      "oauthReady": "OAuth ready:",
+      "yes": "Yes",
+      "no": "No",
+      "status": "Status:",
+      "epicPatientId": "Epic Patient.id:",
+      "noPatientRecord": "No MediTap patient record for this sign-in. Complete intake (Tab 14) first.",
+      "connectSandbox": "Connect Epic (sandbox)",
+      "refreshStatus": "Refresh status",
+      "clearLink": "Clear link",
+      "manualIdLabel": "Demo: Epic Patient.id (manual)",
+      "manualIdPlaceholder": "e.g. eH-XXXXXXXX",
+      "saveManualId": "Save manual id",
+      "redirectUri": "Redirect URI:",
+      "configureBackend": "(configure backend)",
+      "loadError": "Could not load Epic link status.",
+      "oauthStartError": "Could not start Epic OAuth.",
+      "clearLinkError": "Could not clear link.",
+      "saveManualIdError": "Could not save manual id.",
+      "createHospitalError": "Could not create hospital."
+    }
   }
 }

@@ -221,7 +221,7 @@ const Tab12: React.FC = () => {
     <IonList lines="full" className="detail-list ion-margin-bottom">
       <IonItem>
         <IonIcon slot="start" icon={idCardOutline} color="medium" />
-        <IonLabel>Member ID</IonLabel>
+        <IonLabel>{t('insurance.fields.memberId')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.memberId}
         </IonNote>
@@ -229,7 +229,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={personCircleOutline} color="medium" />
-        <IonLabel>Member name</IonLabel>
+        <IonLabel>{t('insurance.fields.memberName')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.policyHolderName || patientDisplayName}
         </IonNote>
@@ -237,7 +237,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={bagAddOutline} color="medium" />
-        <IonLabel>Insurance carrier</IonLabel>
+        <IonLabel>{t('insurance.fields.carrier')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.providerName}
         </IonNote>
@@ -245,7 +245,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={callOutline} color="medium" />
-        <IonLabel>Carrier phone</IonLabel>
+        <IonLabel>{t('insurance.fields.carrierPhone')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.providerPhone}
         </IonNote>
@@ -253,7 +253,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={mailOutline} color="medium" />
-        <IonLabel>Carrier email</IonLabel>
+        <IonLabel>{t('insurance.fields.carrierEmail')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.providerEmail}
         </IonNote>
@@ -261,7 +261,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={bagAddOutline} color="medium" />
-        <IonLabel>Plan type</IonLabel>
+        <IonLabel>{t('insurance.fields.planType')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.planType}
         </IonNote>
@@ -269,7 +269,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={pricetagOutline} color="medium" />
-        <IonLabel>Co-pay (primary care)</IonLabel>
+        <IonLabel>{t('insurance.fields.copayPrimary')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.copayVPCP}
         </IonNote>
@@ -277,7 +277,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={pricetagOutline} color="medium" />
-        <IonLabel>Co-pay (specialty)</IonLabel>
+        <IonLabel>{t('insurance.fields.copaySpecialty')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.copaySC}
         </IonNote>
@@ -285,7 +285,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={pricetagOutline} color="medium" />
-        <IonLabel>Co-pay (emergency / urgent care)</IonLabel>
+        <IonLabel>{t('insurance.fields.copayErUrgent')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.copayEUC}
         </IonNote>
@@ -293,7 +293,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={personCircleOutline} color="medium" />
-        <IonLabel>Prescription drug plan</IonLabel>
+        <IonLabel>{t('insurance.fields.prescriptionPlan')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.prescriptionDPI}
         </IonNote>
@@ -301,7 +301,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={documentTextOutline} color="medium" />
-        <IonLabel>Plan website</IonLabel>
+        <IonLabel>{t('insurance.fields.planWebsite')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.healthPWA}
         </IonNote>
@@ -309,7 +309,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={idCardOutline} color="medium" />
-        <IonLabel>In-network deductible / coinsurance</IonLabel>
+        <IonLabel>{t('insurance.fields.inNetwork')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.inNetworkDAC}
         </IonNote>
@@ -317,7 +317,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={idCardOutline} color="medium" />
-        <IonLabel>Out-of-network deductible / coinsurance</IonLabel>
+        <IonLabel>{t('insurance.fields.outOfNetwork')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.outofNetworkDAC}
         </IonNote>
@@ -325,7 +325,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={idCardOutline} color="medium" />
-        <IonLabel>Plan contact information</IonLabel>
+        <IonLabel>{t('insurance.fields.planContact')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.planContactInfo}
         </IonNote>
@@ -333,15 +333,15 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={calendarOutline} color="medium" />
-        <IonLabel>Policy period</IonLabel>
+        <IonLabel>{t('insurance.fields.policyPeriod')}</IonLabel>
         <IonNote slot="end" className="detail-value">
-          {policy.startDate || '—'} — {policy.endDate || 'Ongoing'}
+          {policy.startDate || '—'} — {policy.endDate || t('insurance.fields.ongoing')}
         </IonNote>
       </IonItem>
 
       <IonItem>
         <IonIcon slot="start" icon={pricetagOutline} color="medium" />
-        <IonLabel>Deductible</IonLabel>
+        <IonLabel>{t('insurance.fields.deductible')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.deductible}
         </IonNote>
@@ -349,7 +349,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={pricetagOutline} color="medium" />
-        <IonLabel>Max out-of-pocket</IonLabel>
+        <IonLabel>{t('insurance.fields.maxOutOfPocket')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.maxOutOfPocket}
         </IonNote>
@@ -357,7 +357,7 @@ const Tab12: React.FC = () => {
 
       <IonItem>
         <IonIcon slot="start" icon={shieldHalfOutline} color="medium" />
-        <IonLabel>Status</IonLabel>
+        <IonLabel>{t('insurance.fields.status')}</IonLabel>
         <IonNote slot="end" className="detail-value">
           {policy.status}
         </IonNote>
@@ -433,7 +433,7 @@ const Tab12: React.FC = () => {
               )}
               {canEditInsurance && (
                 <div className="tab12-staff-banner">
-                  <p>Staff editing is active for this session (or you have the record editor role).</p>
+                  <p>{t('insurance.staffActiveBanner')}</p>
                   {!hasEditorRealmRole && (
                     <IonButton
                       size="small"
@@ -530,20 +530,19 @@ const Tab12: React.FC = () => {
             </p>
           )}
           <p className="tab12-hint">
-            Carrier name and policy ID are tied to your enrollment record; change
-            those on the Patient Information tab if needed.
+            {t('insurance.editHint')}
           </p>
           <IonList>
             <IonItem>
-              <IonLabel position="stacked">Insurance carrier (read-only)</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.carrierReadOnly')}</IonLabel>
               <IonInput value={draft.providerName} readonly />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Policy / plan ID (read-only)</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.policyIdReadOnly')}</IonLabel>
               <IonInput value={draft.policyId} readonly />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Member ID</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.memberId')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.memberId}
@@ -553,7 +552,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Member / subscriber name</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.subscriberName')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.policyHolderName}
@@ -563,7 +562,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Plan type</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.planType')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.planType}
@@ -573,7 +572,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Group number</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.groupNumber')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.groupNumber}
@@ -583,7 +582,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Coverage type (e.g. PPO)</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.coverageType')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.coverageType}
@@ -593,7 +592,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Carrier phone</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.carrierPhone')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.providerPhone}
@@ -603,7 +602,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Carrier email</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.carrierEmail')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 type="email"
@@ -614,7 +613,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Plan website</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.planWebsite')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.healthPWA}
@@ -624,7 +623,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Co-pay — primary care</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.copayPrimaryShort')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.copayVPCP}
@@ -634,7 +633,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Co-pay — specialty</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.copaySpecialtyShort')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.copaySC}
@@ -642,7 +641,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Co-pay — ER / urgent care</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.copayErShort')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.copayEUC}
@@ -652,7 +651,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Prescription plan</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.prescriptionPlanShort')}</IonLabel>
               <IonTextarea
                 readonly={insuranceFieldsLocked}
                 autoGrow
@@ -663,7 +662,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">In-network deductible / coinsurance</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.inNetwork')}</IonLabel>
               <IonTextarea
                 readonly={insuranceFieldsLocked}
                 autoGrow
@@ -674,7 +673,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Out-of-network deductible / coinsurance</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.outOfNetwork')}</IonLabel>
               <IonTextarea
                 readonly={insuranceFieldsLocked}
                 autoGrow
@@ -685,7 +684,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Plan contact information</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.planContact')}</IonLabel>
               <IonTextarea
                 readonly={insuranceFieldsLocked}
                 autoGrow
@@ -696,7 +695,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Start date (YYYY-MM-DD)</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.startDate')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.startDate}
@@ -706,7 +705,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">End date (YYYY-MM-DD)</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.endDate')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.endDate}
@@ -716,7 +715,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Deductible</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.deductible')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.deductible}
@@ -726,7 +725,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Max out-of-pocket</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.maxOutOfPocket')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.maxOutOfPocket}
@@ -736,7 +735,7 @@ const Tab12: React.FC = () => {
               />
             </IonItem>
             <IonItem>
-              <IonLabel position="stacked">Status</IonLabel>
+              <IonLabel position="stacked">{t('insurance.fields.status')}</IonLabel>
               <IonInput
                 readonly={insuranceFieldsLocked}
                 value={draft.status}

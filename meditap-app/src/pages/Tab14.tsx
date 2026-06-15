@@ -1373,10 +1373,10 @@ const Tab14: React.FC = () => {
                                 {insurances.map((insurance, index) => (
                                     <div key = {index} className = "section-block">
 
-                                        <h3> Insurance {index + 1} </h3>
+                                        <h3> {t('patientIntake.fields.insuranceN', { n: index + 1 })} </h3>
 
                                         <div className = "form-field"> 
-                                            <label> Provider Name </label>
+                                            <label> {t('patientIntake.fields.providerName')} </label>
                                             <input value = {insurance.providerName}
                                             onChange={(e) => 
                                                 handleChange(index, "providerName", e.target.value, insurances, setInsurances)
@@ -1384,7 +1384,7 @@ const Tab14: React.FC = () => {
                                         </div> 
 
                                         <div className="form-field">
-                                            <label>Policy Number</label>
+                                            <label>{t('patientIntake.fields.policyNumber')}</label>
                                             <input
                                             value={insurance.policyNumber}
                                             onChange={(e) =>
@@ -1393,7 +1393,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Plan Name</label>
+                                            <label>{t('patientIntake.fields.planName')}</label>
                                             <input
                                             value={insurance.planName}
                                             onChange={(e) =>
@@ -1401,7 +1401,7 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
-                                            <label>Member ID</label>
+                                            <label>{t('patientIntake.fields.memberId')}</label>
                                             <input
                                             value={insurance.memberID}
                                             onChange={(e) =>
@@ -1409,7 +1409,7 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
-                                            <label>Group number</label>
+                                            <label>{t('patientIntake.fields.groupNumber')}</label>
                                             <input
                                             value={insurance.groupNumber}
                                             onChange={(e) =>
@@ -1417,7 +1417,7 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
-                                            <label>Start Date</label>
+                                            <label>{t('patientIntake.fields.startDate')}</label>
                                             <GlassDateInput
                                                 value={insurance.startDate}
                                                 onChange={(iso) =>
@@ -1427,7 +1427,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>End Date</label>
+                                            <label>{t('patientIntake.fields.endDate')}</label>
                                             <GlassDateInput
                                                 value={insurance.endDate}
                                                 onChange={(iso) =>
@@ -1691,7 +1691,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Start Date</label>
+                                            <label>{t('patientIntake.fields.startDate')}</label>
                                             <GlassDateInput
                                                 value={med.startDate}
                                                 onChange={(iso) =>
@@ -1701,7 +1701,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>End Date</label>
+                                            <label>{t('patientIntake.fields.endDate')}</label>
                                             <GlassDateInput
                                                 value={med.endDate}
                                                 onChange={(iso) =>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   Tab5ChronicCondition,
   Tab5ChronicHospitalization,
@@ -7,21 +8,24 @@ import './conditionCards.css';
 
 const HospitalizationRecord: React.FC<{
   record: Tab5ChronicHospitalization;
-}> = ({ record }) => (
-  <div className="hospitalization-record">
-    <p>
-      <strong>Admission:</strong> {record.admissionDate || '—'} -{' '}
-      <strong>Discharge:</strong> {record.dischargeDate || '—'}
-    </p>
-    <p>
-      <strong>Reason:</strong> {record.reason || '—'}
-    </p>
-    <p>
-      <strong>Facility:</strong> {record.facility || '—'} -{' '}
-      <strong>Physician:</strong> {record.physician || '—'}
-    </p>
-  </div>
-);
+}> = ({ record }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="hospitalization-record">
+      <p>
+        <strong>{t('chronic.card.admission')}</strong> {record.admissionDate || '—'} -{' '}
+        <strong>{t('chronic.card.discharge')}</strong> {record.dischargeDate || '—'}
+      </p>
+      <p>
+        <strong>{t('chronic.card.reason')}</strong> {record.reason || '—'}
+      </p>
+      <p>
+        <strong>{t('chronic.card.facility')}</strong> {record.facility || '—'} -{' '}
+        <strong>{t('chronic.card.physician')}</strong> {record.physician || '—'}
+      </p>
+    </div>
+  );
+};
 
 export type ConditionCardProps = {
   condition: Tab5ChronicCondition;
@@ -34,8 +38,11 @@ const ConditionCard: React.FC<ConditionCardProps> = ({
   condition,
   onManage,
   manageHref,
-  manageLabel = 'Manage',
+  manageLabel,
 }) => {
+  const { t } = useTranslation();
+  const label = manageLabel ?? t('common.manage');
+
   const action =
     onManage != null ? (
       <button
@@ -43,11 +50,11 @@ const ConditionCard: React.FC<ConditionCardProps> = ({
         className="condition-card__manage"
         onClick={() => onManage(condition)}
       >
-        {manageLabel}
+        {label}
       </button>
     ) : manageHref ? (
       <a href={manageHref} className="condition-card__manage">
-        {manageLabel}
+        {label}
       </a>
     ) : null;
 
@@ -59,19 +66,20 @@ const ConditionCard: React.FC<ConditionCardProps> = ({
           {condition.name || '—'}
         </h3>
         <span className="diagnosis-date">
-          Diagnosed: {condition.diagnosisDate || '—'}
+          {t('chronic.card.diagnosed')} {condition.diagnosisDate || '—'}
         </span>
       </div>
 
       <div className="condition-details">
-        <h4>Current Treatment:</h4>
+        <h4>{t('chronic.card.currentTreatment')}</h4>
         <p>{condition.currentTreatment || '—'}</p>
 
         {condition.hospitalizations && condition.hospitalizations.length > 0 ? (
           <>
             <h4>
-              Hospitalization History ({condition.hospitalizations.length}{' '}
-              times):
+              {t('chronic.card.hospitalizationHistory', {
+                count: condition.hospitalizations.length,
+              })}
             </h4>
             <div className="hospitalizations-list">
               {condition.hospitalizations.map((record, index) => (
@@ -81,7 +89,7 @@ const ConditionCard: React.FC<ConditionCardProps> = ({
           </>
         ) : (
           <p className="no-hospitalizations">
-            No related hospitalizations recorded.
+            {t('chronic.card.noHospitalizations')}
           </p>
         )}
       </div>

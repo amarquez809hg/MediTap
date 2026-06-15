@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IonContent,
@@ -114,7 +114,7 @@ const Tab13: React.FC = () => {
     } catch (e) {
       setEpicErr(
         formatSessionOrTokenErrorForUi(
-          e instanceof Error ? e.message : 'Could not load Epic link status.'
+          e instanceof Error ? e.message : t('admin.epic.loadError')
         )
       );
     } finally {
@@ -175,51 +175,54 @@ const Tab13: React.FC = () => {
     }
   };
 
-  const sections = [
-    {
-      title: 'MediTap Dashboard',
-      subtitle: 'Patient snapshot and chart overview',
-      headIcon: gridOutline,
-      items: [
-        { label: 'Patient Name', icon: accessibilityOutline, path: 'patient-name' },
-        { label: 'Patient ID', icon: peopleOutline, path: 'patient-id' },
-        { label: 'Patient e-mail', icon: atCircleOutline, path: 'patient-email' },
-        { label: 'BMI Score', icon: analyticsOutline, path: 'bmi-score' },
-        { label: 'Last Visit', icon: archiveOutline, path: 'last-visit' },
-        { label: 'Known Allergies', icon: alertCircle, path: 'known-allergies' },
-        { label: 'Active Meds', icon: bagAddOutline, path: 'active-meds' },
-      ],
-    },
-    {
-      title: 'Quick Status',
-      subtitle: 'Triage metrics and next steps',
-      headIcon: speedometerOutline,
-      items: [
-        { label: 'Appointments', icon: easelOutline, path: 'appointments' },
-        { label: 'Results Pending', icon: fileTrayFullOutline, path: 'pending' },
-        { label: 'Medications', icon: eyedropOutline, path: 'meds' },
-      ],
-    },
-    {
-      title: 'Chronic Conditions',
-      subtitle: 'Long-term diagnoses and care plans',
-      headIcon: medkitOutline,
-      items: [
-        { label: 'Modify Condition 1', icon: optionsOutline, path: 'cond-1' },
-        { label: 'Modify Condition 2', icon: optionsSharp, path: 'cond-2' },
-        { label: 'Add New Condition', icon: pencilOutline, path: 'add-cond' },
-      ],
-    },
-    {
-      title: 'Lab Results',
-      subtitle: 'Panels, components, and new orders',
-      headIcon: flaskOutline,
-      items: [
-        { label: 'Modify Lab Result 1', icon: statsChartOutline, path: 'lab-1' },
-        { label: 'Log New Lab Result', icon: pencilOutline, path: 'add-lab' },
-      ],
-    },
-  ];
+  const sections = useMemo(
+    () => [
+      {
+        title: t('admin.shortcutSections.dashboard.title'),
+        subtitle: t('admin.shortcutSections.dashboard.subtitle'),
+        headIcon: gridOutline,
+        items: [
+          { label: t('admin.shortcutSections.dashboard.patientName'), icon: accessibilityOutline, path: 'patient-name' },
+          { label: t('admin.shortcutSections.dashboard.patientId'), icon: peopleOutline, path: 'patient-id' },
+          { label: t('admin.shortcutSections.dashboard.patientEmail'), icon: atCircleOutline, path: 'patient-email' },
+          { label: t('admin.shortcutSections.dashboard.bmiScore'), icon: analyticsOutline, path: 'bmi-score' },
+          { label: t('admin.shortcutSections.dashboard.lastVisit'), icon: archiveOutline, path: 'last-visit' },
+          { label: t('admin.shortcutSections.dashboard.knownAllergies'), icon: alertCircle, path: 'known-allergies' },
+          { label: t('admin.shortcutSections.dashboard.activeMeds'), icon: bagAddOutline, path: 'active-meds' },
+        ],
+      },
+      {
+        title: t('admin.shortcutSections.quickStatus.title'),
+        subtitle: t('admin.shortcutSections.quickStatus.subtitle'),
+        headIcon: speedometerOutline,
+        items: [
+          { label: t('admin.shortcutSections.quickStatus.appointments'), icon: easelOutline, path: 'appointments' },
+          { label: t('admin.shortcutSections.quickStatus.resultsPending'), icon: fileTrayFullOutline, path: 'pending' },
+          { label: t('admin.shortcutSections.quickStatus.medications'), icon: eyedropOutline, path: 'meds' },
+        ],
+      },
+      {
+        title: t('admin.shortcutSections.chronic.title'),
+        subtitle: t('admin.shortcutSections.chronic.subtitle'),
+        headIcon: medkitOutline,
+        items: [
+          { label: t('admin.shortcutSections.chronic.modify1'), icon: optionsOutline, path: 'cond-1' },
+          { label: t('admin.shortcutSections.chronic.modify2'), icon: optionsSharp, path: 'cond-2' },
+          { label: t('admin.shortcutSections.chronic.addNew'), icon: pencilOutline, path: 'add-cond' },
+        ],
+      },
+      {
+        title: t('admin.shortcutSections.labs.title'),
+        subtitle: t('admin.shortcutSections.labs.subtitle'),
+        headIcon: flaskOutline,
+        items: [
+          { label: t('admin.shortcutSections.labs.modify1'), icon: statsChartOutline, path: 'lab-1' },
+          { label: t('admin.shortcutSections.labs.addNew'), icon: pencilOutline, path: 'add-lab' },
+        ],
+      },
+    ],
+    [t]
+  );
 
   return (
     <IonPage className="ct-page ct-tab13">
@@ -308,9 +311,7 @@ const Tab13: React.FC = () => {
                     type="button"
                     className="tab13-ops__btn"
                     onClick={() =>
-                      window.alert(
-                        'Operational logs are not connected to an API in this build. Use Django admin or server logging.'
-                      )
+                      window.alert(t('admin.viewLogsAlert'))
                     }
                   >
                     <IonIcon icon={settingsOutline} aria-hidden />
@@ -326,7 +327,7 @@ const Tab13: React.FC = () => {
                 <div className="tab13-workspace">
                   <div className="tab13-workspace__shortcuts">
                     <h2 className="tab13-zone__label" id="tab13-shortcuts-heading">
-                      Patient &amp; chart shortcuts
+                      {t('admin.shortcuts')}
                     </h2>
                     <div className="tab13-shortcuts-grid">
                       {sections.map((section) => (
@@ -369,34 +370,32 @@ const Tab13: React.FC = () => {
                     aria-labelledby="tab13-integrations-heading"
                   >
                     <h2 className="tab13-zone__label" id="tab13-integrations-heading">
-                      Integrations
+                      {t('admin.integrations')}
                     </h2>
                     <section className="tab13-epic-card" aria-labelledby="tab13-epic-title">
                       <header className="tab13-epic-card__head">
-                        <span className="tab13-epic-card__badge">Epic FHIR</span>
-                        <h3 id="tab13-epic-title">Sandbox linkage</h3>
+                        <span className="tab13-epic-card__badge">{t('admin.epicFhir')}</span>
+                        <h3 id="tab13-epic-title">{t('admin.sandboxLinkage')}</h3>
                       </header>
                       <div className="tab13-epic-card__body">
                         <p className="tab13-epic-card__lead">
-                          Link the current MediTap patient chart to an Epic sandbox patient for
-                          SMART OAuth demos. The backend stores linkage metadata only—not Epic
-                          access tokens.
+                          {t('admin.epic.lead')}
                         </p>
-                  {epicLoading && <p className="tab13-epic-card__meta">Loading…</p>}
+                  {epicLoading && <p className="tab13-epic-card__meta">{t('common.loading')}</p>}
                   {epicErr && <p className="tab13-epic-card__meta">{epicErr}</p>}
                   {!epicLoading && epicCfg && (
                     <>
                       <div className="tab13-epic-card__status">
-                        OAuth ready:{' '}
-                        <strong>{epicCfg.integration_enabled ? 'Yes' : 'No'}</strong>
+                        {t('admin.epic.oauthReady')}{' '}
+                        <strong>{epicCfg.integration_enabled ? t('admin.epic.yes') : t('admin.epic.no')}</strong>
                         {epicLink && (
                           <>
                             <br />
-                            Status: <strong>{epicLink.status}</strong>
+                            {t('admin.epic.status')} <strong>{epicLink.status}</strong>
                             {epicLink.epic_patient_fhir_id ? (
                               <>
                                 <br />
-                                Epic Patient.id:{' '}
+                                {t('admin.epic.epicPatientId')}{' '}
                                 <strong>{epicLink.epic_patient_fhir_id}</strong>
                               </>
                             ) : null}
@@ -406,8 +405,7 @@ const Tab13: React.FC = () => {
                       {epicCfg.hint ? <p className="tab13-epic-card__meta">{epicCfg.hint}</p> : null}
                       {!epicPatientId && (
                         <p className="tab13-epic-card__meta">
-                          No MediTap patient record for this sign-in. Complete intake (Tab 14)
-                          first.
+                          {t('admin.epic.noPatientRecord')}
                         </p>
                       )}
                       <div className="tab13-epic-card__actions">
@@ -428,14 +426,14 @@ const Tab13: React.FC = () => {
                                   formatSessionOrTokenErrorForUi(
                                     e instanceof Error
                                       ? e.message
-                                      : 'Could not start Epic OAuth.'
+                                      : t('admin.epic.oauthStartError')
                                   )
                                 );
                               }
                             })();
                           }}
                         >
-                          Connect Epic (sandbox)
+                          {t('admin.epic.connectSandbox')}
                         </IonButton>
                         <IonButton
                           expand="block"
@@ -443,7 +441,7 @@ const Tab13: React.FC = () => {
                           disabled={epicLoading}
                           onClick={() => void reloadEpic()}
                         >
-                          Refresh status
+                          {t('admin.epic.refreshStatus')}
                         </IonButton>
                         {epicPatientId && epicLink?.status === 'connected' && (
                           <IonButton
@@ -464,24 +462,24 @@ const Tab13: React.FC = () => {
                                 } catch (e) {
                                   setEpicErr(
                                     formatSessionOrTokenErrorForUi(
-                                      e instanceof Error ? e.message : 'Could not clear link.'
+                                      e instanceof Error ? e.message : t('admin.epic.clearLinkError')
                                     )
                                   );
                                 }
                               })();
                             }}
                           >
-                            Clear link
+                            {t('admin.epic.clearLink')}
                           </IonButton>
                         )}
                       </div>
                       {canEditAdmin && epicPatientId && (
                         <>
                           <IonItem lines="none" className="tab13-epic-manual">
-                            <IonLabel position="stacked">Demo: Epic Patient.id (manual)</IonLabel>
+                            <IonLabel position="stacked">{t('admin.epic.manualIdLabel')}</IonLabel>
                             <IonInput
                               value={epicManualId}
-                              placeholder="e.g. eH-XXXXXXXX"
+                              placeholder={t('admin.epic.manualIdPlaceholder')}
                               onIonInput={(e) => setEpicManualId(e.detail.value ?? '')}
                             />
                           </IonItem>
@@ -506,7 +504,7 @@ const Tab13: React.FC = () => {
                                     formatSessionOrTokenErrorForUi(
                                       e instanceof Error
                                         ? e.message
-                                        : 'Could not save manual id.'
+                                        : t('admin.epic.saveManualIdError')
                                     )
                                   );
                                 } finally {
@@ -515,13 +513,13 @@ const Tab13: React.FC = () => {
                               })();
                             }}
                           >
-                            {epicSavingManual ? 'Saving…' : 'Save manual id'}
+                            {epicSavingManual ? t('common.saving') : t('admin.epic.saveManualId')}
                           </IonButton>
                         </>
                       )}
                         <p className="tab13-epic-card__meta">
-                          Redirect URI:{' '}
-                          <code>{epicCfg.redirect_uri ?? '(configure backend)'}</code>
+                          {t('admin.epic.redirectUri')}{' '}
+                          <code>{epicCfg.redirect_uri ?? t('admin.epic.configureBackend')}</code>
                         </p>
                       </>
                     )}
@@ -547,7 +545,7 @@ const Tab13: React.FC = () => {
         <IonContent className="ion-padding">
           {hospitalMessage && <p>{hospitalMessage}</p>}
           <IonItem>
-            <IonLabel position="stacked">Facility name</IonLabel>
+            <IonLabel position="stacked">{t('admin.facilityName')}</IonLabel>
             <IonInput
               value={hospitalName}
               onIonInput={(e) => setHospitalName(e.detail.value ?? '')}
@@ -563,11 +561,11 @@ const Tab13: React.FC = () => {
                 setHospitalMessage(null);
                 try {
                   await ensureHospital(hospitalName);
-                  setHospitalMessage(`Saved: ${hospitalName.trim()}`);
+                  setHospitalMessage(t('admin.hospitalSaved', { name: hospitalName.trim() }));
                   setHospitalName('');
                 } catch (e) {
                   setHospitalMessage(
-                    e instanceof Error ? e.message : 'Could not create hospital.'
+                    e instanceof Error ? e.message : t('admin.epic.createHospitalError')
                   );
                 } finally {
                   setHospitalSaving(false);
@@ -575,7 +573,7 @@ const Tab13: React.FC = () => {
               })();
             }}
           >
-            {hospitalSaving ? 'Saving…' : 'Create in API'}
+            {hospitalSaving ? t('common.saving') : t('admin.createInApi')}
           </IonButton>
         </IonContent>
       </IonModal>

@@ -219,90 +219,98 @@ const Tab2: React.FC = () => {
 
   const appointmentsSubtitle =
     appointmentStats.total === 0
-      ? 'None scheduled — tap to open Appointments'
+      ? t('quickStatus.apptsNone')
       : appointmentStats.confirmed + appointmentStats.pending > 0
-        ? `${appointmentStats.confirmed} confirmed · ${appointmentStats.pending} pending`
-        : `${appointmentStats.total} on file — tap to review`;
+        ? t('quickStatus.apptsStats', {
+            confirmed: appointmentStats.confirmed,
+            pending: appointmentStats.pending,
+          })
+        : t('quickStatus.apptsOnFile', { count: appointmentStats.total });
 
   const labsPrimary = labStats.needsAttention;
   const labsSubtitle =
     labStats.needsAttention > 0
       ? labStats.pending > 0 && labStats.newPanels > 0
-        ? `${labStats.pending} pending · ${labStats.newPanels} new — tap to review`
+        ? t('quickStatus.labsPendingNew', {
+            pending: labStats.pending,
+            new: labStats.newPanels,
+          })
         : labStats.pending > 0
-          ? `${labStats.pending} awaiting results — tap to review`
-          : `${labStats.newPanels} new result(s) — tap to review`
-      : 'All caught up — tap to open Lab Results';
+          ? t('quickStatus.labsPendingOnly', { pending: labStats.pending })
+          : t('quickStatus.labsNewOnly', { count: labStats.newPanels })
+      : t('quickStatus.labsCaughtUp');
 
   const medsSubtitle =
     medCount === null
       ? loadError
-        ? 'Record unavailable — tap Patient Information'
+        ? t('quickStatus.medsUnavailable')
         : '—'
       : medCount === 0
-        ? 'None on file — tap to add medications'
-        : `${medCount} on record — tap to review`;
+        ? t('quickStatus.medsNone')
+        : t('quickStatus.medsCount', { count: medCount });
 
   const chronicSubtitle =
     chronicCount === null
-      ? 'Loading…'
+      ? t('common.loading')
       : chronicCount === 0
-        ? 'None on file — tap to add conditions'
-        : `${chronicCount} on record — tap to review`;
+        ? t('quickStatus.chronicNone')
+        : t('quickStatus.chronicCount', { count: chronicCount });
 
   const incidentSubtitle =
     incidentCount === null
       ? loadError
-        ? 'Could not load — tap Incidents tab'
-        : 'Loading…'
+        ? t('quickStatus.incidentsLoadError')
+        : t('common.loading')
       : incidentCount === 0
-        ? 'None logged — tap to add an incident'
-        : `${incidentCount} on record — tap to review`;
+        ? t('quickStatus.incidentsNone')
+        : t('quickStatus.incidentsCount', { count: incidentCount });
 
   const allergySubtitle =
     allergyCount === null
-      ? 'Loading…'
+      ? t('common.loading')
       : allergyCount === 0
-        ? 'None documented — tap Patient Information'
+        ? t('quickStatus.allergiesNone')
         : severeAllergies > 0
-          ? `${allergyCount} on file · ${severeAllergies} severe — tap to review`
-          : `${allergyCount} on file — tap to review`;
+          ? t('quickStatus.allergiesSevere', {
+              count: allergyCount,
+              severe: severeAllergies,
+            })
+          : t('quickStatus.allergiesCount', { count: allergyCount });
 
   return (
     <IonPage className="ct-page ct-tab2">
       <IonContent fullscreen className="ion-padding custom-content">
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Quick Status</IonTitle>
+            <IonTitle size="large">{t('quickStatus.title')}</IonTitle>
           </IonToolbar>
         </IonHeader>
 
         <div className="chronic-conditions-container">
           <header className="chronic-conditions-header">
             <h1>
-              <i className="fas fa-notes-medical"></i> Quick Status
+              <i className="fas fa-notes-medical"></i> {t('quickStatus.title')}
             </h1>
             <a href="/tab1" className="book-btn meditap-glass-btn meditap-glass-btn--compact">
-              <i className="fas fa-arrow-left"></i> Back to dashboard
+              <i className="fas fa-arrow-left"></i> {t('common.goBackToDashboard')}
             </a>
           </header>
 
           {loadError && (
             <p className="tab2-inline-warning" role="status">
-              Live summary unavailable: {loadError}. Appointment counts still
-              load from the server when available.
+              {t('quickStatus.loadError', { error: loadError })}
             </p>
           )}
 
           <IonRow className="ion-margin-bottom tab2-kpi-grid">
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="BMI"
+                title={t('quickStatus.bmi')}
                 value={detail?.healthSummary.bmi ?? (loading ? '—' : 'N/A')}
                 subtitle={
                   detail?.healthSummary.bmi !== 'N/A'
                     ? `${detail?.healthSummary.bmiCategory ?? '—'} · ${detail?.healthSummary.heightDisplay ?? '—'} · ${detail?.healthSummary.weightDisplay ?? '—'}`
-                    : 'Open Vitals to add height & weight'
+                    : t('quickStatus.openVitals')
                 }
                 href="/tab14?section=vitals"
                 highlightClass="highlight-1"
@@ -312,7 +320,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Profile complete"
+                title={t('quickStatus.profileComplete')}
                 value={`${profileCompleteness.percent}%`}
                 subtitle={profileCompleteness.subtitle}
                 href="/tab14"
@@ -323,7 +331,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Appointments"
+                title={t('quickStatus.appointments')}
                 value={appointmentStats.total}
                 subtitle={appointmentsSubtitle}
                 href="/tab4"
@@ -333,7 +341,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Labs need attention"
+                title={t('quickStatus.labsAttention')}
                 value={labsPrimary}
                 subtitle={labsSubtitle}
                 href="/tab7"
@@ -344,7 +352,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Medications"
+                title={t('quickStatus.medications')}
                 value={medCount === null ? '—' : medCount}
                 subtitle={medsSubtitle}
                 href="/tab14"
@@ -355,7 +363,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Chronic conditions"
+                title={t('quickStatus.chronicConditions')}
                 value={chronicCount === null ? '—' : chronicCount}
                 subtitle={chronicSubtitle}
                 href="/tab5"
@@ -366,7 +374,7 @@ const Tab2: React.FC = () => {
             </IonCol>
             <IonCol size="6" sizeMd="4">
               <StatusKpiCard
-                title="Incidents"
+                title={t('quickStatus.incidents')}
                 value={incidentCount === null ? '—' : incidentCount}
                 subtitle={incidentSubtitle}
                 href="/tab6"
@@ -393,24 +401,22 @@ const Tab2: React.FC = () => {
             {showUrgencyHeading && (
               <IonIcon icon={warningOutline} className="tab2-urgency-icon" aria-hidden />
             )}
-            {showUrgencyHeading ? 'Needs attention today' : 'Your next steps'}
+            {showUrgencyHeading ? t('quickStatus.needsAttention') : t('quickStatus.yourNextSteps')}
           </h2>
 
           <p className="tab2-next-steps-hint">
-            Prioritized actions from your live chart, labs, and schedule. Tap a
-            metric above or a step below to open the right tab.
+            {t('quickStatus.prioritizedHint')}
           </p>
 
           <IonCard className="task-list-card">
             {loading ? (
               <div className="tab2-next-steps-loading">
                 <IonSpinner name="crescent" />
-                <p>Building your next steps…</p>
+                <p>{t('quickStatus.buildingSteps')}</p>
               </div>
             ) : nextSteps.length === 0 ? (
               <p className="tab2-next-steps-empty">
-                You are caught up for now. Open the dashboard for your full health
-                overview.
+                {t('quickStatus.caughtUp')}
               </p>
             ) : (
               <IonList lines="full" className="task-list">

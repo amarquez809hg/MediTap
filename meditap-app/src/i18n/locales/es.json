@@ -260,6 +260,7 @@
     "openVitals": "Abra Signos vitales para agregar estatura y peso",
     "apptsNone": "Ninguna programada — toque para abrir Citas",
     "apptsStats": "{{confirmed}} confirmadas · {{pending}} pendientes",
+    "apptsOnFile": "{{count}} en archivo — toque para revisar",
     "labsCaughtUp": "Al día — toque para abrir Laboratorio",
     "labsPendingNew": "{{pending}} pendientes · {{new}} nuevos — toque para revisar",
     "labsPendingOnly": "{{pending}} esperando resultados — toque para revisar",
@@ -277,7 +278,7 @@
     "allergiesCount": "{{count}} en archivo — toque para revisar",
     "needsAttention": "Requiere atención hoy",
     "yourNextSteps": "Sus próximos pasos",
-    "prioritizedHint": "Acciones priorizadas según su expediente, citas y laboratorios en vivo.",
+    "prioritizedHint": "Acciones priorizadas según su expediente, laboratorios y agenda en vivo. Toque una métrica arriba o un paso abajo para abrir la pestaña correcta.",
     "buildingSteps": "Preparando sus próximos pasos…",
     "caughtUp": "Está al día por ahora. Abra el panel para su resumen completo de salud."
   },
@@ -332,7 +333,18 @@
     "saveChanges": "Guardar cambios",
     "deleteConfirm": "¿Eliminar esta condición crónica del expediente del paciente? Esto no se puede deshacer.",
     "nameRequired": "El nombre de la condición es obligatorio.",
-    "staffHint": "Ingrese credenciales del personal para agregar o editar condiciones crónicas de este paciente."
+    "staffHint": "Ingrese credenciales del personal para agregar o editar condiciones crónicas de este paciente.",
+    "card": {
+      "diagnosed": "Diagnosticado:",
+      "currentTreatment": "Tratamiento actual:",
+      "hospitalizationHistory": "Historial de hospitalizaciones ({{count}} veces):",
+      "admission": "Ingreso:",
+      "discharge": "Alta:",
+      "reason": "Motivo:",
+      "facility": "Instalación:",
+      "physician": "Médico:",
+      "noHospitalizations": "No hay hospitalizaciones relacionadas registradas."
+    }
   },
   "incidents": {
     "title": "Registros de incidentes",
@@ -375,7 +387,41 @@
     "additionalPolicies": "Hay {{count}} póliza(s) adicional(es) en su expediente.",
     "editInsurance": "Editar seguro",
     "saveChanges": "Guardar cambios",
-    "staffHint": "Ingrese credenciales del personal para editar el seguro de este paciente."
+    "staffHint": "Ingrese credenciales del personal para editar el seguro de este paciente.",
+    "staffActiveBanner": "Edición del personal activa para esta sesión (o tiene el rol editor de registros).",
+    "editHint": "El nombre de la aseguradora y el ID de póliza están vinculados a su registro de inscripción; cámbielos en la pestaña Información del paciente si es necesario.",
+    "fields": {
+      "memberId": "ID de miembro",
+      "memberName": "Nombre del miembro",
+      "carrier": "Aseguradora",
+      "carrierReadOnly": "Aseguradora (solo lectura)",
+      "carrierPhone": "Teléfono de la aseguradora",
+      "carrierEmail": "Correo de la aseguradora",
+      "planType": "Tipo de plan",
+      "copayPrimary": "Copago (atención primaria)",
+      "copaySpecialty": "Copago (especialista)",
+      "copayErUrgent": "Copago (urgencias / atención urgente)",
+      "prescriptionPlan": "Plan de medicamentos recetados",
+      "planWebsite": "Sitio web del plan",
+      "inNetwork": "Deducible / coseguro en red",
+      "outOfNetwork": "Deducible / coseguro fuera de red",
+      "planContact": "Información de contacto del plan",
+      "policyPeriod": "Período de la póliza",
+      "ongoing": "Vigente",
+      "deductible": "Deducible",
+      "maxOutOfPocket": "Máximo de bolsillo",
+      "status": "Estado",
+      "policyIdReadOnly": "ID de póliza / plan (solo lectura)",
+      "subscriberName": "Nombre del miembro / suscriptor",
+      "groupNumber": "Número de grupo",
+      "coverageType": "Tipo de cobertura (p. ej. PPO)",
+      "copayPrimaryShort": "Copago — atención primaria",
+      "copaySpecialtyShort": "Copago — especialista",
+      "copayErShort": "Copago — urgencias / atención urgente",
+      "prescriptionPlanShort": "Plan de recetas",
+      "startDate": "Fecha de inicio (AAAA-MM-DD)",
+      "endDate": "Fecha de fin (AAAA-MM-DD)"
+    }
   },
   "support": {
     "title": "Soporte y ayuda",
@@ -459,7 +505,17 @@
     "staffModalHint": "El personal puede editar demografía y borrar el formulario mientras el paciente sigue con sesión iniciada.",
     "readingDocumentProgress": "Leyendo {{name}} ({{current}} de {{total}})...",
     "uploadFileTypeError": "Suba solo archivos PDF, JPEG o PNG.",
-    "clearUploadedFiles": "Quitar todos los archivos subidos"
+    "clearUploadedFiles": "Quitar todos los archivos subidos",
+    "fields": {
+      "insuranceN": "Seguro {{n}}",
+      "providerName": "Nombre del proveedor",
+      "policyNumber": "Número de póliza",
+      "planName": "Nombre del plan",
+      "memberId": "ID de miembro",
+      "groupNumber": "Número de grupo",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin"
+    }
   },
   "admin": {
     "title": "Panel de administración",
@@ -473,6 +529,65 @@
     "shortcuts": "Accesos directos del paciente y expediente",
     "integrations": "Integraciones",
     "epicFhir": "Epic FHIR",
-    "sandboxLinkage": "Enlace sandbox"
+    "sandboxLinkage": "Enlace sandbox",
+    "facilityName": "Nombre de la instalación",
+    "createInApi": "Crear en la API",
+    "hospitalSaved": "Guardado: {{name}}",
+    "viewLogsAlert": "Los registros operativos no están conectados a una API en esta versión. Use el admin de Django o los registros del servidor.",
+    "shortcutSections": {
+      "dashboard": {
+        "title": "Panel MediTap",
+        "subtitle": "Resumen del paciente y expediente",
+        "patientName": "Nombre del paciente",
+        "patientId": "ID del paciente",
+        "patientEmail": "Correo del paciente",
+        "bmiScore": "Puntuación IMC",
+        "lastVisit": "Última visita",
+        "knownAllergies": "Alergias conocidas",
+        "activeMeds": "Medicamentos activos"
+      },
+      "quickStatus": {
+        "title": "Estado rápido",
+        "subtitle": "Métricas de triaje y próximos pasos",
+        "appointments": "Citas",
+        "resultsPending": "Resultados pendientes",
+        "medications": "Medicamentos"
+      },
+      "chronic": {
+        "title": "Condiciones crónicas",
+        "subtitle": "Diagnósticos a largo plazo y planes de atención",
+        "modify1": "Modificar condición 1",
+        "modify2": "Modificar condición 2",
+        "addNew": "Agregar nueva condición"
+      },
+      "labs": {
+        "title": "Resultados de laboratorio",
+        "subtitle": "Paneles, componentes y nuevas órdenes",
+        "modify1": "Modificar resultado 1",
+        "addNew": "Registrar nuevo resultado"
+      }
+    },
+    "epic": {
+      "lead": "Vincule el expediente actual de MediTap a un paciente sandbox de Epic para demostraciones SMART OAuth. El backend solo almacena metadatos de enlace, no tokens de acceso de Epic.",
+      "oauthReady": "OAuth listo:",
+      "yes": "Sí",
+      "no": "No",
+      "status": "Estado:",
+      "epicPatientId": "Epic Patient.id:",
+      "noPatientRecord": "No hay expediente de paciente MediTap para esta sesión. Complete la admisión (Tab 14) primero.",
+      "connectSandbox": "Conectar Epic (sandbox)",
+      "refreshStatus": "Actualizar estado",
+      "clearLink": "Borrar enlace",
+      "manualIdLabel": "Demo: Epic Patient.id (manual)",
+      "manualIdPlaceholder": "p. ej. eH-XXXXXXXX",
+      "saveManualId": "Guardar ID manual",
+      "redirectUri": "URI de redirección:",
+      "configureBackend": "(configurar backend)",
+      "loadError": "No se pudo cargar el estado del enlace Epic.",
+      "oauthStartError": "No se pudo iniciar OAuth de Epic.",
+      "clearLinkError": "No se pudo borrar el enlace.",
+      "saveManualIdError": "No se pudo guardar el ID manual.",
+      "createHospitalError": "No se pudo crear el hospital."
+    }
   }
 }
