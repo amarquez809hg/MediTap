@@ -1,0 +1,185 @@
+/* Support page — FAQ + contact form on public layout */
+
+.tab8-faq-wrap h2,
+.tab8-contact-wrap h2 {
+  margin-top: 0;
+}
+
+.tab8-contact-lead {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.tab8-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(220, 53, 69, 0.12);
+  color: #ffb4bc;
+  font-size: 0.875rem;
+}
+
+.tab8-success {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(23, 162, 184, 0.15);
+  border: 1px solid rgba(23, 162, 184, 0.35);
+  color: #a8e8ff;
+  font-size: 0.875rem;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.faq-item {
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease;
+}
+
+.faq-item.active {
+  border-color: rgba(23, 162, 184, 0.45);
+}
+
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--meditap-text, #e8eaed);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.faq-question:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.faq-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--meditap-accent, #17a2b8);
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+}
+
+.faq-answer {
+  padding: 0 1rem 1rem;
+}
+
+.faq-answer p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: 2px solid rgba(23, 162, 184, 0.45);
+  border-color: rgba(23, 162, 184, 0.5);
+}
+
+.submit-button {
+  align-self: flex-start;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-accent, #17a2b8) 0%,
+    var(--meditap-primary-tint, #1a6356) 100%
+  );
+  box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
+}
+
+.submit-button:hover {
+  filter: brightness(1.06);
+}
+
+.tab8-mail-link {
+  color: var(--meditap-accent, #17a2b8);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tab8-mail-link:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: light) {
+  .tab8-contact-wrap .form-group label {
+    color: var(--meditap-text, #1f2933);
+  }
+
+  .tab8-contact-wrap .form-group input,
+  .tab8-contact-wrap .form-group textarea {
+    background: var(--meditap-surface, #ffffff);
+    color: var(--meditap-text, #1f2933);
+    border-color: var(--meditap-border, #dbe3df);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .tab8-contact-wrap .form-group label {
+    color: var(--meditap-text, #1f2933);
+  }
+
+  .tab8-contact-wrap .form-group input,
+  .tab8-contact-wrap .form-group textarea {
+    background: var(--meditap-surface, #ffffff);
+    color: var(--meditap-text, #1f2933);
+    border-color: var(--meditap-border, #dbe3df);
+  }
+}

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
@@ -22,14 +21,6 @@ import {
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
-import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
-import {
-    hasHospitalVisitData,
-    mergeChronicConditionsFromPdf,
-    mergeHospitalVisitFromPdf,
-    mergeInsurancesFromPdf,
-    mergeMedicationsFromPdf,
-} from '../intake/mergeTab14IntakeUpload';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -55,7 +46,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import { GlobalWorkerOptions } from "pdfjs-dist";
 import worker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-GlobalWorkerOptions.workerSrc = `${worker}?v=nginx-mjs-mime`;
+GlobalWorkerOptions.workerSrc = worker;
 
 interface PatientInfo {
     givenName: string;
@@ -278,14 +269,14 @@ const sampleHospitalVisit: HospitalVisit = {
     reportId: 'HPT-49202',
 };
 
-const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
-    { id: 0, labelKey: 'patientIntake.sections.patientInfo', icon: 'fa-id-card' },
-    { id: 6, labelKey: 'patientIntake.sections.vitals', icon: 'fa-heartbeat' },
-    { id: 1, labelKey: 'patientIntake.sections.hospitalVisit', icon: 'fa-hospital' },
-    { id: 2, labelKey: 'patientIntake.sections.allergies', icon: 'fa-exclamation-triangle' },
-    { id: 3, labelKey: 'patientIntake.sections.medications', icon: 'fa-pills' },
-    { id: 4, labelKey: 'patientIntake.sections.insurance', icon: 'fa-file-medical' },
-    { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
+const TAB14_SECTIONS: { id: number; label: string; icon: string }[] = [
+    { id: 0, label: 'Patient Information', icon: 'fa-id-card' },
+    { id: 6, label: 'Vitals', icon: 'fa-heartbeat' },
+    { id: 1, label: 'Hospital visit', icon: 'fa-hospital' },
+    { id: 2, label: 'Allergies', icon: 'fa-exclamation-triangle' },
+    { id: 3, label: 'Medications', icon: 'fa-pills' },
+    { id: 4, label: 'Insurance', icon: 'fa-file-medical' },
+    { id: 5, label: 'Chronic Conditions', icon: 'fa-notes-medical' },
 ];
 
 function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
@@ -318,7 +309,6 @@ const ALLERGY_SEVERITY_OPTIONS = [
 ] as const;
 
 const Tab14: React.FC = () => {
-    const { t } = useTranslation();
     const location = useLocation();
     const { username, hasRealmRole, authReady } = useAuth();
     const recordEditorRole = getMeditapRecordEditorRole();
@@ -392,10 +382,6 @@ const Tab14: React.FC = () => {
     const [uploadParsing, setUploadParsing] = useState(false);
     const [loadingIntake, setLoadingIntake] = useState(true);
     const [clearFormHintVisible, setClearFormHintVisible] = useState(false);
-    const [savedFormSnapshot, setSavedFormSnapshot] = useState('');
-    const [showUnsavedLeavePrompt, setShowUnsavedLeavePrompt] = useState(false);
-    const [pendingLeaveUrl, setPendingLeaveUrl] = useState<string | null>(null);
-    const suppressUnsavedPromptRef = useRef(false);
 
     const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
     const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
@@ -405,69 +391,6 @@ const Tab14: React.FC = () => {
         defaultChronicCondition,
     ]);
     const [hospitalVisit, setHospitalVisit] = useState<HospitalVisit>(defaultHospitalVisit);
-
-    const formSnapshot = useMemo(
-        () =>
-            JSON.stringify({
-                patientInfo,
-                insurances,
-                allergies,
-                medications,
-                chronicConditions,
-                hospitalVisit,
-                noAllergies,
-                noMedications,
-                noChronicConditions,
-            }),
-        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisit, noAllergies, noMedications, noChronicConditions]
-    );
-
-    const hasUnsavedChanges =
-        !loadingIntake && savedFormSnapshot !== '' && formSnapshot !== savedFormSnapshot;
-
-    const navigateAwayFromTab14 = (url: string) => {
-        suppressUnsavedPromptRef.current = true;
-        window.location.assign(url);
-    };
-
-    useEffect(() => {
-        if (!loadingIntake && savedFormSnapshot === '') {
-            setSavedFormSnapshot(formSnapshot);
-        }
-    }, [formSnapshot, loadingIntake, savedFormSnapshot]);
-
-    useEffect(() => {
-        const beforeUnload = (event: BeforeUnloadEvent) => {
-            if (!hasUnsavedChanges || suppressUnsavedPromptRef.current) return;
-            event.preventDefault();
-            event.returnValue = '';
-        };
-
-        const clickGuard = (event: MouseEvent) => {
-            if (!hasUnsavedChanges || suppressUnsavedPromptRef.current) return;
-            if (!(event.target instanceof Element)) return;
-
-            const target = event.target.closest('a[href], ion-item[router-link], ion-router-link[href]');
-            if (!target) return;
-
-            const rawUrl = target.getAttribute('href') || target.getAttribute('router-link');
-            if (!rawUrl || rawUrl.startsWith('#') || rawUrl.startsWith('mailto:') || rawUrl.startsWith('tel:')) {
-                return;
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-            setPendingLeaveUrl(rawUrl);
-            setShowUnsavedLeavePrompt(true);
-        };
-
-        window.addEventListener('beforeunload', beforeUnload);
-        document.addEventListener('click', clickGuard, true);
-        return () => {
-            window.removeEventListener('beforeunload', beforeUnload);
-            document.removeEventListener('click', clickGuard, true);
-        };
-    }, [hasUnsavedChanges]);
 
     const applyTab14Bundle = (bundle: Tab14LoadResult) => {
         if (!bundle.hasPatient) return;
@@ -554,140 +477,56 @@ const Tab14: React.FC = () => {
             // Replace demographics from PDF — do not merge with stale API values (e.g. old email).
             setPatientInfo({ ...defaultPatientInfo, ...bundle.patientFields });
 
-            let allergyMergeAdded = 0;
-            if (bundle.allergies.length > 0 || bundle.noKnownDrugAllergies) {
-                const mergedAllergies = mergeAllergiesFromPdf(
-                    allergies.map((row) => ({
+            if (bundle.noKnownDrugAllergies) {
+                setNoAllergies(true);
+                setAllergies([]);
+            } else if (bundle.allergies.length > 0) {
+                setNoAllergies(false);
+                setAllergies(
+                    bundle.allergies.map((row) => ({
                         ...defaultAllergy,
                         ...row,
-                        allergyTypeOther: row.allergyTypeOther ?? "",
-                    })),
-                    bundle.allergies,
-                    bundle.noKnownDrugAllergies
+                    }))
                 );
-                allergyMergeAdded = mergedAllergies.addedCount;
-                setNoAllergies(mergedAllergies.noAllergies);
-                setAllergies(
-                    mergedAllergies.allergies.length > 0
-                        ? mergedAllergies.allergies.map((row) => ({
-                              ...defaultAllergy,
-                              ...row,
-                              allergyTypeOther: row.allergyTypeOther ?? "",
-                          }))
-                        : [defaultAllergy]
-                );
+            } else {
+                setNoAllergies(false);
             }
 
-            let insuranceMergeAdded = 0;
-            let insuranceFieldsFilled = 0;
             if (bundle.insurances.length > 0) {
-                const mergedInsurances = mergeInsurancesFromPdf(
-                    insurances.map((row) => ({ ...defaultInsurance, ...row })),
-                    bundle.insurances.map((row) => ({ ...defaultInsurance, ...row }))
-                );
-                insuranceMergeAdded = mergedInsurances.addedCount;
-                insuranceFieldsFilled = mergedInsurances.filledFieldCount;
                 setInsurances(
-                    mergedInsurances.rows.length > 0
-                        ? mergedInsurances.rows.map((row) => ({
-                              ...defaultInsurance,
-                              ...row,
-                          }))
-                        : [defaultInsurance]
-                );
-            }
-
-            let medicationMergeAdded = 0;
-            if (bundle.medications.length > 0) {
-                const mergedMedications = mergeMedicationsFromPdf(
-                    medications.map((row) => ({ ...defaultMedication, ...row })),
-                    bundle.medications.map((row) => ({ ...defaultMedication, ...row }))
-                );
-                medicationMergeAdded = mergedMedications.addedCount;
-                setNoMedications(false);
-                setMedications(
-                    mergedMedications.rows.length > 0
-                        ? mergedMedications.rows.map((row) => ({
-                              ...defaultMedication,
-                              ...row,
-                          }))
-                        : [defaultMedication]
-                );
-            }
-
-            let chronicMergeAdded = 0;
-            if (bundle.chronicConditions.length > 0) {
-                const mergedChronic = mergeChronicConditionsFromPdf(
-                    chronicConditions.map((row) => ({
-                        ...defaultChronicCondition,
+                    bundle.insurances.map((row) => ({
+                        ...defaultInsurance,
                         ...row,
-                    })),
+                    }))
+                );
+            }
+
+            if (bundle.medications.length > 0) {
+                setMedications(
+                    bundle.medications.map((row) => ({
+                        ...defaultMedication,
+                        ...row,
+                    }))
+                );
+            }
+
+            if (bundle.chronicConditions.length > 0) {
+                setChronicConditions(
                     bundle.chronicConditions.map((row) => ({
                         ...defaultChronicCondition,
                         ...row,
                     }))
                 );
-                chronicMergeAdded = mergedChronic.addedCount;
-                setNoChronicConditions(false);
-                setChronicConditions(
-                    mergedChronic.rows.length > 0
-                        ? mergedChronic.rows.map((row) => ({
-                              ...defaultChronicCondition,
-                              ...row,
-                          }))
-                        : [defaultChronicCondition]
-                );
             }
 
-            let hospitalFieldsAdded = 0;
-            if (hasHospitalVisitData(bundle.hospitalVisit)) {
-                const mergedHospital = mergeHospitalVisitFromPdf(
-                    { ...defaultHospitalVisit, ...hospitalVisit },
-                    bundle.hospitalVisit
-                );
-                hospitalFieldsAdded = mergedHospital.addedFieldCount;
-                setHospitalVisit({
-                    ...defaultHospitalVisit,
-                    ...mergedHospital.visit,
-                });
+            if (Object.keys(bundle.hospitalVisit).length > 0) {
+                setHospitalVisit((prev) => ({
+                    ...prev,
+                    ...bundle.hospitalVisit,
+                }));
             }
 
-            let uploadMsg = summarizeTab14ParseResult(bundle);
-            const mergeNotes: string[] = [];
-            if (allergyMergeAdded > 0) {
-                mergeNotes.push(
-                    `${allergyMergeAdded} new allergy/allergies added (existing kept)`
-                );
-            }
-            if (insuranceMergeAdded > 0) {
-                mergeNotes.push(
-                    `${insuranceMergeAdded} new insurance policy/policies added (existing kept)`
-                );
-            }
-            if (insuranceFieldsFilled > 0) {
-                mergeNotes.push(
-                    `${insuranceFieldsFilled} insurance field(s) filled in (existing values kept)`
-                );
-            }
-            if (medicationMergeAdded > 0) {
-                mergeNotes.push(
-                    `${medicationMergeAdded} new medication(s) added (existing kept)`
-                );
-            }
-            if (chronicMergeAdded > 0) {
-                mergeNotes.push(
-                    `${chronicMergeAdded} new chronic condition(s) added (existing kept)`
-                );
-            }
-            if (hospitalFieldsAdded > 0) {
-                mergeNotes.push(
-                    `${hospitalFieldsAdded} hospital visit field(s) filled in (existing values kept)`
-                );
-            }
-            if (mergeNotes.length > 0) {
-                uploadMsg += ` ${mergeNotes.join('; ')}.`;
-            }
-            setUploadParseMessage(uploadMsg);
+            setUploadParseMessage(summarizeTab14ParseResult(bundle));
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
             setUploadParseMessage(
@@ -768,7 +607,7 @@ const Tab14: React.FC = () => {
 
     // save form
     // checks if form is valid (saves) or not (error message) 
-    const saveForm = async (): Promise<boolean> => {
+    const saveForm = async () => {
         const isValid = checkForm();
 
         if (!isValid) {
@@ -780,7 +619,7 @@ const Tab14: React.FC = () => {
             ) {
                 setActiveSection(0);
             }
-            return false;
+            return;
         }
 
         setSaveErrorMessage(false);
@@ -803,40 +642,15 @@ const Tab14: React.FC = () => {
             if (refreshed.hasPatient) {
                 applyTab14Bundle(refreshed);
             }
-            setSavedFormSnapshot(formSnapshot);
             setSaveMessage(true);
             setTimeout(() => setSaveMessage(false), 2000);
-            return true;
         } catch (e) {
             setBackendError(
                 e instanceof Error ? e.message : 'Could not save to server.'
             );
-            return false;
         } finally {
             setSaving(false);
         }
-    };
-
-    const saveAndLeavePage = async () => {
-        if (!pendingLeaveUrl) return;
-        const destination = pendingLeaveUrl;
-        const saved = await saveForm();
-        if (!saved) {
-            setShowUnsavedLeavePrompt(false);
-            return;
-        }
-        setShowUnsavedLeavePrompt(false);
-        setPendingLeaveUrl(null);
-        navigateAwayFromTab14(destination);
-    };
-
-    const leaveWithoutSaving = () => {
-        if (!pendingLeaveUrl) return;
-        const destination = pendingLeaveUrl;
-        setSavedFormSnapshot(formSnapshot);
-        setShowUnsavedLeavePrompt(false);
-        setPendingLeaveUrl(null);
-        navigateAwayFromTab14(destination);
     };
 
     // clear form 
@@ -1050,7 +864,7 @@ const Tab14: React.FC = () => {
                 <div className="chronic-conditions-container tab14-add-patient">
                     <header className="chronic-conditions-header">
                         <h1>
-                            <i className="fas fa-user-plus" aria-hidden /> {t('patientIntake.title')}
+                            <i className="fas fa-user-plus" aria-hidden /> Add Patient Information
                         </h1>
                         <div className="tab14-header-actions">
                             <button
@@ -1060,7 +874,7 @@ const Tab14: React.FC = () => {
                                 disabled={!canEditPatientRecords}
                             >
                                 <i className="fas fa-flask" aria-hidden />
-                                {t('patientIntake.loadSample')}
+                                Load sample data
                             </button>
                             <button type="button" className="book-btn">
                                 <a
@@ -1073,7 +887,7 @@ const Tab14: React.FC = () => {
                                     }}
                                 >
                                     <i className="fas fa-arrow-left" aria-hidden />
-                                    {t('common.goBackToDashboard')}
+                                    Go back to dashboard
                                 </a>
                             </button>
                         </div>
@@ -1081,7 +895,7 @@ const Tab14: React.FC = () => {
 
                     <main className="chronic-conditions-main tab14-master">
                         <div className="tab14-layout">
-                            <aside className="tab14-sidebar" aria-label={t('patientIntake.sectionsAria')}>
+                            <aside className="tab14-sidebar" aria-label="Form sections">
                                 <nav className="tab14-nav">
                                     {TAB14_SECTIONS.map((s) => (
                                         <button
@@ -1091,7 +905,7 @@ const Tab14: React.FC = () => {
                                             onClick={() => setActiveSection(s.id)}
                                         >
                                             <i className={`fas ${s.icon}`} aria-hidden />
-                                            <span>{t(s.labelKey)}</span>
+                                            <span>{s.label}</span>
                                         </button>
                                     ))}
                                 </nav>
@@ -1099,13 +913,15 @@ const Tab14: React.FC = () => {
                             <div className="tab14-main-panel">
                                 {loadingIntake && (
                                     <p className="tab14-loading-hint" role="status">
-                                        {t('patientIntake.loadingRecord')}
+                                        Loading your saved patient record…
                                     </p>
                                 )}
                                 {staffElevationActive && (
                                     <div className="tab14-staff-elevation-banner" role="status">
                                         <p>
-                                            {t('patientIntake.staffActiveBanner')}
+                                            Staff editing is active for this patient. The patient stays signed
+                                            in. When you’re done, use <strong>End staff mode</strong> to return
+                                            this form to view-only.
                                         </p>
                                         <button
                                             type="button"
@@ -1115,14 +931,17 @@ const Tab14: React.FC = () => {
                                                 setElevationNonce((n) => n + 1);
                                             }}
                                         >
-                                            {t('common.endStaffMode')}
+                                            End staff mode
                                         </button>
                                     </div>
                                 )}
                                 {!canEditPatientRecords && (
                                     <div className="tab14-view-only-banner" role="status">
                                         <p>
-                                            {t('patientIntake.viewOnlyBanner')}
+                                            You can <strong>upload a PDF or image</strong> to fill these fields, then{' '}
+                                            <strong>Save</strong> to your chart. Open the <strong>Vitals</strong>{' '}
+                                            section to enter height and weight for your BMI. Other fields are read-only
+                                            here — use <strong>Staff sign-in</strong> to edit manually or clear the form.
                                         </p>
                                         <button
                                             type="button"
@@ -1132,23 +951,18 @@ const Tab14: React.FC = () => {
                                                 setStaffModalOpen(true);
                                             }}
                                         >
-                                            {t('common.staffSignIn')}
+                                            Staff sign-in
                                         </button>
                                     </div>
                                 )}
                                 <div className="tab14-panel-header">
-                                    <h2>
-                                        {t(
-                                            TAB14_SECTIONS.find((s) => s.id === activeSection)?.labelKey ??
-                                                'patientIntake.sections.patientInfo'
-                                        )}
-                                    </h2>
+                                    <h2>{TAB14_SECTIONS.find((s) => s.id === activeSection)?.label}</h2>
                                     <p className="tab14-panel-sub">
                                         {activeSection === 6
-                                            ? t('patientIntake.vitalsPanelSub')
+                                            ? 'Enter height and weight to calculate BMI on your dashboard and Quick Status, then Save.'
                                             : activeSection === 0
-                                              ? t('patientIntake.demographicsSub')
-                                              : t('patientIntake.defaultPanelSub')}
+                                              ? 'Demographics from your chart or PDF. Use the Vitals tab for height, weight, and BMI.'
+                                              : 'Use the menu to switch sections. Save applies to the entire patient record.'}
                                     </p>
                                 </div>
                                 <div className="tab14-panel-body">
@@ -1371,9 +1185,10 @@ const Tab14: React.FC = () => {
                         {activeSection === 6 && (
                             <div className="tab14-section-card tab14-vitals-section">
                                 <div className="tab14-vitals-heading">
-                                    <h3>{t('patientIntake.heightWeightHeading')}</h3>
+                                    <h3>Height &amp; weight</h3>
                                     <p>
-                                        {t('patientIntake.heightWeightSub')}
+                                        MyChart-style summary: these values drive your BMI on the dashboard and Quick
+                                        Status.
                                     </p>
                                 </div>
                                 {renderPatientVitalsFields()}
@@ -1947,7 +1762,7 @@ const Tab14: React.FC = () => {
                             onClick = {() => void saveForm()}
                             disabled={saving || !authReady}
                         >
-                            {saving ? t('patientIntake.saving') : t('patientIntake.save')}
+                            {saving ? 'Saving…' : 'Save'}
                         </button>
 
                         <span
@@ -1972,14 +1787,14 @@ const Tab14: React.FC = () => {
                                 title={
                                     canEditPatientRecords
                                         ? undefined
-                                        : t('patientIntake.clearFormStaffHint')
+                                        : 'Staff sign-in required to clear the form.'
                                 }
                             >
-                                {t('patientIntake.clearForm')}
+                                Clear Form
                             </button>
                             {!canEditPatientRecords && clearFormHintVisible && (
                                 <span className="tab14-clear-tooltip-popup" role="tooltip">
-                                    {t('patientIntake.clearFormStaffHint')}
+                                    Staff sign-in required to clear the form.
                                 </span>
                             )}
                         </span>
@@ -2004,7 +1819,7 @@ const Tab14: React.FC = () => {
 
                     {saveMessage && 
                     <div className = "saved-message">
-                        {t('patientIntake.dataSaved')}
+                        Data Saved
                     </div>}
 
                     </div>
@@ -2012,11 +1827,11 @@ const Tab14: React.FC = () => {
                     {/* Upload works for patients; Save is outside fieldset so it stays clickable */}
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
-                            {t('patientIntake.uploadFile')}
+                            Upload File (PDF, JPEG, PNG)
                             <input type = "file" accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
                         </label>
                         {uploadParsing && (
-                            <p className="tab14-upload-parse tab14-upload-parse--muted">{t('patientIntake.readingDocument')}</p>
+                            <p className="tab14-upload-parse tab14-upload-parse--muted">Reading document… (OCR on images may take a minute.)</p>
                         )}
                         {!uploadParsing && uploadParseMessage && (
                             <p className="tab14-upload-parse">{uploadParseMessage}</p>
@@ -2068,49 +1883,6 @@ const Tab14: React.FC = () => {
                     </main>
                 </div>
 
-                {showUnsavedLeavePrompt && (
-                    <div className="tab14-unsaved-modal" role="presentation">
-                        <div
-                            className="tab14-unsaved-modal__panel"
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="tab14-unsaved-title"
-                        >
-                            <h2 id="tab14-unsaved-title">Unsaved changes</h2>
-                            <p>You have modified patient information. What would you like to do before leaving this page?</p>
-                            <div className="tab14-unsaved-modal__actions">
-                                <button
-                                    type="button"
-                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--primary"
-                                    onClick={() => void saveAndLeavePage()}
-                                    disabled={saving}
-                                >
-                                    {saving ? 'Saving...' : 'Save'}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--danger"
-                                    onClick={leaveWithoutSaving}
-                                    disabled={saving}
-                                >
-                                    Dont save
-                                </button>
-                                <button
-                                    type="button"
-                                    className="tab14-unsaved-modal__btn tab14-unsaved-modal__btn--secondary"
-                                    onClick={() => {
-                                        setShowUnsavedLeavePrompt(false);
-                                        setPendingLeaveUrl(null);
-                                    }}
-                                    disabled={saving}
-                                >
-                                    Go back
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {staffModalOpen && (
                     <div
                         className="tab14-staff-modal"
@@ -2121,20 +1893,21 @@ const Tab14: React.FC = () => {
                         <button
                             type="button"
                             className="tab14-staff-modal__backdrop"
-                            aria-label={t('common.closeDialog')}
+                            aria-label="Close dialog"
                             disabled={staffSubmitting}
                             onClick={() => {
                                 if (!staffSubmitting) setStaffModalOpen(false);
                             }}
                         />
                         <div className="tab14-staff-modal__panel">
-                            <h2 id="tab14-staff-modal-title">{t('common.staffSignIn')}</h2>
+                            <h2 id="tab14-staff-modal-title">Staff sign-in</h2>
                             <p className="tab14-staff-modal__hint">
-                                {t('patientIntake.staffModalHint')}
+                                The patient stays signed in on this device. Enter your staff username and password
+                                to unlock editing in this tab.
                             </p>
                             <form onSubmit={(e) => void submitStaffModal(e)}>
                                 <div className="form-field">
-                                    <label htmlFor="tab14-staff-user">{t('common.staffUsername')}</label>
+                                    <label htmlFor="tab14-staff-user">Staff username</label>
                                     <input
                                         id="tab14-staff-user"
                                         name="username"
@@ -2145,7 +1918,7 @@ const Tab14: React.FC = () => {
                                     />
                                 </div>
                                 <div className="form-field">
-                                    <label htmlFor="tab14-staff-pass">{t('common.password')}</label>
+                                    <label htmlFor="tab14-staff-pass">Password</label>
                                     <input
                                         id="tab14-staff-pass"
                                         name="password"
@@ -2166,14 +1939,14 @@ const Tab14: React.FC = () => {
                                         disabled={staffSubmitting}
                                         onClick={() => setStaffModalOpen(false)}
                                     >
-                                        {t('common.cancel')}
+                                        Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
                                         disabled={staffSubmitting}
                                     >
-                                        {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
+                                        {staffSubmitting ? 'Signing in…' : 'Unlock editing'}
                                     </button>
                                 </div>
                             </form>
