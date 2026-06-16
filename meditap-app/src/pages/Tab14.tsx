@@ -31,14 +31,17 @@ import {
     mergeMedicationsFromPdf,
 } from '../intake/mergeTab14IntakeUpload';
 import {
+    applyTab14ParseBundle,
+    formatTab14MergeStatsNotes,
+    type Tab14MergeSnapshot,
+} from '../intake/applyTab14ParseBundle';
+import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
 } from '../intake/tab14LegacyStorage';
 import {
-    augmentPdfTextWithFirstPageOcr,
-    extractTextFromPdfContentItems,
-    fileToDataUrl,
-    ocrImageDataUrl,
+    extractTab14UploadFileText,
+    isTab14UploadFileType,
 } from '../intake/documentTextExtraction';
 import {
     bmiCategoryLabel,
@@ -317,6 +320,13 @@ const ALLERGY_SEVERITY_OPTIONS = [
     { value: 'Unknown', label: 'Unknown / not documented' },
 ] as const;
 
+type UploadedFileEntry = {
+    id: string;
+    file: File;
+    previewUrl: string;
+    uploadedAt: string;
+};
+
 const Tab14: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
@@ -364,10 +374,7 @@ const Tab14: React.FC = () => {
     // useStates // 
 
     //file handling 
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null); 
-    const [filePreview, setFilePreview] = useState<string | null>(null); 
-    const [uploadTime, setUploadTime] = useState<string |null>(null); 
-    const [fileType, setFileType] = useState<string | null>(null); 
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileEntry[]>([]); 
     // error handling 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [activeSection, setActiveSection] = useState(0);
@@ -510,186 +517,147 @@ const Tab14: React.FC = () => {
         }
     }, [patientInfo.givenName, patientInfo.familyName, username]);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const applySnapshotToForm = (snapshot: Tab14MergeSnapshot) => {
+        setNoAllergies(snapshot.noAllergies);
+        setAllergies(
+            snapshot.allergies.length > 0
+                ? snapshot.allergies.map((row) => ({
+                      ...defaultAllergy,
+                      ...row,
+                      allergyTypeOther: row.allergyTypeOther ?? "",
+                  }))
+                : [defaultAllergy]
+        );
+        setInsurances(
+            snapshot.insurances.length > 0
+                ? snapshot.insurances.map((row) => ({
+                      ...defaultInsurance,
+                      ...row,
+                  }))
+                : [defaultInsurance]
+        );
+        setNoMedications(snapshot.noMedications);
+        setMedications(
+            snapshot.medications.length > 0
+                ? snapshot.medications.map((row) => ({
+                      ...defaultMedication,
+                      ...row,
+                  }))
+                : [defaultMedication]
+        );
+        setNoChronicConditions(snapshot.noChronicConditions);
+        setChronicConditions(
+            snapshot.chronicConditions.length > 0
+                ? snapshot.chronicConditions.map((row) => ({
+                      ...defaultChronicCondition,
+                      ...row,
+                  }))
+                : [defaultChronicCondition]
+        );
+        setHospitalVisit({
+            ...defaultHospitalVisit,
+            ...snapshot.hospitalVisit,
+        });
+    };
 
-        const allowed = file.type === 'application/pdf' || file.type.startsWith('image/');
-        if (!allowed) {
-            setUploadParseMessage('Please upload a PDF, JPEG, or PNG file.');
+    const buildMergeSnapshot = (): Tab14MergeSnapshot => ({
+        allergies: allergies.map((row) => ({
+            ...defaultAllergy,
+            ...row,
+            allergyTypeOther: row.allergyTypeOther ?? "",
+        })),
+        noAllergies,
+        insurances: insurances.map((row) => ({ ...defaultInsurance, ...row })),
+        medications: medications.map((row) => ({ ...defaultMedication, ...row })),
+        noMedications,
+        chronicConditions: chronicConditions.map((row) => ({
+            ...defaultChronicCondition,
+            ...row,
+        })),
+        noChronicConditions,
+        hospitalVisit: { ...defaultHospitalVisit, ...hospitalVisit },
+    });
+
+    const removeUploadedFile = (id: string) => {
+        setUploadedFiles((prev) => {
+            const entry = prev.find((row) => row.id === id);
+            if (entry) URL.revokeObjectURL(entry.previewUrl);
+            return prev.filter((row) => row.id !== id);
+        });
+    };
+
+    const clearUploadedFiles = () => {
+        setUploadedFiles((prev) => {
+            prev.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
+            return [];
+        });
+        setUploadParseMessage(null);
+    };
+
+    const uploadedFilesRef = useRef<UploadedFileEntry[]>([]);
+    useEffect(() => {
+        uploadedFilesRef.current = uploadedFiles;
+    }, [uploadedFiles]);
+    useEffect(() => {
+        return () => {
+            uploadedFilesRef.current.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
+        };
+    }, []);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = Array.from(e.target.files ?? []);
+        if (!selected.length) return;
+
+        if (selected.some((file) => !isTab14UploadFileType(file))) {
+            setUploadParseMessage(t('patientIntake.uploadFileTypeError'));
             e.target.value = '';
             return;
         }
 
-        setUploadedFile(file);
-        setFileType(file.type);
-        setUploadTime(new Date().toLocaleString());
-        setUploadParseMessage(null);
         setUploadParsing(true);
+        setUploadParseMessage(null);
 
-        const previewUrl = URL.createObjectURL(file);
-        setFilePreview(previewUrl);
+        let snapshot = buildMergeSnapshot();
+        const fileMessages: string[] = [];
+        const newEntries: UploadedFileEntry[] = [];
 
         try {
-            let fullText = '';
+            for (let index = 0; index < selected.length; index += 1) {
+                const file = selected[index];
+                setUploadParseMessage(
+                    t('patientIntake.readingDocumentProgress', {
+                        current: index + 1,
+                        total: selected.length,
+                        name: file.name,
+                    })
+                );
 
-            if (file.type === 'application/pdf') {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
+                const fullText = await extractTab14UploadFileText(file);
+                const bundle = parseTab14IntakeDocument(fullText);
+                const merged = applyTab14ParseBundle(snapshot, bundle);
+                snapshot = merged.snapshot;
+
+                let uploadMsg = summarizeTab14ParseResult(bundle);
+                const mergeNotes = formatTab14MergeStatsNotes(merged.stats);
+                if (mergeNotes.length > 0) {
+                    uploadMsg += ` ${mergeNotes.join('; ')}.`;
                 }
-                fullText = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
-            } else if (file.type.startsWith('image/')) {
-                const dataUrl = await fileToDataUrl(file);
-                fullText = await ocrImageDataUrl(dataUrl);
-            }
+                fileMessages.push(`${file.name}: ${uploadMsg}`);
 
-            // parseTab14IntakeDocument normalizes for generic/Athena docs; MediTap demo
-            // forms use label-boundary parsing on raw extracted text.
-            const bundle = parseTab14IntakeDocument(fullText);
-
-            // Replace demographics from PDF — do not merge with stale API values (e.g. old email).
-            setPatientInfo({ ...defaultPatientInfo, ...bundle.patientFields });
-
-            let allergyMergeAdded = 0;
-            if (bundle.allergies.length > 0 || bundle.noKnownDrugAllergies) {
-                const mergedAllergies = mergeAllergiesFromPdf(
-                    allergies.map((row) => ({
-                        ...defaultAllergy,
-                        ...row,
-                        allergyTypeOther: row.allergyTypeOther ?? "",
-                    })),
-                    bundle.allergies,
-                    bundle.noKnownDrugAllergies
-                );
-                allergyMergeAdded = mergedAllergies.addedCount;
-                setNoAllergies(mergedAllergies.noAllergies);
-                setAllergies(
-                    mergedAllergies.allergies.length > 0
-                        ? mergedAllergies.allergies.map((row) => ({
-                              ...defaultAllergy,
-                              ...row,
-                              allergyTypeOther: row.allergyTypeOther ?? "",
-                          }))
-                        : [defaultAllergy]
-                );
-            }
-
-            let insuranceMergeAdded = 0;
-            let insuranceFieldsFilled = 0;
-            if (bundle.insurances.length > 0) {
-                const mergedInsurances = mergeInsurancesFromPdf(
-                    insurances.map((row) => ({ ...defaultInsurance, ...row })),
-                    bundle.insurances.map((row) => ({ ...defaultInsurance, ...row }))
-                );
-                insuranceMergeAdded = mergedInsurances.addedCount;
-                insuranceFieldsFilled = mergedInsurances.filledFieldCount;
-                setInsurances(
-                    mergedInsurances.rows.length > 0
-                        ? mergedInsurances.rows.map((row) => ({
-                              ...defaultInsurance,
-                              ...row,
-                          }))
-                        : [defaultInsurance]
-                );
-            }
-
-            let medicationMergeAdded = 0;
-            if (bundle.medications.length > 0) {
-                const mergedMedications = mergeMedicationsFromPdf(
-                    medications.map((row) => ({ ...defaultMedication, ...row })),
-                    bundle.medications.map((row) => ({ ...defaultMedication, ...row }))
-                );
-                medicationMergeAdded = mergedMedications.addedCount;
-                setNoMedications(false);
-                setMedications(
-                    mergedMedications.rows.length > 0
-                        ? mergedMedications.rows.map((row) => ({
-                              ...defaultMedication,
-                              ...row,
-                          }))
-                        : [defaultMedication]
-                );
-            }
-
-            let chronicMergeAdded = 0;
-            if (bundle.chronicConditions.length > 0) {
-                const mergedChronic = mergeChronicConditionsFromPdf(
-                    chronicConditions.map((row) => ({
-                        ...defaultChronicCondition,
-                        ...row,
-                    })),
-                    bundle.chronicConditions.map((row) => ({
-                        ...defaultChronicCondition,
-                        ...row,
-                    }))
-                );
-                chronicMergeAdded = mergedChronic.addedCount;
-                setNoChronicConditions(false);
-                setChronicConditions(
-                    mergedChronic.rows.length > 0
-                        ? mergedChronic.rows.map((row) => ({
-                              ...defaultChronicCondition,
-                              ...row,
-                          }))
-                        : [defaultChronicCondition]
-                );
-            }
-
-            let hospitalFieldsAdded = 0;
-            if (hasHospitalVisitData(bundle.hospitalVisit)) {
-                const mergedHospital = mergeHospitalVisitFromPdf(
-                    { ...defaultHospitalVisit, ...hospitalVisit },
-                    bundle.hospitalVisit
-                );
-                hospitalFieldsAdded = mergedHospital.addedFieldCount;
-                setHospitalVisit({
-                    ...defaultHospitalVisit,
-                    ...mergedHospital.visit,
+                newEntries.push({
+                    id: `${Date.now()}-${index}-${file.name}`,
+                    file,
+                    previewUrl: URL.createObjectURL(file),
+                    uploadedAt: new Date().toLocaleString(),
                 });
             }
 
-            let uploadMsg = summarizeTab14ParseResult(bundle);
-            const mergeNotes: string[] = [];
-            if (allergyMergeAdded > 0) {
-                mergeNotes.push(
-                    `${allergyMergeAdded} new allergy/allergies added (existing kept)`
-                );
-            }
-            if (insuranceMergeAdded > 0) {
-                mergeNotes.push(
-                    `${insuranceMergeAdded} new insurance policy/policies added (existing kept)`
-                );
-            }
-            if (insuranceFieldsFilled > 0) {
-                mergeNotes.push(
-                    `${insuranceFieldsFilled} insurance field(s) filled in (existing values kept)`
-                );
-            }
-            if (medicationMergeAdded > 0) {
-                mergeNotes.push(
-                    `${medicationMergeAdded} new medication(s) added (existing kept)`
-                );
-            }
-            if (chronicMergeAdded > 0) {
-                mergeNotes.push(
-                    `${chronicMergeAdded} new chronic condition(s) added (existing kept)`
-                );
-            }
-            if (hospitalFieldsAdded > 0) {
-                mergeNotes.push(
-                    `${hospitalFieldsAdded} hospital visit field(s) filled in (existing values kept)`
-                );
-            }
-            if (mergeNotes.length > 0) {
-                uploadMsg += ` ${mergeNotes.join('; ')}.`;
-            }
-            setUploadParseMessage(uploadMsg);
+            applySnapshotToForm(snapshot);
+            setUploadedFiles((prev) => [...prev, ...newEntries]);
+            setUploadParseMessage(fileMessages.join('\n\n'));
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
+            newEntries.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
             setUploadParseMessage(
                 err instanceof Error ? `Could not read file: ${err.message}` : 'Could not read file.'
             );
@@ -2013,7 +1981,7 @@ const Tab14: React.FC = () => {
                     <div className = "file-upload-section">
                         <label className = "file-upload-label">
                             {t('patientIntake.uploadFile')}
-                            <input type = "file" accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
+                            <input type = "file" multiple accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
                         </label>
                         {uploadParsing && (
                             <p className="tab14-upload-parse tab14-upload-parse--muted">{t('patientIntake.readingDocument')}</p>
@@ -2022,41 +1990,45 @@ const Tab14: React.FC = () => {
                             <p className="tab14-upload-parse">{uploadParseMessage}</p>
                         )}
 
-                        {uploadedFile && (
-                        <div className="file-preview">
-                            <p><strong>Name:</strong> {uploadedFile.name}</p>
-                            <p><strong>Size:</strong> {(uploadedFile.size / 1024).toFixed(2)} KB</p>
-                            <p><strong>Uploaded:</strong> {uploadTime}</p>
+                        {uploadedFiles.length > 0 && (
+                        <div className="file-preview-list">
+                            {uploadedFiles.map((entry) => (
+                                <div className="file-preview" key={entry.id}>
+                                    <p><strong>Name:</strong> {entry.file.name}</p>
+                                    <p><strong>Size:</strong> {(entry.file.size / 1024).toFixed(2)} KB</p>
+                                    <p><strong>Uploaded:</strong> {entry.uploadedAt}</p>
 
-                            {fileType === 'application/pdf' ? (
-                                <div className = "file-thumbnail">
-                                    <img src = "/pdf-icon.png" alt="" />
+                                    {entry.file.type === 'application/pdf' ? (
+                                        <div className = "file-thumbnail">
+                                            <img src = "/pdf-icon.png" alt="" />
+                                            <button
+                                                className = "preview-button"
+                                                type = "button"
+                                                onClick = {() => window.open(entry.previewUrl, "_blank")}>
+                                                Preview PDF
+                                            </button>
+                                        </div>
+                                    ) : entry.file.type.startsWith('image/') ? (
+                                        <div className="file-thumbnail">
+                                            <img src={entry.previewUrl} alt="Uploaded" style={{ width: 100, height: 100, objectFit: 'cover' }} />
+                                        </div>
+                                    ) : (
+                                        <p>No preview available for this file type.</p>
+                                    )}
+
                                     <button
-                                        className = "preview-button"
-                                        type = "button"
-                                        onClick = {() => filePreview && window.open(filePreview, "_blank")}>
-                                        Preview PDF
+                                        className="remove-file-button"
+                                        type="button"
+                                        onClick={() => removeUploadedFile(entry.id)}>
+                                        Remove File
                                     </button>
                                 </div>
-                            ) : fileType?.startsWith('image/') ? (
-                                <div className="file-thumbnail">
-                                    <img src={filePreview!} alt="Uploaded" style={{ width: 100, height: 100, objectFit: 'cover' }} />
-                                </div>
-                            ) : (
-                                <p>No preview available for this file type.</p>
-                            )}
-
+                            ))}
                             <button
-                                className="remove-file-button"
+                                className="remove-file-button remove-file-button--clear-all"
                                 type="button"
-                                onClick={() => {
-                                setUploadedFile(null);
-                                setFilePreview(null);
-                                setFileType(null);
-                                setUploadTime(null);
-                                setUploadParseMessage(null);
-                                }}>
-                                Remove File
+                                onClick={clearUploadedFiles}>
+                                {t('patientIntake.clearUploadedFiles')}
                             </button>
                         </div>
                     )}

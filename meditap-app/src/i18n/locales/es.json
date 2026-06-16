@@ -454,9 +454,12 @@
     "clearForm": "Borrar formulario",
     "clearFormStaffHint": "Se requiere inicio de sesión del personal para borrar el formulario.",
     "dataSaved": "Datos guardados",
-    "uploadFile": "Subir archivo (PDF, JPEG, PNG)",
+    "uploadFile": "Subir archivos (PDF, JPEG, PNG)",
     "readingDocument": "Leyendo documento… (OCR en imágenes puede tardar un minuto.)",
-    "staffModalHint": "El personal puede editar demografía y borrar el formulario mientras el paciente sigue con sesión iniciada."
+    "staffModalHint": "El personal puede editar demografía y borrar el formulario mientras el paciente sigue con sesión iniciada.",
+    "readingDocumentProgress": "Leyendo {{name}} ({{current}} de {{total}})...",
+    "uploadFileTypeError": "Suba solo archivos PDF, JPEG o PNG.",
+    "clearUploadedFiles": "Quitar todos los archivos subidos"
   },
   "admin": {
     "title": "Panel de administración",

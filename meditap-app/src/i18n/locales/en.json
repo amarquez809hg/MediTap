@@ -453,9 +453,12 @@
     "clearForm": "Clear Form",
     "clearFormStaffHint": "Staff sign-in required to clear the form.",
     "dataSaved": "Data Saved",
-    "uploadFile": "Upload File (PDF, JPEG, PNG)",
+    "uploadFile": "Upload Files (PDF, JPEG, PNG)",
     "readingDocument": "Reading document… (OCR on images may take a minute.)",
-    "staffModalHint": "Staff can edit demographics and clear the form while the patient stays signed in."
+    "staffModalHint": "Staff can edit demographics and clear the form while the patient stays signed in.",
+    "readingDocumentProgress": "Reading {{name}} ({{current}} of {{total}})...",
+    "uploadFileTypeError": "Please upload PDF, JPEG, or PNG files only.",
+    "clearUploadedFiles": "Clear all uploaded files"
   },
   "admin": {
     "title": "Admin Panel",

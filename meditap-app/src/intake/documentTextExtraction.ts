@@ -1,3 +1,4 @@
+import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 const SPARSE_PDF_CHAR_THRESHOLD = 100;
@@ -128,4 +129,30 @@ export async function fileToDataUrl(file: File): Promise<string> {
     r.onerror = () => reject(r.error);
     r.readAsDataURL(file);
   });
+}
+
+export function isTab14UploadFileType(file: File): boolean {
+  return file.type === 'application/pdf' || file.type.startsWith('image/');
+}
+
+/** Extract plain text from a Tab14 upload file (PDF with optional OCR, or image OCR). */
+export async function extractTab14UploadFileText(file: File): Promise<string> {
+  if (file.type === 'application/pdf') {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
+    }
+    return augmentPdfTextWithFirstPageOcr(fullText, pdf);
+  }
+
+  if (file.type.startsWith('image/')) {
+    const dataUrl = await fileToDataUrl(file);
+    return ocrImageDataUrl(dataUrl);
+  }
+
+  throw new Error('Unsupported file type');
 }

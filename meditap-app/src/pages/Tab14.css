@@ -849,3 +849,19 @@ ion-page.ct-page.ct-tab14 ion-content {
   background: rgba(148, 163, 184, 0.22);
   color: var(--meditap-text, #102a43);
 }
+
+.file-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.remove-file-button--clear-all {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.tab14-upload-parse {
+  white-space: pre-wrap;
+}
