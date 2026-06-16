@@ -10,7 +10,7 @@ import { mergeAllergiesFromPdf } from "./mergeTab14Allergies";
 import {
   hasHospitalVisitData,
   mergeChronicConditionsFromPdf,
-  mergeHospitalVisitFromPdf,
+  mergeHospitalVisitsFromPdf,
   mergeInsurancesFromPdf,
   mergeMedicationsFromPdf,
 } from "./mergeTab14IntakeUpload";
@@ -23,7 +23,7 @@ export type Tab14MergeSnapshot = {
   noMedications: boolean;
   chronicConditions: Tab14ChronicRow[];
   noChronicConditions: boolean;
-  hospitalVisit: Tab14HospitalFields;
+  hospitalVisits: Tab14HospitalFields[];
 };
 
 export type Tab14MergeStats = {
@@ -32,6 +32,7 @@ export type Tab14MergeStats = {
   insuranceFieldsFilled: number;
   medicationMergeAdded: number;
   chronicMergeAdded: number;
+  hospitalVisitsAdded: number;
   hospitalFieldsAdded: number;
 };
 
@@ -41,6 +42,7 @@ const emptyStats = (): Tab14MergeStats => ({
   insuranceFieldsFilled: 0,
   medicationMergeAdded: 0,
   chronicMergeAdded: 0,
+  hospitalVisitsAdded: 0,
   hospitalFieldsAdded: 0,
 });
 
@@ -70,6 +72,11 @@ export function formatTab14MergeStatsNotes(stats: Tab14MergeStats): string[] {
   if (stats.chronicMergeAdded > 0) {
     notes.push(
       `${stats.chronicMergeAdded} new chronic condition(s) added (existing kept)`
+    );
+  }
+  if (stats.hospitalVisitsAdded > 0) {
+    notes.push(
+      `${stats.hospitalVisitsAdded} new hospital visit(s) added (existing kept)`
     );
   }
   if (stats.hospitalFieldsAdded > 0) {
@@ -145,12 +152,13 @@ export function applyTab14ParseBundle(
   }
 
   if (hasHospitalVisitData(bundle.hospitalVisit)) {
-    const mergedHospital = mergeHospitalVisitFromPdf(
-      next.hospitalVisit,
+    const mergedHospital = mergeHospitalVisitsFromPdf(
+      next.hospitalVisits,
       bundle.hospitalVisit
     );
-    stats.hospitalFieldsAdded = mergedHospital.addedFieldCount;
-    next = { ...next, hospitalVisit: mergedHospital.visit };
+    stats.hospitalVisitsAdded = mergedHospital.addedCount;
+    stats.hospitalFieldsAdded = mergedHospital.filledFieldCount;
+    next = { ...next, hospitalVisits: mergedHospital.rows };
   }
 
   return { snapshot: next, stats };

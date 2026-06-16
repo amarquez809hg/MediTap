@@ -7,6 +7,7 @@ const TAB14_LEGACY_KEYS = [
   'medications',
   'chronicConditions',
   'hospitalVisit',
+  'hospitalVisits',
 ] as const;
 
 function readJson<T>(key: string): T | null {
@@ -20,7 +21,7 @@ function readJson<T>(key: string): T | null {
   }
 }
 
-/** True when any legacy Tab14 localStorage keys exist (preâ€“API-only builds). */
+/** True when any legacy Tab14 localStorage keys exist (pre–API-only builds). */
 export function hasTab14LegacyLocalStorage(): boolean {
   if (typeof window === 'undefined') return false;
   return TAB14_LEGACY_KEYS.some((k) => localStorage.getItem(k) != null);
@@ -45,16 +46,16 @@ export function loadTab14LegacyFromLocalStorage(): Tab14LoadResult | null {
     readJson<Tab14LoadResult['medications']>('medications') ?? [];
   const chronicConditions =
     readJson<Tab14LoadResult['chronicConditions']>('chronicConditions') ?? [];
-  const hospitalVisit =
-    readJson<Tab14LoadResult['hospitalVisit']>('hospitalVisit') ?? {
-      facilityName: '',
-      visitType: '',
-      reason: '',
-      visitDate: '',
-      dischargeDate: '',
-      attendingPhysician: '',
-      reportId: '',
-    };
+  const hospitalVisitsRaw =
+    readJson<Tab14LoadResult['hospitalVisits']>('hospitalVisits') ??
+    readJson<Tab14LoadResult['hospitalVisits']>('hospitalVisit');
+  const hospitalVisits = Array.isArray(hospitalVisitsRaw)
+    ? hospitalVisitsRaw
+    : hospitalVisitsRaw &&
+        typeof hospitalVisitsRaw === 'object' &&
+        Object.values(hospitalVisitsRaw).some((v) => String(v ?? '').trim())
+      ? [hospitalVisitsRaw as Tab14LoadResult['hospitalVisits'][number]]
+      : [];
 
   return {
     hasPatient: true,
@@ -81,7 +82,7 @@ export function loadTab14LegacyFromLocalStorage(): Tab14LoadResult | null {
     allergies: Array.isArray(allergies) ? allergies : [],
     medications: Array.isArray(medications) ? medications : [],
     chronicConditions: Array.isArray(chronicConditions) ? chronicConditions : [],
-    hospitalVisit,
+    hospitalVisits,
     noAllergies: Array.isArray(allergies) && allergies.length === 0,
   };
 }
@@ -97,7 +98,7 @@ export function tab14LegacyToSaveInput(
     allergies: legacy.allergies,
     medications: legacy.medications,
     chronicConditions: legacy.chronicConditions,
-    hospitalVisit: legacy.hospitalVisit,
+    hospitalVisits: legacy.hospitalVisits,
     noAllergies: legacy.noAllergies,
   };
 }

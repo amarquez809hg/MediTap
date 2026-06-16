@@ -1420,7 +1420,7 @@ export type Tab14SaveInput = {
   allergies: Tab14SaveAllergy[];
   medications: Tab14SaveMedication[];
   chronicConditions: Tab14SaveChronic[];
-  hospitalVisit: Tab14SaveHospital;
+  hospitalVisits: Tab14SaveHospital[];
   noAllergies: boolean;
   /** When false (patient portal), skip insurance/hospital writes that require staff permissions. */
   allowStaffOnlySections?: boolean;
@@ -1433,7 +1433,7 @@ export type Tab14LoadResult = {
   allergies: Tab14SaveAllergy[];
   medications: Tab14SaveMedication[];
   chronicConditions: Tab14SaveChronic[];
-  hospitalVisit: Tab14SaveHospital;
+  hospitalVisits: Tab14SaveHospital[];
   noAllergies: boolean;
 };
 
@@ -1523,15 +1523,6 @@ function vitalsPayloadFromTab14Patient(
 export async function loadTab14FromBackend(
   username: string | null
 ): Promise<Tab14LoadResult> {
-  const emptyHospital: Tab14SaveHospital = {
-    facilityName: '',
-    visitType: '',
-    reason: '',
-    visitDate: '',
-    dischargeDate: '',
-    attendingPhysician: '',
-    reportId: '',
-  };
   const empty: Tab14LoadResult = {
     hasPatient: false,
     patient: {
@@ -1557,7 +1548,7 @@ export async function loadTab14FromBackend(
     allergies: [],
     medications: [],
     chronicConditions: [],
-    hospitalVisit: emptyHospital,
+    hospitalVisits: [],
     noAllergies: false,
   };
 
@@ -1672,26 +1663,25 @@ export async function loadTab14FromBackend(
     })
     .filter((c) => c.conditionName);
 
-  const latest = incidents
+  const hospitalVisits: Tab14SaveHospital[] = incidents
     .filter((i) => i.patient === pid)
-    .sort((a, b) => +new Date(b.occurred_at) - +new Date(a.occurred_at))[0];
-
-  let hospitalVisit = emptyHospital;
-  if (latest) {
-    const h = hospitalById.get(latest.hospital);
-    const notes = latest.clinical_notes || '';
-    const discM = notes.match(/Discharge:\s*([0-9-]+)/i);
-    const attM = notes.match(/Attending:\s*([^\n]+)/i);
-    hospitalVisit = {
-      facilityName: dashToEmpty(h?.name),
-      visitType: dashToEmpty(latest.incident_type),
-      reason: dashToEmpty(latest.summary),
-      visitDate: isoDateForInput(latest.occurred_at),
-      dischargeDate: discM?.[1]?.trim() || '',
-      attendingPhysician: attM?.[1]?.trim() || '',
-      reportId: dashToEmpty(latest.diagnosis_code),
-    };
-  }
+    .sort((a, b) => +new Date(b.occurred_at) - +new Date(a.occurred_at))
+    .map((incident) => {
+      const h = hospitalById.get(incident.hospital);
+      const notes = incident.clinical_notes || '';
+      const discM = notes.match(/Discharge:\s*([0-9-]+)/i);
+      const attM = notes.match(/Attending:\s*([^\n]+)/i);
+      return {
+        facilityName: dashToEmpty(h?.name),
+        visitType: dashToEmpty(incident.incident_type),
+        reason: dashToEmpty(incident.summary),
+        visitDate: isoDateForInput(incident.occurred_at),
+        dischargeDate: discM?.[1]?.trim() || '',
+        attendingPhysician: attM?.[1]?.trim() || '',
+        reportId: dashToEmpty(incident.diagnosis_code),
+      };
+    })
+    .filter((row) => row.facilityName || row.visitDate);
 
   return {
     hasPatient: true,
@@ -1714,7 +1704,7 @@ export async function loadTab14FromBackend(
     allergies,
     medications,
     chronicConditions,
-    hospitalVisit,
+    hospitalVisits,
     noAllergies: allergies.length === 0,
   };
 }
@@ -2244,33 +2234,31 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     );
   }
 
-  const hv = input.hospitalVisit;
-  if (
-    allowStaffOnlySections &&
-    (hv.facilityName || '').trim() &&
-    (hv.visitDate || '').trim()
-  ) {
-    const hid = await ensureHospital(hv.facilityName);
-    const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
-    const disc = (hv.dischargeDate || '').trim();
-    const att = (hv.attendingPhysician || '').trim();
-    const clinical = [
-      disc ? `Discharge: ${disc}` : '',
-      att ? `Attending: ${att}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-    await requestJson<IncidentApi>('/api/incidents/', {
-      method: 'POST',
-      body: JSON.stringify({
-        patient: pid,
-        hospital: hid,
-        occurred_at: occurred,
-        incident_type: (hv.visitType || '').trim() || 'Visit',
-        summary: (hv.reason || '').trim() || '—',
-        clinical_notes: clinical || null,
-        diagnosis_code: (hv.reportId || '').trim() || null,
-      }),
-    });
+  if (allowStaffOnlySections) {
+    for (const hv of input.hospitalVisits) {
+      if (!(hv.facilityName || '').trim() || !(hv.visitDate || '').trim()) continue;
+      const hid = await ensureHospital(hv.facilityName);
+      const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
+      const disc = (hv.dischargeDate || '').trim();
+      const att = (hv.attendingPhysician || '').trim();
+      const clinical = [
+        disc ? `Discharge: ${disc}` : '',
+        att ? `Attending: ${att}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      await requestJson<IncidentApi>('/api/incidents/', {
+        method: 'POST',
+        body: JSON.stringify({
+          patient: pid,
+          hospital: hid,
+          occurred_at: occurred,
+          incident_type: (hv.visitType || '').trim() || 'Visit',
+          summary: (hv.reason || '').trim() || '—',
+          clinical_notes: clinical || null,
+          diagnosis_code: (hv.reportId || '').trim() || null,
+        }),
+      });
+    }
   }
 }

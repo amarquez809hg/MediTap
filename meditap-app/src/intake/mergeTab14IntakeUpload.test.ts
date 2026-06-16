@@ -7,6 +7,7 @@ import {
   hasHospitalVisitData,
   mergeChronicConditionsFromPdf,
   mergeHospitalVisitFromPdf,
+  mergeHospitalVisitsFromPdf,
   mergeInsurancesFromPdf,
   mergeMedicationsFromPdf,
 } from "./mergeTab14IntakeUpload";
@@ -216,5 +217,37 @@ describe("mergeHospitalVisitFromPdf", () => {
   it("detects when incoming has hospital data", () => {
     expect(hasHospitalVisitData({ facilityName: "General Hospital" })).toBe(true);
     expect(hasHospitalVisitData({})).toBe(false);
+  });
+});
+
+
+describe("mergeHospitalVisitsFromPdf", () => {
+  it("appends a distinct visit instead of overwriting an existing one", () => {
+    const existing: Tab14HospitalFields[] = [
+      { facilityName: "St. Jude Medical Center", visitDate: "2024-09-15" },
+    ];
+    const incoming: Tab14HospitalFields = {
+      facilityName: "General Hospital",
+      visitDate: "2025-01-01",
+      reason: "Follow-up",
+    };
+    const result = mergeHospitalVisitsFromPdf(existing, incoming);
+    expect(result.rows).toHaveLength(2);
+    expect(result.addedCount).toBe(1);
+    expect(result.rows[1].facilityName).toBe("General Hospital");
+  });
+
+  it("fills an empty placeholder row before appending", () => {
+    const existing: Tab14HospitalFields[] = [{}];
+    const incoming: Tab14HospitalFields = {
+      facilityName: "Downtown Specialty Group",
+      visitDate: "2026-06-16",
+      reason: "Follow-up",
+    };
+    const result = mergeHospitalVisitsFromPdf(existing, incoming);
+    expect(result.rows).toHaveLength(1);
+    expect(result.addedCount).toBe(0);
+    expect(result.filledFieldCount).toBeGreaterThan(0);
+    expect(result.rows[0].facilityName).toBe("Downtown Specialty Group");
   });
 });

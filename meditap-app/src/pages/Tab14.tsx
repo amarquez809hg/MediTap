@@ -24,9 +24,7 @@ import {
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
 import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
 import {
-    hasHospitalVisitData,
     mergeChronicConditionsFromPdf,
-    mergeHospitalVisitFromPdf,
     mergeInsurancesFromPdf,
     mergeMedicationsFromPdf,
 } from '../intake/mergeTab14IntakeUpload';
@@ -200,6 +198,24 @@ const defaultHospitalVisit: HospitalVisit = {
     attendingPhysician: '',
     reportId: '',
 };
+
+function mapStoredHospitalVisits(raw: unknown): HospitalVisit[] {
+    if (!raw) return [defaultHospitalVisit];
+    if (Array.isArray(raw)) {
+        if (raw.length === 0) return [defaultHospitalVisit];
+        return raw.map((row: unknown) => ({
+            ...defaultHospitalVisit,
+            ...(row as Partial<HospitalVisit>),
+        }));
+    }
+    if (typeof raw === 'object') {
+        const row = raw as Partial<HospitalVisit>;
+        if (Object.values(row).some((v) => String(v ?? '').trim())) {
+            return [{ ...defaultHospitalVisit, ...row }];
+        }
+    }
+    return [defaultHospitalVisit];
+}
 const defaultChronicCondition: ChronicCondition = {
     conditionName: '', 
     icdCode: '', 
@@ -411,7 +427,7 @@ const Tab14: React.FC = () => {
     const [chronicConditions, setChronicConditions] = useState<ChronicCondition[]>([
         defaultChronicCondition,
     ]);
-    const [hospitalVisit, setHospitalVisit] = useState<HospitalVisit>(defaultHospitalVisit);
+    const [hospitalVisits, setHospitalVisits] = useState<HospitalVisit[]>([defaultHospitalVisit]);
 
     const formSnapshot = useMemo(
         () =>
@@ -421,12 +437,12 @@ const Tab14: React.FC = () => {
                 allergies,
                 medications,
                 chronicConditions,
-                hospitalVisit,
+                hospitalVisits,
                 noAllergies,
                 noMedications,
                 noChronicConditions,
             }),
-        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisit, noAllergies, noMedications, noChronicConditions]
+        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisits, noAllergies, noMedications, noChronicConditions]
     );
 
     const hasUnsavedChanges =
@@ -499,11 +515,7 @@ const Tab14: React.FC = () => {
                 ? bundle.chronicConditions
                 : [defaultChronicCondition]
         );
-        setHospitalVisit(
-            Object.values(bundle.hospitalVisit).some((v) => String(v).trim())
-                ? bundle.hospitalVisit
-                : defaultHospitalVisit
-        );
+        setHospitalVisits(mapStoredHospitalVisits(bundle.hospitalVisits));
         setNoAllergies(bundle.noAllergies);
         setNoMedications(bundle.medications.length === 0);
         setNoChronicConditions(bundle.chronicConditions.length === 0);
@@ -554,10 +566,14 @@ const Tab14: React.FC = () => {
                   }))
                 : [defaultChronicCondition]
         );
-        setHospitalVisit({
-            ...defaultHospitalVisit,
-            ...snapshot.hospitalVisit,
-        });
+        setHospitalVisits(
+            snapshot.hospitalVisits.length > 0
+                ? snapshot.hospitalVisits.map((row) => ({
+                      ...defaultHospitalVisit,
+                      ...row,
+                  }))
+                : [defaultHospitalVisit]
+        );
     };
 
     const buildMergeSnapshot = (): Tab14MergeSnapshot => ({
@@ -575,7 +591,7 @@ const Tab14: React.FC = () => {
             ...row,
         })),
         noChronicConditions,
-        hospitalVisit: { ...defaultHospitalVisit, ...hospitalVisit },
+        hospitalVisits: hospitalVisits.map((row) => ({ ...defaultHospitalVisit, ...row })),
     });
 
     const removeUploadedFile = (id: string) => {
@@ -672,9 +688,6 @@ const Tab14: React.FC = () => {
         setObj({ ...obj, [field]: value });
     };
 
-    const handleHospitalChange = (field: keyof HospitalVisit, value: string) => {
-        setHospitalVisit((prev) => ({ ...prev, [field]: value }));
-    };
     const handleChange = 
     <T,>(index: number, field: keyof T, value: string, array: T[], setArray: React.Dispatch<React.SetStateAction<T[]>>) => {
         const updated = [...array];
@@ -762,7 +775,7 @@ const Tab14: React.FC = () => {
                 allergies: noAllergies ? [] : allergies,
                 medications: noMedications ? [] : medications,
                 chronicConditions: noChronicConditions ? [] : chronicConditions,
-                hospitalVisit,
+                hospitalVisits,
                 noAllergies,
                 allowStaffOnlySections: canEditPatientRecords,
             });
@@ -816,7 +829,7 @@ const Tab14: React.FC = () => {
         setAllergies([defaultAllergy]);
         setMedications([defaultMedication]);
         setChronicConditions([defaultChronicCondition]);
-        setHospitalVisit(defaultHospitalVisit);
+        setHospitalVisits([defaultHospitalVisit]);
         setNoAllergies(false);
         setNoMedications(false);
         setNoChronicConditions(false);
@@ -828,7 +841,7 @@ const Tab14: React.FC = () => {
         setAllergies([{ ...sampleAllergy }]);
         setMedications([{ ...sampleMedication }]);
         setChronicConditions([{ ...sampleChronicCondition }]);
-        setHospitalVisit({ ...sampleHospitalVisit });
+        setHospitalVisits([{ ...sampleHospitalVisit }]);
         setNoAllergies(false);
         setNoMedications(false);
         setNoChronicConditions(false);
@@ -1836,67 +1849,96 @@ const Tab14: React.FC = () => {
                             <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
                                 Fill these fields to populate the Health Overview “Patient Hospital” card.
                             </p>
-                            <div className="form-field">
-                                <label>Type</label>
-                                <input
-                                    placeholder='e.g. Recent admission, ER, outpatient'
-                                    value={hospitalVisit.visitType}
-                                    onChange={(e) =>
-                                        handleHospitalChange('visitType', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>Facility</label>
-                                <input
-                                    value={hospitalVisit.facilityName}
-                                    onChange={(e) =>
-                                        handleHospitalChange('facilityName', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>Reason</label>
-                                <input
-                                    value={hospitalVisit.reason}
-                                    onChange={(e) =>
-                                        handleHospitalChange('reason', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>Date</label>
-                                <GlassDateInput
-                                    value={hospitalVisit.visitDate}
-                                    onChange={(iso) => handleHospitalChange('visitDate', iso)}
-                                    max={new Date().toISOString().split('T')[0]}
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>Discharge</label>
-                                <GlassDateInput
-                                    value={hospitalVisit.dischargeDate}
-                                    onChange={(iso) => handleHospitalChange('dischargeDate', iso)}
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>Attending</label>
-                                <input
-                                    value={hospitalVisit.attendingPhysician}
-                                    onChange={(e) =>
-                                        handleHospitalChange('attendingPhysician', e.target.value)
-                                    }
-                                />
-                            </div>
-                            <div className="form-field">
-                                <label>ReportId</label>
-                                <input
-                                    value={hospitalVisit.reportId}
-                                    onChange={(e) =>
-                                        handleHospitalChange('reportId', e.target.value)
-                                    }
-                                />
-                            </div>
+                            {hospitalVisits.map((visit, index) => (
+                                <div key={index} className="section-block">
+                                    <h3>Hospital Visit {index + 1}</h3>
+                                    <div className="form-field">
+                                        <label>Type</label>
+                                        <input
+                                            placeholder='e.g. Recent admission, ER, outpatient'
+                                            value={visit.visitType}
+                                            onChange={(e) =>
+                                                handleChange(index, 'visitType', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Facility</label>
+                                        <input
+                                            value={visit.facilityName}
+                                            onChange={(e) =>
+                                                handleChange(index, 'facilityName', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Reason</label>
+                                        <input
+                                            value={visit.reason}
+                                            onChange={(e) =>
+                                                handleChange(index, 'reason', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Date</label>
+                                        <GlassDateInput
+                                            value={visit.visitDate}
+                                            onChange={(iso) =>
+                                                handleChange(index, 'visitDate', iso, hospitalVisits, setHospitalVisits)
+                                            }
+                                            max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Discharge</label>
+                                        <GlassDateInput
+                                            value={visit.dischargeDate}
+                                            onChange={(iso) =>
+                                                handleChange(index, 'dischargeDate', iso, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Attending</label>
+                                        <input
+                                            value={visit.attendingPhysician}
+                                            onChange={(e) =>
+                                                handleChange(index, 'attendingPhysician', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>ReportId</label>
+                                        <input
+                                            value={visit.reportId}
+                                            onChange={(e) =>
+                                                handleChange(index, 'reportId', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    {hospitalVisits.length > 1 && (
+                                        <button
+                                            className="remove-button"
+                                            type="button"
+                                            onClick={() =>
+                                                handleRemoveSection(index, hospitalVisits, setHospitalVisits)
+                                            }
+                                        >
+                                            Remove Hospital Visit
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button
+                                className="add-section-button"
+                                type="button"
+                                onClick={() =>
+                                    handleAddSection(hospitalVisits, setHospitalVisits, defaultHospitalVisit)
+                                }
+                            >
+                                + Add Another Hospital Visit
+                            </button>
                         </div>
                     )}
 

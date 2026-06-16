@@ -201,7 +201,7 @@ export type MergeInsurancesResult = MergeRowsResult<Tab14InsuranceRow> & {
 /**
  * Merge insurances parsed from a PDF upload into policies already on the form.
  * New policies are appended; duplicates match on policy number, member ID, or plan.
- * Matching rows only fill empty fields — existing values are never overwritten.
+ * Matching rows only fill empty fields â€” existing values are never overwritten.
  */
 export function mergeInsurancesFromPdf(
   existing: Tab14InsuranceRow[],
@@ -281,4 +281,53 @@ export function mergeHospitalVisitFromPdf(
 
 export function hasHospitalVisitData(fields: Tab14HospitalFields): boolean {
   return Object.values(fields).some((v) => String(v ?? "").trim() !== "");
+}
+
+function hospitalVisitKey(fields: Tab14HospitalFields): string {
+  const date = String(fields.visitDate ?? "").trim().toLowerCase();
+  const facility = String(fields.facilityName ?? "").trim().toLowerCase();
+  if (!date && !facility) return "";
+  return `${date}|${facility}`;
+}
+
+export type MergeHospitalVisitsResult = {
+  rows: Tab14HospitalFields[];
+  addedCount: number;
+  filledFieldCount: number;
+};
+
+export function mergeHospitalVisitsFromPdf(
+  existing: Tab14HospitalFields[],
+  incoming: Tab14HospitalFields
+): MergeHospitalVisitsResult {
+  if (!hasHospitalVisitData(incoming)) {
+    return { rows: existing, addedCount: 0, filledFieldCount: 0 };
+  }
+
+  const rows = existing.map((row) => ({ ...row }));
+  const incomingKey = hospitalVisitKey(incoming);
+
+  let matchIndex = -1;
+  if (incomingKey) {
+    matchIndex = rows.findIndex((row) => hospitalVisitKey(row) === incomingKey);
+  }
+  if (matchIndex < 0) {
+    matchIndex = rows.findIndex((row) => !hasHospitalVisitData(row));
+  }
+
+  if (matchIndex >= 0) {
+    const merged = mergeHospitalVisitFromPdf(rows[matchIndex], incoming);
+    rows[matchIndex] = merged.visit;
+    return {
+      rows,
+      addedCount: 0,
+      filledFieldCount: merged.addedFieldCount,
+    };
+  }
+
+  return {
+    rows: [...rows, incoming],
+    addedCount: 1,
+    filledFieldCount: 0,
+  };
 }

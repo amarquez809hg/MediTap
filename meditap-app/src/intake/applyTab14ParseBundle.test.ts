@@ -10,7 +10,7 @@ const emptySnapshot = {
   noMedications: false,
   chronicConditions: [],
   noChronicConditions: false,
-  hospitalVisit: {},
+  hospitalVisits: [],
 };
 
 const metforminBundle: Tab14IntakeParseResult = {
