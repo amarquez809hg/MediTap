@@ -27,6 +27,7 @@ import { getApiBase } from '../config/api';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { MediTapLocale } from '../i18n/localeSync';
+import { SUPPORTED_LOCALES } from '../i18n/localeSync';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import type { CardStatus } from '../preferences/userPreferencesTypes';
 
@@ -291,14 +292,10 @@ const Tab11: React.FC = () => {
         onDidDismiss={() => setLanguageSheetOpen(false)}
         header={t('language.choose')}
         buttons={[
-          {
-            text: localeLabel('en'),
-            handler: () => pickLocale('en'),
-          },
-          {
-            text: localeLabel('es'),
-            handler: () => pickLocale('es'),
-          },
+          ...SUPPORTED_LOCALES.map((code) => ({
+            text: localeLabel(code),
+            handler: () => pickLocale(code),
+          })),
           {
             text: t('common.cancel'),
             role: 'cancel',

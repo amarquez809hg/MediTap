@@ -3,7 +3,8 @@
     "label": "Language",
     "choose": "Choose language",
     "english": "English",
-    "spanish": "Español"
+    "spanish": "Español",
+    "chinese": "中文（简体）"
   },
   "common": {
     "loading": "Loading…",

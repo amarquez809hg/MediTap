@@ -353,9 +353,11 @@ class PortalUserPreferences(models.Model):
 
     LOCALE_EN = "en"
     LOCALE_ES = "es"
+    LOCALE_ZH = "zh"
     LOCALE_CHOICES = [
         (LOCALE_EN, "English"),
         (LOCALE_ES, "Spanish"),
+        (LOCALE_ZH, "Chinese (Simplified)"),
     ]
 
     CARD_ACTIVE = "active"

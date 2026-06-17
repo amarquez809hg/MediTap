@@ -38,7 +38,18 @@ describe('localeSync', () => {
   it('validates locale codes', () => {
     expect(isMediTapLocale('en')).toBe(true);
     expect(isMediTapLocale('es')).toBe(true);
+    expect(isMediTapLocale('zh')).toBe(true);
     expect(isMediTapLocale('de')).toBe(false);
+  });
+
+  it('returns localized language names for Chinese', () => {
+    expect(localeDisplayName('zh', 'en')).toBe('中文（简体）');
+    expect(localeDisplayName('zh', 'zh')).toBe('中文（简体）');
+  });
+
+  it('sets document lang to zh-Hans for Chinese', () => {
+    applyMediTapLocale('zh');
+    expect(document.documentElement.lang).toBe('zh-Hans');
   });
 
   it('returns localized language names', () => {

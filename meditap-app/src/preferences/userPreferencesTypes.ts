@@ -1,4 +1,4 @@
-import type { MediTapLocale } from '../i18n/localeSync';
+import { isMediTapLocale, type MediTapLocale } from '../i18n/localeSync';
 
 export type CardStatus = 'active' | 'reported_lost' | 'inactive';
 
@@ -22,7 +22,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
 export function normalizeUserPreferences(
   raw: Partial<UserPreferences> | null | undefined
 ): UserPreferences {
-  const locale = raw?.locale === 'es' ? 'es' : 'en';
+  const locale = isMediTapLocale(raw?.locale) ? raw.locale : 'en';
   const card = raw?.card_status;
   const card_status: CardStatus =
     card === 'reported_lost' || card === 'inactive' ? card : 'active';
