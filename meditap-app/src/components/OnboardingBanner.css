@@ -3,23 +3,37 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
   margin-bottom: 1.5rem;
   padding: 1rem 1.25rem;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(23, 162, 184, 0.18), rgba(0, 77, 64, 0.2));
-  border: 1px solid rgba(23, 162, 184, 0.35);
+  border-radius: var(--meditap-radius, 12px);
+  background: linear-gradient(
+    135deg,
+    rgba(23, 162, 184, 0.14) 0%,
+    rgba(0, 77, 64, 0.1) 100%
+  );
+  border: 1px solid rgba(23, 162, 184, 0.28);
+}
+
+.onboarding-banner__text {
+  flex: 1 1 14rem;
+  min-width: 0;
 }
 
 .onboarding-banner__text strong {
   display: block;
   margin-bottom: 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--meditap-primary, #0a3d46);
+  letter-spacing: -0.01em;
 }
 
 .onboarding-banner__text p {
   margin: 0;
   font-size: 0.875rem;
-  opacity: 0.9;
+  line-height: 1.45;
+  color: var(--meditap-text-muted, #666);
 }
 
 .onboarding-banner__actions {
@@ -27,29 +41,71 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .onboarding-banner__btn {
-  padding: 0.45rem 0.9rem;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #e8eaed;
-}
-
-.onboarding-banner__btn--primary {
-  background: #17a2b8;
-  border-color: #17a2b8;
-  color: #fff;
+  white-space: nowrap;
 }
 
 .onboarding-banner__dismiss {
+  margin-left: 0.15rem;
+  padding: 0.45rem 0.65rem;
   background: transparent;
   border: none;
-  color: #a8b0bc;
+  border-radius: 6px;
+  color: var(--meditap-accent, #17a2b8);
   cursor: pointer;
   font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.onboarding-banner__dismiss:hover {
+  color: var(--meditap-accent-hover, #138496);
+  background: rgba(23, 162, 184, 0.08);
+  text-decoration: none;
+}
+
+.onboarding-banner__dismiss:focus-visible {
+  outline: 2px solid var(--meditap-accent, #17a2b8);
+  outline-offset: 2px;
+}
+
+.ion-palette-dark .onboarding-banner {
+  border-color: rgba(23, 162, 184, 0.35);
+}
+
+.ion-palette-dark .onboarding-banner__text strong {
+  color: var(--meditap-text, #e8eaed);
+}
+
+.ion-palette-dark .onboarding-banner__text p {
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.ion-palette-dark .onboarding-banner__dismiss {
+  color: #7dd3e1;
+}
+
+.ion-palette-dark .onboarding-banner__dismiss:hover {
+  color: #a8e6ef;
+  background: rgba(23, 162, 184, 0.15);
+}
+
+@media (max-width: 900px) {
+  .onboarding-banner__actions {
+    width: 100%;
+  }
+
+  .onboarding-banner__btn {
+    flex: 1 1 auto;
+    min-width: 7.5rem;
+  }
 }

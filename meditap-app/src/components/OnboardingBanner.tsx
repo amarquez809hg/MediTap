@@ -25,10 +25,16 @@ const OnboardingBanner: React.FC<OnboardingBannerProps> = ({
         </p>
       </div>
       <div className="onboarding-banner__actions">
-        <Link to="/onboarding" className="onboarding-banner__btn onboarding-banner__btn--primary">
+        <Link
+          to="/onboarding"
+          className="onboarding-banner__btn meditap-glass-btn meditap-glass-btn--compact"
+        >
           {t('onboarding.continueSetup')}
         </Link>
-        <Link to="/tab14" className="onboarding-banner__btn">
+        <Link
+          to="/tab14"
+          className="onboarding-banner__btn meditap-glass-btn meditap-glass-btn--compact meditap-glass-btn--outline"
+        >
           {t('onboarding.patientIntake')}
         </Link>
         {onDismiss && (
