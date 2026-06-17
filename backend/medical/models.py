@@ -346,3 +346,45 @@ class PatientAppointment(models.Model):
     def __str__(self):
         code = self.display_code or str(self.appointment_id)[:8]
         return f"{code} — {self.specialist}"
+
+
+class PortalUserPreferences(models.Model):
+    """Per-portal-account UI settings (language, theme, notifications, etc.)."""
+
+    LOCALE_EN = "en"
+    LOCALE_ES = "es"
+    LOCALE_CHOICES = [
+        (LOCALE_EN, "English"),
+        (LOCALE_ES, "Spanish"),
+    ]
+
+    CARD_ACTIVE = "active"
+    CARD_REPORTED_LOST = "reported_lost"
+    CARD_INACTIVE = "inactive"
+    CARD_STATUS_CHOICES = [
+        (CARD_ACTIVE, "Active"),
+        (CARD_REPORTED_LOST, "Reported lost"),
+        (CARD_INACTIVE, "Inactive"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="portal_preferences",
+    )
+    locale = models.CharField(max_length=8, choices=LOCALE_CHOICES, default=LOCALE_EN)
+    dark_mode = models.BooleanField(default=False)
+    push_notifications = models.BooleanField(default=True)
+    card_status = models.CharField(
+        max_length=32,
+        choices=CARD_STATUS_CHOICES,
+        default=CARD_ACTIVE,
+    )
+    card_reported_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Portal user preferences"
+
+    def __str__(self):
+        return f"Preferences for {self.user.get_username()}"

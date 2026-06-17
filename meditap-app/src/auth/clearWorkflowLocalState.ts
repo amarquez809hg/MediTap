@@ -15,7 +15,7 @@ const APPOINTMENTS_KEY_PREFIX = `${APPOINTMENTS_STORAGE_PREFIX}:`;
 
 /**
  * Removes Tab14 draft data, per-user appointment caches (Tab4), and staff elevation.
- * Preserves JWT and global settings (dark mode, locale, push toggle).
+ * Preserves JWT and profile UI preferences (language, theme, notifications on server + cache).
  * Call after a successful sign-in (new account or account switch) and on logout / session end.
  */
 export function clearMediTapWorkflowLocalState(): void {

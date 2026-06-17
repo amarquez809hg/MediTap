@@ -2,18 +2,13 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from 'react';
-import i18n from '../i18n';
 import {
-  applyMediTapLocale,
   localeDisplayName,
-  persistMediTapLocale,
-  readMediTapLocale,
   type MediTapLocale,
 } from '../i18n/localeSync';
+import { useProfileLocale } from './UserPreferencesContext';
 
 type LanguageContextValue = {
   locale: MediTapLocale;
@@ -24,17 +19,14 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocaleState] = useState<MediTapLocale>(() => readMediTapLocale());
+  const { locale, setLocale: setProfileLocale } = useProfileLocale();
 
-  useEffect(() => {
-    applyMediTapLocale(locale);
-    void i18n.changeLanguage(locale);
-  }, [locale]);
-
-  const setLocale = useCallback((next: MediTapLocale) => {
-    setLocaleState(next);
-    persistMediTapLocale(next);
-  }, []);
+  const setLocale = useCallback(
+    (next: MediTapLocale) => {
+      void setProfileLocale(next);
+    },
+    [setProfileLocale]
+  );
 
   const localeLabel = useCallback(
     (target: MediTapLocale) => localeDisplayName(target, locale),

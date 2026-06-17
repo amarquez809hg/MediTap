@@ -30,6 +30,7 @@ import EpicCallback from './pages/EpicCallback';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
@@ -211,13 +212,15 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <LanguageProvider>
-    <DarkModeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </DarkModeProvider>
-  </LanguageProvider>
+  <AuthProvider>
+    <UserPreferencesProvider>
+      <LanguageProvider>
+        <DarkModeProvider>
+          <AppRoutes />
+        </DarkModeProvider>
+      </LanguageProvider>
+    </UserPreferencesProvider>
+  </AuthProvider>
 );
 
 export default App;

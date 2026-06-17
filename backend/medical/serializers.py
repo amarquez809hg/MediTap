@@ -172,3 +172,17 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             validated_data.setdefault("created_by", request.user)
         return super().create(validated_data)
+
+
+class PortalUserPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.PortalUserPreferences
+        fields = (
+            "locale",
+            "dark_mode",
+            "push_notifications",
+            "card_status",
+            "card_reported_at",
+            "updated_at",
+        )
+        read_only_fields = ("updated_at",)

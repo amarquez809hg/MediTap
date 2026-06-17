@@ -2,15 +2,9 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from 'react';
-import {
-  applyMediTapDarkMode,
-  persistMediTapDarkMode,
-  readMediTapDarkMode,
-} from '../theme/darkModeSync';
+import { useProfileDarkMode } from './UserPreferencesContext';
 
 type DarkModeContextValue = {
   dark: boolean;
@@ -20,16 +14,14 @@ type DarkModeContextValue = {
 const DarkModeContext = createContext<DarkModeContextValue | null>(null);
 
 export const DarkModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [dark, setDarkState] = useState(() => readMediTapDarkMode());
+  const { dark, setDark: setProfileDark } = useProfileDarkMode();
 
-  useEffect(() => {
-    applyMediTapDarkMode(dark);
-  }, [dark]);
-
-  const setDark = useCallback((enabled: boolean) => {
-    setDarkState(enabled);
-    persistMediTapDarkMode(enabled);
-  }, []);
+  const setDark = useCallback(
+    (enabled: boolean) => {
+      void setProfileDark(enabled);
+    },
+    [setProfileDark]
+  );
 
   const value = useMemo(() => ({ dark, setDark }), [dark, setDark]);
 

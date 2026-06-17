@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   IonContent,
   IonPage,
@@ -27,6 +27,8 @@ import { getApiBase } from '../config/api';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { MediTapLocale } from '../i18n/localeSync';
+import { useUserPreferences } from '../contexts/UserPreferencesContext';
+import type { CardStatus } from '../preferences/userPreferencesTypes';
 
 function fullAppUrl(path: string) {
   const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -34,35 +36,21 @@ function fullAppUrl(path: string) {
   return `${window.location.origin}${base}${seg}`;
 }
 
-type CardStatus = 'active' | 'reported_lost' | 'inactive';
-
-const LS_PUSH = 'meditap_settings_push_notifications';
-const LS_CARD_STATUS = 'meditap_demo_card_status';
-const LS_CARD_REPORTED_AT = 'meditap_demo_card_reported_at';
 const APP_VERSION = '0.0.1';
-
-function readCardStatus(): CardStatus {
-  try {
-    const stored = localStorage.getItem(LS_CARD_STATUS);
-    if (stored === 'reported_lost' || stored === 'inactive') return stored;
-  } catch {
-    /* ignore */
-  }
-  return 'active';
-}
 
 const Tab11: React.FC = () => {
   const { t } = useTranslation();
   const { logout, isStaff, isSuperuser } = useAuth();
   const { locale, setLocale, localeLabel } = useLanguage();
+  const { preferences, updatePreferences } = useUserPreferences();
   const djangoAdminUrl = `${getApiBase().replace(/\/$/, '')}/admin/`;
   const { dark: darkModeEnabled, setDark: setDarkMode } = useDarkMode();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const [showCardLostAlert, setShowCardLostAlert] = useState(false);
   const [showCardFoundAlert, setShowCardFoundAlert] = useState(false);
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
-  const [cardStatus, setCardStatus] = useState<CardStatus>(() => readCardStatus());
+  const notificationsEnabled = preferences.push_notifications;
+  const cardStatus = preferences.card_status as CardStatus;
 
   const cardStatusLabel = (status: CardStatus) => {
     if (status === 'reported_lost') return t('settings.cardStatusReportedLost');
@@ -70,26 +58,12 @@ const Tab11: React.FC = () => {
     return t('settings.cardStatusActive');
   };
 
-  useEffect(() => {
-    try {
-      const n = localStorage.getItem(LS_PUSH);
-      if (n === '0') setNotificationsEnabled(false);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   const persistNotifications = useCallback((on: boolean) => {
-    setNotificationsEnabled(on);
-    try {
-      localStorage.setItem(LS_PUSH, on ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
+    void updatePreferences({ push_notifications: on });
     if (on && typeof window !== 'undefined' && 'Notification' in window) {
       void Notification.requestPermission();
     }
-  }, []);
+  }, [updatePreferences]);
 
   const handleLogout = () => {
     void logout();
@@ -102,23 +76,17 @@ const Tab11: React.FC = () => {
 
   const handleReportCardLost = () => {
     const reportedAt = new Date().toISOString();
-    setCardStatus('reported_lost');
-    try {
-      localStorage.setItem(LS_CARD_STATUS, 'reported_lost');
-      localStorage.setItem(LS_CARD_REPORTED_AT, reportedAt);
-    } catch {
-      /* ignore */
-    }
+    void updatePreferences({
+      card_status: 'reported_lost',
+      card_reported_at: reportedAt,
+    });
   };
 
   const handleCardFound = () => {
-    setCardStatus('active');
-    try {
-      localStorage.setItem(LS_CARD_STATUS, 'active');
-      localStorage.removeItem(LS_CARD_REPORTED_AT);
-    } catch {
-      /* ignore */
-    }
+    void updatePreferences({
+      card_status: 'active',
+      card_reported_at: null,
+    });
   };
 
   return (
