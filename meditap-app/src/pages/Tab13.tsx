@@ -58,6 +58,7 @@ import {
   formatSessionOrTokenErrorForUi,
   patchPatientEpicLink,
   prepareEpicPatientAuthorize,
+  syncEpicPatientFromFhir,
   requestPatientIntakeStaffElevation,
   type EpicOAuthConfigApi,
   type EpicPatientLinkApi,
@@ -99,6 +100,8 @@ const Tab13: React.FC = () => {
   const [epicErr, setEpicErr] = useState<string | null>(null);
   const [epicManualId, setEpicManualId] = useState('');
   const [epicSavingManual, setEpicSavingManual] = useState(false);
+  const [epicSyncing, setEpicSyncing] = useState(false);
+  const [epicSyncMessage, setEpicSyncMessage] = useState<string | null>(null);
 
   const reloadEpic = useCallback(async () => {
     setEpicLoading(true);
@@ -399,9 +402,32 @@ const Tab13: React.FC = () => {
                                 <strong>{epicLink.epic_patient_fhir_id}</strong>
                               </>
                             ) : null}
+                            {epicLink.last_sync_at ? (
+                              <>
+                                <br />
+                                {t('admin.epic.lastSync')}{' '}
+                                <strong>
+                                  {new Date(epicLink.last_sync_at).toLocaleString()}
+                                </strong>
+                                {epicLink.last_sync_summary?.updated_fields?.length ? (
+                                  <>
+                                    <br />
+                                    {t('admin.epic.lastSyncFields', {
+                                      count:
+                                        epicLink.last_sync_summary.updated_fields.length,
+                                    })}
+                                  </>
+                                ) : null}
+                              </>
+                            ) : null}
                           </>
                         )}
                       </div>
+                      {epicSyncMessage && (
+                        <p className="tab13-epic-card__meta tab13-epic-card__meta--success">
+                          {epicSyncMessage}
+                        </p>
+                      )}
                       {epicCfg.hint ? <p className="tab13-epic-card__meta">{epicCfg.hint}</p> : null}
                       {!epicPatientId && (
                         <p className="tab13-epic-card__meta">
@@ -443,6 +469,43 @@ const Tab13: React.FC = () => {
                         >
                           {t('admin.epic.refreshStatus')}
                         </IonButton>
+                        {epicPatientId && epicLink?.status === 'connected' && (
+                          <IonButton
+                            expand="block"
+                            fill="outline"
+                            color="primary"
+                            disabled={!canEditAdmin || epicLoading || epicSyncing}
+                            onClick={() => {
+                              void (async () => {
+                                if (!epicPatientId) return;
+                                setEpicSyncing(true);
+                                setEpicErr(null);
+                                setEpicSyncMessage(null);
+                                try {
+                                  const result = await syncEpicPatientFromFhir(epicPatientId);
+                                  setEpicLink(result.link);
+                                  const n = result.summary.updated_fields.length;
+                                  setEpicSyncMessage(
+                                    t('admin.epic.syncSuccess', {
+                                      count: n,
+                                      observations: result.summary.observations_read,
+                                    })
+                                  );
+                                } catch (e) {
+                                  setEpicErr(
+                                    formatSessionOrTokenErrorForUi(
+                                      e instanceof Error ? e.message : t('admin.epic.syncError')
+                                    )
+                                  );
+                                } finally {
+                                  setEpicSyncing(false);
+                                }
+                              })();
+                            }}
+                          >
+                            {epicSyncing ? t('admin.epic.syncing') : t('admin.epic.syncFromEpic')}
+                          </IonButton>
+                        )}
                         {epicPatientId && epicLink?.status === 'connected' && (
                           <IonButton
                             expand="block"

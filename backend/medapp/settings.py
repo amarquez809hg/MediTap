@@ -147,7 +147,7 @@ EPIC_REDIRECT_URI = os.getenv("EPIC_REDIRECT_URI", "").strip()
 # Do not include launch or launch/patient unless implementing EHR launch.
 EPIC_DEFAULT_SCOPE = os.getenv(
     "EPIC_DEFAULT_SCOPE",
-    "openid fhirUser patient/Patient.read patient/Observation.read",
+    "openid offline_access fhirUser patient/Patient.read patient/Observation.read",
 ).strip()
 EPIC_OAUTH_STATE_MAX_AGE = int(os.getenv("EPIC_OAUTH_STATE_MAX_AGE", "600") or "600")
 

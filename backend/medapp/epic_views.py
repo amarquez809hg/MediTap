@@ -10,10 +10,12 @@ import logging
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import timedelta
 
 from django.conf import settings
 from django.core import signing
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -23,6 +25,9 @@ from medical import models
 from medical.patient_api_scoping import scoped_patient_queryset
 from medical.permissions import IntakeEditorWritePermission
 from medical.serializers import EpicPatientLinkSerializer
+
+from .epic_fhir_sync import sync_epic_into_patient
+from .epic_token_crypto import clear_epic_tokens, encrypt_epic_token
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +85,21 @@ def _extract_epic_patient_id(token_payload: dict) -> str | None:
     return None
 
 
+def _persist_oauth_tokens(link: models.EpicPatientLink, token_json: dict) -> None:
+    access = token_json.get("access_token")
+    refresh = token_json.get("refresh_token")
+    expires_in = token_json.get("expires_in")
+    if isinstance(access, str) and access.strip():
+        link.access_token_encrypted = encrypt_epic_token(access.strip())
+    if isinstance(refresh, str) and refresh.strip():
+        link.refresh_token_encrypted = encrypt_epic_token(refresh.strip())
+    if expires_in is not None:
+        try:
+            link.access_token_expires_at = timezone.now() + timedelta(seconds=int(expires_in))
+        except (TypeError, ValueError):
+            link.access_token_expires_at = None
+
+
 class EpicOAuthConfigView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -125,7 +145,62 @@ class PatientEpicLinkView(APIView):
         ser = EpicPatientLinkSerializer(link, data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
         ser.save()
+        if link.status == models.EpicPatientLink.STATUS_DISCONNECTED:
+            clear_epic_tokens(link)
+            link.last_sync_at = None
+            link.last_sync_summary = {}
+            link.save(
+                update_fields=[
+                    "access_token_encrypted",
+                    "refresh_token_encrypted",
+                    "access_token_expires_at",
+                    "last_sync_at",
+                    "last_sync_summary",
+                    "updated_at",
+                ]
+            )
         return Response(EpicPatientLinkSerializer(link).data)
+
+
+class EpicSyncFromFhirView(APIView):
+    """Phase 1: import demographics + vitals from connected Epic sandbox patient."""
+
+    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+
+    def post(self, request, patient_id):
+        if not _epic_oauth_configured():
+            return Response(
+                {"detail": "Epic OAuth is not configured on the server."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        patient = get_object_or_404(scoped_patient_queryset(request), pk=patient_id)
+        link, _ = models.EpicPatientLink.objects.get_or_create(patient=patient)
+        if link.status != models.EpicPatientLink.STATUS_CONNECTED:
+            return Response(
+                {"detail": "Epic link is not connected. Connect sandbox OAuth first."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not (link.epic_patient_fhir_id or "").strip():
+            return Response(
+                {"detail": "Epic Patient.id is missing on this link."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            summary = sync_epic_into_patient(link)
+        except ValueError as e:
+            link.last_error = str(e)[:2000]
+            link.save(update_fields=["last_error", "updated_at"])
+            return Response(
+                {"detail": str(e), "error": link.last_error},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        link.refresh_from_db()
+        return Response(
+            {
+                "link": EpicPatientLinkSerializer(link).data,
+                "summary": summary,
+            }
+        )
 
 
 class PrepareEpicAuthorizeView(APIView):
@@ -226,12 +301,16 @@ class EpicOAuthCompleteView(APIView):
         link.fhir_server_base_url = settings.EPIC_FHIR_BASE_URL.strip()
         if isinstance(epic_pid, str) and epic_pid.strip():
             link.epic_patient_fhir_id = epic_pid.strip()
+        _persist_oauth_tokens(link, token_json)
         link.save(
             update_fields=[
                 "status",
                 "last_error",
                 "fhir_server_base_url",
                 "epic_patient_fhir_id",
+                "access_token_encrypted",
+                "refresh_token_encrypted",
+                "access_token_expires_at",
                 "updated_at",
             ]
         )

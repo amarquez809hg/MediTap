@@ -181,7 +181,7 @@ export type PatientAppointmentWriteBody = {
   clinicalNotes?: string;
 };
 
-/** Epic sandbox SMART linking (read-only; backend never stores Epic access tokens). */
+/** Epic sandbox SMART linking + Phase 1 FHIR sync (tokens stored encrypted server-side). */
 export type EpicOAuthConfigApi = {
   integration_enabled: boolean;
   sandbox: boolean;
@@ -199,8 +199,23 @@ export type EpicPatientLinkApi = {
   epic_patient_fhir_id: string;
   fhir_server_base_url: string | null;
   last_error: string;
+  last_sync_at: string | null;
+  last_sync_summary: {
+    updated_fields?: string[];
+    observations_read?: number;
+    epic_patient_id?: string;
+  } | null;
   created_at: string;
   updated_at: string;
+};
+
+export type EpicSyncResultApi = {
+  link: EpicPatientLinkApi;
+  summary: {
+    updated_fields: string[];
+    observations_read: number;
+    epic_patient_id: string;
+  };
 };
 
 /** Tab5 UI + persistence helpers (hospitalization rows stored as JSON in `notes` after a marker). */
@@ -1971,6 +1986,15 @@ export async function patchPatientEpicLink(
   return requestJson<EpicPatientLinkApi>(`/api/patients/${patientId}/epic-link/`, {
     method: 'PATCH',
     body: JSON.stringify(body),
+  });
+}
+
+export async function syncEpicPatientFromFhir(
+  patientId: string
+): Promise<EpicSyncResultApi> {
+  return requestJson<EpicSyncResultApi>(`/api/patients/${patientId}/epic-link/sync/`, {
+    method: 'POST',
+    body: '{}',
   });
 }
 

@@ -568,7 +568,7 @@
       }
     },
     "epic": {
-      "lead": "将当前 MediTap 患者病历关联至 Epic 沙盒患者，用于 SMART OAuth 演示。后端仅存储关联元数据 — 不存储 Epic 访问令牌。",
+      "lead": "通过 SMART OAuth 将当前 MediTap 患者病历关联至 Epic 沙盒患者。连接后，工作人员可从 Epic 同步人口统计信息与生命体征至 MediTap。",
       "oauthReady": "OAuth 就绪：",
       "yes": "是",
       "no": "否",
@@ -577,6 +577,12 @@
       "noPatientRecord": "此登录账户暂无 MediTap 患者档案。请先完成登记（Tab 14）。",
       "connectSandbox": "连接 Epic（沙盒）",
       "refreshStatus": "刷新状态",
+      "syncFromEpic": "从 Epic 同步",
+      "syncing": "同步中…",
+      "lastSync": "上次同步：",
+      "lastSyncFields": "从 Epic 更新了 {{count}} 个字段",
+      "syncSuccess": "同步完成 — 更新了 {{count}} 个字段（读取了 {{observations}} 条生命体征观测）。",
+      "syncError": "无法从 Epic 同步。",
       "clearLink": "清除关联",
       "manualIdLabel": "演示：Epic Patient.id（手动）",
       "manualIdPlaceholder": "例如 eH-XXXXXXXX",

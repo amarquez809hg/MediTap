@@ -568,7 +568,7 @@
       }
     },
     "epic": {
-      "lead": "Link the current MediTap patient chart to an Epic sandbox patient for SMART OAuth demos. The backend stores linkage metadata only—not Epic access tokens.",
+      "lead": "Link the current MediTap patient chart to an Epic sandbox patient via SMART OAuth. After connecting, staff can sync demographics and vital signs from Epic into MediTap.",
       "oauthReady": "OAuth ready:",
       "yes": "Yes",
       "no": "No",
@@ -577,6 +577,12 @@
       "noPatientRecord": "No MediTap patient record for this sign-in. Complete intake (Tab 14) first.",
       "connectSandbox": "Connect Epic (sandbox)",
       "refreshStatus": "Refresh status",
+      "syncFromEpic": "Sync from Epic",
+      "syncing": "Syncing…",
+      "lastSync": "Last sync:",
+      "lastSyncFields": "{{count}} field(s) updated from Epic",
+      "syncSuccess": "Sync complete — {{count}} field(s) updated ({{observations}} vital observation(s) read).",
+      "syncError": "Could not sync from Epic.",
       "clearLink": "Clear link",
       "manualIdLabel": "Demo: Epic Patient.id (manual)",
       "manualIdPlaceholder": "e.g. eH-XXXXXXXX",

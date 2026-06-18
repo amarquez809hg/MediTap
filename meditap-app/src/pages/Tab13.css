@@ -423,6 +423,10 @@ ion-page.ct-page.ct-tab13 ion-content {
   word-break: break-all;
 }
 
+.tab13-epic-card__meta--success {
+  color: var(--ion-color-success, #2dd36f);
+}
+
 .tab13-epic-card__actions {
   display: flex;
   flex-direction: column;

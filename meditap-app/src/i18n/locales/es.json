@@ -569,7 +569,7 @@
       }
     },
     "epic": {
-      "lead": "Vincule el expediente actual de MediTap a un paciente sandbox de Epic para demostraciones SMART OAuth. El backend solo almacena metadatos de enlace, no tokens de acceso de Epic.",
+      "lead": "Vincule el expediente actual de MediTap a un paciente sandbox de Epic mediante SMART OAuth. Tras conectar, el personal puede sincronizar datos demográficos y signos vitales desde Epic a MediTap.",
       "oauthReady": "OAuth listo:",
       "yes": "Sí",
       "no": "No",
@@ -578,6 +578,12 @@
       "noPatientRecord": "No hay expediente de paciente MediTap para esta sesión. Complete la admisión (Tab 14) primero.",
       "connectSandbox": "Conectar Epic (sandbox)",
       "refreshStatus": "Actualizar estado",
+      "syncFromEpic": "Sincronizar desde Epic",
+      "syncing": "Sincronizando…",
+      "lastSync": "Última sincronización:",
+      "lastSyncFields": "{{count}} campo(s) actualizado(s) desde Epic",
+      "syncSuccess": "Sincronización completa — {{count}} campo(s) actualizado(s) ({{observations}} observación(es) de signos vitales leídas).",
+      "syncError": "No se pudo sincronizar desde Epic.",
       "clearLink": "Borrar enlace",
       "manualIdLabel": "Demo: Epic Patient.id (manual)",
       "manualIdPlaceholder": "p. ej. eH-XXXXXXXX",

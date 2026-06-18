@@ -119,10 +119,19 @@ class EpicPatientLinkSerializer(serializers.ModelSerializer):
             "epic_patient_fhir_id",
             "fhir_server_base_url",
             "last_error",
+            "last_sync_at",
+            "last_sync_summary",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("patient", "last_error", "created_at", "updated_at")
+        read_only_fields = (
+            "patient",
+            "last_error",
+            "last_sync_at",
+            "last_sync_summary",
+            "created_at",
+            "updated_at",
+        )
 
 
 class PatientAppointmentSerializer(serializers.ModelSerializer):

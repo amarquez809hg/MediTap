@@ -97,6 +97,11 @@ urlpatterns = [
         name="patient_epic_link",
     ),
     path(
+        "api/patients/<uuid:patient_id>/epic-link/sync/",
+        epic_views.EpicSyncFromFhirView.as_view(),
+        name="patient_epic_sync",
+    ),
+    path(
         "api/patients/<uuid:patient_id>/epic-link/prepare-authorize/",
         epic_views.PrepareEpicAuthorizeView.as_view(),
         name="patient_epic_prepare_authorize",

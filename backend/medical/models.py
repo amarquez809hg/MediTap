@@ -261,7 +261,7 @@ class PatientChronicDisease(models.Model):
 # ---------- External FHIR (Epic sandbox / SMART) ----------
 class EpicPatientLink(models.Model):
     """
-    Read-only Epic linkage for a MediTap patient (OAuth + FHIR reads; no token persistence).
+    Epic SMART linkage for a MediTap patient (OAuth tokens stored encrypted; FHIR read sync).
     """
 
     STATUS_DISCONNECTED = "disconnected"
@@ -295,6 +295,29 @@ class EpicPatientLink(models.Model):
         blank=True,
         null=True,
         help_text="FHIR base URL used when this link was established (sandbox issuer).",
+    )
+    access_token_encrypted = models.TextField(
+        blank=True,
+        help_text="Encrypted OAuth access token (never exposed via API).",
+    )
+    refresh_token_encrypted = models.TextField(
+        blank=True,
+        help_text="Encrypted OAuth refresh token for FHIR reads between sessions.",
+    )
+    access_token_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the stored access token expires (refreshed automatically on sync).",
+    )
+    last_sync_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last successful FHIR import into the MediTap patient chart.",
+    )
+    last_sync_summary = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Summary of the last sync (updated fields, observation counts, etc.).",
     )
     last_error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
