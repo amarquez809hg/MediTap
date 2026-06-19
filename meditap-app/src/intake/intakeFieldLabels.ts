@@ -28,9 +28,18 @@ export const INTAKE_SECTION_HEADERS = [
   'STRESS TEST',
   'MEDICATIONS',
   'ALLERGIES',
+  'ALERGIAS',
   'INSURANCE',
+  'SEGURO MÉDICO',
+  'SEGURO MEDICO',
   'HOSPITAL VISIT',
+  'VISITAS MÉDICAS',
+  'VISITAS MEDICAS',
   'CHRONIC CONDITIONS',
+  'CONDICIONES CRÓNICAS',
+  'CONDICIONES CRONICAS',
+  'DATOS DEMOGRÁFICOS',
+  'DATOS DEMOGRAFICOS',
   'URGENT CARE',
   'DENTAL NOTE',
   'IMAGING',
@@ -70,19 +79,19 @@ export type DemographicLabelDef = {
 
 /** Longest aliases first when scanning (Child Name before Name). */
 export const DEMOGRAPHIC_LABELS: DemographicLabelDef[] = [
-  { field: 'givenName', aliases: ['Given Name', 'First Name'] },
-  { field: 'familyName', aliases: ['Family Name', 'Last Name', 'Surname'] },
-  { field: 'fullName', aliases: ['Patient Name', 'Full Name', 'Child Name', 'Name'] },
-  { field: 'dateOfBirth', aliases: ['Date of Birth', 'Birth Date', 'DOB', 'Born'] },
-  { field: 'sexAtBirth', aliases: ['Sex at Birth', 'Sex', 'Gender'] },
-  { field: 'bloodType', aliases: ['Blood Type'] },
-  { field: 'email', aliases: ['Email', 'E-mail'] },
-  { field: 'phoneNumber', aliases: ['Phone Number', 'Phone', 'Mobile', 'Cell'] },
-  { field: 'address', aliases: ['Address', 'Home Address', 'Street Address'] },
-  { field: 'race', aliases: ['Race'] },
-  { field: 'ethnicity', aliases: ['Ethnicity'] },
-  { field: 'preferredLanguage', aliases: ['Preferred Language', 'Language'] },
-  { field: 'maritalStatus', aliases: ['Marital Status'] },
+  { field: 'givenName', aliases: ['Given Name', 'First Name', 'Nombre'] },
+  { field: 'familyName', aliases: ['Family Name', 'Last Name', 'Surname', 'Apellido'] },
+  { field: 'fullName', aliases: ['Patient Name', 'Full Name', 'Child Name', 'Name', 'Nombre completo'] },
+  { field: 'dateOfBirth', aliases: ['Date of Birth', 'Birth Date', 'DOB', 'Born', 'Fecha de nacimiento'] },
+  { field: 'sexAtBirth', aliases: ['Sex at Birth', 'Sex', 'Gender', 'Sexo al nacer', 'Sexo'] },
+  { field: 'bloodType', aliases: ['Blood Type', 'Tipo de sangre'] },
+  { field: 'email', aliases: ['Email', 'E-mail', 'Correo electrónico', 'Correo electronico'] },
+  { field: 'phoneNumber', aliases: ['Phone Number', 'Phone', 'Mobile', 'Cell', 'Teléfono', 'Telefono'] },
+  { field: 'address', aliases: ['Address', 'Home Address', 'Street Address', 'Dirección', 'Direccion'] },
+  { field: 'race', aliases: ['Race', 'Raza'] },
+  { field: 'ethnicity', aliases: ['Ethnicity', 'Etnicidad'] },
+  { field: 'preferredLanguage', aliases: ['Preferred Language', 'Language', 'Idioma preferido', 'Idioma'] },
+  { field: 'maritalStatus', aliases: ['Marital Status', 'Estado civil'] },
   { field: 'heightInches', aliases: ['Height', 'Ht', 'Stature'] },
   { field: 'weightLbs', aliases: ['Weight', 'Wt', 'Body Weight'] },
 ];
@@ -163,9 +172,11 @@ export function validateDemographicValue(
     case 'dateOfBirth':
       return undefined; // validated separately with tryParseDateToIso
     case 'sexAtBirth': {
-      const s = v.match(/^(male|female)\b/i);
+      const s = v.match(/^(male|female|masculino|femenino|hombre|mujer)\b/i);
       if (!s) return undefined;
-      return s[1].charAt(0).toUpperCase() + s[1].slice(1).toLowerCase();
+      const token = s[1].toLowerCase();
+      if (token === 'male' || token === 'masculino' || token === 'hombre') return 'Male';
+      return 'Female';
     }
     case 'bloodType':
       return normalizeBloodType(v);

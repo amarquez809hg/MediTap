@@ -9,9 +9,12 @@ export function tryParseDateToIso(raw: string): string | undefined {
   }
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) {
-    const mo = +m[1];
-    const day = +m[2];
+    let mo = +m[1];
+    let day = +m[2];
     const y = +m[3];
+    if (mo > 12 && day >= 1 && day <= 12) {
+      [mo, day] = [day, mo];
+    }
     if (mo >= 1 && mo <= 12 && day >= 1 && day <= 31) {
       const d = new Date(y, mo - 1, day);
       return Number.isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);

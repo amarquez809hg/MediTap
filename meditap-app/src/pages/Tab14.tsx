@@ -30,11 +30,13 @@ import {
 } from '../intake/mergeTab14IntakeUpload';
 import {
     applyTab14ParseBundle,
+    bundleHasPatientIdentity,
+    emptyMergeSnapshot,
     formatTab14MergeStatsNotes,
     mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
-import type { Tab14PatientFields } from '../intake/tab14IntakeTypes';
+import type { Tab14IntakeParseResult, Tab14PatientFields } from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -632,6 +634,7 @@ const Tab14: React.FC = () => {
 
         let snapshot = buildMergeSnapshot();
         let patientFromUpload: Tab14PatientFields = {};
+        const parsedBundles: Tab14IntakeParseResult[] = [];
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
 
@@ -648,18 +651,13 @@ const Tab14: React.FC = () => {
 
                 const fullText = await extractTab14UploadFileText(file);
                 const bundle = parseTab14IntakeDocument(fullText);
+                parsedBundles.push(bundle);
                 patientFromUpload = mergePdfPatientFields(
                     patientFromUpload,
                     bundle.patientFields
                 );
-                const merged = applyTab14ParseBundle(snapshot, bundle);
-                snapshot = merged.snapshot;
 
                 let uploadMsg = summarizeTab14ParseResult(bundle);
-                const mergeNotes = formatTab14MergeStatsNotes(merged.stats);
-                if (mergeNotes.length > 0) {
-                    uploadMsg += ` ${mergeNotes.join('; ')}.`;
-                }
                 fileMessages.push(`${file.name}: ${uploadMsg}`);
 
                 newEntries.push({
@@ -670,11 +668,29 @@ const Tab14: React.FC = () => {
                 });
             }
 
+            const replaceChartFromPdf = parsedBundles.some(bundleHasPatientIdentity);
+            snapshot = replaceChartFromPdf ? emptyMergeSnapshot() : buildMergeSnapshot();
+
+            for (let i = 0; i < parsedBundles.length; i += 1) {
+                const bundle = parsedBundles[i];
+                const merged = applyTab14ParseBundle(snapshot, bundle);
+                snapshot = merged.snapshot;
+                const mergeNotes = formatTab14MergeStatsNotes(merged.stats);
+                if (mergeNotes.length > 0) {
+                    fileMessages[i] += ` ${mergeNotes.join('; ')}.`;
+                }
+            }
+
             applySnapshotToForm(snapshot);
             if (Object.keys(patientFromUpload).length > 0) {
                 // Replace demographics from PDF so stale chart values (e.g. prior patient name) do not linger.
                 setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
                 setActiveSection(0);
+            }
+            if (replaceChartFromPdf) {
+                setNoAllergies(snapshot.noAllergies);
+                setNoMedications(snapshot.noMedications);
+                setNoChronicConditions(snapshot.noChronicConditions);
             }
             setUploadedFiles((prev) => [...prev, ...newEntries]);
             setUploadParseMessage(fileMessages.join('\n\n'));

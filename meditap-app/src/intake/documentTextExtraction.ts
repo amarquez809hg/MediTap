@@ -84,12 +84,31 @@ export function isSparseExtractedText(text: string): boolean {
   return text.replace(/\s/g, '').length < SPARSE_PDF_CHAR_THRESHOLD;
 }
 
+/** Guess OCR languages from extracted text (English + Spanish by default). */
+export function detectOcrLanguages(existingText: string): string {
+  const t = existingText.replace(/\s+/g, ' ').toLowerCase();
+  const wantsSpanish =
+    /registro m[ée]dico|datos demogr[áa]ficos|alergias|medicamentos|apellido|fecha de nacimiento|penicilina|seguro m[ée]dico|condiciones cr[óo]nicas/.test(
+      t
+    );
+  const wantsEnglish =
+    /demographics|allergies|medications|given name|family name|date of birth|patient name/.test(
+      t
+    );
+  if (wantsSpanish && wantsEnglish) return 'eng+spa';
+  if (wantsSpanish) return 'spa+eng';
+  return 'eng+spa';
+}
+
 /**
  * OCR a raster image (data URL or image element src). Loads tesseract.js on demand.
  */
-export async function ocrImageDataUrl(dataUrl: string): Promise<string> {
+export async function ocrImageDataUrl(
+  dataUrl: string,
+  languages = 'eng+spa'
+): Promise<string> {
   const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker('eng');
+  const worker = await createWorker(languages);
   try {
     const {
       data: { text },
@@ -120,7 +139,7 @@ export async function augmentPdfTextWithFirstPageOcr(
     const renderTask = page.render({ canvasContext: ctx, viewport });
     await renderTask.promise;
     const dataUrl = canvas.toDataURL('image/png');
-    const ocrText = await ocrImageDataUrl(dataUrl);
+    const ocrText = await ocrImageDataUrl(dataUrl, detectOcrLanguages(extractedText));
     if (!ocrText) return extractedText;
     return `${extractedText}\n\n${ocrText}`.trim();
   } catch {
@@ -172,7 +191,7 @@ export async function extractTab14UploadFileText(file: File): Promise<string> {
 
   if (file.type.startsWith('image/')) {
     const dataUrl = await fileToDataUrl(file);
-    return ocrImageDataUrl(dataUrl);
+    return ocrImageDataUrl(dataUrl, 'eng+spa');
   }
 
   throw new Error('Unsupported file type');

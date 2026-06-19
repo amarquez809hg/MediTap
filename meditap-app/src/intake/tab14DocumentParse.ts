@@ -22,6 +22,10 @@ import {
   isRiverbendHieDocument,
   parseRiverbendHieDocument,
 } from './riverbendHieParse';
+import {
+  isSpanishMediTapRegistroDocument,
+  parseSpanishMediTapRegistroDocument,
+} from './spanishIntakeParse';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -771,6 +775,9 @@ export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
   }
   if (isRiverbendHieDocument(rawText)) {
     specialized.push(parseRiverbendHieDocument(rawText));
+  }
+  if (isSpanishMediTapRegistroDocument(rawText)) {
+    specialized.push(parseSpanishMediTapRegistroDocument(rawText));
   }
   if (isEpicHealthSummaryDocument(rawText)) {
     specialized.push(parseEpicHealthSummaryDocument(rawText));

@@ -768,12 +768,12 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
     /\bno\s+known\s+(drug\s+)?allergies\b/i.test(text) ||
     /\bNKA\b/i.test(text);
 
-  const allergySection = sliceAfterHeader(lines, /^(allergies|drug\s*allergies)\b/i);
+  const allergySection = sliceAfterHeader(lines, /^(allergies|drug\s*allergies|alergias)\b/i);
   let allergies = noKnownDrugAllergies ? [] : parseAllergyRows(allergySection, text);
   if (!allergies.length) allergies = parseAthenaAllergies(text);
 
   const medSection =
-    sliceAfterHeader(lines, /^(current\s*)?(medications?|medication\s*list|home\s*meds)\b/i) ||
+    sliceAfterHeader(lines, /^(current\s*)?(medications?|medication\s*list|home\s*meds|medicamentos)\b/i) ||
     sliceSection(text, /\bMEDICATIONS\b/i, /MISSING FIELDS|ENCOUNTER NOTE|URGENT CARE|ALLERGIES/i).split('\n');
   let medications = parseMedicationRows(Array.isArray(medSection) ? medSection : [medSection]);
   if (!medications.length) medications = parseAthenaMedications(text);

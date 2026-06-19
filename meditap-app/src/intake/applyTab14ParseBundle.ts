@@ -6,7 +6,7 @@ import type {
   Tab14IntakeParseResult,
   Tab14MedicationRow,
   Tab14PatientFields,
-} from "./tab14IntakeTypes";
+} from './tab14IntakeTypes';
 import { mergeAllergiesFromPdf } from "./mergeTab14Allergies";
 import {
   hasHospitalVisitData,
@@ -36,6 +36,26 @@ export type Tab14MergeStats = {
   hospitalVisitsAdded: number;
   hospitalFieldsAdded: number;
 };
+
+/** True when a parsed bundle identifies a specific patient (given + family name). */
+export function bundleHasPatientIdentity(bundle: Tab14IntakeParseResult): boolean {
+  return Boolean(
+    bundle.patientFields.givenName?.trim() && bundle.patientFields.familyName?.trim()
+  );
+}
+
+export function emptyMergeSnapshot(): Tab14MergeSnapshot {
+  return {
+    allergies: [],
+    noAllergies: false,
+    insurances: [],
+    medications: [],
+    noMedications: false,
+    chronicConditions: [],
+    noChronicConditions: false,
+    hospitalVisits: [],
+  };
+}
 
 /** Accumulate demographics from one or more parsed uploads (later files override). */
 export function mergePdfPatientFields(
