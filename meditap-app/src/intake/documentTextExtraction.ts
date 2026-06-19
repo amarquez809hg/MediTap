@@ -1,5 +1,11 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import { GlobalWorkerOptions } from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import worker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+if (!GlobalWorkerOptions.workerSrc) {
+  GlobalWorkerOptions.workerSrc = `${worker}?v=nginx-mjs-mime`;
+}
 
 const SPARSE_PDF_CHAR_THRESHOLD = 100;
 
@@ -135,11 +141,26 @@ export function isTab14UploadFileType(file: File): boolean {
   return file.type === 'application/pdf' || file.type.startsWith('image/');
 }
 
+async function loadPdfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<PDFDocumentProxy> {
+  const data = new Uint8Array(arrayBuffer);
+  try {
+    return await pdfjsLib.getDocument({ data }).promise;
+  } catch {
+    const legacy = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    return legacy.getDocument({
+      data,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    }).promise;
+  }
+}
+
 /** Extract plain text from a Tab14 upload file (PDF with optional OCR, or image OCR). */
 export async function extractTab14UploadFileText(file: File): Promise<string> {
   if (file.type === 'application/pdf') {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await loadPdfFromArrayBuffer(arrayBuffer);
     let fullText = '';
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);

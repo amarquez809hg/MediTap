@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTab14ParseBundle } from "./applyTab14ParseBundle";
+import { applyTab14ParseBundle, mergePdfPatientFields } from "./applyTab14ParseBundle";
 import type { Tab14IntakeParseResult } from "./tab14IntakeTypes";
 
 const emptySnapshot = {
@@ -53,6 +53,18 @@ const lisinoprilBundle: Tab14IntakeParseResult = {
     },
   ],
 };
+
+describe("mergePdfPatientFields", () => {
+  it("accumulates demographics and later uploads override", () => {
+    let acc = mergePdfPatientFields({}, { givenName: "Riley", familyName: "Moore" });
+    acc = mergePdfPatientFields(acc, { givenName: "Rafael", familyName: "Santos", bloodType: "AB+" });
+    expect(acc).toEqual({
+      givenName: "Rafael",
+      familyName: "Santos",
+      bloodType: "AB+",
+    });
+  });
+});
 
 describe("applyTab14ParseBundle", () => {
   it("merges two bundles sequentially into one snapshot", () => {

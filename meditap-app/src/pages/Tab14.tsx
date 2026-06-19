@@ -31,8 +31,10 @@ import {
 import {
     applyTab14ParseBundle,
     formatTab14MergeStatsNotes,
+    mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
+import type { Tab14PatientFields } from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -52,11 +54,6 @@ import {
     IonPage,
     IonContent
 } from '@ionic/react';
-import * as pdfjsLib from "pdfjs-dist";
-import { GlobalWorkerOptions } from "pdfjs-dist";
-import worker from "pdfjs-dist/build/pdf.worker.mjs?url";
-
-GlobalWorkerOptions.workerSrc = `${worker}?v=nginx-mjs-mime`;
 
 interface PatientInfo {
     givenName: string;
@@ -634,6 +631,7 @@ const Tab14: React.FC = () => {
         setUploadParseMessage(null);
 
         let snapshot = buildMergeSnapshot();
+        let patientFromUpload: Tab14PatientFields = {};
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
 
@@ -650,6 +648,10 @@ const Tab14: React.FC = () => {
 
                 const fullText = await extractTab14UploadFileText(file);
                 const bundle = parseTab14IntakeDocument(fullText);
+                patientFromUpload = mergePdfPatientFields(
+                    patientFromUpload,
+                    bundle.patientFields
+                );
                 const merged = applyTab14ParseBundle(snapshot, bundle);
                 snapshot = merged.snapshot;
 
@@ -669,6 +671,11 @@ const Tab14: React.FC = () => {
             }
 
             applySnapshotToForm(snapshot);
+            if (Object.keys(patientFromUpload).length > 0) {
+                // Replace demographics from PDF so stale chart values (e.g. prior patient name) do not linger.
+                setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
+                setActiveSection(0);
+            }
             setUploadedFiles((prev) => [...prev, ...newEntries]);
             setUploadParseMessage(fileMessages.join('\n\n'));
             markOnboardingStep(username, 'upload', true);

@@ -5,6 +5,7 @@ import type {
   Tab14InsuranceRow,
   Tab14IntakeParseResult,
   Tab14MedicationRow,
+  Tab14PatientFields,
 } from "./tab14IntakeTypes";
 import { mergeAllergiesFromPdf } from "./mergeTab14Allergies";
 import {
@@ -35,6 +36,15 @@ export type Tab14MergeStats = {
   hospitalVisitsAdded: number;
   hospitalFieldsAdded: number;
 };
+
+/** Accumulate demographics from one or more parsed uploads (later files override). */
+export function mergePdfPatientFields(
+  accumulated: Tab14PatientFields,
+  fromBundle: Tab14PatientFields
+): Tab14PatientFields {
+  if (Object.keys(fromBundle).length === 0) return accumulated;
+  return { ...accumulated, ...fromBundle };
+}
 
 const emptyStats = (): Tab14MergeStats => ({
   allergyMergeAdded: 0,
