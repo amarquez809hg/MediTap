@@ -30,10 +30,13 @@ import {
 } from '../intake/mergeTab14IntakeUpload';
 import {
     applyTab14ParseBundle,
+    bundleHasPatientIdentity,
+    emptyMergeSnapshot,
     formatTab14MergeStatsNotes,
+    mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
-import type { Tab14IntakeParseResult } from '../intake/tab14IntakeTypes';
+import type { Tab14IntakeParseResult, Tab14PatientFields } from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -638,6 +641,7 @@ const Tab14: React.FC = () => {
         setUploadParseMessage(null);
 
         let snapshot = buildMergeSnapshot();
+        let patientFromUpload: Tab14PatientFields = {};
         const parsedBundles: Tab14IntakeParseResult[] = [];
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
@@ -656,6 +660,10 @@ const Tab14: React.FC = () => {
                 const fullText = await extractTab14UploadFileText(file);
                 const bundle = parseTab14IntakeDocument(fullText);
                 parsedBundles.push(bundle);
+                patientFromUpload = mergePdfPatientFields(
+                    patientFromUpload,
+                    bundle.patientFields
+                );
 
                 let uploadMsg = summarizeTab14ParseResult(bundle);
                 fileMessages.push(uploadMsg);
@@ -668,6 +676,9 @@ const Tab14: React.FC = () => {
                 });
             }
 
+            const replaceChartFromPdf = parsedBundles.some(bundleHasPatientIdentity);
+            snapshot = replaceChartFromPdf ? emptyMergeSnapshot() : buildMergeSnapshot();
+
             for (let i = 0; i < parsedBundles.length; i += 1) {
                 const bundle = parsedBundles[i];
                 const merged = applyTab14ParseBundle(snapshot, bundle);
@@ -679,6 +690,15 @@ const Tab14: React.FC = () => {
             }
 
             applySnapshotToForm(snapshot);
+            if (Object.keys(patientFromUpload).length > 0) {
+                setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
+                setActiveSection(0);
+            }
+            if (replaceChartFromPdf) {
+                setNoAllergies(snapshot.noAllergies);
+                setNoMedications(snapshot.noMedications);
+                setNoChronicConditions(snapshot.noChronicConditions);
+            }
             const entriesWithStatus = newEntries.map((entry, i) => ({
                 ...entry,
                 parseStatus: fileMessages[i] ?? '',
