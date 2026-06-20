@@ -30,13 +30,10 @@ import {
 } from '../intake/mergeTab14IntakeUpload';
 import {
     applyTab14ParseBundle,
-    bundleHasPatientIdentity,
-    emptyMergeSnapshot,
     formatTab14MergeStatsNotes,
-    mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
-import type { Tab14IntakeParseResult, Tab14PatientFields } from '../intake/tab14IntakeTypes';
+import type { Tab14IntakeParseResult } from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -335,11 +332,19 @@ const ALLERGY_SEVERITY_OPTIONS = [
     { value: 'Unknown', label: 'Unknown / not documented' },
 ] as const;
 
+
+function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
+    const comma = stamp.indexOf(", ");
+    if (comma < 0) return { date: stamp, time: "" };
+    return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
+}
+
 type UploadedFileEntry = {
     id: string;
     file: File;
     previewUrl: string;
     uploadedAt: string;
+    parseStatus?: string;
 };
 
 const Tab14: React.FC = () => {
@@ -633,7 +638,6 @@ const Tab14: React.FC = () => {
         setUploadParseMessage(null);
 
         let snapshot = buildMergeSnapshot();
-        let patientFromUpload: Tab14PatientFields = {};
         const parsedBundles: Tab14IntakeParseResult[] = [];
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
@@ -652,13 +656,9 @@ const Tab14: React.FC = () => {
                 const fullText = await extractTab14UploadFileText(file);
                 const bundle = parseTab14IntakeDocument(fullText);
                 parsedBundles.push(bundle);
-                patientFromUpload = mergePdfPatientFields(
-                    patientFromUpload,
-                    bundle.patientFields
-                );
 
                 let uploadMsg = summarizeTab14ParseResult(bundle);
-                fileMessages.push(`${file.name}: ${uploadMsg}`);
+                fileMessages.push(uploadMsg);
 
                 newEntries.push({
                     id: `${Date.now()}-${index}-${file.name}`,
@@ -667,9 +667,6 @@ const Tab14: React.FC = () => {
                     uploadedAt: new Date().toLocaleString(),
                 });
             }
-
-            const replaceChartFromPdf = parsedBundles.some(bundleHasPatientIdentity);
-            snapshot = replaceChartFromPdf ? emptyMergeSnapshot() : buildMergeSnapshot();
 
             for (let i = 0; i < parsedBundles.length; i += 1) {
                 const bundle = parsedBundles[i];
@@ -682,18 +679,12 @@ const Tab14: React.FC = () => {
             }
 
             applySnapshotToForm(snapshot);
-            if (Object.keys(patientFromUpload).length > 0) {
-                // Replace demographics from PDF so stale chart values (e.g. prior patient name) do not linger.
-                setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
-                setActiveSection(0);
-            }
-            if (replaceChartFromPdf) {
-                setNoAllergies(snapshot.noAllergies);
-                setNoMedications(snapshot.noMedications);
-                setNoChronicConditions(snapshot.noChronicConditions);
-            }
-            setUploadedFiles((prev) => [...prev, ...newEntries]);
-            setUploadParseMessage(fileMessages.join('\n\n'));
+            const entriesWithStatus = newEntries.map((entry, i) => ({
+                ...entry,
+                parseStatus: fileMessages[i] ?? '',
+            }));
+            setUploadedFiles((prev) => [...prev, ...entriesWithStatus]);
+            setUploadParseMessage(null);
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
             newEntries.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
@@ -2051,48 +2042,84 @@ const Tab14: React.FC = () => {
                         {uploadParsing && (
                             <p className="tab14-upload-parse tab14-upload-parse--muted">{t('patientIntake.readingDocument')}</p>
                         )}
-                        {!uploadParsing && uploadParseMessage && (
+                        {!uploadParsing && uploadParseMessage && uploadedFiles.length === 0 && (
                             <p className="tab14-upload-parse">{uploadParseMessage}</p>
                         )}
 
                         {uploadedFiles.length > 0 && (
                         <div className="file-preview-list">
+                            <div className="file-preview-row file-preview-row--head" aria-hidden="true">
+                                <span className="file-preview-cell file-preview-cell--name">Name</span>
+                                <span className="file-preview-cell file-preview-cell--size">Size</span>
+                                <span className="file-preview-cell file-preview-cell--uploaded">Uploaded</span>
+                                <span className="file-preview-cell file-preview-cell--status">Import status</span>
+                                <span className="file-preview-cell file-preview-cell--preview">Preview</span>
+                                <span className="file-preview-cell file-preview-cell--actions">Actions</span>
+                            </div>
                             {uploadedFiles.map((entry) => (
-                                <div className="file-preview" key={entry.id}>
-                                    <p><strong>Name:</strong> {entry.file.name}</p>
-                                    <p><strong>Size:</strong> {(entry.file.size / 1024).toFixed(2)} KB</p>
-                                    <p><strong>Uploaded:</strong> {entry.uploadedAt}</p>
-
-                                    {entry.file.type === 'application/pdf' ? (
-                                        <div className = "file-thumbnail">
-                                            <img src = "/pdf-icon.png" alt="" />
+                                <div className="file-preview-row" key={entry.id}>
+                                    <span
+                                        className="file-preview-cell file-preview-cell--name"
+                                        title={entry.file.name}
+                                    >
+                                        {entry.file.name}
+                                    </span>
+                                    <span className="file-preview-cell file-preview-cell--size">
+                                        {(entry.file.size / 1024).toFixed(2)} KB
+                                    </span>
+                                    <span className="file-preview-cell file-preview-cell--uploaded">
+                                        {(() => {
+                                            const { date, time } = splitUploadedAtStamp(entry.uploadedAt);
+                                            return (
+                                                <>
+                                                    <span className="file-preview-uploaded-date">{date}</span>
+                                                    {time ? (
+                                                        <span className="file-preview-uploaded-time">{time}</span>
+                                                    ) : null}
+                                                </>
+                                            );
+                                        })()}
+                                    </span>
+                                    <span className="file-preview-cell file-preview-cell--status">
+                                        {entry.parseStatus?.trim() || '-'}
+                                    </span>
+                                    <span className="file-preview-cell file-preview-cell--preview">
+                                        {entry.file.type === 'application/pdf' ? (
                                             <button
-                                                className = "preview-button"
-                                                type = "button"
-                                                onClick = {() => window.open(entry.previewUrl, "_blank")}>
+                                                className="preview-button"
+                                                type="button"
+                                                onClick={() => window.open(entry.previewUrl, '_blank')}
+                                            >
                                                 Preview PDF
                                             </button>
-                                        </div>
-                                    ) : entry.file.type.startsWith('image/') ? (
-                                        <div className="file-thumbnail">
-                                            <img src={entry.previewUrl} alt="Uploaded" style={{ width: 100, height: 100, objectFit: 'cover' }} />
-                                        </div>
-                                    ) : (
-                                        <p>No preview available for this file type.</p>
-                                    )}
-
-                                    <button
-                                        className="remove-file-button"
-                                        type="button"
-                                        onClick={() => removeUploadedFile(entry.id)}>
-                                        Remove File
-                                    </button>
+                                        ) : entry.file.type.startsWith('image/') ? (
+                                            <button
+                                                className="preview-button preview-button--image"
+                                                type="button"
+                                                onClick={() => window.open(entry.previewUrl, '_blank')}
+                                            >
+                                                View Image
+                                            </button>
+                                        ) : (
+                                            <span className="file-preview-empty">-</span>
+                                        )}
+                                    </span>
+                                    <span className="file-preview-cell file-preview-cell--actions">
+                                        <button
+                                            className="remove-file-button"
+                                            type="button"
+                                            onClick={() => removeUploadedFile(entry.id)}
+                                        >
+                                            Remove
+                                        </button>
+                                    </span>
                                 </div>
                             ))}
                             <button
                                 className="remove-file-button remove-file-button--clear-all"
                                 type="button"
-                                onClick={clearUploadedFiles}>
+                                onClick={clearUploadedFiles}
+                            >
                                 {t('patientIntake.clearUploadedFiles')}
                             </button>
                         </div>
