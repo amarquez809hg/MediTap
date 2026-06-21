@@ -20,11 +20,41 @@ function cleanValue(v: string): string {
   return collapseWs(v.replace(/\*+$/g, '').trim());
 }
 
-function mapSpanishSex(raw: string): string | undefined {
-  const v = collapseWs(raw).toLowerCase();
-  if (/^masculino|^male|^hombre/.test(v)) return 'Male';
-  if (/^femenino|^female|^mujer/.test(v)) return 'Female';
-  return undefined;
+function preserveLocalizedSex(raw: string): string | undefined {
+  const v = cleanValue(raw);
+  if (!v) return undefined;
+  const lower = v.toLowerCase();
+  if (/^masculino|^male|^hombre/.test(lower)) return 'Masculino';
+  if (/^femenino|^female|^mujer/.test(lower)) return 'Femenino';
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+const MARITAL_STATUS_MAP: Record<string, string> = {
+  soltero: 'Soltero',
+  soltera: 'Soltera',
+  casado: 'Casado',
+  casada: 'Casada',
+  divorciado: 'Divorciado',
+  divorciada: 'Divorciada',
+  viudo: 'Viudo',
+  viuda: 'Viuda',
+  single: 'Single',
+  married: 'Married',
+  divorced: 'Divorced',
+  widowed: 'Widowed',
+  'domestic partnership': 'Domestic Partnership',
+  'union libre': 'Unión libre',
+  'unión libre': 'Unión libre',
+  other: 'Other',
+  otro: 'Otro',
+};
+
+function preserveLocalizedMarital(raw: string): string | undefined {
+  const trimmed = cleanValue(raw.split(/\s+ALERGIAS\b/i)[0]);
+  if (!trimmed) return undefined;
+  const mapped = MARITAL_STATUS_MAP[trimmed.toLowerCase()];
+  if (mapped) return mapped;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
 /** PDF text often glues section headers to values (DATOS DEMOGRÁFICOSNombre:). */
@@ -73,6 +103,7 @@ export function preprocessSpanishGluedText(text: string): string {
     t = t.replace(new RegExp(`(${escapeRe(label)})(?=\\S)`, 'gi'), '$1\n');
   }
   t = t.replace(/ALERGIAS(\d+\.)/gi, 'ALERGIAS\n$1');
+  t = t.replace(/(Estado civil:\s*[^\n]+?)\s+ALERGIAS\b/gi, '$1\nALERGIAS');
   t = t.replace(/MEDICAMENTOS([A-Za-zÁÉÍÓÚáéíóú])/gi, 'MEDICAMENTOS\n$1');
   t = t.replace(/CONDICIONES CR[ÓO]NICAS([A-Za-zÁÉÍÓÚáéíóú])/gi, 'CONDICIONES CRÓNICAS\n$1');
   t = t.replace(/VISITAS M[ÉE]DICAS(\d)/gi, 'VISITAS MÉDICAS\n$1');
@@ -110,7 +141,7 @@ function parsePatientFields(text: string): Tab14PatientFields {
   }
 
   const sexRaw = labelValue(text, /Sexo al nacer:\s*([^\n]+)/i) ?? labelValue(text, /Sexo:\s*([^\n]+)/i);
-  const sex = sexRaw ? mapSpanishSex(sexRaw) : undefined;
+  const sex = sexRaw ? preserveLocalizedSex(sexRaw) : undefined;
   if (sex) out.sexAtBirth = sex;
 
   const btRaw = labelValue(text, /Tipo de sangre:\s*([^\n]+)/i);
@@ -135,7 +166,8 @@ function parsePatientFields(text: string): Tab14PatientFields {
   const lang = labelValue(text, /Idioma preferido:\s*([^\n]+)/i);
   if (lang) out.preferredLanguage = lang;
 
-  const marital = labelValue(text, /Estado civil:\s*([^\n]+)/i);
+  const maritalRaw = labelValue(text, /Estado civil:\s*([^\n]+)/i);
+  const marital = maritalRaw ? preserveLocalizedMarital(maritalRaw) : undefined;
   if (marital) out.maritalStatus = marital;
 
   return out;

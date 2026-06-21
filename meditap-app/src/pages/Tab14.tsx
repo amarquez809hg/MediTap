@@ -333,13 +333,63 @@ const ALLERGY_SEVERITY_OPTIONS = [
     { value: 'Severe', label: 'Severe (significant systemic symptoms)' },
     { value: 'Anaphylaxis', label: 'Anaphylaxis (life-threatening)' },
     { value: 'Unknown', label: 'Unknown / not documented' },
+    { value: 'Leve', label: 'Leve' },
+    { value: 'Moderada', label: 'Moderada' },
+    { value: 'Grave', label: 'Grave' },
 ] as const;
-
 
 function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
     const comma = stamp.indexOf(", ");
     if (comma < 0) return { date: stamp, time: "" };
     return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
+}
+
+const SEX_AT_BIRTH_OPTIONS = [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Masculino', label: 'Masculino' },
+    { value: 'Femenino', label: 'Femenino' },
+];
+
+const MARITAL_STATUS_OPTIONS = [
+    { value: 'Single', label: 'Single' },
+    { value: 'Married', label: 'Married' },
+    { value: 'Divorced', label: 'Divorced' },
+    { value: 'Widowed', label: 'Widowed' },
+    { value: 'Domestic Partnership', label: 'Domestic Partnership' },
+    { value: 'Other', label: 'Other' },
+    { value: 'Soltero', label: 'Soltero' },
+    { value: 'Soltera', label: 'Soltera' },
+    { value: 'Casado', label: 'Casado' },
+    { value: 'Casada', label: 'Casada' },
+    { value: 'Divorciado', label: 'Divorciado' },
+    { value: 'Divorciada', label: 'Divorciada' },
+    { value: 'Viudo', label: 'Viudo' },
+    { value: 'Viuda', label: 'Viuda' },
+    { value: 'Unión libre', label: 'Unión libre' },
+    { value: 'Otro', label: 'Otro' },
+];
+
+function renderIntakeSelect(
+    value: string,
+    options: { value: string; label: string }[],
+    placeholder: string,
+    onChange: (next: string) => void
+) {
+    const known = new Set(options.map((o) => o.value));
+    return (
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+            <option value="">{placeholder}</option>
+            {options.map((o) => (
+                <option key={o.value} value={o.value}>
+                    {o.label}
+                </option>
+            ))}
+            {value && !known.has(value) ? (
+                <option value={value}>{value}</option>
+            ) : null}
+        </select>
+    );
 }
 
 type UploadedFileEntry = {
@@ -1325,25 +1375,18 @@ const Tab14: React.FC = () => {
 
                                 <div className="form-field">
                                     <label>Marital Status</label>
-                                    <select
-                                        value={patientInfo.maritalStatus}
-                                        onChange={(e) =>
+                                    {renderIntakeSelect(
+                                        patientInfo.maritalStatus,
+                                        MARITAL_STATUS_OPTIONS,
+                                        'Select marital status',
+                                        (next) =>
                                             handleSingleChange(
                                                 'maritalStatus',
-                                                e.target.value,
+                                                next,
                                                 patientInfo,
                                                 setPatientInfo
                                             )
-                                        }
-                                    >
-                                        <option value="">Select marital status</option>
-                                        <option value="Single">Single</option>
-                                        <option value="Married">Married</option>
-                                        <option value="Divorced">Divorced</option>
-                                        <option value="Widowed">Widowed</option>
-                                        <option value="Domestic Partnership">Domestic Partnership</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                                    )}
                                 </div>
                                 
                                 <div className="form-field">
@@ -1367,15 +1410,18 @@ const Tab14: React.FC = () => {
 
                                 <div className="form-field">
                                     <label>Sex at Birth</label>
-                                    <select
-                                    value={patientInfo.sexAtBirth}
-                                    onChange={(e) =>
-                                        handleSingleChange("sexAtBirth", e.target.value, patientInfo, setPatientInfo)
-                                    }>
-                                        <option value="">Select Sex at Birth</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
+                                    {renderIntakeSelect(
+                                        patientInfo.sexAtBirth,
+                                        SEX_AT_BIRTH_OPTIONS,
+                                        'Select Sex at Birth',
+                                        (next) =>
+                                            handleSingleChange(
+                                                'sexAtBirth',
+                                                next,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                    )}
                                 </div>
 
                             </div>
@@ -1587,17 +1633,22 @@ const Tab14: React.FC = () => {
 
                                     <div className="form-field">
                                         <label>Severity</label>
-                                        <select
-                                        value={allergy.severity}
-                                        onChange={(e) =>
-                                            handleChange(index, "severity", e.target.value, allergies, setAllergies)
-                                        }>
-                                            {ALLERGY_SEVERITY_OPTIONS.map((opt) => (
-                                                <option key={opt.value || 'blank'} value={opt.value}>
-                                                    {opt.label}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        {renderIntakeSelect(
+                                            allergy.severity,
+                                            ALLERGY_SEVERITY_OPTIONS.map((opt) => ({
+                                                value: opt.value,
+                                                label: opt.label,
+                                            })),
+                                            'Select severity',
+                                            (next) =>
+                                                handleChange(
+                                                    index,
+                                                    'severity',
+                                                    next,
+                                                    allergies,
+                                                    setAllergies
+                                                )
+                                        )}
                                     </div>
 
                                     <div className="form-field">

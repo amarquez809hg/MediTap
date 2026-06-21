@@ -45,7 +45,8 @@ describe('Spanish + Rafael user PDFs', () => {
     expect(r.patientFields.givenName).toBe('Riley');
     expect(r.patientFields.familyName).toBe('Moore');
     expect(r.patientFields.dateOfBirth).toBe('1997-03-22');
-    expect(r.patientFields.sexAtBirth).toBe('Male');
+    expect(r.patientFields.sexAtBirth).toBe('Masculino');
+    expect(r.patientFields.maritalStatus).toBe('Soltero');
     expect(r.patientFields.bloodType).toBe('O+');
     expect(r.allergies.length).toBeGreaterThanOrEqual(2);
     expect(r.medications.length).toBeGreaterThanOrEqual(4);
