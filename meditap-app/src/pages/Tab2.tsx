@@ -3,6 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Tab2.css';
 import './Tab5.css';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import {
   IonContent,
   IonHeader,
@@ -291,9 +292,12 @@ const Tab2: React.FC = () => {
             <h1>
               <i className="fas fa-notes-medical"></i> {t('quickStatus.title')}
             </h1>
-            <a href="/tab1" className="book-btn meditap-glass-btn meditap-glass-btn--compact">
-              <i className="fas fa-arrow-left"></i> {t('common.goBackToDashboard')}
-            </a>
+            <div className="chronic-conditions-header__actions">
+              <HeaderLanguagePicker className="chronic-conditions-header__action-btn" />
+              <a href="/tab1" className="book-btn meditap-glass-btn meditap-glass-btn--compact">
+                <i className="fas fa-arrow-left"></i> {t('common.goBackToDashboard')}
+              </a>
+            </div>
           </header>
 
           {loadError && (

@@ -4,6 +4,7 @@ import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
 import { GlassDateInput } from '../components/GlassDatePicker';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { markOnboardingStep } from '../onboarding/onboardingStorage';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -1127,6 +1128,7 @@ const Tab14: React.FC = () => {
                                 <i className="fas fa-flask" aria-hidden />
                                 {t('patientIntake.loadSample')}
                             </button>
+                            <HeaderLanguagePicker />
                             <button type="button" className="book-btn">
                                 <a
                                     href="/tab1"

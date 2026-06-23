@@ -23,6 +23,7 @@ import {
   type Tab6IncidentPayload,
 } from '../api';
 import IncidentRecordCard from '../incidents/IncidentRecordCard';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import type { IncidentRecord } from '../incidents/incidentModel';
 import StaffPresetField from '../components/StaffPresetField';
 import {
@@ -317,6 +318,7 @@ const Tab6: React.FC = () => {
           >
             <i className="fas fa-plus"></i> {t('incidents.logNew')}
           </button>
+          <HeaderLanguagePicker className="incident-records-header__action-btn" />
           <a
             href="/tab1"
             className="book-btn incident-records-header__action-btn"

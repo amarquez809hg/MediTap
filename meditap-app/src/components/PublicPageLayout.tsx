@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import HeaderLanguagePicker from './HeaderLanguagePicker';
 import './PublicPageLayout.css';
 
 export type PublicNavKey = 'about' | 'support' | 'terms' | 'privacy';
@@ -39,6 +40,7 @@ const PublicPageLayout: React.FC<PublicPageLayoutProps> = ({
           {t('common.meditap')}
         </Link>
         <nav className="public-page__nav" aria-label="Site">
+          <HeaderLanguagePicker tone="nav" />
           <Link
             to="/tab10"
             className={activeNav === 'about' ? 'public-page__nav-link is-active' : 'public-page__nav-link'}

@@ -12,6 +12,7 @@ import {
 } from '../onboarding/onboardingStorage';
 import { loadTab14FromBackend } from '../api';
 import './OnboardingPage.css';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 
 const OnboardingPage: React.FC = () => {
   const { t } = useTranslation();
@@ -142,9 +143,12 @@ const OnboardingPage: React.FC = () => {
         <Link to="/tab1" className="onboarding-page__logo">
           {t('common.meditap')}
         </Link>
-        <button type="button" className="onboarding-page__skip" onClick={onSkip}>
-          {t('onboarding.skipForNow')}
-        </button>
+        <div className="onboarding-page__header-actions">
+          <HeaderLanguagePicker tone="nav" />
+          <button type="button" className="onboarding-page__skip" onClick={onSkip}>
+            {t('onboarding.skipForNow')}
+          </button>
+        </div>
       </header>
 
       <main className="onboarding-page__main">

@@ -17,6 +17,7 @@ import {
   updatePatientAppointment,
 } from '../api';
 import AppointmentCard from '../appointments/AppointmentCard';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import AppointmentPresetField from '../appointments/AppointmentPresetField';
 import {
   APPOINTMENT_CLINICAL_NOTES_OPTIONS,
@@ -210,6 +211,7 @@ const Tab4: React.FC = () => {
             <i className="fas fa-plus" aria-hidden />
             {t('appointments.bookNew')}
           </button>
+          <HeaderLanguagePicker className="schedule-header__action-btn" />
           <a
             href="/tab1"
             className="book-btn schedule-header__action-btn"

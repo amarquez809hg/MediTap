@@ -9,6 +9,7 @@ import DashboardHomeHero from '../components/DashboardHomeHero';
 import DashboardNextSteps from '../components/DashboardNextSteps';
 import DashboardSectionActions from '../components/DashboardSectionActions';
 import OnboardingBanner from '../components/OnboardingBanner';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import StaffElevationModal from '../components/StaffElevationModal';
 import { useStaffElevationGate } from '../hooks/useStaffElevationGate';
 import {
@@ -368,14 +369,15 @@ const Tab1: React.FC = () => {
     <div className="profile-container">
       <header className="profile-header">
         <div className="logo">{t('dashboard.title')}</div>
-        {username && (
-          <span style={{ marginRight: 12, fontSize: '0.9rem', opacity: 0.9 }}>
-            {username}
-          </span>
-        )}
-        <button type="button" className="logout-btn" onClick={() => setShowLogoutAlert(true)}>
-          <i className="fas fa-sign-out-alt"></i> {t('common.logout')}
-        </button>
+        <div className="profile-header__right">
+          {username && (
+            <span className="profile-header__username">{username}</span>
+          )}
+          <HeaderLanguagePicker />
+          <button type="button" className="logout-btn" onClick={() => setShowLogoutAlert(true)}>
+            <i className="fas fa-sign-out-alt"></i> {t('common.logout')}
+          </button>
+        </div>
       </header>
 
       <IonAlert

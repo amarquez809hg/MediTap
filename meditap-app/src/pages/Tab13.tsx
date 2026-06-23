@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import {
   IonContent,
   IonHeader,
@@ -237,6 +238,7 @@ const Tab13: React.FC = () => {
               {t('admin.title')}
             </h1>
             <div className="admin-panel-header__actions">
+              <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
               <a
                 href={fullAppUrl('/tab1')}
                 className="book-btn patient-insurance-header__action-btn"

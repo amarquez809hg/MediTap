@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
@@ -268,6 +269,7 @@ const Tab5: React.FC = () => {
             <i className="fas fa-plus" aria-hidden />
             {t('chronic.addNew')}
           </button>
+          <HeaderLanguagePicker className="chronic-conditions-header__action-btn" />
           <a href="/tab1" className="book-btn chronic-conditions-header__action-btn">
             <i className="fas fa-arrow-left" aria-hidden />
             {t('common.goBackToDashboard')}

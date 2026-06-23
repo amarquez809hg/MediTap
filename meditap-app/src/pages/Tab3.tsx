@@ -3,6 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 
 const HERO_POINT_KEYS = ['login.heroPoint1', 'login.heroPoint2', 'login.heroPoint3'] as const;
@@ -52,6 +53,7 @@ const Tab3: React.FC = () => {
       <header className="header">
         <div className="logo">MediTap</div>
         <nav className="nav" aria-label="Site">
+          <HeaderLanguagePicker tone="nav" />
           <Link to="/tab10">{t('login.aboutUs')}</Link>
           <Link to="/tab8">{t('login.support')}</Link>
         </nav>

@@ -26,6 +26,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getApiBase } from '../config/api';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import type { MediTapLocale } from '../i18n/localeSync';
 import { SUPPORTED_LOCALES } from '../i18n/localeSync';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
@@ -100,6 +101,7 @@ const Tab11: React.FC = () => {
               {t('settings.title')}
             </h1>
             <div className="settings-header__actions">
+              <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
               <a
                 href={fullAppUrl('/tab1')}
                 className="book-btn patient-insurance-header__action-btn"

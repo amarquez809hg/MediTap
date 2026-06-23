@@ -3,6 +3,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getApiBase } from '../config/api';
 import { startOnboardingForNewUser } from '../onboarding/onboardingStorage';
@@ -125,6 +126,7 @@ const Tab9: React.FC = () => {
       <header className="header">
         <div className="logo">{t('common.meditap')}</div>
         <nav className="nav" aria-label="Site">
+          <HeaderLanguagePicker tone="nav" />
           <Link to="/tab3">{t('login.logIn')}</Link>
           <Link to="/tab10">{t('login.aboutUs')}</Link>
           <Link to="/tab8">{t('login.support')}</Link>

@@ -21,6 +21,7 @@ import {
   updatePatientLabPanel,
 } from '../api';
 import LabResultCard from '../labResults/LabResultCard';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import type { LabResultLineItem, LabResultRow } from '../labResults/labResultModel';
 import { mapPatientLabPanelToRow } from '../labResults/labResultModel';
 import {
@@ -418,6 +419,7 @@ const Tab7: React.FC = () => {
                 <i className="fas fa-plus" aria-hidden />
                 {t('labs.addNew')}
               </button>
+              <HeaderLanguagePicker className="lab-results-header__action-btn" />
               <a href="/tab1" className="book-btn lab-results-header__action-btn">
                 <i className="fas fa-arrow-left" aria-hidden />
                 {t('common.goBackToDashboard')}

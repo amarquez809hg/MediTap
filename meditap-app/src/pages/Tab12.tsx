@@ -33,6 +33,7 @@ import {
 } from 'ionicons/icons';
 
 import './Tab12.css';
+import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -397,6 +398,7 @@ const Tab12: React.FC = () => {
                 <i className="fas fa-plus" aria-hidden />
                 {t('insurance.addPolicy')}
               </a>
+              <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
               <a
                 href={fullAppUrl('/tab1')}
                 className="book-btn patient-insurance-header__action-btn"
