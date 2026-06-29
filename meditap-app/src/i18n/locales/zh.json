@@ -597,7 +597,9 @@
     "passwordMismatch": "两次密码不一致。",
     "fieldsRequired": "请输入用户名、邮箱和密码。",
     "serverUnreachable": "无法连接服务器。请检查网络及 API 地址（VITE_API_BASE / 同源 /api）。",
-    "apiNotConfigured": "未配置 API 基础 URL（请设置 VITE_API_BASE）。"
+    "apiNotConfigured": "未配置 API 基础 URL（请设置 VITE_API_BASE）。",
+    "acceptTerms": "我已阅读并同意<termsLink>服务条款</termsLink>和<privacyLink>隐私政策</privacyLink>，包括授权将我提供的健康信息用于临床用途。",
+    "acceptTermsRequired": "创建账户前必须接受服务条款。"
   },
   "forgotPassword": {
     "title": "忘记密码",

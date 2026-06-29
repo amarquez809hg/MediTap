@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
@@ -46,6 +46,7 @@ const Tab9: React.FC = () => {
   const [showAccPasswordConfirm, setShowAccPasswordConfirm] = useState(false);
   const [accError, setAccError] = useState<string | null>(null);
   const [accSubmitting, setAccSubmitting] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   React.useEffect(() => {
     if (authReady && isAuthenticated) {
@@ -64,6 +65,10 @@ const Tab9: React.FC = () => {
     }
     if (accPassword !== accPasswordConfirm) {
       setAccError(t('register.passwordMismatch'));
+      return;
+    }
+    if (!acceptedTerms) {
+      setAccError(t('register.acceptTermsRequired'));
       return;
     }
     const base = getApiBase();
@@ -176,7 +181,7 @@ const Tab9: React.FC = () => {
                     className="login-card__alert-retry"
                     onClick={() => setAccError(null)}
                   >
-                    Dismiss
+                    {t('common.dismiss')}
                   </button>
                 </div>
               </div>
@@ -257,10 +262,47 @@ const Tab9: React.FC = () => {
                 </div>
               </label>
 
+              <label className="login-card__terms-check">
+                <input
+                  type="checkbox"
+                  className="login-card__terms-check-input"
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    setAcceptedTerms(e.target.checked);
+                    if (e.target.checked) setAccError(null);
+                  }}
+                  disabled={!authReady || accSubmitting}
+                  aria-describedby="register-terms-desc"
+                />
+                <span id="register-terms-desc" className="login-card__terms-check-text">
+                  <Trans
+                    i18nKey="register.acceptTerms"
+                    components={{
+                      termsLink: (
+                        <Link
+                          to="/terms"
+                          className="login-card__terms-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ),
+                      privacyLink: (
+                        <Link
+                          to="/privacy"
+                          className="login-card__terms-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ),
+                    }}
+                  />
+                </span>
+              </label>
+
               <button
                 type="submit"
                 className="login-card__btn login-card__btn--primary"
-                disabled={!authReady || accSubmitting}
+                disabled={!authReady || accSubmitting || !acceptedTerms}
               >
                 <span className="login-card__btn-label">
                   {accSubmitting
@@ -335,12 +377,6 @@ const Tab9: React.FC = () => {
                 </span>
               </a>
             </div>
-
-            <p className="login-card__terms">
-              {t('login.termsPrefix')}{' '}
-              <Link to="/terms">{t('login.termsOfService')}</Link> {t('login.and')}{' '}
-              <Link to="/privacy">{t('login.privacyPolicy')}</Link>.
-            </p>
           </aside>
         </div>
       </main>

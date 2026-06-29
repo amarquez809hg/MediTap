@@ -544,6 +544,41 @@
   text-underline-offset: 2px;
 }
 
+.login-card__terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.25rem 0 0.5rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.login-card__terms-check-input {
+  flex-shrink: 0;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  accent-color: var(--meditap-accent, #17a2b8);
+  cursor: pointer;
+}
+
+.login-card__terms-check-text {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.login-card__terms-link {
+  color: rgba(127, 219, 255, 0.95);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-card__terms-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 900px) {
   .overlay {
     flex-direction: column;

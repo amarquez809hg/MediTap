@@ -598,7 +598,9 @@
     "passwordMismatch": "Las contraseñas no coinciden.",
     "fieldsRequired": "Ingrese usuario, correo y contraseña.",
     "serverUnreachable": "No se pudo contactar al servidor. Verifique su conexión y la URL de la API (VITE_API_BASE / mismo origen /api).",
-    "apiNotConfigured": "La URL base de la API no está configurada (defina VITE_API_BASE)."
+    "apiNotConfigured": "La URL base de la API no está configurada (defina VITE_API_BASE).",
+    "acceptTerms": "He leído y acepto los <termsLink>Términos de servicio</termsLink> y la <privacyLink>Política de privacidad</privacyLink>, incluida la autorización para el uso clínico de la información de salud que proporcione.",
+    "acceptTermsRequired": "Debe aceptar los Términos de servicio para crear una cuenta."
   },
   "forgotPassword": {
     "title": "Olvidó su contraseña",

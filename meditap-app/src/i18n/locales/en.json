@@ -597,7 +597,9 @@
     "passwordMismatch": "Passwords do not match.",
     "fieldsRequired": "Enter username, email, and password.",
     "serverUnreachable": "Could not reach the server. Check your connection and API URL (VITE_API_BASE / same-origin /api).",
-    "apiNotConfigured": "API base URL is not configured (set VITE_API_BASE)."
+    "apiNotConfigured": "API base URL is not configured (set VITE_API_BASE).",
+    "acceptTerms": "I have read and agree to the <termsLink>Terms of Service</termsLink> and <privacyLink>Privacy Policy</privacyLink>, including authorization for clinical use of the health information I provide.",
+    "acceptTermsRequired": "You must accept the Terms of Service to create an account."
   },
   "forgotPassword": {
     "title": "Forgot password",
