@@ -1,34 +1,15 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PublicPageLayout from '../components/PublicPageLayout';
 import { submitSupportContact } from '../api/publicContact';
 import './Tab8.css';
 
-const faqData = [
-  {
-    question: 'How do I create a MediTap account?',
-    answer:
-      'From the log in page, choose Create an account. Enter a username, email, and password. After registration you can sign in and complete your patient intake.',
-  },
-  {
-    question: 'I forgot my password. What should I do?',
-    answer:
-      'On the log in page, choose Forgot password and enter your account email. We will send a secure link to reset your password. The link expires after use; request a new one if needed.',
-  },
-  {
-    question: 'How does staff editing work?',
-    answer:
-      'Patients can upload documents and review their information. Authorized staff unlock editing from the intake or admin screens using staff credentials—without signing the patient out.',
-  },
-  {
-    question: 'Is Epic integration required?',
-    answer:
-      'No. Epic FHIR sandbox linking is optional and is configured from the Admin panel after you log in, for pilots and technical demonstrations.',
-  },
-];
-
 const Tab8: React.FC = () => {
   const { t } = useTranslation();
+  const faqData = useMemo(
+    () => t('support.faq', { returnObjects: true }) as { question: string; answer: string }[],
+    [t]
+  );
   const faqListId = useId();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -55,7 +36,7 @@ const Tab8: React.FC = () => {
       setSuccessMessage(msg);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Could not send your message.');
+      setFormError(err instanceof Error ? err.message : t('support.sendError'));
     } finally {
       setSubmitting(false);
     }
@@ -177,8 +158,7 @@ const Tab8: React.FC = () => {
           </a>
         </p>
         <p>
-          For product demos and partnership inquiries, mention your organization in the message
-          subject line.
+          {t('support.otherResourcesPartnership')}
         </p>
       </section>
     </PublicPageLayout>

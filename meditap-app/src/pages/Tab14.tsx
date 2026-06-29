@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
@@ -307,69 +307,29 @@ const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
     { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
 ];
 
-function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
+function summarizeTab14ParseResult(
+    b: ReturnType<typeof parseTab14IntakeDocument>,
+    t: (key: string, opts?: Record<string, unknown>) => string
+): string {
     const chips: string[] = [];
-    if (Object.keys(b.patientFields).length) chips.push('Patient info');
-    if (b.noKnownDrugAllergies) chips.push('NKDA (no known drug allergies)');
-    else if (b.allergies.length) chips.push(`Allergies (${b.allergies.length})`);
-    if (b.medications.length) chips.push(`Medications (${b.medications.length})`);
-    if (b.insurances.length) chips.push('Insurance');
-    if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
-    if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
+    if (Object.keys(b.patientFields).length) chips.push(t('patientIntake.parse.chipPatientInfo'));
+    if (b.noKnownDrugAllergies) chips.push(t('patientIntake.parse.chipNkda'));
+    else if (b.allergies.length) chips.push(t('patientIntake.parse.chipAllergies', { count: b.allergies.length }));
+    if (b.medications.length) chips.push(t('patientIntake.parse.chipMedications', { count: b.medications.length }));
+    if (b.insurances.length) chips.push(t('patientIntake.parse.chipInsurance'));
+    if (b.chronicConditions.length) chips.push(t('patientIntake.parse.chipChronic', { count: b.chronicConditions.length }));
+    if (Object.keys(b.hospitalVisit).length) chips.push(t('patientIntake.parse.chipHospital'));
     if (!chips.length) {
-        return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
+        return t('patientIntake.parse.noMatch');
     }
-    return `Imported: ${chips.join(' · ')} — open each sidebar section to verify, then Save.`;
+    return t('patientIntake.parse.imported', { summary: chips.join(' · ') });
 }
-
-/**
- * Common + clinically recognizable allergy severity options.
- * - Mild/Moderate/Severe are broadly used in clinical charting.
- * - Anaphylaxis captures life-threatening systemic reactions.
- */
-const ALLERGY_SEVERITY_OPTIONS = [
-    { value: '', label: 'Select severity' },
-    { value: 'Mild', label: 'Mild (localized symptoms)' },
-    { value: 'Moderate', label: 'Moderate (multi-system, stable)' },
-    { value: 'Severe', label: 'Severe (significant systemic symptoms)' },
-    { value: 'Anaphylaxis', label: 'Anaphylaxis (life-threatening)' },
-    { value: 'Unknown', label: 'Unknown / not documented' },
-    { value: 'Leve', label: 'Leve' },
-    { value: 'Moderada', label: 'Moderada' },
-    { value: 'Grave', label: 'Grave' },
-] as const;
 
 function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
     const comma = stamp.indexOf(", ");
     if (comma < 0) return { date: stamp, time: "" };
     return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
 }
-
-const SEX_AT_BIRTH_OPTIONS = [
-    { value: 'Male', label: 'Male' },
-    { value: 'Female', label: 'Female' },
-    { value: 'Masculino', label: 'Masculino' },
-    { value: 'Femenino', label: 'Femenino' },
-];
-
-const MARITAL_STATUS_OPTIONS = [
-    { value: 'Single', label: 'Single' },
-    { value: 'Married', label: 'Married' },
-    { value: 'Divorced', label: 'Divorced' },
-    { value: 'Widowed', label: 'Widowed' },
-    { value: 'Domestic Partnership', label: 'Domestic Partnership' },
-    { value: 'Other', label: 'Other' },
-    { value: 'Soltero', label: 'Soltero' },
-    { value: 'Soltera', label: 'Soltera' },
-    { value: 'Casado', label: 'Casado' },
-    { value: 'Casada', label: 'Casada' },
-    { value: 'Divorciado', label: 'Divorciado' },
-    { value: 'Divorciada', label: 'Divorciada' },
-    { value: 'Viudo', label: 'Viudo' },
-    { value: 'Viuda', label: 'Viuda' },
-    { value: 'Unión libre', label: 'Unión libre' },
-    { value: 'Otro', label: 'Otro' },
-];
 
 function renderIntakeSelect(
     value: string,
@@ -403,6 +363,53 @@ type UploadedFileEntry = {
 
 const Tab14: React.FC = () => {
     const { t } = useTranslation();
+
+    const allergySeverityOptions = useMemo(
+        () => [
+            { value: '', label: t('patientIntake.selectSeverity') },
+            { value: 'Mild', label: t('patientIntake.severityOptions.mild') },
+            { value: 'Moderate', label: t('patientIntake.severityOptions.moderate') },
+            { value: 'Severe', label: t('patientIntake.severityOptions.severe') },
+            { value: 'Anaphylaxis', label: t('patientIntake.severityOptions.anaphylaxis') },
+            { value: 'Unknown', label: t('patientIntake.severityOptions.unknown') },
+            { value: 'Leve', label: 'Leve' },
+            { value: 'Moderada', label: 'Moderada' },
+            { value: 'Grave', label: 'Grave' },
+        ],
+        [t]
+    );
+
+    const sexAtBirthOptions = useMemo(
+        () => [
+            { value: 'Male', label: t('patientIntake.sexOptions.male') },
+            { value: 'Female', label: t('patientIntake.sexOptions.female') },
+            { value: 'Masculino', label: 'Masculino' },
+            { value: 'Femenino', label: 'Femenino' },
+        ],
+        [t]
+    );
+
+    const maritalStatusOptions = useMemo(
+        () => [
+            { value: 'Single', label: t('patientIntake.maritalOptions.single') },
+            { value: 'Married', label: t('patientIntake.maritalOptions.married') },
+            { value: 'Divorced', label: t('patientIntake.maritalOptions.divorced') },
+            { value: 'Widowed', label: t('patientIntake.maritalOptions.widowed') },
+            { value: 'Domestic Partnership', label: t('patientIntake.maritalOptions.domesticPartnership') },
+            { value: 'Other', label: t('patientIntake.maritalOptions.other') },
+            { value: 'Soltero', label: 'Soltero' },
+            { value: 'Soltera', label: 'Soltera' },
+            { value: 'Casado', label: 'Casado' },
+            { value: 'Casada', label: 'Casada' },
+            { value: 'Divorciado', label: 'Divorciado' },
+            { value: 'Divorciada', label: 'Divorciada' },
+            { value: 'Viudo', label: 'Viudo' },
+            { value: 'Viuda', label: 'Viuda' },
+            { value: 'Unión libre', label: 'Unión libre' },
+            { value: 'Otro', label: 'Otro' },
+        ],
+        [t]
+    );
     const location = useLocation();
     const { username, hasRealmRole, authReady } = useAuth();
     const recordEditorRole = getMeditapRecordEditorRole();
@@ -716,7 +723,7 @@ const Tab14: React.FC = () => {
                     bundle.patientFields
                 );
 
-                let uploadMsg = summarizeTab14ParseResult(bundle);
+                let uploadMsg = summarizeTab14ParseResult(bundle, t);
                 fileMessages.push(uploadMsg);
 
                 newEntries.push({
@@ -760,7 +767,7 @@ const Tab14: React.FC = () => {
         } catch (err) {
             newEntries.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
             setUploadParseMessage(
-                err instanceof Error ? `Could not read file: ${err.message}` : 'Could not read file.'
+                err instanceof Error ? `${t('patientIntake.errors.couldNotReadFile')} ${err.message}` : t('patientIntake.errors.couldNotReadFile')
             );
         } finally {
             setUploadParsing(false);
@@ -796,13 +803,13 @@ const Tab14: React.FC = () => {
         const newErrors: Record<string, string> = {};
 
         // required fields 
-        if (!patientInfo.givenName.trim()) newErrors.givenName = "Given Name is required.";
-        if (!patientInfo.familyName.trim()) newErrors.familyName = "Family Name is required.";
-        if (!patientInfo.dateOfBirth) newErrors.dateOfBirth = "Date of Birth is required.";
+        if (!patientInfo.givenName.trim()) newErrors.givenName = t('patientIntake.errors.givenNameRequired');
+        if (!patientInfo.familyName.trim()) newErrors.familyName = t('patientIntake.errors.familyNameRequired');
+        if (!patientInfo.dateOfBirth) newErrors.dateOfBirth = t('patientIntake.errors.dobRequired');
 
         // (not required) checks if email format is correct 
         if (patientInfo.email && !/\S+@\S+\.\S+/.test(patientInfo.email)) {
-            newErrors.email = "A valid email format is required.";
+            newErrors.email = t('patientIntake.errors.emailInvalid');
         }
 
         // dont let insurance dates start after they end 
@@ -811,7 +818,7 @@ const Tab14: React.FC = () => {
                 const start = new Date(insurance.startDate);
                 const end = new Date(insurance.endDate);
                 if (start > end) {
-                    newErrors[`insurance-${index}`] = "Start Date cannot be after End Date.";
+                    newErrors[`insurance-${index}`] = t('patientIntake.errors.dateRangeInsurance');
                 }
             }
         });
@@ -822,7 +829,7 @@ const Tab14: React.FC = () => {
                 const start = new Date(med.startDate);
                 const end = new Date(med.endDate);
                 if (start > end) {
-                    newErrors[`medication-${index}`] = "Start Date cannot be after End Date.";
+                    newErrors[`medication-${index}`] = t('patientIntake.errors.dateRangeMedication');
                 }
             }
         });
@@ -875,7 +882,7 @@ const Tab14: React.FC = () => {
             return true;
         } catch (e) {
             setBackendError(
-                e instanceof Error ? e.message : 'Could not save to server.'
+                e instanceof Error ? e.message : t('patientIntake.errors.couldNotSave')
             );
             return false;
         } finally {
@@ -959,7 +966,7 @@ const Tab14: React.FC = () => {
                             setBackendError(
                                 e instanceof Error
                                     ? e.message
-                                    : 'Could not sync saved browser intake to your chart.'
+                                    : t('patientIntake.errors.couldNotSyncLegacy')
                             );
                         }
                     }
@@ -974,7 +981,7 @@ const Tab14: React.FC = () => {
                     setBackendError(
                         e instanceof Error
                             ? e.message
-                            : 'Could not load your saved patient record.'
+                            : t('patientIntake.errors.couldNotLoadRecord')
                     );
                 }
             } finally {
@@ -991,14 +998,14 @@ const Tab14: React.FC = () => {
     const renderPatientVitalsFields = () => (
         <>
             <div className="form-field">
-                <label>Height (inches)</label>
+                <label>{t('patientIntake.heightInches')}</label>
                 <input
                     type="number"
                     min={1}
                     max={96}
                     step={0.1}
                     inputMode="decimal"
-                    placeholder={'e.g. 70 for 5\'10"'}
+                    placeholder={t('patientIntake.heightPlaceholder')}
                     value={patientInfo.heightInches}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1012,14 +1019,14 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>Weight (lb)</label>
+                <label>{t('patientIntake.weightLbs')}</label>
                 <input
                     type="number"
                     min={1}
                     max={999}
                     step={0.1}
                     inputMode="decimal"
-                    placeholder="e.g. 180"
+                    placeholder={t('patientIntake.weightPlaceholder')}
                     value={patientInfo.weightLbs}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1033,13 +1040,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>Blood pressure (systolic)</label>
+                <label>{t('patientIntake.bpSystolic')}</label>
                 <input
                     type="number"
                     min={1}
                     max={300}
                     inputMode="numeric"
-                    placeholder="e.g. 120"
+                    placeholder={t('patientIntake.vitalsPlaceholderSys')}
                     value={patientInfo.systolicBp}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1053,13 +1060,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>Blood pressure (diastolic)</label>
+                <label>{t('patientIntake.bpDiastolic')}</label>
                 <input
                     type="number"
                     min={1}
                     max={200}
                     inputMode="numeric"
-                    placeholder="e.g. 80"
+                    placeholder={t('patientIntake.vitalsPlaceholderDia')}
                     value={patientInfo.diastolicBp}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1073,13 +1080,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>Heart rate (bpm)</label>
+                <label>{t('patientIntake.heartRate')}</label>
                 <input
                     type="number"
                     min={1}
                     max={250}
                     inputMode="numeric"
-                    placeholder="e.g. 72"
+                    placeholder={t('patientIntake.vitalsPlaceholderHr')}
                     value={patientInfo.heartRate}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1102,7 +1109,7 @@ const Tab14: React.FC = () => {
                 if (bmi == null) return null;
                 return (
                     <p className="tab14-vitals-bmi-preview" role="status">
-                        Calculated BMI: <strong>{formatBmiDisplay(bmi)}</strong> (
+                        {t('patientIntake.calculatedBmi')} <strong>{formatBmiDisplay(bmi)}</strong> (
                         {bmiCategoryLabel(bmi)})
                     </p>
                 );
@@ -1228,7 +1235,7 @@ const Tab14: React.FC = () => {
                             <div className="tab14-section-card">
 
                                 <div className="form-field">
-                                    <label>Given Name *</label>
+                                    <label>{t('patientIntake.givenName')} *</label>
                                     <input
                                         value={patientInfo.givenName}
                                         onChange={(e) =>
@@ -1247,7 +1254,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Family Name *</label>
+                                    <label>{t('patientIntake.familyName')} *</label>
                                     <input
                                         value={patientInfo.familyName}
                                         onChange={(e) =>
@@ -1266,7 +1273,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Date of Birth *</label>
+                                    <label>{t('patientIntake.dateOfBirth')} *</label>
                                     <GlassDateInput
                                         value={patientInfo.dateOfBirth}
                                         onChange={(iso) =>
@@ -1281,7 +1288,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Email </label>
+                                    <label>{t('patientIntake.email')} </label>
                                     <input
                                         type="email"
                                         value={patientInfo.email}
@@ -1302,7 +1309,7 @@ const Tab14: React.FC = () => {
                                 </div>
                                 
                                 <div className = "form-field">
-                                    <label> Phone Number </label>
+                                    <label>{t('patientIntake.phoneNumber')}</label>
                                     <input 
                                     value = {patientInfo.phoneNumber}
                                     onChange={(e) =>
@@ -1316,7 +1323,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Address</label>
+                                    <label>{t('patientIntake.address')}</label>
                                     <input
                                         value={patientInfo.address}
                                         onChange={(e) =>
@@ -1331,7 +1338,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Race</label>
+                                    <label>{t('patientIntake.race')}</label>
                                     <input
                                         value={patientInfo.race}
                                         onChange={(e) =>
@@ -1346,7 +1353,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Ethnicity</label>
+                                    <label>{t('patientIntake.ethnicity')}</label>
                                     <input
                                         value={patientInfo.ethnicity}
                                         onChange={(e) =>
@@ -1361,7 +1368,7 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Preferred Language</label>
+                                    <label>{t('patientIntake.preferredLanguage')}</label>
                                     <input
                                         value={patientInfo.preferredLanguage}
                                         onChange={(e) =>
@@ -1376,11 +1383,11 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Marital Status</label>
+                                    <label>{t('patientIntake.maritalStatus')}</label>
                                     {renderIntakeSelect(
                                         patientInfo.maritalStatus,
-                                        MARITAL_STATUS_OPTIONS,
-                                        'Select marital status',
+                                        maritalStatusOptions,
+                                        t('patientIntake.selectMaritalStatus'),
                                         (next) =>
                                             handleSingleChange(
                                                 'maritalStatus',
@@ -1392,13 +1399,13 @@ const Tab14: React.FC = () => {
                                 </div>
                                 
                                 <div className="form-field">
-                                    <label>Blood Type</label>
+                                    <label>{t('patientIntake.bloodType')}</label>
                                     <select
                                     value={patientInfo.bloodType}
                                     onChange={(e) =>
                                         handleSingleChange("bloodType", e.target.value, patientInfo, setPatientInfo)
                                     }>
-                                        <option value="">Select Blood Type</option>
+                                        <option value="">{t('patientIntake.selectBloodType')}</option>
                                         <option value="A+">A+</option>
                                         <option value="A-">A-</option>
                                         <option value="B+">B+</option>
@@ -1411,11 +1418,11 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>Sex at Birth</label>
+                                    <label>{t('patientIntake.sexAtBirth')}</label>
                                     {renderIntakeSelect(
                                         patientInfo.sexAtBirth,
-                                        SEX_AT_BIRTH_OPTIONS,
-                                        'Select Sex at Birth',
+                                        sexAtBirthOptions,
+                                        t('patientIntake.selectSexAtBirth'),
                                         (next) =>
                                             handleSingleChange(
                                                 'sexAtBirth',
@@ -1531,7 +1538,7 @@ const Tab14: React.FC = () => {
                                             className="remove-button"
                                             type="button"
                                             onClick={() => handleRemoveSection(index, insurances, setInsurances)}>
-                                                Remove Insurance
+                                                {t('patientIntake.removeInsurance')}
                                             </button>
                                         )}
                                     </div>
@@ -1580,7 +1587,7 @@ const Tab14: React.FC = () => {
                                     <h3>Allergy {index + 1}</h3>
 
                                     <div className="form-field">
-                                        <label>Allergy Name</label>
+                                        <label>{t('patientIntake.allergyName')}</label>
                                         <input
                                         value={allergy.allergyName}
                                         onChange={(e) =>
@@ -1589,7 +1596,7 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Type (e.g. food, drug)</label>
+                                        <label>{t('patientIntake.allergyType')}</label>
                                         <select
                                         value={allergy.allergyType}
                                         onChange={(e) => {
@@ -1606,17 +1613,17 @@ const Tab14: React.FC = () => {
                                                 return next;
                                             });
                                         }}>
-                                            <option value="">Select type</option>
-                                            <option value="Food">Food</option>
-                                            <option value="Drug">Drug</option>
-                                            <option value="Environmental">Environmental</option>
-                                            <option value="Other">Other</option>
+                                            <option value="">{t('patientIntake.selectAllergyType')}</option>
+                                            <option value="Food">{t('patientIntake.allergyTypes.food')}</option>
+                                            <option value="Drug">{t('patientIntake.allergyTypes.drug')}</option>
+                                            <option value="Environmental">{t('patientIntake.allergyTypes.environmental')}</option>
+                                            <option value="Other">{t('patientIntake.allergyTypes.other')}</option>
                                         </select>
                                     </div>
 
                                     {allergy.allergyType === 'Other' && (
                                         <div className="form-field">
-                                            <label>Describe allergy type</label>
+                                            <label>{t('patientIntake.allergyTypeOther')}</label>
                                             <input
                                                 value={allergy.allergyTypeOther}
                                                 onChange={(e) =>
@@ -1628,20 +1635,20 @@ const Tab14: React.FC = () => {
                                                         setAllergies
                                                     )
                                                 }
-                                                placeholder="e.g. Latex, contrast dye, insect sting"
+                                                placeholder={t('patientIntake.allergyTypeOtherPlaceholder')}
                                             />
                                         </div>
                                     )}
 
                                     <div className="form-field">
-                                        <label>Severity</label>
+                                        <label>{t('patientIntake.severity')}</label>
                                         {renderIntakeSelect(
                                             allergy.severity,
-                                            ALLERGY_SEVERITY_OPTIONS.map((opt) => ({
+                                            allergySeverityOptions.map((opt) => ({
                                                 value: opt.value,
                                                 label: opt.label,
                                             })),
-                                            'Select severity',
+                                            t('patientIntake.selectSeverity'),
                                             (next) =>
                                                 handleChange(
                                                     index,
@@ -1654,7 +1661,7 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Reaction Notes</label>
+                                        <label>{t('patientIntake.reactionNotes')}</label>
                                         <input
                                         value={allergy.reactionNotes}
                                         onChange={(e) =>
@@ -1663,7 +1670,7 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Last observed</label>
+                                        <label>{t('patientIntake.lastObserved')}</label>
                                         <GlassDateInput
                                             value={allergy.lastObserved}
                                             onChange={(iso) =>
@@ -1678,7 +1685,7 @@ const Tab14: React.FC = () => {
                                         className="remove-button"
                                         type="button"
                                         onClick={() => handleRemoveSection(index, allergies, setAllergies)}>
-                                        Remove Allergy
+                                        {t('patientIntake.removeAllergy')}
                                         </button>
                                     )}
                                     </div>
@@ -1715,7 +1722,7 @@ const Tab14: React.FC = () => {
                                         <h3>Medication {index + 1}</h3>
 
                                         <div className="form-field">
-                                            <label>Generic Name</label>
+                                            <label>{t('patientIntake.genericName')}</label>
                                             <input
                                             value={med.genericName}
                                             onChange={(e) =>
@@ -1724,7 +1731,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Brand Name</label>
+                                            <label>{t('patientIntake.brandName')}</label>
                                             <input
                                             value={med.brandName}
                                             onChange={(e) =>
@@ -1733,7 +1740,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Dosage</label>
+                                            <label>{t('patientIntake.dosage')}</label>
                                             <input
                                             value={med.dosage}
                                             onChange={(e) =>
@@ -1742,7 +1749,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Route</label>
+                                            <label>{t('patientIntake.route')}</label>
                                             <input
                                             value={med.route}
                                             onChange={(e) =>
@@ -1751,7 +1758,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Frequency</label>
+                                            <label>{t('patientIntake.frequency')}</label>
                                             <input
                                             value={med.frequency}
                                             onChange={(e) =>
@@ -1760,7 +1767,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Purpose / indication</label>
+                                            <label>{t('patientIntake.purpose')}</label>
                                             <input
                                             value={med.purpose}
                                             onChange={(e) =>
@@ -1769,7 +1776,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Prescribing physician</label>
+                                            <label>{t('patientIntake.prescribingPhysician')}</label>
                                             <input
                                             value={med.prescribingPhysician}
                                             onChange={(e) =>
@@ -1802,7 +1809,7 @@ const Tab14: React.FC = () => {
                                         <span className="save-error-message">{errors[`medication-${index}`]}</span>
                                         )}      
                                         <div className="form-field">
-                                            <label>Notes</label>
+                                            <label>{t('patientIntake.notes')}</label>
                                             <input
                                             value={med.notesMedication}
                                             onChange={(e) =>
@@ -1815,7 +1822,7 @@ const Tab14: React.FC = () => {
                                                 className="remove-button"
                                                 type="button"
                                                 onClick={() => handleRemoveSection(index, medications, setMedications)}>
-                                                Remove Medication
+                                                {t('patientIntake.removeMedication')}
                                             </button>
                                         )}
                                     </div>
@@ -1855,7 +1862,7 @@ const Tab14: React.FC = () => {
                                         <h3>Chronic Conditions {index + 1}</h3>
 
                                         <div className="form-field">
-                                            <label>Condition Name</label>
+                                            <label>{t('patientIntake.conditionName')}</label>
                                             <input
                                             value={condition.conditionName}
                                             onChange={(e) =>
@@ -1864,7 +1871,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>ICD Code</label>
+                                            <label>{t('patientIntake.icdCode')}</label>
                                             <input
                                             value={condition.icdCode}
                                             onChange={(e) =>
@@ -1873,7 +1880,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Diagnosis Date</label>
+                                            <label>{t('patientIntake.diagnosisDate')}</label>
                                             <GlassDateInput
                                                 value={condition.diagnosisDate}
                                                 onChange={(iso) =>
@@ -1890,7 +1897,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Preexisting</label>
+                                            <label>{t('patientIntake.preexisting')}</label>
                                             <input
                                             value={condition.prexisting}
                                             onChange={(e) =>
@@ -1899,7 +1906,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Additional Notes</label>
+                                            <label>{t('patientIntake.additionalNotes')}</label>
                                             <input
                                             value={condition.notesChronicConditions}
                                             onChange={(e) =>
@@ -1914,7 +1921,7 @@ const Tab14: React.FC = () => {
                                                 onClick={() =>
                                                     handleRemoveSection(index, chronicConditions, setChronicConditions)
                                                   }>
-                                                Remove Chronic Condition
+                                                {t('patientIntake.removeChronic')}
                                             </button>
                                         )}
                                     </div>
@@ -1940,9 +1947,9 @@ const Tab14: React.FC = () => {
                                 <div key={index} className="section-block">
                                     <h3>Hospital Visit {index + 1}</h3>
                                     <div className="form-field">
-                                        <label>Type</label>
+                                        <label>{t('patientIntake.visitType')}</label>
                                         <input
-                                            placeholder='e.g. Recent admission, ER, outpatient'
+                                            placeholder={t('patientIntake.visitTypePlaceholder')}
                                             value={visit.visitType}
                                             onChange={(e) =>
                                                 handleChange(index, 'visitType', e.target.value, hospitalVisits, setHospitalVisits)
@@ -1950,7 +1957,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Facility</label>
+                                        <label>{t('patientIntake.facility')}</label>
                                         <input
                                             value={visit.facilityName}
                                             onChange={(e) =>
@@ -1959,7 +1966,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Reason</label>
+                                        <label>{t('patientIntake.reason')}</label>
                                         <input
                                             value={visit.reason}
                                             onChange={(e) =>
@@ -1968,7 +1975,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Date</label>
+                                        <label>{t('patientIntake.visitDate')}</label>
                                         <GlassDateInput
                                             value={visit.visitDate}
                                             onChange={(iso) =>
@@ -1978,7 +1985,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Discharge</label>
+                                        <label>{t('patientIntake.dischargeDate')}</label>
                                         <GlassDateInput
                                             value={visit.dischargeDate}
                                             onChange={(iso) =>
@@ -1987,7 +1994,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Attending</label>
+                                        <label>{t('patientIntake.attending')}</label>
                                         <input
                                             value={visit.attendingPhysician}
                                             onChange={(e) =>
@@ -1996,7 +2003,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>ReportId</label>
+                                        <label>{t('patientIntake.reportId')}</label>
                                         <input
                                             value={visit.reportId}
                                             onChange={(e) =>
@@ -2012,7 +2019,7 @@ const Tab14: React.FC = () => {
                                                 handleRemoveSection(index, hospitalVisits, setHospitalVisits)
                                             }
                                         >
-                                            Remove Hospital Visit
+                                            {t('patientIntake.removeHospitalVisit')}
                                         </button>
                                     )}
                                 </div>
@@ -2086,10 +2093,14 @@ const Tab14: React.FC = () => {
                     <div className = "form"> 
                         {saveErrorMessage && (
                             <span className = "save-error-message">
-                                Unable to save. Upload a PDF or ensure{' '}
-                                <strong>Given Name</strong>, <strong>Family Name</strong>, and{' '}
-                                <strong>Date of Birth</strong> are filled (Patient Information
-                                section).
+                                <Trans
+                                    i18nKey="patientIntake.saveErrorHint"
+                                    components={{
+                                        givenName: <strong />,
+                                        familyName: <strong />,
+                                        dob: <strong />,
+                                    }}
+                                />
                             </span>
                         )}
                         {backendError && (
@@ -2122,12 +2133,12 @@ const Tab14: React.FC = () => {
                         {uploadedFiles.length > 0 && (
                         <div className="file-preview-list">
                             <div className="file-preview-row file-preview-row--head" aria-hidden="true">
-                                <span className="file-preview-cell file-preview-cell--name">Name</span>
-                                <span className="file-preview-cell file-preview-cell--size">Size</span>
-                                <span className="file-preview-cell file-preview-cell--uploaded">Uploaded</span>
-                                <span className="file-preview-cell file-preview-cell--status">Import status</span>
-                                <span className="file-preview-cell file-preview-cell--preview">Preview</span>
-                                <span className="file-preview-cell file-preview-cell--actions">Actions</span>
+                                <span className="file-preview-cell file-preview-cell--name">{t('patientIntake.uploadTableName')}</span>
+                                <span className="file-preview-cell file-preview-cell--size">{t('patientIntake.uploadTableSize')}</span>
+                                <span className="file-preview-cell file-preview-cell--uploaded">{t('patientIntake.uploadTableUploaded')}</span>
+                                <span className="file-preview-cell file-preview-cell--status">{t('patientIntake.uploadTableStatus')}</span>
+                                <span className="file-preview-cell file-preview-cell--preview">{t('patientIntake.uploadTablePreview')}</span>
+                                <span className="file-preview-cell file-preview-cell--actions">{t('patientIntake.uploadTableActions')}</span>
                             </div>
                             {uploadedFiles.map((entry) => (
                                 <div className="file-preview-row" key={entry.id}>
@@ -2163,7 +2174,7 @@ const Tab14: React.FC = () => {
                                                 type="button"
                                                 onClick={() => window.open(entry.previewUrl, '_blank')}
                                             >
-                                                Preview PDF
+                                                {t('patientIntake.previewPdf')}
                                             </button>
                                         ) : entry.file.type.startsWith('image/') ? (
                                             <button
@@ -2183,7 +2194,7 @@ const Tab14: React.FC = () => {
                                             type="button"
                                             onClick={() => removeUploadedFile(entry.id)}
                                         >
-                                            Remove
+                                            {t('patientIntake.removeFile')}
                                         </button>
                                     </span>
                                 </div>
@@ -2222,7 +2233,7 @@ const Tab14: React.FC = () => {
                                     onClick={() => void saveAndLeavePage()}
                                     disabled={saving}
                                 >
-                                    {saving ? 'Saving...' : 'Save'}
+                                    {saving ? t('patientIntake.saving') : t('patientIntake.save')}
                                 </button>
                                 <button
                                     type="button"

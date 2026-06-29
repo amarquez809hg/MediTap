@@ -435,11 +435,152 @@
     "message": "Message",
     "sendMessage": "Send message",
     "sending": "Sending…",
-    "otherResources": "Other resources"
+    "otherResources": "Other resources",
+    "otherResourcesPartnership": "For product demos and partnership inquiries, mention your organization in the message subject line.",
+    "sendError": "Could not send your message.",
+    "faq": [
+      {
+        "question": "How do I create a MediTap account?",
+        "answer": "From the log in page, choose Create an account. Enter a username, email, and password. After registration you can sign in and complete your patient intake."
+      },
+      {
+        "question": "I forgot my password. What should I do?",
+        "answer": "On the log in page, choose Forgot password and enter your account email. We will send a secure link to reset your password. The link expires after use; request a new one if needed."
+      },
+      {
+        "question": "How does staff editing work?",
+        "answer": "Patients can upload documents and review their information. Authorized staff unlock editing from the intake or admin screens using staff credentials—without signing the patient out."
+      },
+      {
+        "question": "Is Epic integration required?",
+        "answer": "No. Epic FHIR sandbox linking is optional and is configured from the Admin panel after you log in, for pilots and technical demonstrations."
+      }
+    ]
   },
   "about": {
     "title": "About MediTap",
-    "subtitle": "Closing the gap between fragmented health records and the intake workflows care teams rely on."
+    "subtitle": "Closing the gap between fragmented health records and the intake workflows care teams rely on.",
+    "problemTitle": "The problem",
+    "problemBody": "Despite decades of investment in digital health, clinicians still lack a unified, bedside-ready view of the patient story. MyChart, HIEs, and lab networks each hold part of the puzzle—but none deliver complete context at the moment of care.",
+    "solutionTitle": "The MediTap solution",
+    "solutionBody": "MediTap empowers patients to carry their medical history across networks with consent-first sharing and fast intake—from structured forms and uploaded PDFs and images.",
+    "solutionItems": [
+      "Patient-led intake with document extraction",
+      "Staff workflows for review and chart updates",
+      "Epic FHIR sandbox-ready for health-system pilots"
+    ],
+    "whoTitle": "Who we serve",
+    "whoBody": "Hospitals, clinics, and digital health partners evaluating faster onboarding, better data quality at intake, and interoperable connections to existing EHR investments."
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "subtitle": "These terms govern your use of the MediTap patient intake and health-record workflow platform, including your authorization for clinical use of the information you provide.",
+    "lastUpdated": "Last updated: May 2026",
+    "s1": {
+      "title": "1. Acceptance",
+      "p1": "By creating an account, logging in, uploading documents, or otherwise using MediTap, you agree to these Terms of Service and to our <privacyLink>Privacy Policy</privacyLink>. If you do not agree, do not use the service.",
+      "p2": "Where you act on behalf of another person (for example, as a parent, legal guardian, or authorized representative), you represent that you have lawful authority to accept these terms and to provide that person's health information through MediTap."
+    },
+    "s2": {
+      "title": "2. The service",
+      "p1": "MediTap helps patients and authorized care teams capture, review, and manage health intake information, including document upload and optional integrations such as Epic FHIR sandbox connectivity for demonstration and development purposes.",
+      "p2": "MediTap is a technology platform that supports clinical workflows. It does not replace in-person evaluation, emergency services, or the professional judgment of licensed healthcare providers."
+    },
+    "s3": {
+      "title": "3. Accounts and access",
+      "p1": "You are responsible for safeguarding your login credentials and for activity under your account.",
+      "items": [
+        "Provide accurate registration information.",
+        "Notify your organization or MediTap support if you suspect unauthorized access.",
+        "Staff and administrative features require appropriate roles assigned by your organization."
+      ]
+    },
+    "s4": {
+      "title": "4. Authorization for medical and clinical use of your information",
+      "lead": "By using MediTap, you voluntarily authorize MediTap, your participating healthcare organization, and authorized members of your care team to collect, store, review, use, and disclose the health-related information you enter, upload, or import through the platform for legitimate medical and clinical purposes.",
+      "authHeading": "What you authorize",
+      "authIntro": "You understand and agree that information you provide may be used to:",
+      "authItems": [
+        "Build and maintain your patient intake record and health summary (for example demographics, allergies, medications, chronic conditions, laboratory results, visit history, insurance details, and vital signs).",
+        "Support treatment, care coordination, referral, billing support, quality review, and operational workflows performed by authorized clinicians and staff at your organization.",
+        "Populate dashboards, quick-status views, and staff-assisted documentation tools so your care team can review accurate information before and during care.",
+        "Process documents you upload (including PDFs and imported records) using automated extraction tools to pre-fill intake fields, subject to staff review where applicable.",
+        "Synchronize or display data from optional integrations you or your organization enable (such as Epic FHIR sandbox connectivity), in accordance with the permissions granted during connection."
+      ],
+      "repHeading": "What you represent",
+      "repIntro": "By submitting information through MediTap, you represent that:",
+      "repItems": [
+        "The information is provided voluntarily and, to the best of your knowledge, is accurate, complete, and not misleading.",
+        "You are the patient named in the record, or you are legally authorized to provide the patient's information and to grant this authorization on their behalf.",
+        "You will update information when it changes materially (for example, new allergies, medication changes, or updated contact details) when continuing to use the platform."
+      ],
+      "accessHeading": "Who may access your information",
+      "accessIntro": "Access is limited to users and systems with a legitimate need under your organization's policies, including:",
+      "accessItems": [
+        "You, through your authenticated patient portal session.",
+        "Authorized clinical and administrative staff acting within assigned roles (including temporary staff elevation on shared devices when your organization permits it).",
+        "Service providers that host, secure, or operate MediTap on behalf of your organization, under contractual confidentiality and security obligations.",
+        "Third-party health systems or integration partners only when you or your organization explicitly enables a connection and grants the applicable permissions."
+      ],
+      "durationHeading": "Duration and withdrawal",
+      "durationBody": "This authorization remains in effect while you maintain an active account or while your organization retains records in accordance with its medical records and retention policies. You may request to withdraw or limit use of your information by contacting your healthcare organization or MediTap Support; however, withdrawal may prevent some features from functioning and may not require deletion of information already incorporated into a legal medical record or retained as required by law."
+    },
+    "s5": {
+      "title": "5. Health information and regulatory responsibility",
+      "p1": "MediTap is designed to support clinical workflows. Your healthcare organization remains responsible for compliance with applicable laws (including HIPAA and state privacy laws where applicable), obtaining any additional consents required for your jurisdiction, and determining how information is used in production care environments.",
+      "p2": "MediTap does not provide medical advice, diagnosis, or treatment. Clinical decisions remain the responsibility of licensed providers who review your record and evaluate you directly."
+    },
+    "s6": {
+      "title": "6. Document upload and imported records",
+      "p1": "When you upload documents or authorize import from external systems, you confirm that you have the right to share those materials for clinical intake purposes and that they relate to your care (or the care of the individual you represent).",
+      "p2": "Automated parsing may suggest field values that require human verification. You agree that parsed or synced data should be reviewed by you and/or authorized staff before being relied upon for clinical decisions."
+    },
+    "s7": {
+      "title": "7. Acceptable use",
+      "p1": "You may not misuse MediTap, attempt to breach security, reverse engineer the service except as permitted by law, upload unlawful or harmful content, or enter information about another person without proper authorization."
+    },
+    "s8": {
+      "title": "8. Emergency and urgent care",
+      "p1": "<strong>MediTap is not for medical emergencies.</strong> If you think you may have a medical emergency, call your local emergency number (for example, 911 in the United States) or go to the nearest emergency department immediately. Do not rely on MediTap for time-sensitive or life-threatening situations."
+    },
+    "s9": {
+      "title": "9. Changes and contact",
+      "p1": "We may update these terms from time to time. Material changes will be reflected on this page with an updated date. Continued use after changes constitutes acceptance of the revised terms.",
+      "p2": "Questions about these terms or your authorization: contact us through the <supportLink>Support</supportLink> page or your participating healthcare organization."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "How MediTap handles information when you use our platform.",
+    "lastUpdated": "Last updated: May 2026",
+    "overviewTitle": "Overview",
+    "overviewBody": "MediTap respects your privacy. This policy describes the types of information we process when you use the application and the choices available to you.",
+    "collectTitle": "Information we collect",
+    "collectItems": [
+      "Account information such as username, email, and authentication credentials.",
+      "Patient intake data you enter or upload (for example demographics, medications, allergies).",
+      "Technical logs needed to operate and secure the service (device/browser, timestamps, errors)."
+    ],
+    "useTitle": "How we use information",
+    "useIntro": "We use information to:",
+    "useItems": [
+      "Provide login, intake, dashboard, and staff workflow features.",
+      "Improve reliability, security, and product quality.",
+      "Support optional integrations you or your organization enable (such as Epic FHIR sandbox linking)."
+    ],
+    "sharingTitle": "Sharing",
+    "sharingBody": "We do not sell personal health information. Data may be shared with your healthcare organization, service providers that help us host and operate MediTap, or when required by law.",
+    "securityTitle": "Security and retention",
+    "securityBody": "We apply administrative, technical, and organizational safeguards appropriate to a health technology platform. Retention periods depend on your organization's policies and applicable regulations.",
+    "choicesTitle": "Your choices",
+    "choicesBody": "You may request access, correction, or deletion of your account data through your care organization or via our <supportLink>Support</supportLink> contact form."
+  },
+  "epicCallback": {
+    "completing": "Completing Epic authorization…",
+    "linked": "Epic sandbox linked. Returning to Admin…",
+    "backToAdmin": "Back to Admin",
+    "missingParams": "Missing authorization code or state. Use Admin → Epic and start Connect again.",
+    "completeError": "Could not complete Epic sign-in."
   },
   "register": {
     "heroLine1": "Start your journey.",
@@ -452,7 +593,11 @@
     "username": "Username",
     "email": "Email",
     "confirmPassword": "Confirm password",
-    "couldNotCreate": "Could not create account"
+    "couldNotCreate": "Could not create account",
+    "passwordMismatch": "Passwords do not match.",
+    "fieldsRequired": "Enter username, email, and password.",
+    "serverUnreachable": "Could not reach the server. Check your connection and API URL (VITE_API_BASE / same-origin /api).",
+    "apiNotConfigured": "API base URL is not configured (set VITE_API_BASE)."
   },
   "forgotPassword": {
     "title": "Forgot password",
@@ -472,7 +617,8 @@
     "linkInvalid": "This reset link is incomplete or expired.",
     "requestNew": "Request a new link",
     "passwordMismatch": "Passwords do not match.",
-    "redirecting": "Redirecting to log in…"
+    "redirecting": "Redirecting to log in…",
+    "sendError": "Could not send reset email."
   },
   "patientIntake": {
     "title": "Add Patient Information",
@@ -506,6 +652,128 @@
     "readingDocumentProgress": "Reading {{name}} ({{current}} of {{total}})...",
     "uploadFileTypeError": "Please upload PDF, JPEG, or PNG files only.",
     "clearUploadedFiles": "Clear all uploaded files",
+    "givenName": "Given Name",
+    "familyName": "Family Name",
+    "dateOfBirth": "Date of Birth",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "address": "Address",
+    "race": "Race",
+    "ethnicity": "Ethnicity",
+    "preferredLanguage": "Preferred Language",
+    "maritalStatus": "Marital Status",
+    "bloodType": "Blood Type",
+    "sexAtBirth": "Sex at Birth",
+    "selectMaritalStatus": "Select marital status",
+    "selectBloodType": "Select Blood Type",
+    "selectSexAtBirth": "Select Sex at Birth",
+    "selectSeverity": "Select severity",
+    "selectAllergyType": "Select type",
+    "calculatedBmi": "Calculated BMI:",
+    "heightInches": "Height (inches)",
+    "heightPlaceholder": "e.g. 70 for 5'10\"",
+    "weightLbs": "Weight (lb)",
+    "weightPlaceholder": "e.g. 180",
+    "bpSystolic": "Blood pressure (systolic)",
+    "bpDiastolic": "Blood pressure (diastolic)",
+    "heartRate": "Heart rate (bpm)",
+    "vitalsPlaceholderSys": "e.g. 120",
+    "vitalsPlaceholderDia": "e.g. 80",
+    "vitalsPlaceholderHr": "e.g. 72",
+    "allergyName": "Allergy Name",
+    "allergyType": "Type (e.g. food, drug)",
+    "allergyTypeOther": "Describe allergy type",
+    "allergyTypeOtherPlaceholder": "e.g. Latex, contrast dye, insect sting",
+    "severity": "Severity",
+    "reactionNotes": "Reaction Notes",
+    "lastObserved": "Last observed",
+    "genericName": "Generic Name",
+    "brandName": "Brand Name",
+    "dosage": "Dosage",
+    "route": "Route",
+    "frequency": "Frequency",
+    "purpose": "Purpose / indication",
+    "prescribingPhysician": "Prescribing physician",
+    "notes": "Notes",
+    "conditionName": "Condition Name",
+    "icdCode": "ICD Code",
+    "diagnosisDate": "Diagnosis Date",
+    "preexisting": "Preexisting",
+    "additionalNotes": "Additional Notes",
+    "visitType": "Type",
+    "visitTypePlaceholder": "e.g. Recent admission, ER, outpatient",
+    "facility": "Facility",
+    "reason": "Reason",
+    "visitDate": "Date",
+    "dischargeDate": "Discharge",
+    "attending": "Attending",
+    "reportId": "ReportId",
+    "noKnownAllergies": "No known drug allergies (NKDA)",
+    "noKnownMedications": "No medications on file",
+    "uploadTableName": "Name",
+    "uploadTableSize": "Size",
+    "uploadTableUploaded": "Uploaded",
+    "uploadTableStatus": "Import status",
+    "uploadTablePreview": "Preview",
+    "uploadTableActions": "Actions",
+    "previewPdf": "Preview PDF",
+    "previewImage": "Preview image",
+    "removeFile": "Remove",
+    "removeInsurance": "Remove Insurance",
+    "removeAllergy": "Remove Allergy",
+    "removeMedication": "Remove Medication",
+    "removeChronic": "Remove Chronic Condition",
+    "removeHospitalVisit": "Remove Hospital Visit",
+    "previewImage": "Preview image",
+    "saveErrorHint": "Unable to save. Upload a PDF or ensure <givenName>Given Name</givenName>, <familyName>Family Name</familyName>, and <dob>Date of Birth</dob> are filled (Patient Information section).",
+    "errors": {
+      "givenNameRequired": "Given Name is required.",
+      "familyNameRequired": "Family Name is required.",
+      "dobRequired": "Date of Birth is required.",
+      "emailInvalid": "A valid email format is required.",
+      "dateRangeInsurance": "Start Date cannot be after End Date.",
+      "dateRangeMedication": "Start Date cannot be after End Date.",
+      "couldNotReadFile": "Could not read file.",
+      "couldNotSave": "Could not save to server.",
+      "couldNotSyncLegacy": "Could not sync saved browser intake to your chart.",
+      "couldNotLoadRecord": "Could not load your saved patient record."
+    },
+    "parse": {
+      "chipPatientInfo": "Patient info",
+      "chipNkda": "NKDA (no known drug allergies)",
+      "chipAllergies": "Allergies ({{count}})",
+      "chipMedications": "Medications ({{count}})",
+      "chipInsurance": "Insurance",
+      "chipChronic": "Chronic ({{count}})",
+      "chipHospital": "Hospital visit",
+      "noMatch": "No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).",
+      "imported": "Imported: {{summary}} — open each sidebar section to verify, then Save."
+    },
+    "allergyTypes": {
+      "food": "Food",
+      "drug": "Drug",
+      "environmental": "Environmental",
+      "other": "Other"
+    },
+    "severityOptions": {
+      "mild": "Mild (localized symptoms)",
+      "moderate": "Moderate (multi-system, stable)",
+      "severe": "Severe (significant systemic symptoms)",
+      "anaphylaxis": "Anaphylaxis (life-threatening)",
+      "unknown": "Unknown / not documented"
+    },
+    "sexOptions": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "maritalOptions": {
+      "single": "Single",
+      "married": "Married",
+      "divorced": "Divorced",
+      "widowed": "Widowed",
+      "domesticPartnership": "Domestic Partnership",
+      "other": "Other"
+    },
     "fields": {
       "insuranceN": "Insurance {{n}}",
       "providerName": "Provider Name",

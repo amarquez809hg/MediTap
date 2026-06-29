@@ -436,11 +436,152 @@
     "message": "Mensaje",
     "sendMessage": "Enviar mensaje",
     "sending": "Enviando…",
-    "otherResources": "Otros recursos"
+    "otherResources": "Otros recursos",
+    "otherResourcesPartnership": "Para demostraciones del producto y consultas de alianzas, mencione su organización en el asunto del mensaje.",
+    "sendError": "No se pudo enviar su mensaje.",
+    "faq": [
+      {
+        "question": "¿Cómo creo una cuenta de MediTap?",
+        "answer": "Desde la página de inicio de sesión, elija Crear una cuenta. Ingrese usuario, correo y contraseña. Tras registrarse puede iniciar sesión y completar su admisión del paciente."
+      },
+      {
+        "question": "Olvidé mi contraseña. ¿Qué debo hacer?",
+        "answer": "En la página de inicio de sesión, elija Olvidó su contraseña e ingrese el correo de su cuenta. Enviaremos un enlace seguro para restablecerla. El enlace expira tras usarse; solicite uno nuevo si es necesario."
+      },
+      {
+        "question": "¿Cómo funciona la edición del personal?",
+        "answer": "Los pacientes pueden cargar documentos y revisar su información. El personal autorizado desbloquea la edición desde admisión o pantallas de admin con credenciales del personal, sin cerrar la sesión del paciente."
+      },
+      {
+        "question": "¿Es obligatoria la integración con Epic?",
+        "answer": "No. El enlace Epic FHIR sandbox es opcional y se configura desde el panel Admin tras iniciar sesión, para pilotos y demostraciones técnicas."
+      }
+    ]
   },
   "about": {
     "title": "Acerca de MediTap",
-    "subtitle": "Cerrando la brecha entre registros de salud fragmentados y los flujos de admisión que los equipos de atención necesitan."
+    "subtitle": "Cerrando la brecha entre registros de salud fragmentados y los flujos de admisión que los equipos de atención necesitan.",
+    "problemTitle": "El problema",
+    "problemBody": "A pesar de décadas de inversión en salud digital, los clínicos aún carecen de una vista unificada y lista para el punto de atención de la historia del paciente. MyChart, HIE y redes de laboratorio tienen cada una una parte del rompecabezas, pero ninguna ofrece contexto completo en el momento de la atención.",
+    "solutionTitle": "La solución MediTap",
+    "solutionBody": "MediTap permite a los pacientes llevar su historial médico entre redes con consentimiento informado y admisión rápida, desde formularios estructurados y PDFs e imágenes cargados.",
+    "solutionItems": [
+      "Admisión liderada por el paciente con extracción de documentos",
+      "Flujos del personal para revisión y actualización del expediente",
+      "Listo para Epic FHIR sandbox en pilotos con sistemas de salud"
+    ],
+    "whoTitle": "A quién servimos",
+    "whoBody": "Hospitales, clínicas y socios de salud digital que evalúan incorporación más rápida, mejor calidad de datos en la admisión e interoperabilidad con inversiones EHR existentes."
+  },
+  "terms": {
+    "title": "Términos de servicio",
+    "subtitle": "Estos términos rigen el uso de la plataforma MediTap de admisión del paciente y flujo de expediente clínico, incluida su autorización para el uso clínico de la información que proporcione.",
+    "lastUpdated": "Última actualización: mayo de 2026",
+    "s1": {
+      "title": "1. Aceptación",
+      "p1": "Al crear una cuenta, iniciar sesión, cargar documentos o usar MediTap de cualquier otro modo, usted acepta estos Términos de servicio y nuestra <privacyLink>Política de privacidad</privacyLink>. Si no está de acuerdo, no utilice el servicio.",
+      "p2": "Si actúa en nombre de otra persona (por ejemplo, como padre, tutor legal o representante autorizado), declara que tiene autoridad legal para aceptar estos términos y proporcionar la información de salud de esa persona a través de MediTap."
+    },
+    "s2": {
+      "title": "2. El servicio",
+      "p1": "MediTap ayuda a pacientes y equipos de atención autorizados a capturar, revisar y gestionar información de admisión clínica, incluida la carga de documentos e integraciones opcionales como la conectividad Epic FHIR sandbox con fines de demostración y desarrollo.",
+      "p2": "MediTap es una plataforma tecnológica que apoya flujos clínicos. No sustituye la evaluación presencial, los servicios de emergencia ni el criterio profesional de proveedores de salud con licencia."
+    },
+    "s3": {
+      "title": "3. Cuentas y acceso",
+      "p1": "Usted es responsable de proteger sus credenciales de acceso y de la actividad bajo su cuenta.",
+      "items": [
+        "Proporcionar información de registro exacta.",
+        "Notificar a su organización o al soporte de MediTap si sospecha acceso no autorizado.",
+        "Las funciones de personal y administración requieren los roles apropiados asignados por su organización."
+      ]
+    },
+    "s4": {
+      "title": "4. Autorización para uso médico y clínico de su información",
+      "lead": "Al usar MediTap, usted autoriza voluntariamente a MediTap, a su organización de salud participante y a los miembros autorizados de su equipo de atención a recopilar, almacenar, revisar, usar y divulgar la información relacionada con la salud que ingrese, cargue o importe a través de la plataforma para fines médicos y clínicos legítimos.",
+      "authHeading": "Qué autoriza",
+      "authIntro": "Usted entiende y acepta que la información que proporcione puede usarse para:",
+      "authItems": [
+        "Construir y mantener su expediente de admisión del paciente y resumen de salud (por ejemplo demografía, alergias, medicamentos, condiciones crónicas, resultados de laboratorio, historial de visitas, detalles de seguro y signos vitales).",
+        "Apoyar tratamiento, coordinación de atención, referencias, soporte de facturación, revisión de calidad y flujos operativos realizados por clínicos y personal autorizado de su organización.",
+        "Poblar paneles, vistas de estado rápido y herramientas de documentación asistida por personal para que su equipo revise información exacta antes y durante la atención.",
+        "Procesar documentos que cargue (incluidos PDF e historiales importados) con herramientas de extracción automatizada para prellenar campos de admisión, sujeto a revisión del personal cuando corresponda.",
+        "Sincronizar o mostrar datos de integraciones opcionales que usted o su organización habiliten (como Epic FHIR sandbox), de acuerdo con los permisos otorgados durante la conexión."
+      ],
+      "repHeading": "Qué declara",
+      "repIntro": "Al enviar información a través de MediTap, usted declara que:",
+      "repItems": [
+        "La información se proporciona voluntariamente y, según su mejor conocimiento, es exacta, completa y no engañosa.",
+        "Usted es el paciente nombrado en el expediente, o está legalmente autorizado para proporcionar la información del paciente y otorgar esta autorización en su nombre.",
+        "Actualizará la información cuando cambie de manera relevante (por ejemplo nuevas alergias, cambios de medicamentos o datos de contacto actualizados) al seguir usando la plataforma."
+      ],
+      "accessHeading": "Quién puede acceder a su información",
+      "accessIntro": "El acceso se limita a usuarios y sistemas con necesidad legítima según las políticas de su organización, incluyendo:",
+      "accessItems": [
+        "Usted, a través de su sesión autenticada del portal del paciente.",
+        "Personal clínico y administrativo autorizado actuando dentro de roles asignados (incluida elevación temporal del personal en dispositivos compartidos cuando su organización lo permita).",
+        "Proveedores de servicios que alojan, aseguran u operan MediTap en nombre de su organización, bajo obligaciones contractuales de confidencialidad y seguridad.",
+        "Sistemas de salud o socios de integración de terceros solo cuando usted o su organización habiliten explícitamente una conexión y otorguen los permisos aplicables."
+      ],
+      "durationHeading": "Duración y revocación",
+      "durationBody": "Esta autorización permanece vigente mientras mantenga una cuenta activa o mientras su organización conserve registros conforme a sus políticas de historial médico y retención. Puede solicitar retirar o limitar el uso de su información contactando a su organización de salud o al Soporte de MediTap; sin embargo, la revocación puede impedir que algunas funciones operen y puede no exigir la eliminación de información ya incorporada a un historial médico legal o retenida según la ley."
+    },
+    "s5": {
+      "title": "5. Información de salud y responsabilidad regulatoria",
+      "p1": "MediTap está diseñado para apoyar flujos clínicos. Su organización de salud sigue siendo responsable del cumplimiento de las leyes aplicables (incluida HIPAA y leyes estatales de privacidad cuando corresponda), de obtener consentimientos adicionales requeridos en su jurisdicción y de determinar cómo se usa la información en entornos de atención en producción.",
+      "p2": "MediTap no proporciona consejo médico, diagnóstico ni tratamiento. Las decisiones clínicas siguen siendo responsabilidad de proveedores con licencia que revisan su expediente y lo evalúan directamente."
+    },
+    "s6": {
+      "title": "6. Carga de documentos e historiales importados",
+      "p1": "Al cargar documentos o autorizar importación desde sistemas externos, confirma que tiene derecho a compartir esos materiales para fines de admisión clínica y que se relacionan con su atención (o la del individuo que representa).",
+      "p2": "El análisis automatizado puede sugerir valores de campos que requieren verificación humana. Usted acepta que los datos analizados o sincronizados deben ser revisados por usted y/o personal autorizado antes de usarse para decisiones clínicas."
+    },
+    "s7": {
+      "title": "7. Uso aceptable",
+      "p1": "No debe hacer un uso indebido de MediTap, intentar vulnerar la seguridad, aplicar ingeniería inversa al servicio salvo lo permitido por ley, cargar contenido ilegal o dañino, ni ingresar información de otra persona sin la autorización correspondiente."
+    },
+    "s8": {
+      "title": "8. Emergencias y atención urgente",
+      "p1": "<strong>MediTap no es para emergencias médicas.</strong> Si cree que puede tener una emergencia médica, llame al número de emergencia local (por ejemplo, 911 en Estados Unidos) o acuda de inmediato al departamento de emergencias más cercano. No confíe en MediTap para situaciones urgentes o que pongan en riesgo la vida."
+    },
+    "s9": {
+      "title": "9. Cambios y contacto",
+      "p1": "Podemos actualizar estos términos periódicamente. Los cambios materiales se reflejarán en esta página con una fecha actualizada. El uso continuado después de los cambios constituye aceptación de los términos revisados.",
+      "p2": "Preguntas sobre estos términos o su autorización: contáctenos a través de la página de <supportLink>Soporte</supportLink> o su organización de salud participante."
+    }
+  },
+  "privacy": {
+    "title": "Política de privacidad",
+    "subtitle": "Cómo MediTap maneja la información cuando usa nuestra plataforma.",
+    "lastUpdated": "Última actualización: mayo de 2026",
+    "overviewTitle": "Resumen",
+    "overviewBody": "MediTap respeta su privacidad. Esta política describe los tipos de información que procesamos cuando usa la aplicación y las opciones disponibles para usted.",
+    "collectTitle": "Información que recopilamos",
+    "collectItems": [
+      "Información de cuenta como usuario, correo y credenciales de autenticación.",
+      "Datos de admisión del paciente que ingresa o carga (por ejemplo demografía, medicamentos, alergias).",
+      "Registros técnicos necesarios para operar y asegurar el servicio (dispositivo/navegador, marcas de tiempo, errores)."
+    ],
+    "useTitle": "Cómo usamos la información",
+    "useIntro": "Usamos la información para:",
+    "useItems": [
+      "Proporcionar inicio de sesión, admisión, panel y funciones de flujo del personal.",
+      "Mejorar confiabilidad, seguridad y calidad del producto.",
+      "Apoyar integraciones opcionales que usted o su organización habiliten (como enlace Epic FHIR sandbox)."
+    ],
+    "sharingTitle": "Compartición",
+    "sharingBody": "No vendemos información de salud personal. Los datos pueden compartirse con su organización de salud, proveedores de servicios que nos ayudan a alojar y operar MediTap, o cuando lo exija la ley.",
+    "securityTitle": "Seguridad y retención",
+    "securityBody": "Aplicamos salvaguardas administrativas, técnicas y organizacionales apropiadas para una plataforma de tecnología en salud. Los períodos de retención dependen de las políticas de su organización y la normativa aplicable.",
+    "choicesTitle": "Sus opciones",
+    "choicesBody": "Puede solicitar acceso, corrección o eliminación de los datos de su cuenta a través de su organización de atención o mediante nuestro formulario de <supportLink>Soporte</supportLink>."
+  },
+  "epicCallback": {
+    "completing": "Completando autorización de Epic…",
+    "linked": "Sandbox de Epic vinculado. Regresando al Admin…",
+    "backToAdmin": "Volver al Admin",
+    "missingParams": "Falta el código de autorización o el state. Use Admin → Epic e inicie Conectar de nuevo.",
+    "completeError": "No se pudo completar el inicio de sesión en Epic."
   },
   "register": {
     "heroLine1": "Comience su camino.",
@@ -453,7 +594,11 @@
     "username": "Usuario",
     "email": "Correo",
     "confirmPassword": "Confirmar contraseña",
-    "couldNotCreate": "No se pudo crear la cuenta"
+    "couldNotCreate": "No se pudo crear la cuenta",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "fieldsRequired": "Ingrese usuario, correo y contraseña.",
+    "serverUnreachable": "No se pudo contactar al servidor. Verifique su conexión y la URL de la API (VITE_API_BASE / mismo origen /api).",
+    "apiNotConfigured": "La URL base de la API no está configurada (defina VITE_API_BASE)."
   },
   "forgotPassword": {
     "title": "Olvidó su contraseña",
@@ -473,7 +618,8 @@
     "linkInvalid": "Este enlace de restablecimiento está incompleto o expiró.",
     "requestNew": "Solicitar un enlace nuevo",
     "passwordMismatch": "Las contraseñas no coinciden.",
-    "redirecting": "Redirigiendo al inicio de sesión…"
+    "redirecting": "Redirigiendo al inicio de sesión…",
+    "sendError": "No se pudo enviar el correo de restablecimiento."
   },
   "patientIntake": {
     "title": "Agregar información del paciente",
@@ -507,6 +653,128 @@
     "readingDocumentProgress": "Leyendo {{name}} ({{current}} de {{total}})...",
     "uploadFileTypeError": "Suba solo archivos PDF, JPEG o PNG.",
     "clearUploadedFiles": "Quitar todos los archivos subidos",
+    "givenName": "Nombre",
+    "familyName": "Apellido",
+    "dateOfBirth": "Fecha de nacimiento",
+    "email": "Correo",
+    "phoneNumber": "Teléfono",
+    "address": "Dirección",
+    "race": "Raza",
+    "ethnicity": "Etnia",
+    "preferredLanguage": "Idioma preferido",
+    "maritalStatus": "Estado civil",
+    "bloodType": "Tipo de sangre",
+    "sexAtBirth": "Sexo al nacer",
+    "selectMaritalStatus": "Seleccionar estado civil",
+    "selectBloodType": "Seleccionar tipo de sangre",
+    "selectSexAtBirth": "Seleccionar sexo al nacer",
+    "selectSeverity": "Seleccionar gravedad",
+    "selectAllergyType": "Seleccionar tipo",
+    "calculatedBmi": "IMC calculado:",
+    "heightInches": "Estatura (pulgadas)",
+    "heightPlaceholder": "p. ej. 70 para 5'10\"",
+    "weightLbs": "Peso (lb)",
+    "weightPlaceholder": "p. ej. 180",
+    "bpSystolic": "Presión arterial (sistólica)",
+    "bpDiastolic": "Presión arterial (diastólica)",
+    "heartRate": "Frecuencia cardíaca (lpm)",
+    "vitalsPlaceholderSys": "p. ej. 120",
+    "vitalsPlaceholderDia": "p. ej. 80",
+    "vitalsPlaceholderHr": "p. ej. 72",
+    "allergyName": "Nombre de la alergia",
+    "allergyType": "Tipo (p. ej. alimento, medicamento)",
+    "allergyTypeOther": "Describir tipo de alergia",
+    "allergyTypeOtherPlaceholder": "p. ej. látex, contraste, picadura de insecto",
+    "severity": "Gravedad",
+    "reactionNotes": "Notas de reacción",
+    "lastObserved": "Última observación",
+    "genericName": "Nombre genérico",
+    "brandName": "Nombre comercial",
+    "dosage": "Dosis",
+    "route": "Vía",
+    "frequency": "Frecuencia",
+    "purpose": "Propósito / indicación",
+    "prescribingPhysician": "Médico prescriptor",
+    "notes": "Notas",
+    "conditionName": "Nombre de la condición",
+    "icdCode": "Código CIE",
+    "diagnosisDate": "Fecha de diagnóstico",
+    "preexisting": "Preexistente",
+    "additionalNotes": "Notas adicionales",
+    "visitType": "Tipo",
+    "visitTypePlaceholder": "p. ej. ingreso reciente, urgencias, ambulatorio",
+    "facility": "Instalación",
+    "reason": "Motivo",
+    "visitDate": "Fecha",
+    "dischargeDate": "Alta",
+    "attending": "Médico tratante",
+    "reportId": "ID de informe",
+    "noKnownAllergies": "Sin alergias medicamentosas conocidas (NKDA)",
+    "noKnownMedications": "Sin medicamentos registrados",
+    "uploadTableName": "Nombre",
+    "uploadTableSize": "Tamaño",
+    "uploadTableUploaded": "Subido",
+    "uploadTableStatus": "Estado de importación",
+    "uploadTablePreview": "Vista previa",
+    "uploadTableActions": "Acciones",
+    "previewPdf": "Ver PDF",
+    "previewImage": "Ver imagen",
+    "removeFile": "Quitar",
+    "removeInsurance": "Quitar seguro",
+    "removeAllergy": "Quitar alergia",
+    "removeMedication": "Quitar medicamento",
+    "removeChronic": "Quitar condición crónica",
+    "removeHospitalVisit": "Quitar visita hospitalaria",
+    "previewImage": "Ver imagen",
+    "saveErrorHint": "No se pudo guardar. Suba un PDF o asegúrese de completar <givenName>Nombre</givenName>, <familyName>Apellido</familyName> y <dob>Fecha de nacimiento</dob> (sección Información del paciente).",
+    "errors": {
+      "givenNameRequired": "El nombre es obligatorio.",
+      "familyNameRequired": "El apellido es obligatorio.",
+      "dobRequired": "La fecha de nacimiento es obligatoria.",
+      "emailInvalid": "Se requiere un formato de correo válido.",
+      "dateRangeInsurance": "La fecha de inicio no puede ser posterior a la de fin.",
+      "dateRangeMedication": "La fecha de inicio no puede ser posterior a la de fin.",
+      "couldNotReadFile": "No se pudo leer el archivo.",
+      "couldNotSave": "No se pudo guardar en el servidor.",
+      "couldNotSyncLegacy": "No se pudo sincronizar la admisión guardada en el navegador con su expediente.",
+      "couldNotLoadRecord": "No se pudo cargar su expediente de paciente guardado."
+    },
+    "parse": {
+      "chipPatientInfo": "Info del paciente",
+      "chipNkda": "NKDA (sin alergias medicamentosas conocidas)",
+      "chipAllergies": "Alergias ({{count}})",
+      "chipMedications": "Medicamentos ({{count}})",
+      "chipInsurance": "Seguro",
+      "chipChronic": "Crónicas ({{count}})",
+      "chipHospital": "Visita hospitalaria",
+      "noMatch": "No se encontraron campos etiquetados. Use un PDF con texto o una foto clara; los PDF escaneados pueden tardar más (OCR de la primera página).",
+      "imported": "Importado: {{summary}} — abra cada sección del menú para verificar, luego Guarde."
+    },
+    "allergyTypes": {
+      "food": "Alimento",
+      "drug": "Medicamento",
+      "environmental": "Ambiental",
+      "other": "Otro"
+    },
+    "severityOptions": {
+      "mild": "Leve (síntomas localizados)",
+      "moderate": "Moderada (multisistémica, estable)",
+      "severe": "Grave (síntomas sistémicos significativos)",
+      "anaphylaxis": "Anafilaxia (potencialmente mortal)",
+      "unknown": "Desconocida / no documentada"
+    },
+    "sexOptions": {
+      "male": "Masculino",
+      "female": "Femenino"
+    },
+    "maritalOptions": {
+      "single": "Soltero/a",
+      "married": "Casado/a",
+      "divorced": "Divorciado/a",
+      "widowed": "Viudo/a",
+      "domesticPartnership": "Unión doméstica",
+      "other": "Otro"
+    },
     "fields": {
       "insuranceN": "Seguro {{n}}",
       "providerName": "Nombre del proveedor",

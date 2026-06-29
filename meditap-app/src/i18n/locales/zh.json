@@ -435,11 +435,152 @@
     "message": "消息",
     "sendMessage": "发送消息",
     "sending": "发送中…",
-    "otherResources": "其他资源"
+    "otherResources": "其他资源",
+    "otherResourcesPartnership": "产品演示与合作伙伴咨询，请在邮件主题中注明您的机构。",
+    "sendError": "无法发送您的消息。",
+    "faq": [
+      {
+        "question": "如何创建 MediTap 账户？",
+        "answer": "在登录页选择创建账户，输入用户名、邮箱和密码。注册后可登录并完成患者登记。"
+      },
+      {
+        "question": "忘记密码怎么办？",
+        "answer": "在登录页选择忘记密码并输入账户邮箱。我们将发送安全重置链接。链接使用后失效，如需可重新申请。"
+      },
+      {
+        "question": "员工编辑如何工作？",
+        "answer": "患者可上传文档并查看信息。授权员工在登记或管理界面使用员工凭据解锁编辑，无需退出患者登录。"
+      },
+      {
+        "question": "是否必须集成 Epic？",
+        "answer": "否。Epic FHIR 沙盒链接为可选，登录后在管理面板配置，用于试点与技术演示。"
+      }
+    ]
   },
   "about": {
     "title": "关于 MediTap",
-    "subtitle": "弥合分散的健康记录与护理团队所依赖的登记工作流之间的差距。"
+    "subtitle": "弥合分散的健康记录与护理团队所依赖的登记工作流之间的差距。",
+    "problemTitle": "问题",
+    "problemBody": "尽管数字健康投资已有数十年，临床医生仍缺乏统一、可在床旁使用的患者全貌。MyChart、HIE 和检验网络各持拼图一角，但都无法在照护当下提供完整背景。",
+    "solutionTitle": "MediTap 方案",
+    "solutionBody": "MediTap 让患者以同意优先的方式携带医疗史跨网络共享，并通过结构化表单与上传的 PDF/图像快速完成登记。",
+    "solutionItems": [
+      "患者主导的登记与文档提取",
+      "供员工审阅与更新病历的工作流",
+      "面向医疗系统试点的 Epic FHIR 沙盒就绪"
+    ],
+    "whoTitle": "服务对象",
+    "whoBody": "医院、诊所及数字健康合作伙伴，评估更快 onboarding、更高登记数据质量及与现有 EHR 的互操作连接。"
+  },
+  "terms": {
+    "title": "服务条款",
+    "subtitle": "本条款规范您对 MediTap 患者登记与健康记录工作流平台的使用，包括您对所提供信息用于临床用途的授权。",
+    "lastUpdated": "最后更新：2026年5月",
+    "s1": {
+      "title": "1. 接受条款",
+      "p1": "创建账户、登录、上传文档或以其他方式使用 MediTap，即表示您同意本服务条款及我们的<privacyLink>隐私政策</privacyLink>。若不同意，请勿使用本服务。",
+      "p2": "若您代表他人行事（例如父母、法定监护人或授权代表），您声明有权接受本条款并通过 MediTap 提供该人的健康信息。"
+    },
+    "s2": {
+      "title": "2. 服务说明",
+      "p1": "MediTap 帮助患者及授权护理团队采集、审阅和管理健康登记信息，包括文档上传及可选集成（如用于演示与开发的 Epic FHIR 沙盒连接）。",
+      "p2": "MediTap 是支持临床工作流的技术平台，不能替代当面评估、急救服务或持证医疗专业人员的判断。"
+    },
+    "s3": {
+      "title": "3. 账户与访问",
+      "p1": "您有责任保护登录凭据及账户下的活动。",
+      "items": [
+        "提供准确的注册信息。",
+        "如怀疑未授权访问，请通知您的机构或 MediTap 支持。",
+        "员工及管理功能需由机构分配适当角色。"
+      ]
+    },
+    "s4": {
+      "title": "4. 健康信息医疗与临床使用授权",
+      "lead": "使用 MediTap 即表示您自愿授权 MediTap、您参与的医疗机构及授权护理团队成员，为合法医疗与临床目的采集、存储、审阅、使用及披露您通过平台输入、上传或导入的健康相关信息。",
+      "authHeading": "您授权的内容",
+      "authIntro": "您理解并同意所提供信息可用于：",
+      "authItems": [
+        "建立并维护您的患者登记记录与健康摘要（如人口统计、过敏、用药、慢性病、检验结果、就诊史、保险信息及生命体征）。",
+        "支持您机构内授权临床与行政人员开展的治疗、护理协调、转诊、计费支持、质量审查及运营工作流。",
+        "填充仪表板、快速状态视图及员工辅助文档工具，以便护理团队在照护前后审阅准确信息。",
+        "处理您上传的文档（含 PDF 与导入记录），使用自动提取工具预填登记字段（适用时需员工审阅）。",
+        "在您或机构启用的可选集成（如 Epic FHIR 沙盒）权限范围内同步或展示数据。"
+      ],
+      "repHeading": "您的声明",
+      "repIntro": "通过 MediTap 提交信息即表示您声明：",
+      "repItems": [
+        "信息为自愿提供，且据您所知准确、完整、无误导。",
+        "您是记录中的患者，或依法有权提供患者信息并代表其作出本授权。",
+        "继续使用平台时，将在信息发生重大变化（如新过敏、用药变更或联系方式更新）时及时更新。"
+      ],
+      "accessHeading": "谁可访问您的信息",
+      "accessIntro": "访问限于机构政策下有正当需要的用户与系统，包括：",
+      "accessItems": [
+        "您本人，通过已认证的患者门户会话。",
+        "在分配角色内行事的授权临床与行政人员（含机构允许的共享设备上的临时员工提升模式）。",
+        "代表机构托管、保障或运营 MediTap 的服务提供商，受合同保密与安全义务约束。",
+        "仅在您或机构明确启用连接并授予相应权限时的第三方健康系统或集成伙伴。"
+      ],
+      "durationHeading": "期限与撤回",
+      "durationBody": "本授权在您保持活跃账户期间，或机构依医疗记录与保留政策保留记录期间有效。您可联系医疗机构或 MediTap 支持请求撤回或限制使用；但撤回可能导致部分功能无法使用，且可能不要求删除已纳入合法病历或依法须保留的信息。"
+    },
+    "s5": {
+      "title": "5. 健康信息与监管责任",
+      "p1": "MediTap 旨在支持临床工作流。您的医疗机构仍须遵守适用法律（含 HIPAA 及适用州隐私法）、取得司法管辖区要求的额外同意，并决定生产环境中信息的使用方式。",
+      "p2": "MediTap 不提供医疗建议、诊断或治疗。临床决策仍由审阅记录并直接评估您的持证提供者负责。"
+    },
+    "s6": {
+      "title": "6. 文档上传与导入记录",
+      "p1": "上传文档或授权从外部系统导入时，您确认有权为临床登记目的共享这些材料，且其与您的照护（或您所代表者的照护）相关。",
+      "p2": "自动解析可能建议需人工核验的字段值。您同意在用于临床决策前，由您和/或授权员工审阅解析或同步的数据。"
+    },
+    "s7": {
+      "title": "7. 可接受使用",
+      "p1": "不得滥用 MediTap、试图破坏安全、除法律允许外逆向工程、上传违法或有害内容，或在无适当授权下输入他人信息。"
+    },
+    "s8": {
+      "title": "8. 急救与 urgent  care",
+      "p1": "<strong>MediTap 不用于医疗急救。</strong>若您认为可能发生医疗急救，请拨打当地急救电话（如美国 911）或立即前往最近急诊。请勿在时效性或危及生命的情形下依赖 MediTap。"
+    },
+    "s9": {
+      "title": "9. 变更与联系",
+      "p1": "我们可能不时更新本条款。重大变更将在此页更新日期后反映。变更后继续使用即视为接受修订条款。",
+      "p2": "有关本条款或授权的疑问：请通过<supportLink>支持</supportLink>页面或您参与的医疗机构联系我们。"
+    }
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "subtitle": "MediTap 在您使用平台时如何处理信息。",
+    "lastUpdated": "最后更新：2026年5月",
+    "overviewTitle": "概述",
+    "overviewBody": "MediTap 尊重您的隐私。本政策说明您使用应用时我们处理的的信息类型及您的选择。",
+    "collectTitle": "我们收集的信息",
+    "collectItems": [
+      "账户信息，如用户名、电子邮件及认证凭据。",
+      "您输入或上传的患者登记数据（如人口统计、用药、过敏）。",
+      "运营与保障服务所需的技术日志（设备/浏览器、时间戳、错误）。"
+    ],
+    "useTitle": "信息用途",
+    "useIntro": "我们使用信息以：",
+    "useItems": [
+      "提供登录、登记、仪表板及员工工作流功能。",
+      "提高可靠性、安全性与产品质量。",
+      "支持您或机构启用的可选集成（如 Epic FHIR 沙盒链接）。"
+    ],
+    "sharingTitle": "共享",
+    "sharingBody": "我们不出售个人健康信息。数据可能与您的医疗机构、协助托管与运营 MediTap 的服务提供商共享，或在法律要求时共享。",
+    "securityTitle": "安全与保留",
+    "securityBody": "我们采取适合健康技术平台的行政、技术与组织保障措施。保留期限取决于机构政策及适用法规。",
+    "choicesTitle": "您的选择",
+    "choicesBody": "您可通过护理机构或我们的<supportLink>支持</supportLink>联系表单请求访问、更正或删除账户数据。"
+  },
+  "epicCallback": {
+    "completing": "正在完成 Epic 授权…",
+    "linked": "Epic 沙盒已链接。正在返回管理…",
+    "backToAdmin": "返回管理",
+    "missingParams": "缺少授权码或 state。请使用管理 → Epic 并重新连接。",
+    "completeError": "无法完成 Epic 登录。"
   },
   "register": {
     "heroLine1": "开启您的旅程。",
@@ -452,7 +593,11 @@
     "username": "用户名",
     "email": "电子邮箱",
     "confirmPassword": "确认密码",
-    "couldNotCreate": "无法创建账户"
+    "couldNotCreate": "无法创建账户",
+    "passwordMismatch": "两次密码不一致。",
+    "fieldsRequired": "请输入用户名、邮箱和密码。",
+    "serverUnreachable": "无法连接服务器。请检查网络及 API 地址（VITE_API_BASE / 同源 /api）。",
+    "apiNotConfigured": "未配置 API 基础 URL（请设置 VITE_API_BASE）。"
   },
   "forgotPassword": {
     "title": "忘记密码",
@@ -472,7 +617,8 @@
     "linkInvalid": "此重置链接不完整或已过期。",
     "requestNew": "申请新链接",
     "passwordMismatch": "两次输入的密码不一致。",
-    "redirecting": "正在跳转至登录页…"
+    "redirecting": "正在跳转至登录页…",
+    "sendError": "无法发送重置邮件。"
   },
   "patientIntake": {
     "title": "添加患者信息",
@@ -506,6 +652,128 @@
     "readingDocumentProgress": "正在读取 {{name}}（{{current}}/{{total}}）…",
     "uploadFileTypeError": "请仅上传 PDF、JPEG 或 PNG 文件。",
     "clearUploadedFiles": "清除所有已上传文件",
+    "givenName": "名",
+    "familyName": "姓",
+    "dateOfBirth": "出生日期",
+    "email": "电子邮箱",
+    "phoneNumber": "电话号码",
+    "address": "地址",
+    "race": "种族",
+    "ethnicity": "族裔",
+    "preferredLanguage": "首选语言",
+    "maritalStatus": "婚姻状况",
+    "bloodType": "血型",
+    "sexAtBirth": "出生性别",
+    "selectMaritalStatus": "选择婚姻状况",
+    "selectBloodType": "选择血型",
+    "selectSexAtBirth": "选择出生性别",
+    "selectSeverity": "选择严重程度",
+    "selectAllergyType": "选择类型",
+    "calculatedBmi": "计算的 BMI：",
+    "heightInches": "身高（英寸）",
+    "heightPlaceholder": "例如 70 表示 5'10\"",
+    "weightLbs": "体重（磅）",
+    "weightPlaceholder": "例如 180",
+    "bpSystolic": "血压（收缩压）",
+    "bpDiastolic": "血压（舒张压）",
+    "heartRate": "心率（次/分）",
+    "vitalsPlaceholderSys": "例如 120",
+    "vitalsPlaceholderDia": "例如 80",
+    "vitalsPlaceholderHr": "例如 72",
+    "allergyName": "过敏名称",
+    "allergyType": "类型（如食物、药物）",
+    "allergyTypeOther": "描述过敏类型",
+    "allergyTypeOtherPlaceholder": "例如乳胶、造影剂、虫咬",
+    "severity": "严重程度",
+    "reactionNotes": "反应说明",
+    "lastObserved": "最后观察",
+    "genericName": "通用名",
+    "brandName": "商品名",
+    "dosage": "剂量",
+    "route": "给药途径",
+    "frequency": "频率",
+    "purpose": "用途/适应症",
+    "prescribingPhysician": "处方医师",
+    "notes": "备注",
+    "conditionName": "疾病名称",
+    "icdCode": "ICD 编码",
+    "diagnosisDate": "诊断日期",
+    "preexisting": "既往史",
+    "additionalNotes": "补充说明",
+    "visitType": "类型",
+    "visitTypePlaceholder": "例如近期入院、急诊、门诊",
+    "facility": "机构",
+    "reason": "原因",
+    "visitDate": "日期",
+    "dischargeDate": "出院",
+    "attending": "主诊医师",
+    "reportId": "报告编号",
+    "noKnownAllergies": "无已知药物过敏（NKDA）",
+    "noKnownMedications": "无用药记录",
+    "uploadTableName": "名称",
+    "uploadTableSize": "大小",
+    "uploadTableUploaded": "上传时间",
+    "uploadTableStatus": "导入状态",
+    "uploadTablePreview": "预览",
+    "uploadTableActions": "操作",
+    "previewPdf": "预览 PDF",
+    "previewImage": "预览图片",
+    "removeFile": "移除",
+    "removeInsurance": "移除保险",
+    "removeAllergy": "移除过敏",
+    "removeMedication": "移除用药",
+    "removeChronic": "移除慢性病",
+    "removeHospitalVisit": "移除住院记录",
+    "previewImage": "预览图片",
+    "saveErrorHint": "无法保存。请上传 PDF 或确保已填写<givenName>名</givenName>、<familyName>姓</familyName>和<dob>出生日期</dob>（患者信息部分）。",
+    "errors": {
+      "givenNameRequired": "名为必填项。",
+      "familyNameRequired": "姓为必填项。",
+      "dobRequired": "出生日期为必填项。",
+      "emailInvalid": "需要有效的邮箱格式。",
+      "dateRangeInsurance": "开始日期不能晚于结束日期。",
+      "dateRangeMedication": "开始日期不能晚于结束日期。",
+      "couldNotReadFile": "无法读取文件。",
+      "couldNotSave": "无法保存到服务器。",
+      "couldNotSyncLegacy": "无法将浏览器中保存的登记同步到您的病历。",
+      "couldNotLoadRecord": "无法加载已保存的患者记录。"
+    },
+    "parse": {
+      "chipPatientInfo": "患者信息",
+      "chipNkda": "NKDA（无已知药物过敏）",
+      "chipAllergies": "过敏（{{count}}）",
+      "chipMedications": "用药（{{count}}）",
+      "chipInsurance": "保险",
+      "chipChronic": "慢性病（{{count}}）",
+      "chipHospital": "住院",
+      "noMatch": "未匹配到标注字段。请使用含文本的 PDF 或清晰照片；扫描 PDF 可能较慢（首页 OCR）。",
+      "imported": "已导入：{{summary}} — 请打开各侧边栏部分核对后保存。"
+    },
+    "allergyTypes": {
+      "food": "食物",
+      "drug": "药物",
+      "environmental": "环境",
+      "other": "其他"
+    },
+    "severityOptions": {
+      "mild": "轻度（局部症状）",
+      "moderate": "中度（多系统，稳定）",
+      "severe": "重度（明显全身症状）",
+      "anaphylaxis": "过敏性休克（危及生命）",
+      "unknown": "未知/未记录"
+    },
+    "sexOptions": {
+      "male": "男",
+      "female": "女"
+    },
+    "maritalOptions": {
+      "single": "单身",
+      "married": "已婚",
+      "divorced": "离异",
+      "widowed": "丧偶",
+      "domesticPartnership": "同居伴侣",
+      "other": "其他"
+    },
     "fields": {
       "insuranceN": "保险 {{n}}",
       "providerName": "承保商名称",

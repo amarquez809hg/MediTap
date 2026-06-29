@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { IonContent, IonPage, IonSpinner } from '@ionic/react';
 import { completeEpicOAuth, formatSessionOrTokenErrorForUi } from '../api';
 import './Tab13.css';
@@ -8,6 +9,7 @@ import './Tab13.css';
  * OAuth redirect target for Epic sandbox (must match EPIC_REDIRECT_URI on the backend).
  */
 const EpicCallback: React.FC = () => {
+  const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
   const [busy, setBusy] = useState(true);
@@ -20,9 +22,7 @@ const EpicCallback: React.FC = () => {
     const state = params.get('state') || '';
     if (!code || !state) {
       setBusy(false);
-      setError(
-        'Missing authorization code or state. Use Admin → Epic and start Connect again.'
-      );
+      setError(t('epicCallback.missingParams'));
       return;
     }
     let cancelled = false;
@@ -30,13 +30,13 @@ const EpicCallback: React.FC = () => {
       try {
         await completeEpicOAuth(code, state);
         if (!cancelled) {
-          setMessage('Epic sandbox linked. Returning to Admin…');
+          setMessage(t('epicCallback.linked'));
           setBusy(false);
           window.setTimeout(() => history.replace('/tab13'), 900);
         }
       } catch (e) {
         if (!cancelled) {
-          const m = e instanceof Error ? e.message : 'Could not complete Epic sign-in.';
+          const m = e instanceof Error ? e.message : t('epicCallback.completeError');
           setError(formatSessionOrTokenErrorForUi(m));
           setBusy(false);
         }
@@ -45,7 +45,7 @@ const EpicCallback: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [history, location.search]);
+  }, [history, location.search, t]);
 
   return (
     <IonPage className="ct-page ct-tab13">
@@ -54,7 +54,7 @@ const EpicCallback: React.FC = () => {
           {busy && !error && (
             <div className="tab13-epic-callback__status">
               <IonSpinner name="crescent" />
-              <p>Completing Epic authorization…</p>
+              <p>{t('epicCallback.completing')}</p>
             </div>
           )}
           {message && <p className="tab13-epic-callback__ok">{message}</p>}
@@ -65,7 +65,7 @@ const EpicCallback: React.FC = () => {
               className="tab13-epic-callback__back"
               onClick={() => history.replace('/tab13')}
             >
-              Back to Admin
+              {t('epicCallback.backToAdmin')}
             </button>
           )}
         </div>

@@ -59,16 +59,16 @@ const Tab9: React.FC = () => {
     const u = accUsername.trim();
     const em = accEmail.trim();
     if (!u || !em || !accPassword) {
-      setAccError('Enter username, email, and password.');
+      setAccError(t('register.fieldsRequired'));
       return;
     }
     if (accPassword !== accPasswordConfirm) {
-      setAccError('Passwords do not match.');
+      setAccError(t('register.passwordMismatch'));
       return;
     }
     const base = getApiBase();
     if (!base) {
-      setAccError('API base URL is not configured (set VITE_API_BASE).');
+      setAccError(t('register.apiNotConfigured'));
       return;
     }
     setAccSubmitting(true);
@@ -112,7 +112,7 @@ const Tab9: React.FC = () => {
         );
       }
     } catch {
-      setAccError('Could not reach the server. Check your connection and API URL (VITE_API_BASE / same-origin /api).');
+      setAccError(t('register.serverUnreachable'));
     } finally {
       setAccSubmitting(false);
     }
