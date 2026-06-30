@@ -15,6 +15,9 @@ export type Tab14PatientFields = Partial<{
   sexAtBirth: string;
   heightInches: string;
   weightLbs: string;
+  systolicBp: string;
+  diastolicBp: string;
+  heartRate: string;
 }>;
 
 export type Tab14InsuranceRow = {

@@ -97,6 +97,7 @@ export function preprocessGluedLabelText(text: string): string {
 }
 
 export function isMeditapDemoRecordDocument(text: string): boolean {
+  if (isDataPortabilityCompactRecord(text)) return true;
   if (/demo\s+medical\s+record\s+for\s+meditap/i.test(text)) return true;
   if (
     /DEMOGRAPHICS/i.test(text) &&
@@ -398,8 +399,377 @@ function pickHospitalVisit(section: string): Tab14HospitalFields {
   return best;
 }
 
+/** Compact "Data Portability for Name" exports (Jordan Parker demo PDF). */
+export function isDataPortabilityCompactRecord(text: string): boolean {
+  const t = preprocessCompactPortabilityText(text);
+  return (
+    /data\s+portability\s+for\s+[A-Za-z]/i.test(t) &&
+    /\bdemographics\b/i.test(t) &&
+    /\bsex\s*:/i.test(t) &&
+    !/table\s+of\s+contents/i.test(t) &&
+    !/given\s+name\s*:/i.test(t)
+  );
+}
+
+function splitPersonFromPortabilityTitle(text: string): Partial<Tab14PatientFields> {
+  const m = text.match(
+    /data\s+portability\s+for\s+([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*)*?)(?:\s+demographics\b|\s+care\s+team\b|\s+insurance\b|$)/i
+  );
+  if (!m) return {};
+  const parts = m[1].trim().split(/\s+/);
+  if (parts.length === 1) return { givenName: parts[0] };
+  return { givenName: parts[0], familyName: parts.slice(1).join(' ') };
+}
+
+function readCompactLabel(
+  block: string,
+  label: string,
+  nextLabelPatterns: string[]
+): string {
+  const stops =
+    nextLabelPatterns.length > 0
+      ? `(?=\\s+(?:${nextLabelPatterns.map(escapeRe).join('|')})\\s*:?\\b|$)`
+      : '$';
+  const re = new RegExp(`\\b${escapeRe(label)}\\s*:?\\s*([\\s\\S]*?)${stops}`, 'i');
+  const m = block.match(re);
+  return m ? cleanValue(m[1]) : '';
+}
+
+/** Section headers in compact Data Portability PDFs (title case, from Jordan Parker demo). */
+const COMPACT_PORTABILITY_HEADERS = [
+  'Demographics',
+  'Care Team',
+  'Insurance',
+  'Allergies',
+  'Chronic Conditions',
+  'Medications',
+  'Recent Hospital Visit',
+  'Laboratory Results',
+  'Vitals',
+  'Immunizations',
+  'Social History',
+  'Notes',
+] as const;
+
+/**
+ * pdf.js line-break extraction often glues headers to the next token
+ * (e.g. DemographicsSex, AllergiesSulfa, MedicationsLosartan).
+ */
+export function preprocessCompactPortabilityText(text: string): string {
+  let t = text.replace(/\r\n/g, '\n');
+  for (const header of COMPACT_PORTABILITY_HEADERS) {
+    t = t.replace(
+      new RegExp(`\\b(${escapeRe(header)})(?=[A-Za-z0-9#:(])`, 'gi'),
+      '$1 '
+    );
+  }
+  return t;
+}
+
+function parseCompactVitals(text: string): Pick<
+  Tab14PatientFields,
+  'heightInches' | 'weightLbs' | 'systolicBp' | 'diastolicBp' | 'heartRate'
+> {
+  const vitals = sliceSection(text, /\bvitals\b/i, [
+    /\bimmunizations\b/i,
+    /\bsocial\s+history\b/i,
+    /\bnotes\b/i,
+  ]);
+  const out: Pick<
+    Tab14PatientFields,
+    'heightInches' | 'weightLbs' | 'systolicBp' | 'diastolicBp' | 'heartRate'
+  > = {};
+
+  const bp = vitals.match(/\bBP\s+(\d+)\s*\/\s*(\d+)/i);
+  if (bp) {
+    out.systolicBp = bp[1];
+    out.diastolicBp = bp[2];
+  }
+
+  const hr = vitals.match(/\bHR\s+(\d+)\b/i);
+  if (hr) out.heartRate = hr[1];
+
+  const weightM = vitals.match(/\bweight\s+(\d+(?:\.\d+)?)\s*lb\b/i);
+  if (weightM) out.weightLbs = weightM[1];
+
+  const bmiM = vitals.match(/\bBMI\s+(\d+(?:\.\d+)?)/i);
+  if (weightM && bmiM && !out.heightInches) {
+    const weightKg = parseFloat(weightM[1]) * 0.45359237;
+    const bmi = parseFloat(bmiM[1]);
+    if (bmi > 0 && weightKg > 0) {
+      const heightM = Math.sqrt(weightKg / bmi);
+      const heightIn = heightM / 0.0254;
+      if (heightIn > 40 && heightIn < 90) {
+        out.heightInches = String(Math.round(heightIn * 10) / 10);
+      }
+    }
+  }
+
+  return out;
+}
+
+function parseCompactPatient(text: string): Tab14PatientFields {
+  const out: Tab14PatientFields = {
+    ...splitPersonFromPortabilityTitle(text),
+    ...parseCompactVitals(text),
+  };
+  const demo = sliceSection(text, /\bdemographics\b/i, [
+    /\bcare\s+team\b/i,
+    /\binsurance\b/i,
+    /\ballergies\b/i,
+  ]);
+  const block = demo || text;
+
+  const sex = readCompactLabel(block, 'Sex', ['DOB', 'Blood Type']);
+  if (sex) {
+    const parsed = parseSex(sex);
+    if (parsed) out.sexAtBirth = parsed;
+  }
+
+  const dob = readCompactLabel(block, 'DOB', ['Blood Type', 'Race']);
+  if (dob) {
+    const iso = tryParseDateToIso(dob);
+    if (iso) out.dateOfBirth = iso;
+  }
+
+  const btRaw = readCompactLabel(block, 'Blood Type', ['Race', 'Ethnicity']);
+  const bt = normalizeBloodType(btRaw || block);
+  if (bt) out.bloodType = bt;
+
+  const race = readCompactLabel(block, 'Race', ['Ethnicity', 'Language']);
+  if (race) out.race = race;
+
+  const ethnicity = readCompactLabel(block, 'Ethnicity', ['Language', 'Marital Status']);
+  if (ethnicity) out.ethnicity = ethnicity;
+
+  const language = readCompactLabel(block, 'Language', ['Marital Status', 'Address']);
+  if (language) out.preferredLanguage = language;
+
+  const marital = readCompactLabel(block, 'Marital Status', ['Address', 'Phone']);
+  if (marital) out.maritalStatus = marital;
+
+  const address = readCompactLabel(block, 'Address', ['Phone', 'Email']);
+  if (address) out.address = address;
+
+  const phone = readCompactLabel(block, 'Phone', ['Email', 'Care Team']);
+  if (phone) out.phoneNumber = phone;
+
+  const email = readCompactLabel(block, 'Email', ['Care Team', 'Insurance']);
+  if (email) out.email = email.split(/\s+/)[0];
+
+  return out;
+}
+
+function parseCompactAllergies(section: string): Tab14AllergyRow[] {
+  const rows: Tab14AllergyRow[] = [];
+  const normalized = section.replace(/\s+/g, ' ').trim();
+  const re =
+    /([A-Za-z][A-Za-z0-9\s'-]*?)\s*[-–—]\s*([A-Za-z][A-Za-z0-9\s'-]*?)(?=\s+[A-Z][a-z]+(?:\s+[a-z])*\s*[-–—]|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(normalized)) !== null) {
+    const name = cleanValue(m[1]);
+    const reaction = cleanValue(m[2]);
+    if (name.length < 2) continue;
+    rows.push({
+      allergyName: name,
+      allergyType: guessAllergyType(name),
+      allergyTypeOther: '',
+      severity: '',
+      reactionNotes: reaction,
+      lastObserved: '',
+    });
+  }
+  return rows;
+}
+
+function parseCompactChronic(section: string): Tab14ChronicRow[] {
+  const rows: Tab14ChronicRow[] = [];
+  let normalized = section.replace(/\s+/g, ' ').trim();
+  const start = normalized.search(
+    /\b(?:essential|hyperlipidemia|type\s+\d|diabetes|asthma|hypertension|[A-Z][a-z]+(?:\s+[A-Za-z]+)*)\s*\([A-Z0-9.]+\)/i
+  );
+  if (start > 0) normalized = normalized.slice(start);
+
+  const re =
+    /([A-Za-z][A-Za-z0-9\s/+-]{2,80}?)\s*\(([A-Z0-9.]+)\)\s*[-–—]\s*Diagnosed\s+(\d{1,2}\/\d{1,2}\/\d{4})/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(normalized)) !== null) {
+    const name = m[1].trim();
+    const icd = m[2].trim();
+    if (!name || /^group\s*#/i.test(name)) continue;
+    const iso = tryParseDateToIso(m[3]);
+    rows.push({
+      conditionName: name,
+      icdCode: icd,
+      diagnosisDate: iso || '',
+      severity: '',
+      prexisting: 'Yes',
+      notesChronicConditions: '',
+    });
+  }
+  return rows;
+}
+
+function parseCompactMedicationLine(raw: string): Tab14MedicationRow | null {
+  const trimmed = cleanValue(raw);
+  if (!trimmed) return null;
+
+  const withMeta = trimmed.match(
+    /^(.+?\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?)\s+PO\s+\w+)\s*[-–—]\s*([^-–—]+?)\s*[-–—]\s*(Dr\.?\s.+)$/i
+  );
+  if (withMeta) {
+    const drugPart = withMeta[1];
+    const drugM = drugPart.match(/^(.+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))\s+(PO\s+\w+)/i);
+    return {
+      genericName: drugM ? cleanValue(drugM[1]) : drugPart,
+      brandName: '',
+      dosage: drugM ? drugM[2].trim() : '',
+      route: drugM ? drugM[3].split(/\s+/)[0] : 'PO',
+      frequency: drugM ? drugM[3].split(/\s+/).slice(1).join(' ') : '',
+      startDate: '',
+      endDate: '',
+      purpose: cleanValue(withMeta[2]),
+      prescribingPhysician: cleanValue(withMeta[3]),
+      notesMedication: '',
+    };
+  }
+
+  const simple = trimmed.match(/^(.+?\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?)\s+PO\s+\w+)/i);
+  if (!simple) return null;
+  const drugPart = simple[1];
+  const drugM = drugPart.match(/^(.+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))\s+(PO\s+\w+)/i);
+  return {
+    genericName: drugM ? cleanValue(drugM[1]) : drugPart,
+    brandName: '',
+    dosage: drugM ? drugM[2].trim() : '',
+    route: drugM ? drugM[3].split(/\s+/)[0] : 'PO',
+    frequency: drugM ? drugM[3].split(/\s+/).slice(1).join(' ') : '',
+    startDate: '',
+    endDate: '',
+    purpose: '',
+    prescribingPhysician: '',
+    notesMedication: '',
+  };
+}
+
+function parseCompactMedications(section: string): Tab14MedicationRow[] {
+  const normalized = section.replace(/\s+/g, ' ').trim();
+  const starts: number[] = [];
+  const startRe =
+    /\b([A-Z][A-Za-z0-9\s.-]*?\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?)\s+PO\s+\w+)/g;
+  let sm: RegExpExecArray | null;
+  while ((sm = startRe.exec(normalized)) !== null) {
+    starts.push(sm.index);
+  }
+
+  const rows: Tab14MedicationRow[] = [];
+  for (let i = 0; i < starts.length; i += 1) {
+    const chunk = normalized
+      .slice(starts[i], i + 1 < starts.length ? starts[i + 1] : normalized.length)
+      .trim();
+    const row = parseCompactMedicationLine(chunk);
+    if (row && !rows.some((r) => r.genericName === row.genericName && r.dosage === row.dosage)) {
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function parseCompactInsurance(section: string): Tab14InsuranceRow[] {
+  const provider = readCompactLabel(section, 'Provider', ['Policy #', 'Policy Number']);
+  const policy = readCompactLabel(section, 'Policy #', ['Plan', 'Member ID']);
+  if (!provider && !policy) return [];
+
+  const plan = readCompactLabel(section, 'Plan', ['Member ID', 'Group #']);
+  const memberId = readCompactLabel(section, 'Member ID', ['Group #', 'Coverage']);
+  const group = readCompactLabel(section, 'Group #', ['Coverage', 'Start Date']);
+
+  let startDate = '';
+  let endDate = '';
+  const coverage = readCompactLabel(section, 'Coverage', ['Allergies', 'Chronic']);
+  const covM = coverage.match(
+    /(\d{1,2}\/\d{1,2}\/\d{4})\s*[–—-]\s*(\d{1,2}\/\d{1,2}\/\d{4})/
+  );
+  if (covM) {
+    startDate = tryParseDateToIso(covM[1]) || '';
+    endDate = tryParseDateToIso(covM[2]) || '';
+  }
+
+  return [
+    {
+      providerName: provider,
+      policyNumber: policy,
+      planName: plan,
+      memberID: memberId,
+      groupNumber: group,
+      startDate,
+      endDate,
+    },
+  ];
+}
+
+function parseCompactHospital(section: string): Tab14HospitalFields {
+  return {
+    visitType: readCompactLabel(section, 'Type', ['Facility', 'Reason']),
+    facilityName: readCompactLabel(section, 'Facility', ['Reason', 'Date']),
+    reason: readCompactLabel(section, 'Reason', ['Date', 'Discharge']),
+    visitDate: tryParseDateToIso(readCompactLabel(section, 'Date', ['Discharge', 'Outcome'])) || '',
+    dischargeDate:
+      tryParseDateToIso(readCompactLabel(section, 'Discharge', ['Outcome', 'Attending'])) || '',
+    attendingPhysician: readCompactLabel(section, 'Attending', ['Report ID', 'Outcome']),
+    reportId: readCompactLabel(section, 'Report ID', ['Outcome', 'Laboratory']),
+  };
+}
+
+function parseDataPortabilityCompactRecord(raw: string): Tab14IntakeParseResult {
+  const text = preprocessCompactPortabilityText(raw.replace(/\r\n/g, '\n'));
+
+  const allergySection = sliceSection(text, /\ballergies\b/i, [
+    /\bchronic\s+conditions\b/i,
+    /\bmedications\b/i,
+  ]);
+  const chronicSection = sliceSection(text, /\bchronic\s+conditions\b/i, [
+    /\bmedications\b/i,
+    /\brecent\s+hospital\s+visit\b/i,
+  ]);
+  const medSection = sliceSection(text, /\bmedications\b/i, [
+    /\brecent\s+hospital\s+visit\b/i,
+    /\bhospital\s+visit\b/i,
+    /\blaboratory\s+results\b/i,
+  ]);
+  const insuranceSection = sliceSection(text, /\binsurance\b/i, [
+    /\ballergies\b/i,
+    /\bchronic\s+conditions\b/i,
+  ]);
+  const hospitalSection = sliceSection(text, /\b(?:recent\s+)?hospital\s+visit\b/i, [
+    /\blaboratory\s+results\b/i,
+    /\bvitals\b/i,
+  ]);
+
+  const allergies = parseCompactAllergies(allergySection);
+  const chronicConditions = parseCompactChronic(chronicSection);
+  const medications = parseCompactMedications(medSection);
+  const insurances = parseCompactInsurance(insuranceSection);
+  const hospitalVisit = parseCompactHospital(hospitalSection);
+
+  return {
+    patientFields: parseCompactPatient(text),
+    noKnownDrugAllergies: detectNoKnownDrugAllergies(text, allergies.length),
+    insurances,
+    allergies,
+    medications,
+    chronicConditions,
+    hospitalVisit,
+  };
+}
+
 export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseResult {
-  const text = preprocessGluedLabelText(raw.replace(/\r\n/g, '\n'));
+  const normalized = raw.replace(/\r\n/g, '\n');
+  if (isDataPortabilityCompactRecord(normalized)) {
+    return parseDataPortabilityCompactRecord(normalized);
+  }
+
+  const text = preprocessGluedLabelText(normalized);
 
   const demoSection = sliceSection(text, /\bDEMOGRAPHICS\b/i, [
     /\bALLERGIES\b/i,

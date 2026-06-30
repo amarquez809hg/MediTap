@@ -540,6 +540,12 @@ function parseChronicFromNarrative(block: string): Tab14ChronicRow[] {
     if (/^(stage|grade|specimen|cycle|regimen|margins|sentinel|date|height|weight|bmi|percentile)/i.test(s)) {
       continue;
     }
+    if (/^(group\s*#|provider|policy|member\s*id|shellfish|sulfa|medications|allergies|coverage)/i.test(s)) {
+      continue;
+    }
+    if (/\bmedications[a-z]/i.test(s) || (/\bdiagnosed\s+\d/i.test(s) && s.length > 80)) {
+      continue;
+    }
     rows.push({
       conditionName: s.slice(0, 180),
       icdCode: icd,
@@ -817,6 +823,31 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
   };
 }
 
+/** Score chronic rows so merge prefers clean parser output over noisy narrative fallbacks. */
+export function chronicConditionParseScore(rows: Tab14ChronicRow[]): number {
+  if (!rows.length) return -1;
+  let score = 0;
+  for (const row of rows) {
+    const name = row.conditionName.trim();
+    if (name.length < 3 || name.length > 100) {
+      score -= 4;
+      continue;
+    }
+    if (/^(group\s*#|provider|policy|shellfish|sulfa|medications|allergies|coverage)/i.test(name)) {
+      score -= 6;
+      continue;
+    }
+    if (/\bmedications[a-z]/i.test(name) || (/\bdiagnosed\s+\d/i.test(name) && name.length > 60)) {
+      score -= 5;
+      continue;
+    }
+    score += 2;
+    if (row.icdCode && /^[A-Z]\d/i.test(row.icdCode)) score += 3;
+    if (row.diagnosisDate) score += 1;
+  }
+  return score;
+}
+
 /** Merge multiple parse results — prefer validated, non-empty values; longer lists win. */
 export function mergeIntakeParseResults(
   ...results: Tab14IntakeParseResult[]
@@ -869,9 +900,23 @@ export function mergeIntakeParseResults(
     return pick(generalOnly);
   };
 
+  const pickBestChronic = (): Tab14ChronicRow[] => {
+    let best: Tab14ChronicRow[] = [];
+    let bestScore = -1;
+    for (const r of results) {
+      const rows = r.chronicConditions;
+      const score = chronicConditionParseScore(rows);
+      if (score > bestScore) {
+        bestScore = score;
+        best = rows;
+      }
+    }
+    return bestScore >= 0 ? best : [];
+  };
+
   const allergies = pickBestList((r) => r.allergies);
   const medications = pickBestList((r) => r.medications);
-  const chronicConditions = pickBestList((r) => r.chronicConditions);
+  const chronicConditions = pickBestChronic();
   const insurances = mergeInsurance();
 
   return {

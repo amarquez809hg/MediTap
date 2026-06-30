@@ -1,0 +1,39 @@
+Data Portability for Jordan Parker DemographicsSex: Female
+DOB: 08/17/1992
+Blood Type: A+
+Race: White
+Ethnicity: Not Hispanic or Latino
+Language: English
+Marital Status: Married
+Address: 4821 Cedar Ridge Dr, Austin, TX 78731
+Phone: (512) 555-0148
+Email: jordan.parker92@example.com Care TeamPrimary Care: Dr. Olivia Bennett, MD (Austin Family Health)
+Cardiologist: Dr. Kevin Ross, MD (HeartCare Austin) InsuranceProvider: Aetna
+Policy #: ATX94827511
+Plan: Aetna Choice POS II
+Member ID: JP2048813
+Group #: G781245
+Coverage: 01/01/2026–12/31/2026 AllergiesSulfa antibiotics – Hives
+Shellfish – Swelling Chronic ConditionsEssential Hypertension (I10) – Diagnosed 05/14/2022
+Hyperlipidemia (E78.5) – Diagnosed 11/08/2023 MedicationsLosartan 50 mg PO daily – Hypertension – Dr. Olivia Bennett
+Rosuvastatin 10 mg PO nightly – Hyperlipidemia – Dr. Kevin Ross
+Vitamin D3 2000 IU PO daily Recent Hospital VisitType: Emergency Department
+Facility: St. David's Medical Center
+Reason: Chest pain evaluation
+Date: 02/18/2026
+Discharge: 02/18/2026
+Outcome: Cardiac workup negative; discharged home. Laboratory Results
+02/18/2026 CBC: Normal
+02/18/2026 Troponin: Negative
+03/05/2026 LDL: 96 mg/dL
+03/05/2026 HDL: 62 mg/dL
+03/05/2026 A1C: 5.4% Vitals03/05/2026 BP 122/78
+HR 68 bpm
+Weight 154 lb
+BMI 24.9 ImmunizationsInfluenza: 10/12/2025
+COVID-19 Booster: 09/20/2025
+Tdap: 08/15/2021 Social HistoryNever smoker
+Alcohol: Occasional
+Exercise: 4x/week
+Occupation: Marketing Manager NotesPatient follows DASH diet. Blood pressure well controlled. Continue current medications and follow
+up in 6 months.
