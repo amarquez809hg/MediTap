@@ -172,10 +172,11 @@ export function validateDemographicValue(
     case 'dateOfBirth':
       return undefined; // validated separately with tryParseDateToIso
     case 'sexAtBirth': {
-      const lower = v.toLowerCase();
-      if (/^masculino|^male|^hombre/.test(lower)) return 'Masculino';
-      if (/^femenino|^female|^mujer/.test(lower)) return 'Femenino';
-      return undefined;
+      const s = v.match(/^(male|female|masculino|femenino|hombre|mujer)\b/i);
+      if (!s) return undefined;
+      const token = s[1].toLowerCase();
+      if (token === 'male' || token === 'masculino' || token === 'hombre') return 'Male';
+      return 'Female';
     }
     case 'bloodType':
       return normalizeBloodType(v);

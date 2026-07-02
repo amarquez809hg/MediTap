@@ -74,6 +74,9 @@ describe('parseMeditapDemoRecordDocument', () => {
     expect(r.medications.length).toBeGreaterThanOrEqual(3);
     expect(r.medications.some((m) => /losartan/i.test(m.genericName))).toBe(true);
     expect(r.medications.some((m) => /vitamin d3/i.test(m.genericName))).toBe(true);
+    expect(r.medications.some((m) => /rosuvastatin/i.test(m.genericName))).toBe(true);
+    expect(r.medications.every((m) => !/^dr\.?\s/i.test(m.genericName))).toBe(true);
+    expect(r.medications.every((m) => !/bennett|kevin ross/i.test(m.genericName))).toBe(true);
 
     expect(r.insurances[0]?.providerName).toMatch(/aetna/i);
     expect(r.insurances[0]?.policyNumber).toBe('ATX94827511');
@@ -113,6 +116,22 @@ describe('parseMeditapDemoRecordDocument', () => {
 
     expect(full.allergies).toHaveLength(2);
     expect(full.medications.length).toBeGreaterThanOrEqual(3);
+    expect(full.medications.map((m) => m.genericName)).toEqual(
+      expect.arrayContaining(['Losartan', 'Rosuvastatin', 'Vitamin D3'])
+    );
+  });
+
+  it('parses glued single-line Jordan Parker medications without physician bleed', () => {
+    const gluedMeds =
+      'Medications Losartan 50 mg PO daily – Hypertension – Dr. Olivia Bennett Rosuvastatin 10 mg PO nightly – Hyperlipidemia – Dr. Kevin Ross Vitamin D3 2000 IU PO daily';
+    const r = parseMeditapDemoRecordDocument(
+      `Data Portability for Jordan Parker Demographics Sex: Female ${gluedMeds}`
+    );
+    const names = r.medications.map((m) => m.genericName);
+    expect(names).toContain('Losartan');
+    expect(names).toContain('Rosuvastatin');
+    expect(names).toContain('Vitamin D3');
+    expect(names.some((n) => /bennett|olivia|kevin ross/i.test(n))).toBe(false);
   });
 
   it('preprocess splits glued compact section headers', () => {

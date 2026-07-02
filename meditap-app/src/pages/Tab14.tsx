@@ -23,12 +23,6 @@ import {
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
-import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
-import {
-    mergeChronicConditionsFromPdf,
-    mergeInsurancesFromPdf,
-    mergeMedicationsFromPdf,
-} from '../intake/mergeTab14IntakeUpload';
 import {
     applyTab14ParseBundle,
     bundleHasPatientIdentity,
@@ -46,6 +40,12 @@ import {
     extractTab14UploadFileText,
     isTab14UploadFileType,
 } from '../intake/documentTextExtraction';
+import {
+    clearTab14PersistedUploads,
+    loadTab14UploadedFiles,
+    persistTab14UploadedFile,
+    removeTab14PersistedUpload,
+} from '../intake/tab14UploadStorage';
 import {
     bmiCategoryLabel,
     computeBmiFromMetric,
@@ -539,6 +539,8 @@ const Tab14: React.FC = () => {
     const patientSub =
         typeof kcParsedTab14?.sub === 'string' ? kcParsedTab14.sub : undefined;
 
+    const uploadStorageScope = (patientSub ?? username ?? '').trim();
+
     const canEditPatientRecords =
         hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
 
@@ -579,6 +581,17 @@ const Tab14: React.FC = () => {
             setActiveSection(6);
         }
     }, [location.search]);
+
+    useEffect(() => {
+        if (!authReady || !uploadStorageScope) return;
+        let cancelled = false;
+        void loadTab14UploadedFiles(uploadStorageScope).then((restored) => {
+            if (!cancelled) setUploadedFiles(restored);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [authReady, uploadStorageScope]);
 
     // message handling 
     const [saveMessage, setSaveMessage] = useState(false); 
@@ -779,6 +792,9 @@ const Tab14: React.FC = () => {
             if (entry) URL.revokeObjectURL(entry.previewUrl);
             return prev.filter((row) => row.id !== id);
         });
+        if (uploadStorageScope) {
+            void removeTab14PersistedUpload(uploadStorageScope, id);
+        }
     };
 
     const clearUploadedFiles = () => {
@@ -787,6 +803,9 @@ const Tab14: React.FC = () => {
             return [];
         });
         setUploadParseMessage(null);
+        if (uploadStorageScope) {
+            void clearTab14PersistedUploads(uploadStorageScope);
+        }
     };
 
     const uploadedFilesRef = useRef<UploadedFileEntry[]>([]);
@@ -876,6 +895,13 @@ const Tab14: React.FC = () => {
                 parseStatus: fileMessages[i] ?? '',
             }));
             setUploadedFiles((prev) => [...prev, ...entriesWithStatus]);
+            if (uploadStorageScope) {
+                void Promise.all(
+                    entriesWithStatus.map((entry) =>
+                        persistTab14UploadedFile(uploadStorageScope, entry)
+                    )
+                );
+            }
             setUploadParseMessage(null);
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
@@ -1086,6 +1112,7 @@ const Tab14: React.FC = () => {
     const clearForm = () => {
         if (!canEditPatientRecords) return;
         clearTab14DraftKeysOnly();
+        clearUploadedFiles();
         setPatientInfo(defaultPatientInfo);
         setInsurances([defaultInsurance]);
         setAllergies([defaultAllergy]);

@@ -15,6 +15,7 @@ const APPOINTMENTS_KEY_PREFIX = `${APPOINTMENTS_STORAGE_PREFIX}:`;
 
 /**
  * Removes Tab14 draft data, per-user appointment caches (Tab4), and staff elevation.
+ * Tab14 upload file table rows stay in IndexedDB (scoped per user) across logout/login.
  * Preserves JWT and profile UI preferences (language, theme, notifications on server + cache).
  * Call after a successful sign-in (new account or account switch) and on logout / session end.
  */
@@ -22,7 +23,6 @@ export function clearMediTapWorkflowLocalState(): void {
   if (typeof window === 'undefined') return;
 
   clearMeditapIntakeElevation();
-
   try {
     for (const k of TAB14_WORKFLOW_KEYS) {
       localStorage.removeItem(k);

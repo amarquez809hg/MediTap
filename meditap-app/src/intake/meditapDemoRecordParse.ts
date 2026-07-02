@@ -610,6 +610,28 @@ function parseCompactChronic(section: string): Tab14ChronicRow[] {
   return rows;
 }
 
+function stripLeadingPhysicianFromDrugName(name: string): string {
+  return name
+    .replace(/^medications\s+/i, '')
+    .replace(/^(?:Dr\.?\s+[A-Za-z]+(?:\s+[A-Za-z]+)*\s+)+(?=[A-Za-z])/i, '')
+    .trim();
+}
+
+/** Drug line starts at the medication name, not a glued "Dr. …" prefix from the prior row. */
+const COMPACT_MEDICATION_START_RE =
+  /\b(?!Dr\.?\s)([A-Z][A-Za-z0-9]*(?:\s+(?!Dr\.?\s)[A-Za-z][A-Za-z0-9]*){0,3})\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))\s+PO\s+\w+/gi;
+
+function preprocessCompactMedicationSection(section: string): string {
+  return section
+    .replace(/^\s*medications\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(
+      /(?:[-–—]\s*)?Dr\.?\s+[A-Za-z]+(?:\s+[A-Za-z]+)*\s+(?=[A-Z][a-z]+(?:\s+D?\d+)?\s+\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))/g,
+      (match) => `${match.trimEnd()}\n`
+    )
+    .trim();
+}
+
 function parseCompactMedicationLine(raw: string): Tab14MedicationRow | null {
   const trimmed = cleanValue(raw);
   if (!trimmed) return null;
@@ -620,8 +642,12 @@ function parseCompactMedicationLine(raw: string): Tab14MedicationRow | null {
   if (withMeta) {
     const drugPart = withMeta[1];
     const drugM = drugPart.match(/^(.+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))\s+(PO\s+\w+)/i);
+    const genericName = stripLeadingPhysicianFromDrugName(
+      drugM ? cleanValue(drugM[1]) : drugPart
+    );
+    if (!genericName) return null;
     return {
-      genericName: drugM ? cleanValue(drugM[1]) : drugPart,
+      genericName,
       brandName: '',
       dosage: drugM ? drugM[2].trim() : '',
       route: drugM ? drugM[3].split(/\s+/)[0] : 'PO',
@@ -638,8 +664,12 @@ function parseCompactMedicationLine(raw: string): Tab14MedicationRow | null {
   if (!simple) return null;
   const drugPart = simple[1];
   const drugM = drugPart.match(/^(.+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?))\s+(PO\s+\w+)/i);
+  const genericName = stripLeadingPhysicianFromDrugName(
+    drugM ? cleanValue(drugM[1]) : drugPart
+  );
+  if (!genericName) return null;
   return {
-    genericName: drugM ? cleanValue(drugM[1]) : drugPart,
+    genericName,
     brandName: '',
     dosage: drugM ? drugM[2].trim() : '',
     route: drugM ? drugM[3].split(/\s+/)[0] : 'PO',
@@ -653,24 +683,50 @@ function parseCompactMedicationLine(raw: string): Tab14MedicationRow | null {
 }
 
 function parseCompactMedications(section: string): Tab14MedicationRow[] {
-  const normalized = section.replace(/\s+/g, ' ').trim();
-  const starts: number[] = [];
-  const startRe =
-    /\b([A-Z][A-Za-z0-9\s.-]*?\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?)\s+PO\s+\w+)/g;
-  let sm: RegExpExecArray | null;
-  while ((sm = startRe.exec(normalized)) !== null) {
-    starts.push(sm.index);
-  }
-
+  const normalized = preprocessCompactMedicationSection(section);
   const rows: Tab14MedicationRow[] = [];
-  for (let i = 0; i < starts.length; i += 1) {
-    const chunk = normalized
-      .slice(starts[i], i + 1 < starts.length ? starts[i + 1] : normalized.length)
-      .trim();
+
+  const parseChunk = (chunk: string) => {
     const row = parseCompactMedicationLine(chunk);
     if (row && !rows.some((r) => r.genericName === row.genericName && r.dosage === row.dosage)) {
       rows.push(row);
     }
+  };
+
+  if (normalized.includes('\n')) {
+    for (const line of normalized.split(/\n+/)) {
+      const lineTrim = line.trim();
+      if (!lineTrim) continue;
+      if (/\d+(?:\.\d+)?\s*(?:mg|mcg|IU|units?)\s+PO\s+\w+/i.test(lineTrim)) {
+        parseChunk(lineTrim);
+        continue;
+      }
+      const starts: number[] = [];
+      let sm: RegExpExecArray | null;
+      const startRe = new RegExp(COMPACT_MEDICATION_START_RE.source, 'gi');
+      while ((sm = startRe.exec(lineTrim)) !== null) {
+        starts.push(sm.index);
+      }
+      for (let i = 0; i < starts.length; i += 1) {
+        parseChunk(
+          lineTrim.slice(starts[i], i + 1 < starts.length ? starts[i + 1] : lineTrim.length).trim()
+        );
+      }
+    }
+    return rows;
+  }
+
+  const starts: number[] = [];
+  let sm: RegExpExecArray | null;
+  const startRe = new RegExp(COMPACT_MEDICATION_START_RE.source, 'gi');
+  while ((sm = startRe.exec(normalized)) !== null) {
+    starts.push(sm.index);
+  }
+
+  for (let i = 0; i < starts.length; i += 1) {
+    parseChunk(
+      normalized.slice(starts[i], i + 1 < starts.length ? starts[i + 1] : normalized.length).trim()
+    );
   }
   return rows;
 }
