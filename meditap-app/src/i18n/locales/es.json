@@ -476,7 +476,7 @@
   "terms": {
     "title": "Términos de servicio",
     "subtitle": "Estos términos rigen el uso de la plataforma MediTap de admisión del paciente y flujo de expediente clínico, incluida su autorización para el uso clínico de la información que proporcione.",
-    "lastUpdated": "Última actualización: mayo de 2026",
+    "lastUpdated": "Última actualización: julio de 2026",
     "s1": {
       "title": "1. Aceptación",
       "p1": "Al crear una cuenta, iniciar sesión, cargar documentos o usar MediTap de cualquier otro modo, usted acepta estos Términos de servicio y nuestra <privacyLink>Política de privacidad</privacyLink>. Si no está de acuerdo, no utilice el servicio.",
@@ -497,34 +497,90 @@
       ]
     },
     "s4": {
-      "title": "4. Autorización para uso médico y clínico de su información",
-      "lead": "Al usar MediTap, usted autoriza voluntariamente a MediTap, a su organización de salud participante y a los miembros autorizados de su equipo de atención a recopilar, almacenar, revisar, usar y divulgar la información relacionada con la salud que ingrese, cargue o importe a través de la plataforma para fines médicos y clínicos legítimos.",
+      "title": "4. Autorización para el uso médico y clínico de su información",
+      "lead": "Al crear una cuenta, acceder o usar MediTap, usted autoriza voluntariamente a MediTap, a su organización de salud participante y a los miembros autorizados de su equipo de atención a recopilar, recibir, almacenar, revisar, procesar, usar y divulgar la información relacionada con la salud que ingrese, cargue, importe o proporcione de otro modo a través de la plataforma para fines legítimos de atención médica, tratamiento, pago y operaciones de salud, según lo permita la ley aplicable.",
+      "hipaaHeading": "Cumplimiento de HIPAA",
+      "hipaaP1": "MediTap está diseñado para apoyar el cumplimiento de la Ley de Portabilidad y Responsabilidad de Seguros de Salud de 1996 (HIPAA), la Ley HITECH y otras leyes federales y estatales de privacidad aplicables. Cuando MediTap procesa Información de Salud Protegida (\"PHI\") en nombre de un proveedor de salud cubierto u otra entidad regulada por HIPAA, la recopilación, almacenamiento, uso y divulgación de PHI se realiza conforme a los requisitos legales aplicables, obligaciones contractuales y esta Autorización.",
+      "hipaaP2": "Tenga en cuenta que HIPAA aplica solo cuando MediTap actúa en nombre de una entidad cubierta por HIPAA o un Asociado comercial. Ciertas funciones o usos de la plataforma pueden no estar sujetos a HIPAA pero siguen regidos por esta Política de privacidad y la ley aplicable.",
       "authHeading": "Qué autoriza",
-      "authIntro": "Usted entiende y acepta que la información que proporcione puede usarse para:",
+      "authIntro": "Al usar MediTap, usted nos autoriza a:",
       "authItems": [
-        "Construir y mantener su expediente de admisión del paciente y resumen de salud (por ejemplo demografía, alergias, medicamentos, condiciones crónicas, resultados de laboratorio, historial de visitas, detalles de seguro y signos vitales).",
-        "Apoyar tratamiento, coordinación de atención, referencias, soporte de facturación, revisión de calidad y flujos operativos realizados por clínicos y personal autorizado de su organización.",
-        "Poblar paneles, vistas de estado rápido y herramientas de documentación asistida por personal para que su equipo revise información exacta antes y durante la atención.",
-        "Procesar documentos que cargue (incluidos PDF e historiales importados) con herramientas de extracción automatizada para prellenar campos de admisión, sujeto a revisión del personal cuando corresponda.",
-        "Sincronizar o mostrar datos de integraciones opcionales que usted o su organización habiliten (como Epic FHIR sandbox), de acuerdo con los permisos otorgados durante la conexión."
+        "Construir, mantener, actualizar y almacenar de forma segura su expediente de admisión del paciente, resumen longitudinal de salud y documentación clínica relacionada.",
+        "Recopilar y organizar información demográfica, contactos de emergencia, información de seguro, alergias, medicamentos, inmunizaciones, resultados de laboratorio, diagnósticos, procedimientos, historial de visitas, signos vitales y otra información de salud que elija proporcionar o autorizar recuperar.",
+        "Apoyar tratamiento médico, coordinación de atención, referencias, admisión del paciente, soporte de facturación, mejora de calidad, flujos operativos y otros servicios relacionados con la salud realizados por profesionales autorizados.",
+        "Mostrar su información mediante paneles, resúmenes del paciente, flujos de admisión y otras herramientas clínicas que ayuden a los profesionales de la salud a brindar atención.",
+        "Procesar documentos que cargue, incluidos PDF, registros médicos escaneados, documentos de seguro e informes de laboratorio, usando tecnologías de reconocimiento y extracción de datos para identificar información estructurada y prellenar campos de admisión.",
+        "Sincronizar o mostrar información de integraciones de terceros autorizadas que usted o su organización habiliten, incluidos sistemas de historial clínico electrónico como integraciones Epic FHIR u otras conexiones de datos de salud compatibles.",
+        "Mejorar la funcionalidad, seguridad, confiabilidad y experiencia de la plataforma usando información desidentificada o agregada cuando sea posible y según lo permita la ley aplicable."
       ],
+      "authNote": "El procesamiento automatizado de documentos tiene como único fin apoyar flujos administrativos y clínicos. Los profesionales de la salud siguen siendo responsables de revisar y verificar la información médica antes de usarla para diagnóstico, tratamiento u otras decisiones clínicas.",
       "repHeading": "Qué declara",
-      "repIntro": "Al enviar información a través de MediTap, usted declara que:",
+      "repIntro": "Al enviar información a través de MediTap, usted declara y garantiza que:",
       "repItems": [
-        "La información se proporciona voluntariamente y, según su mejor conocimiento, es exacta, completa y no engañosa.",
-        "Usted es el paciente nombrado en el expediente, o está legalmente autorizado para proporcionar la información del paciente y otorgar esta autorización en su nombre.",
-        "Actualizará la información cuando cambie de manera relevante (por ejemplo nuevas alergias, cambios de medicamentos o datos de contacto actualizados) al seguir usando la plataforma."
+        "La información que proporciona se envía voluntariamente.",
+        "Según su mejor conocimiento, la información es exacta, completa y no intencionalmente engañosa.",
+        "Usted es el paciente identificado en el expediente, o está legalmente autorizado para proporcionar información y otorgar esta autorización en nombre del paciente.",
+        "Acepta actualizar la información cuando ocurran cambios relevantes, incluidos cambios de medicamentos, alergias, contactos de emergencia, información de seguro u otra información de salud significativa, si continúa usando MediTap."
       ],
       "accessHeading": "Quién puede acceder a su información",
-      "accessIntro": "El acceso se limita a usuarios y sistemas con necesidad legítima según las políticas de su organización, incluyendo:",
+      "accessIntro": "El acceso a su información se limita a personas y sistemas con necesidad legítima de conocerla y se rige por controles de acceso basados en roles y políticas organizacionales.",
+      "accessSubIntro": "Los usuarios autorizados pueden incluir:",
       "accessItems": [
-        "Usted, a través de su sesión autenticada del portal del paciente.",
-        "Personal clínico y administrativo autorizado actuando dentro de roles asignados (incluida elevación temporal del personal en dispositivos compartidos cuando su organización lo permita).",
-        "Proveedores de servicios que alojan, aseguran u operan MediTap en nombre de su organización, bajo obligaciones contractuales de confidencialidad y seguridad.",
-        "Sistemas de salud o socios de integración de terceros solo cuando usted o su organización habiliten explícitamente una conexión y otorguen los permisos aplicables."
+        "Usted, a través de su cuenta autenticada de MediTap.",
+        "Médicos, enfermeras, asistentes médicos, personal administrativo y otros miembros autorizados de su equipo de atención actuando dentro de sus responsabilidades asignadas.",
+        "Personal autorizado con acceso elevado temporal conforme a las políticas de su organización, incluidos flujos en dispositivos compartidos cuando se permita.",
+        "Proveedores de servicios que alojan, mantienen, operan o apoyan MediTap bajo obligaciones contractuales de confidencialidad, privacidad y seguridad.",
+        "Organizaciones de salud de terceros, intercambios de información de salud, laboratorios, farmacias o socios de integración solo cuando usted o su organización autorice o habilite explícitamente esas conexiones."
       ],
-      "durationHeading": "Duración y revocación",
-      "durationBody": "Esta autorización permanece vigente mientras mantenga una cuenta activa o mientras su organización conserve registros conforme a sus políticas de historial médico y retención. Puede solicitar retirar o limitar el uso de su información contactando a su organización de salud o al Soporte de MediTap; sin embargo, la revocación puede impedir que algunas funciones operen y puede no exigir la eliminación de información ya incorporada a un historial médico legal o retenida según la ley."
+      "accessMinimumNecessary": "MediTap sigue el estándar de \"Mínimo necesario\" de HIPAA cuando corresponda, limitando el acceso al mínimo de Información de Salud Protegida razonablemente necesario para que los usuarios autorizados cumplan sus responsabilidades, excepto cuando se requiera acceso más amplio para tratamiento o se permita de otro modo por ley.",
+      "securityHeading": "Seguridad de su información",
+      "securityIntro": "Proteger su información de salud es una de las prioridades más altas de MediTap.",
+      "securityIntro2": "MediTap implementa salvaguardas administrativas, técnicas y físicas diseñadas para proteger la Información de Salud Protegida y otra información personal contra acceso, alteración, divulgación o destrucción no autorizados. Estas salvaguardas pueden incluir:",
+      "securityItems": [
+        "Cifrado de datos durante la transmisión con protocolos estándar de la industria.",
+        "Cifrado de datos almacenados cuando corresponda.",
+        "Controles de acceso basados en roles.",
+        "Autenticación multifactor cuando esté disponible.",
+        "Autenticación segura y gestión de sesiones.",
+        "Registro de auditoría y monitoreo de acceso.",
+        "Actualizaciones de seguridad rutinarias y gestión de vulnerabilidades.",
+        "Procedimientos de respaldo y recuperación ante desastres.",
+        "Capacitación del personal en privacidad y seguridad.",
+        "Monitoreo continuo y mejoras de seguridad diseñadas para proteger la información del paciente."
+      ],
+      "securityClosing": "Aunque ningún sistema electrónico puede garantizar seguridad absoluta, MediTap trabaja continuamente para implementar salvaguardas razonables y apropiadas conforme a los estándares aplicables de privacidad y seguridad en salud.",
+      "emergencyHeading": "Acceso de emergencia",
+      "emergencyBody": "Cuando lo permita la ley aplicable y lo autorice su organización de salud participante, MediTap puede permitir que profesionales autorizados accedan a información de salud limitada en situaciones de emergencia cuando sea necesario para proteger su salud o seguridad o la de otra persona. El acceso de emergencia se registra y monitorea conforme a las políticas organizacionales y requisitos legales aplicables.",
+      "privacyRightsHeading": "Sus derechos de privacidad",
+      "privacyRightsIntro": "Sujeto a la ley federal y estatal aplicable, usted puede tener derecho a:",
+      "privacyRightsItems": [
+        "Solicitar acceso a su información de salud.",
+        "Solicitar correcciones o enmiendas a información inexacta.",
+        "Solicitar restricciones sobre ciertos usos o divulgaciones de su información.",
+        "Solicitar comunicaciones confidenciales por métodos alternativos cuando corresponda.",
+        "Recibir un registro de ciertas divulgaciones de su Información de Salud Protegida.",
+        "Recibir copias de avisos de privacidad aplicables.",
+        "Retirar o limitar autorizaciones cuando lo permita la ley."
+      ],
+      "privacyRightsClosing": "Las solicitudes pueden enviarse a través de su organización de salud participante o contactando al Soporte de MediTap.",
+      "willNotHeading": "Lo que no haremos",
+      "willNotIntro": "Salvo que la ley lo exija o permita, MediTap no:",
+      "willNotItems": [
+        "Venderá su Información de Salud Protegida.",
+        "Compartirá su información médica con terceros no autorizados.",
+        "Usará su Información de Salud Protegida con fines publicitarios o de marketing sin su autorización cuando la ley lo exija.",
+        "Permitirá que empleados, contratistas o proveedores accedan a su información excepto cuando sea necesario para sus funciones autorizadas.",
+        "Divulgará su información excepto según usted autorice, la ley lo exija, lo permitan las leyes de privacidad en salud aplicables o sea necesario para prestar servicios de salud."
+      ],
+      "retentionHeading": "Retención, retiro y revocación",
+      "retentionBody": "Esta autorización permanece vigente mientras mantenga una cuenta activa de MediTap o mientras su organización de salud conserve registros conforme a las leyes de retención de historiales médicos, políticas organizacionales u otras obligaciones legales aplicables. Puede solicitar retirar o limitar su autorización contactando a su organización de salud participante o al Soporte de MediTap. La revocación puede limitar o deshabilitar ciertas funciones de MediTap y no exige eliminar información ya incorporada a un historial médico oficial o retenida según la ley aplicable.",
+      "breachHeading": "Notificación de violaciones",
+      "breachBody": "Si MediTap tiene conocimiento de una violación que involucre Información de Salud Protegida no asegurada, investigará el incidente con prontitud y responderá conforme a las leyes federales y estatales aplicables, incluidos los requisitos de notificación de violaciones de HIPAA cuando corresponda. Cuando la ley lo exija, se notificará a las personas afectadas, organizaciones de salud participantes y autoridades regulatorias correspondientes dentro de los plazos legalmente requeridos.",
+      "contactHeading": "Información de contacto",
+      "contactIntro": "Si tiene preguntas sobre esta Autorización, sus derechos de privacidad o el manejo de su información por MediTap, contacte:",
+      "contactOrg": "Soporte de MediTap",
+      "contactEmail": "Correo: <emailLink>cindyrenee@meditap.ai</emailLink>",
+      "closing": "Al continuar usando MediTap, usted reconoce que ha leído, entendido y acepta esta Autorización para el uso médico y clínico de su información."
     },
     "s5": {
       "title": "5. Información de salud y responsabilidad regulatoria",
@@ -553,7 +609,7 @@
   "privacy": {
     "title": "Política de privacidad",
     "subtitle": "Cómo MediTap maneja la información cuando usa nuestra plataforma.",
-    "lastUpdated": "Última actualización: mayo de 2026",
+    "lastUpdated": "Última actualización: julio de 2026",
     "overviewTitle": "Resumen",
     "overviewBody": "MediTap respeta su privacidad. Esta política describe los tipos de información que procesamos cuando usa la aplicación y las opciones disponibles para usted.",
     "collectTitle": "Información que recopilamos",

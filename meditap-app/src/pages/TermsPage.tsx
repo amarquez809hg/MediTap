@@ -15,9 +15,6 @@ function TermsList({ items }: { items: string[] }) {
 
 const TermsPage: React.FC = () => {
   const { t } = useTranslation();
-  const s4AuthItems = t('terms.s4.authItems', { returnObjects: true }) as string[];
-  const s4RepItems = t('terms.s4.repItems', { returnObjects: true }) as string[];
-  const s4AccessItems = t('terms.s4.accessItems', { returnObjects: true }) as string[];
 
   return (
     <PublicPageLayout
@@ -55,17 +52,65 @@ const TermsPage: React.FC = () => {
         <p>
           <strong>{t('terms.s4.lead')}</strong>
         </p>
+
+        <h3>{t('terms.s4.hipaaHeading')}</h3>
+        <p>{t('terms.s4.hipaaP1')}</p>
+        <p>{t('terms.s4.hipaaP2')}</p>
+
         <h3>{t('terms.s4.authHeading')}</h3>
         <p>{t('terms.s4.authIntro')}</p>
-        <TermsList items={s4AuthItems} />
+        <TermsList items={t('terms.s4.authItems', { returnObjects: true }) as string[]} />
+        <p>{t('terms.s4.authNote')}</p>
+
         <h3>{t('terms.s4.repHeading')}</h3>
         <p>{t('terms.s4.repIntro')}</p>
-        <TermsList items={s4RepItems} />
+        <TermsList items={t('terms.s4.repItems', { returnObjects: true }) as string[]} />
+
         <h3>{t('terms.s4.accessHeading')}</h3>
         <p>{t('terms.s4.accessIntro')}</p>
-        <TermsList items={s4AccessItems} />
-        <h3>{t('terms.s4.durationHeading')}</h3>
-        <p>{t('terms.s4.durationBody')}</p>
+        <p>{t('terms.s4.accessSubIntro')}</p>
+        <TermsList items={t('terms.s4.accessItems', { returnObjects: true }) as string[]} />
+        <p>{t('terms.s4.accessMinimumNecessary')}</p>
+
+        <h3>{t('terms.s4.securityHeading')}</h3>
+        <p>{t('terms.s4.securityIntro')}</p>
+        <p>{t('terms.s4.securityIntro2')}</p>
+        <TermsList items={t('terms.s4.securityItems', { returnObjects: true }) as string[]} />
+        <p>{t('terms.s4.securityClosing')}</p>
+
+        <h3>{t('terms.s4.emergencyHeading')}</h3>
+        <p>{t('terms.s4.emergencyBody')}</p>
+
+        <h3>{t('terms.s4.privacyRightsHeading')}</h3>
+        <p>{t('terms.s4.privacyRightsIntro')}</p>
+        <TermsList items={t('terms.s4.privacyRightsItems', { returnObjects: true }) as string[]} />
+        <p>{t('terms.s4.privacyRightsClosing')}</p>
+
+        <h3>{t('terms.s4.willNotHeading')}</h3>
+        <p>{t('terms.s4.willNotIntro')}</p>
+        <TermsList items={t('terms.s4.willNotItems', { returnObjects: true }) as string[]} />
+
+        <h3>{t('terms.s4.retentionHeading')}</h3>
+        <p>{t('terms.s4.retentionBody')}</p>
+
+        <h3>{t('terms.s4.breachHeading')}</h3>
+        <p>{t('terms.s4.breachBody')}</p>
+
+        <h3>{t('terms.s4.contactHeading')}</h3>
+        <p>{t('terms.s4.contactIntro')}</p>
+        <p>
+          <strong>{t('terms.s4.contactOrg')}</strong>
+          <br />
+          <Trans
+            i18nKey="terms.s4.contactEmail"
+            components={{
+              emailLink: (
+                <a href="mailto:cindyrenee@meditap.ai" className="public-page__inline-link" />
+              ),
+            }}
+          />
+        </p>
+        <p>{t('terms.s4.closing')}</p>
       </section>
 
       <section className="public-page__card">
