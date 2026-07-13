@@ -426,17 +426,88 @@
   "support": {
     "title": "Support & Help",
     "subtitle": "Answers to common questions about MediTap, your account, and getting care teams connected.",
+    "issuesTitle": "Common issues",
+    "issuesLead": "Select the topic that best matches your situation. We will route your request to the MediTap support inbox.",
+    "issues": [
+      {
+        "category": "account",
+        "title": "Can't sign in or reset password",
+        "description": "Login errors, locked accounts, forgot password, or registration problems."
+      },
+      {
+        "category": "intake",
+        "title": "Patient intake not saving",
+        "description": "Demographics, vitals, allergies, or intake fields missing or not updating."
+      },
+      {
+        "category": "document_upload",
+        "title": "PDF or document upload failed",
+        "description": "Upload errors, parsing issues, or extracted data looks wrong."
+      },
+      {
+        "category": "epic_integration",
+        "title": "Epic FHIR connection",
+        "description": "Sandbox linking, OAuth callback errors, or missing imported records."
+      },
+      {
+        "category": "staff_access",
+        "title": "Staff editing or admin access",
+        "description": "Staff unlock, record editor roles, or admin panel permissions."
+      },
+      {
+        "category": "clinical_data",
+        "title": "Appointments, labs, or records",
+        "description": "Dashboard data, lab results, appointments, or clinical tabs look incorrect."
+      },
+      {
+        "category": "technical",
+        "title": "Website error or bug",
+        "description": "Page won't load, buttons fail, language picker, or unexpected errors."
+      },
+      {
+        "category": "privacy_security",
+        "title": "Privacy or account security",
+        "description": "HIPAA questions, unauthorized access concerns, or data deletion requests."
+      }
+    ],
     "faqTitle": "Frequently asked questions",
     "contactTitle": "Contact support",
-    "contactLead": "Send us a message and we will respond by email.",
+    "contactLead": "Choose the issue that best matches your situation. If none fit, pick \"Something else\" and describe what happened.",
+    "situationSection": "Your situation",
+    "reachSection": "How we can reach you",
+    "userType": "I am a",
+    "userTypes": {
+      "visitor": "Visitor / not signed in",
+      "patient": "Patient",
+      "staff": "Staff or administrator"
+    },
+    "problemCategory": "What do you need help with?",
+    "problemCategoryPlaceholder": "— Select —",
+    "problemCategories": {
+      "account": "Account — sign in, sign up, or password",
+      "intake": "Patient intake or demographics",
+      "document_upload": "PDF upload or document parsing",
+      "epic_integration": "Epic FHIR linking or health record sync",
+      "staff_access": "Staff editing, roles, or admin panel",
+      "clinical_data": "Appointments, labs, or health record tabs",
+      "technical": "Website error or technical issue",
+      "privacy_security": "Privacy, HIPAA, or account security",
+      "other": "Something else — describe below"
+    },
     "yourName": "Your name",
     "email": "Email",
-    "subject": "Subject",
-    "message": "Message",
-    "sendMessage": "Send message",
+    "phone": "Phone (optional)",
+    "phonePlaceholder": "Optional — for faster follow-up",
+    "message": "Describe the issue",
+    "messageHint": "Optional for most topics — required when you select \"Something else\".",
+    "messagePlaceholder": "What were you trying to do? What happened instead?",
+    "sendSupportRequest": "Send support request",
     "sending": "Sending…",
+    "categoryRequired": "Please select what you need help with.",
     "otherResources": "Other resources",
-    "otherResourcesPartnership": "For product demos and partnership inquiries, mention your organization in the message subject line.",
+    "directEmailLabel": "Email:",
+    "deliveryNote": "Support requests are delivered to the MediTap support inbox. When SMTP is configured on the server, you will also receive a confirmation email.",
+    "otherResourcesPartnership": "For product demos and partnership inquiries, mention your organization in your message.",
     "sendError": "Could not send your message.",
     "faq": [
       {
@@ -448,12 +519,20 @@
         "answer": "On the log in page, choose Forgot password and enter your account email. We will send a secure link to reset your password. The link expires after use; request a new one if needed."
       },
       {
+        "question": "My PDF upload did not parse correctly. What can I do?",
+        "answer": "Try a clearer scan or export from your health portal. After upload, review extracted fields in Patient Information and correct anything that looks wrong. Staff can also verify before relying on parsed data."
+      },
+      {
         "question": "How does staff editing work?",
         "answer": "Patients can upload documents and review their information. Authorized staff unlock editing from the intake or admin screens using staff credentials—without signing the patient out."
       },
       {
         "question": "Is Epic integration required?",
         "answer": "No. Epic FHIR sandbox linking is optional and is configured from the Admin panel after you log in, for pilots and technical demonstrations."
+      },
+      {
+        "question": "Who can I contact for privacy or HIPAA questions?",
+        "answer": "Use the Privacy or account security category above, or email support@meditap.ai. For clinical emergencies, contact your provider or emergency services directly—MediTap support cannot provide medical advice."
       }
     ]
   },

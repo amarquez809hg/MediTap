@@ -20,6 +20,14 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from .support_email import (
+    mail_configured,
+    send_support_auto_reply,
+    send_support_inquiry_email,
+    support_contact_email,
+)
+from .support_options import SUPPORT_PROBLEM_VALUES, SUPPORT_USER_TYPE_VALUES
+
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
@@ -27,10 +35,6 @@ User = get_user_model()
 def _frontend_base() -> str:
     base = (getattr(settings, "MEDITAP_FRONTEND_URL", "") or "").strip().rstrip("/")
     return base or "http://localhost:8100"
-
-
-def _support_inbox() -> str:
-    return (getattr(settings, "MEDITAP_SUPPORT_INBOX", "") or "").strip() or "support@meditap.ai"
 
 
 def _from_email() -> str:
@@ -75,9 +79,39 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class SupportContactSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200, trim_whitespace=True)
     email = serializers.EmailField()
-    subject = serializers.CharField(max_length=300, trim_whitespace=True)
-    message = serializers.CharField(max_length=8000, trim_whitespace=True)
+    user_type = serializers.ChoiceField(choices=sorted(SUPPORT_USER_TYPE_VALUES))
+    problem_category = serializers.ChoiceField(choices=sorted(SUPPORT_PROBLEM_VALUES))
+    phone = serializers.CharField(max_length=40, required=False, allow_blank=True, trim_whitespace=True)
+    message = serializers.CharField(
+        max_length=8000,
+        required=False,
+        allow_blank=True,
+        trim_whitespace=True,
+    )
 
+    def validate(self, attrs):
+        category = attrs.get("problem_category", "")
+        message = (attrs.get("message") or "").strip()
+        if category == "other" and not message:
+            raise serializers.ValidationError(
+                {"message": "Please describe your issue when selecting Something else."}
+            )
+        attrs["message"] = message
+        attrs["phone"] = (attrs.get("phone") or "").strip()
+        return attrs
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def support_config(request):
+    """Public support contact details for the SPA."""
+    return Response(
+        {
+            "contact_email": support_contact_email(),
+            "mail_configured": mail_configured(),
+        }
+    )
 
 def _user_from_uid(uid_b64: str) -> User | None:
     try:
@@ -181,40 +215,26 @@ def support_contact(request):
         return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = ser.validated_data
-    inbox = _support_inbox()
-    subject = f"[MediTap Support] {data['subject']}"
-    body = (
-        f"From: {data['name']} <{data['email']}>\n\n"
-        f"{data['message']}\n"
-    )
+    contact_email = support_contact_email()
     try:
-        send_mail(
-            subject,
-            body,
-            _from_email(),
-            [inbox],
-            reply_to=[data["email"]],
-            fail_silently=False,
-        )
-        auto_subject = "We received your MediTap support request"
-        auto_body = (
-            f"Hi {data['name']},\n\n"
-            f"Thank you for contacting MediTap. We received your message about "
-            f"\"{data['subject']}\" and aim to reply within one business day.\n\n"
-            f"— MediTap Support\n"
-        )
-        _send_user_email(subject=auto_subject, message=auto_body, recipient=data["email"])
+        send_support_inquiry_email(data=data)
+        send_support_auto_reply(data=data)
     except Exception:
         logger.exception("support_contact: failed to send mail")
         return Response(
-            {"detail": "Could not send your message right now. Email support@meditap.ai directly."},
+            {
+                "detail": (
+                    f"Could not send your message right now. Email {contact_email} directly."
+                )
+            },
             status=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
     return Response(
         {
             "detail": (
-                "Thank you. We received your message and will respond within one business day."
+                "Thank you. We received your support request and will respond within "
+                "one business day."
             )
         },
         status=status.HTTP_201_CREATED,

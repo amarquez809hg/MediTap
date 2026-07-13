@@ -284,7 +284,12 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
 EMAIL_USE_TLS = _env_truthy("EMAIL_USE_TLS")
 EMAIL_USE_SSL = _env_truthy("EMAIL_USE_SSL")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@meditap.ai").strip()
-MEDITAP_SUPPORT_INBOX = os.getenv("MEDITAP_SUPPORT_INBOX", "support@meditap.ai").strip()
+MEDITAP_SUPPORT_CONTACT_EMAIL = os.getenv(
+    "MEDITAP_SUPPORT_CONTACT_EMAIL", "support@meditap.ai"
+).strip()
+MEDITAP_SUPPORT_INBOX = os.getenv(
+    "MEDITAP_SUPPORT_INBOX", MEDITAP_SUPPORT_CONTACT_EMAIL
+).strip()
 _meditap_frontend_url = os.getenv("MEDITAP_FRONTEND_URL", "").strip()
 if _meditap_frontend_url:
     MEDITAP_FRONTEND_URL = _meditap_frontend_url.rstrip("/")

@@ -427,17 +427,88 @@
   "support": {
     "title": "Soporte y ayuda",
     "subtitle": "Respuestas a preguntas comunes sobre MediTap, su cuenta y la conexión con equipos de atención.",
+    "issuesTitle": "Problemas frecuentes",
+    "issuesLead": "Seleccione el tema que mejor describa su situación. Enviaremos su solicitud al buzón de soporte de MediTap.",
+    "issues": [
+      {
+        "category": "account",
+        "title": "No puedo iniciar sesión o restablecer contraseña",
+        "description": "Errores de acceso, cuentas bloqueadas, contraseña olvidada o problemas de registro."
+      },
+      {
+        "category": "intake",
+        "title": "La admisión del paciente no se guarda",
+        "description": "Datos demográficos, signos vitales, alergias o campos de admisión que no se actualizan."
+      },
+      {
+        "category": "document_upload",
+        "title": "Falló la carga de PDF o documento",
+        "description": "Errores de carga, problemas de análisis o datos extraídos incorrectos."
+      },
+      {
+        "category": "epic_integration",
+        "title": "Conexión Epic FHIR",
+        "description": "Enlace sandbox, errores OAuth o registros importados faltantes."
+      },
+      {
+        "category": "staff_access",
+        "title": "Edición del personal o acceso admin",
+        "description": "Desbloqueo del personal, roles de editor o permisos del panel admin."
+      },
+      {
+        "category": "clinical_data",
+        "title": "Citas, laboratorios o registros",
+        "description": "Datos del panel, resultados de laboratorio, citas o pestañas clínicas incorrectas."
+      },
+      {
+        "category": "technical",
+        "title": "Error del sitio o fallo técnico",
+        "description": "Página que no carga, botones que fallan, idioma o errores inesperados."
+      },
+      {
+        "category": "privacy_security",
+        "title": "Privacidad o seguridad de la cuenta",
+        "description": "Preguntas HIPAA, acceso no autorizado o solicitudes de eliminación de datos."
+      }
+    ],
     "faqTitle": "Preguntas frecuentes",
     "contactTitle": "Contactar soporte",
-    "contactLead": "Envíenos un mensaje y responderemos por correo.",
+    "contactLead": "Elija el problema que mejor describa su situación. Si ninguno aplica, seleccione \"Algo más\" y descríbalo.",
+    "situationSection": "Su situación",
+    "reachSection": "Cómo contactarlo",
+    "userType": "Soy",
+    "userTypes": {
+      "visitor": "Visitante / sin sesión",
+      "patient": "Paciente",
+      "staff": "Personal o administrador"
+    },
+    "problemCategory": "¿Con qué necesita ayuda?",
+    "problemCategoryPlaceholder": "— Seleccionar —",
+    "problemCategories": {
+      "account": "Cuenta — inicio de sesión, registro o contraseña",
+      "intake": "Admisión del paciente o datos demográficos",
+      "document_upload": "Carga de PDF o análisis de documentos",
+      "epic_integration": "Enlace Epic FHIR o sincronización de registros",
+      "staff_access": "Edición del personal, roles o panel admin",
+      "clinical_data": "Citas, laboratorios o pestañas del expediente",
+      "technical": "Error del sitio o problema técnico",
+      "privacy_security": "Privacidad, HIPAA o seguridad de la cuenta",
+      "other": "Algo más — describa abajo"
+    },
     "yourName": "Su nombre",
     "email": "Correo",
-    "subject": "Asunto",
-    "message": "Mensaje",
-    "sendMessage": "Enviar mensaje",
+    "phone": "Teléfono (opcional)",
+    "phonePlaceholder": "Opcional — para seguimiento más rápido",
+    "message": "Describa el problema",
+    "messageHint": "Opcional en la mayoría de temas — obligatorio si selecciona \"Algo más\".",
+    "messagePlaceholder": "¿Qué intentaba hacer? ¿Qué ocurrió en su lugar?",
+    "sendSupportRequest": "Enviar solicitud de soporte",
     "sending": "Enviando…",
+    "categoryRequired": "Seleccione con qué necesita ayuda.",
     "otherResources": "Otros recursos",
-    "otherResourcesPartnership": "Para demostraciones del producto y consultas de alianzas, mencione su organización en el asunto del mensaje.",
+    "directEmailLabel": "Correo:",
+    "deliveryNote": "Las solicitudes se entregan al buzón de soporte de MediTap. Cuando SMTP esté configurado en el servidor, también recibirá un correo de confirmación.",
+    "otherResourcesPartnership": "Para demostraciones del producto y consultas de alianzas, mencione su organización en el mensaje.",
     "sendError": "No se pudo enviar su mensaje.",
     "faq": [
       {
@@ -449,12 +520,20 @@
         "answer": "En la página de inicio de sesión, elija Olvidó su contraseña e ingrese el correo de su cuenta. Enviaremos un enlace seguro para restablecerla. El enlace expira tras usarse; solicite uno nuevo si es necesario."
       },
       {
+        "question": "Mi PDF no se analizó correctamente. ¿Qué puedo hacer?",
+        "answer": "Intente un escaneo más claro o exporte desde su portal de salud. Tras la carga, revise los campos extraídos en Información del paciente y corrija lo que parezca incorrecto."
+      },
+      {
         "question": "¿Cómo funciona la edición del personal?",
         "answer": "Los pacientes pueden cargar documentos y revisar su información. El personal autorizado desbloquea la edición desde admisión o pantallas de admin con credenciales del personal, sin cerrar la sesión del paciente."
       },
       {
         "question": "¿Es obligatoria la integración con Epic?",
         "answer": "No. El enlace Epic FHIR sandbox es opcional y se configura desde el panel Admin tras iniciar sesión, para pilotos y demostraciones técnicas."
+      },
+      {
+        "question": "¿A quién contacto por privacidad o HIPAA?",
+        "answer": "Use la categoría Privacidad o seguridad de la cuenta arriba, o escriba a support@meditap.ai. Para emergencias clínicas, contacte a su proveedor o servicios de emergencia — el soporte de MediTap no brinda consejo médico."
       }
     ]
   },

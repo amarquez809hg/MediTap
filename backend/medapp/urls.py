@@ -68,6 +68,7 @@ urlpatterns = [
         user_preferences_views.user_preferences,
         name='auth_preferences',
     ),
+    path('api/support/config/', public_views.support_config, name='support_config'),
     path('api/support/contact/', public_views.support_contact, name='support_contact'),
     path(
         'api/auth/token/refresh/',

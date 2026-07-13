@@ -426,17 +426,88 @@
   "support": {
     "title": "支持与帮助",
     "subtitle": "关于 MediTap、您的账户以及如何连接护理团队的常见问题解答。",
+    "issuesTitle": "常见问题类型",
+    "issuesLead": "选择最符合您情况的主题。我们将把您的请求发送至 MediTap 支持收件箱。",
+    "issues": [
+      {
+        "category": "account",
+        "title": "无法登录或重置密码",
+        "description": "登录错误、账户锁定、忘记密码或注册问题。"
+      },
+      {
+        "category": "intake",
+        "title": "患者登记无法保存",
+        "description": "人口统计、生命体征、过敏或登记字段缺失或未更新。"
+      },
+      {
+        "category": "document_upload",
+        "title": "PDF 或文档上传失败",
+        "description": "上传错误、解析问题或提取数据不正确。"
+      },
+      {
+        "category": "epic_integration",
+        "title": "Epic FHIR 连接",
+        "description": "沙盒链接、OAuth 回调错误或导入记录缺失。"
+      },
+      {
+        "category": "staff_access",
+        "title": "员工编辑或管理权限",
+        "description": "员工解锁、记录编辑角色或管理面板权限。"
+      },
+      {
+        "category": "clinical_data",
+        "title": "预约、检验或记录",
+        "description": "仪表盘数据、检验结果、预约或临床标签页显示异常。"
+      },
+      {
+        "category": "technical",
+        "title": "网站错误或故障",
+        "description": "页面无法加载、按钮失效、语言选择器或意外错误。"
+      },
+      {
+        "category": "privacy_security",
+        "title": "隐私或账户安全",
+        "description": "HIPAA 问题、未授权访问担忧或数据删除请求。"
+      }
+    ],
     "faqTitle": "常见问题",
     "contactTitle": "联系支持",
-    "contactLead": "发送消息，我们将通过电子邮箱回复。",
+    "contactLead": "选择最符合您情况的问题。若无合适选项，请选择“其他”并描述具体情况。",
+    "situationSection": "您的情况",
+    "reachSection": "联系方式",
+    "userType": "我是",
+    "userTypes": {
+      "visitor": "访客 / 未登录",
+      "patient": "患者",
+      "staff": "员工或管理员"
+    },
+    "problemCategory": "您需要什么帮助？",
+    "problemCategoryPlaceholder": "— 请选择 —",
+    "problemCategories": {
+      "account": "账户 — 登录、注册或密码",
+      "intake": "患者登记或人口统计",
+      "document_upload": "PDF 上传或文档解析",
+      "epic_integration": "Epic FHIR 链接或健康记录同步",
+      "staff_access": "员工编辑、角色或管理面板",
+      "clinical_data": "预约、检验或健康记录标签页",
+      "technical": "网站错误或技术问题",
+      "privacy_security": "隐私、HIPAA 或账户安全",
+      "other": "其他 — 请在下方描述"
+    },
     "yourName": "您的姓名",
     "email": "电子邮箱",
-    "subject": "主题",
-    "message": "消息",
-    "sendMessage": "发送消息",
+    "phone": "电话（可选）",
+    "phonePlaceholder": "可选 — 便于更快跟进",
+    "message": "描述问题",
+    "messageHint": "大多数主题下为可选 — 选择“其他”时必填。",
+    "messagePlaceholder": "您尝试做什么？实际发生了什么？",
+    "sendSupportRequest": "发送支持请求",
     "sending": "发送中…",
+    "categoryRequired": "请选择您需要的帮助类型。",
     "otherResources": "其他资源",
-    "otherResourcesPartnership": "产品演示与合作伙伴咨询，请在邮件主题中注明您的机构。",
+    "directEmailLabel": "电子邮箱：",
+    "deliveryNote": "支持请求将发送至 MediTap 支持收件箱。服务器配置 SMTP 后，您还将收到确认邮件。",
+    "otherResourcesPartnership": "产品演示与合作伙伴咨询，请在消息中注明您的机构。",
     "sendError": "无法发送您的消息。",
     "faq": [
       {
@@ -448,12 +519,20 @@
         "answer": "在登录页选择忘记密码并输入账户邮箱。我们将发送安全重置链接。链接使用后失效，如需可重新申请。"
       },
       {
+        "question": "PDF 解析不正确怎么办？",
+        "answer": "请尝试更清晰的扫描或从健康门户导出。上传后，在患者信息中核对提取字段并更正错误内容。员工也可在依赖解析数据前进行核实。"
+      },
+      {
         "question": "员工编辑如何工作？",
         "answer": "患者可上传文档并查看信息。授权员工在登记或管理界面使用员工凭据解锁编辑，无需退出患者登录。"
       },
       {
         "question": "是否必须集成 Epic？",
         "answer": "否。Epic FHIR 沙盒链接为可选，登录后在管理面板配置，用于试点与技术演示。"
+      },
+      {
+        "question": "隐私或 HIPAA 问题联系谁？",
+        "answer": "请使用上方的隐私或账户安全类别，或发送邮件至 support@meditap.ai。临床紧急情况请联系您的提供者或急救服务 — MediTap 支持无法提供医疗建议。"
       }
     ]
   },
