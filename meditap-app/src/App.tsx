@@ -34,6 +34,7 @@ import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
+import CookieConsentBanner from './components/CookieConsentBanner';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -114,6 +115,7 @@ const AppRoutes: React.FC = () => {
       <IonReactRouter>
         <>
           <SessionExpiredModal />
+          <CookieConsentBanner />
           <IonRouterOutlet animated={false}>
             <Route exact path="/tab3">
               <Tab3 />

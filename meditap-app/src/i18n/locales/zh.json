@@ -1000,5 +1000,12 @@
       "saveManualIdError": "无法保存手动 ID。",
       "createHospitalError": "无法创建医院。"
     }
+  },
+  "cookies": {
+    "title": "MediTap 上的 Cookie",
+    "description": "我们使用必要 Cookie 以便您登录和使用网站。经您许可，我们还会使用分析 Cookie 来了解访问者如何使用 MediTap 并改善体验。",
+    "privacyLink": "隐私与 Cookie",
+    "essentialOnly": "仅必要",
+    "acceptAll": "接受所有"
   }
 }

@@ -1,0 +1,109 @@
+/* Cookie consent banner — fixed bottom bar (CargoPulse pattern adapted for MediTap) */
+
+.mt-cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  padding: 14px 16px 18px;
+  background: rgba(8, 12, 20, 0.95);
+  border-top: 1px solid rgba(23, 162, 184, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.mt-cookie-banner__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.mt-cookie-banner__title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e8eaed;
+}
+
+.mt-cookie-banner__desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(168, 176, 188, 0.85);
+  max-width: 640px;
+}
+
+.mt-cookie-banner__link {
+  color: var(--meditap-accent, #17a2b8);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mt-cookie-banner__link:hover {
+  text-decoration: underline;
+}
+
+.mt-cookie-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.mt-cookie-banner__btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  min-width: 130px;
+  text-align: center;
+}
+
+.mt-cookie-banner__btn--outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e8eaed;
+}
+
+.mt-cookie-banner__btn--outline:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mt-cookie-banner__btn--accept {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--meditap-accent, #17a2b8) 0%,
+    var(--meditap-primary-tint, #1a6356) 100%
+  );
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.mt-cookie-banner__btn--accept:hover {
+  filter: brightness(1.08);
+}
+
+@media (max-width: 640px) {
+  .mt-cookie-banner__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mt-cookie-banner__actions {
+    flex-direction: column;
+  }
+
+  .mt-cookie-banner__btn {
+    width: 100%;
+  }
+}

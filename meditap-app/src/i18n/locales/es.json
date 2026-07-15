@@ -1001,5 +1001,12 @@
       "saveManualIdError": "No se pudo guardar el ID manual.",
       "createHospitalError": "No se pudo crear el hospital."
     }
+  },
+  "cookies": {
+    "title": "Cookies en MediTap",
+    "description": "Usamos cookies esenciales para que pueda iniciar sesión y usar el sitio. Con su permiso, también usamos cookies de análisis para comprender cómo los visitantes usan MediTap y mejorar la experiencia.",
+    "privacyLink": "Privacidad y cookies",
+    "essentialOnly": "Solo esenciales",
+    "acceptAll": "Aceptar todas"
   }
 }
