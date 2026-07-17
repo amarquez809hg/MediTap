@@ -20,6 +20,10 @@ import {
   validateDemographicValue,
   type DemographicFieldKey,
 } from './intakeFieldLabels';
+import {
+  assessDemographicRawValue,
+  warningsForWinningPatientFields,
+} from './intakeFieldWarnings';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -27,6 +31,7 @@ import type {
   Tab14InsuranceRow,
   Tab14IntakeParseResult,
   Tab14MedicationRow,
+  Tab14PatientFieldWarnings,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
 
@@ -206,7 +211,10 @@ function extractAthenaDemographicsLine(text: string): Tab14PatientFields {
   return out;
 }
 
-function extractPatientFieldsFromLabels(text: string): Tab14PatientFields {
+function extractPatientFieldsFromLabels(text: string): {
+  fields: Tab14PatientFields;
+  warnings: Tab14PatientFieldWarnings;
+} {
   const scope = extractDemographicsScope(text);
   const hits = collectLabelHits(scope);
   const rawByField = new Map<DemographicFieldKey, string>();
@@ -221,36 +229,64 @@ function extractPatientFieldsFromLabels(text: string): Tab14PatientFields {
   }
 
   const out: Tab14PatientFields = {};
+  const warnings: Tab14PatientFieldWarnings = {};
+
+  const applyAssessed = (
+    field: DemographicFieldKey,
+    raw: string,
+    assign: (cleaned: string) => void
+  ) => {
+    const assessed = assessDemographicRawValue(field, raw);
+    if (!assessed.value) return;
+    assign(assessed.value);
+    if (assessed.warning) {
+      if (field === 'fullName') {
+        if (!warnings.givenName) warnings.givenName = assessed.warning;
+        if (!warnings.familyName) warnings.familyName = assessed.warning;
+      } else {
+        warnings[field as keyof Tab14PatientFields] = assessed.warning;
+      }
+    }
+  };
 
   const givenRaw = rawByField.get('givenName');
   const familyRaw = rawByField.get('familyName');
   const fullRaw = rawByField.get('fullName');
 
   if (givenRaw) {
-    const v = validateDemographicValue('givenName', givenRaw);
-    if (v) out.givenName = v;
+    applyAssessed('givenName', givenRaw, (cleaned) => {
+      const v = validateDemographicValue('givenName', cleaned);
+      if (v) out.givenName = v;
+    });
   }
   if (familyRaw) {
-    const v = validateDemographicValue('familyName', familyRaw);
-    if (v) out.familyName = v;
+    applyAssessed('familyName', familyRaw, (cleaned) => {
+      const v = validateDemographicValue('familyName', cleaned);
+      if (v) out.familyName = v;
+    });
   }
   if (fullRaw) {
-    const v = validateDemographicValue('fullName', fullRaw);
-    if (v) {
-      const split = splitPersonName(v);
-      if (!out.givenName && split.given && looksLikePersonName(split.given)) {
-        out.givenName = split.given;
+    applyAssessed('fullName', fullRaw, (cleaned) => {
+      const v = validateDemographicValue('fullName', cleaned);
+      if (v) {
+        const split = splitPersonName(v);
+        if (!out.givenName && split.given && looksLikePersonName(split.given)) {
+          out.givenName = split.given;
+        }
+        if (!out.familyName && split.family && looksLikePersonName(split.family)) {
+          out.familyName = split.family;
+        }
       }
-      if (!out.familyName && split.family && looksLikePersonName(split.family)) {
-        out.familyName = split.family;
-      }
-    }
+    });
   }
 
   const dobRaw = rawByField.get('dateOfBirth');
   if (dobRaw) {
-    const iso = tryParseDateToIso(dobRaw) ?? tryParseDateToIso(dobRaw.split(/\s+/)[0] ?? '');
-    if (iso && looksLikeBirthDate(iso)) out.dateOfBirth = iso;
+    applyAssessed('dateOfBirth', dobRaw, (cleaned) => {
+      const iso =
+        tryParseDateToIso(cleaned) ?? tryParseDateToIso(cleaned.split(/\s+/)[0] ?? '');
+      if (iso && looksLikeBirthDate(iso)) out.dateOfBirth = iso;
+    });
   }
   if (!out.dateOfBirth) {
     const dobInline = text.match(
@@ -277,21 +313,26 @@ function extractPatientFieldsFromLabels(text: string): Tab14PatientFields {
   ] as const) {
     const raw = rawByField.get(key);
     if (!raw) continue;
-    if (key === 'bloodType') {
-      const v = normalizeBloodType(raw);
-      if (v) out.bloodType = v;
-      continue;
-    }
-    if (key === 'preferredLanguage') {
-      const v = validateDemographicValue(key, raw.split(/\s+(?=Interpreter Needed\b)/i)[0] ?? raw);
-      if (v) out.preferredLanguage = v;
-      continue;
-    }
-    const v = validateDemographicValue(key, raw);
-    if (v) out[key] = v;
+    applyAssessed(key, raw, (cleaned) => {
+      if (key === 'bloodType') {
+        const v = normalizeBloodType(cleaned);
+        if (v) out.bloodType = v;
+        return;
+      }
+      if (key === 'preferredLanguage') {
+        const v = validateDemographicValue(
+          key,
+          cleaned.split(/\s+(?=Interpreter Needed\b)/i)[0] ?? cleaned
+        );
+        if (v) out.preferredLanguage = v;
+        return;
+      }
+      const v = validateDemographicValue(key, cleaned);
+      if (v) out[key] = v;
+    });
   }
 
-  return out;
+  return { fields: out, warnings };
 }
 
 function mergePatientFields(...parts: Tab14PatientFields[]): Tab14PatientFields {
@@ -527,9 +568,54 @@ function parseAthenaMedications(text: string): Tab14MedicationRow[] {
 
 const ICD_RE = /\b([A-TV-Z]\d{2}(?:\.\d+)?[A-Z0-9]{0,4})\b/;
 
+/**
+ * Encounter SOAP / visit workflow lines that must never become chronic conditions.
+ * Eleanor Watts-style notes put these under "active problems" prose, which falsely
+ * matches a PROBLEMS section scan.
+ */
+export function isEncounterSoapOrVisitFragment(name: string): boolean {
+  const t = collapseWs(name);
+  if (!t) return true;
+  if (
+    /^(subjective|objective|assessment|plan|chief complaint|order status|lab panel)\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(vitals reviewed|medication reconciliation(?:\s+attempted)?|external records unavailable|no acute distress|patient reports symptoms|continue current care plan|follow-?up scheduled|return in \d)/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** True when a block is an encounter note body rather than a problem list. */
+export function isEncounterNoteNarrativeBlock(block: string): boolean {
+  const t = block.trim();
+  if (!t) return false;
+  const soapLabels = (t.match(/\b(?:Subjective|Objective|Assessment|Plan)\s*:/gi) || [])
+    .length;
+  if (soapLabels >= 2) return true;
+  if (
+    /\bChief Complaint\s*:/i.test(t) &&
+    /\b(?:Subjective|Objective|Assessment|Plan)\s*:/i.test(t)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** PROBLEMS as a section header — not "active problems" inside chief complaint prose. */
+const PROBLEMS_SECTION_HEADER = /(?:^|\n)\s*PROBLEMS\b/i;
+
 function parseChronicFromNarrative(block: string): Tab14ChronicRow[] {
   const rows: Tab14ChronicRow[] = [];
   if (!block.trim()) return rows;
+  if (isEncounterNoteNarrativeBlock(block)) return rows;
   const icdMatch = block.match(/\bICD[-\s]?([A-Z]\d{2}(?:\.\d+)?)\b/i);
   const icd = icdMatch ? icdMatch[1].toUpperCase() : '';
   const sentences = block
@@ -540,12 +626,7 @@ function parseChronicFromNarrative(block: string): Tab14ChronicRow[] {
     if (/^(stage|grade|specimen|cycle|regimen|margins|sentinel|date|height|weight|bmi|percentile)/i.test(s)) {
       continue;
     }
-    if (/^(group\s*#|provider|policy|member\s*id|shellfish|sulfa|medications|allergies|coverage)/i.test(s)) {
-      continue;
-    }
-    if (/\bmedications[a-z]/i.test(s) || (/\bdiagnosed\s+\d/i.test(s) && s.length > 80)) {
-      continue;
-    }
+    if (isEncounterSoapOrVisitFragment(s)) continue;
     rows.push({
       conditionName: s.slice(0, 180),
       icdCode: icd,
@@ -761,13 +842,18 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
   const text = preprocessIntakeDocumentText(raw);
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
 
+  const fromLabels = extractPatientFieldsFromLabels(text);
   const patientFields = pickDefinedPatient(
     mergePatientFields(
-      extractPatientFieldsFromLabels(text),
+      fromLabels.fields,
       extractTitleName(text),
       extractAthenaDemographicsLine(text)
     )
   );
+
+  const fieldWarnings = warningsForWinningPatientFields(patientFields, [
+    { fields: fromLabels.fields, warnings: fromLabels.warnings },
+  ]);
 
   const noKnownDrugAllergies =
     /\bNKDA\b/i.test(text) ||
@@ -799,14 +885,14 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
   );
   const problems = sliceSection(
     text,
-    /\bPROBLEMS\b/i,
+    PROBLEMS_SECTION_HEADER,
     /MISSING FIELDS|ENCOUNTER NOTE|DIAGNOSIS/i
   );
   let chronicConditions = parseChronicFromNarrative(diagnosis);
   if (!chronicConditions.length) chronicConditions = parseChronicFromNarrative(problems);
   if (!chronicConditions.length) {
     chronicConditions = parseChronicRows(
-      sliceAfterHeader(lines, /^(chronic\s*conditions?|problem\s*list|active\s*problems|diagnoses)\b/i),
+      sliceAfterHeader(lines, /^(chronic\s*conditions?|problem\s*list|diagnoses)\b/i),
       text
     );
   }
@@ -820,32 +906,8 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
     medications,
     chronicConditions,
     hospitalVisit: parseHospital(text),
+    ...(fieldWarnings ? { fieldWarnings } : {}),
   };
-}
-
-/** Score chronic rows so merge prefers clean parser output over noisy narrative fallbacks. */
-export function chronicConditionParseScore(rows: Tab14ChronicRow[]): number {
-  if (!rows.length) return -1;
-  let score = 0;
-  for (const row of rows) {
-    const name = row.conditionName.trim();
-    if (name.length < 3 || name.length > 100) {
-      score -= 4;
-      continue;
-    }
-    if (/^(group\s*#|provider|policy|shellfish|sulfa|medications|allergies|coverage)/i.test(name)) {
-      score -= 6;
-      continue;
-    }
-    if (/\bmedications[a-z]/i.test(name) || (/\bdiagnosed\s+\d/i.test(name) && name.length > 60)) {
-      score -= 5;
-      continue;
-    }
-    score += 2;
-    if (row.icdCode && /^[A-Z]\d/i.test(row.icdCode)) score += 3;
-    if (row.diagnosisDate) score += 1;
-  }
-  return score;
 }
 
 /** Merge multiple parse results — prefer validated, non-empty values; longer lists win. */
@@ -863,6 +925,11 @@ export function mergeIntakeParseResults(
       if (v?.trim()) hospitalVisit[k] = v.trim();
     }
   }
+
+  const fieldWarnings = warningsForWinningPatientFields(
+    patientFields,
+    results.map((r) => ({ fields: r.patientFields, warnings: r.fieldWarnings }))
+  );
 
   const pickLongest = <T>(lists: T[][]): T[] => {
     const sorted = [...lists].sort((a, b) => b.length - a.length);
@@ -900,11 +967,14 @@ export function mergeIntakeParseResults(
     return pick(generalOnly);
   };
 
+  /** Prefer clean chronic lists over encounter SOAP narrative fallbacks. */
   const pickBestChronic = (): Tab14ChronicRow[] => {
     let best: Tab14ChronicRow[] = [];
     let bestScore = -1;
     for (const r of results) {
-      const rows = r.chronicConditions;
+      const rows = r.chronicConditions.filter(
+        (row) => !isEncounterSoapOrVisitFragment(row.conditionName)
+      );
       const score = chronicConditionParseScore(rows);
       if (score > bestScore) {
         bestScore = score;
@@ -927,5 +997,35 @@ export function mergeIntakeParseResults(
     medications,
     chronicConditions,
     hospitalVisit,
+    ...(fieldWarnings ? { fieldWarnings } : {}),
   };
+}
+
+/** Score chronic rows so merge prefers real conditions over visit-note fragments. */
+export function chronicConditionParseScore(rows: Tab14ChronicRow[]): number {
+  if (!rows.length) return -1;
+  let score = 0;
+  for (const row of rows) {
+    const name = row.conditionName.trim();
+    if (name.length < 3 || name.length > 100) {
+      score -= 4;
+      continue;
+    }
+    if (isEncounterSoapOrVisitFragment(name)) {
+      score -= 12;
+      continue;
+    }
+    if (/^(group\s*#|provider|policy|shellfish|sulfa|medications|allergies|coverage)/i.test(name)) {
+      score -= 6;
+      continue;
+    }
+    if (/\bmedications[a-z]/i.test(name) || (/\bdiagnosed\s+\d/i.test(name) && name.length > 60)) {
+      score -= 5;
+      continue;
+    }
+    score += 2;
+    if (row.icdCode && /^[A-Z]\d/i.test(row.icdCode)) score += 3;
+    if (row.diagnosisDate) score += 1;
+  }
+  return score;
 }

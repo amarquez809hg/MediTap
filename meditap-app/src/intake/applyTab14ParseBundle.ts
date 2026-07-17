@@ -5,6 +5,8 @@ import type {
   Tab14InsuranceRow,
   Tab14IntakeParseResult,
   Tab14MedicationRow,
+  Tab14PatientFieldKey,
+  Tab14PatientFieldWarnings,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
 import { mergeAllergiesFromPdf } from "./mergeTab14Allergies";
@@ -15,6 +17,7 @@ import {
   mergeInsurancesFromPdf,
   mergeMedicationsFromPdf,
 } from "./mergeTab14IntakeUpload";
+import { warningsForWinningPatientFields } from './intakeFieldWarnings';
 
 export type Tab14MergeSnapshot = {
   allergies: Tab14AllergyRow[];
@@ -64,6 +67,33 @@ export function mergePdfPatientFields(
 ): Tab14PatientFields {
   if (Object.keys(fromBundle).length === 0) return accumulated;
   return { ...accumulated, ...fromBundle };
+}
+
+/**
+ * Accumulate field warnings alongside patient field merges.
+ * Later uploads override earlier warnings for the same key when they supply that value.
+ */
+export function mergePdfPatientFieldWarnings(
+  accumulated: Tab14PatientFieldWarnings | undefined,
+  accumulatedFields: Tab14PatientFields,
+  fromBundle: Tab14IntakeParseResult
+): Tab14PatientFieldWarnings | undefined {
+  const nextFields = mergePdfPatientFields(accumulatedFields, fromBundle.patientFields);
+  return warningsForWinningPatientFields(nextFields, [
+    { fields: accumulatedFields, warnings: accumulated },
+    { fields: fromBundle.patientFields, warnings: fromBundle.fieldWarnings },
+  ]);
+}
+
+/** Clear a single field warning after the user manually edits that field. */
+export function clearPatientFieldWarning(
+  warnings: Tab14PatientFieldWarnings | undefined,
+  field: Tab14PatientFieldKey
+): Tab14PatientFieldWarnings | undefined {
+  if (!warnings?.[field]) return warnings;
+  const next = { ...warnings };
+  delete next[field];
+  return Object.keys(next).length ? next : undefined;
 }
 
 const emptyStats = (): Tab14MergeStats => ({

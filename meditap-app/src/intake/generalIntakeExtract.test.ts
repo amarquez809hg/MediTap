@@ -30,11 +30,33 @@ describe('parseGeneralIntakeDocument', () => {
     expect(r.patientFields.dateOfBirth).toBe('2018-03-05');
   });
 
+  it('strips label bleed from names and attaches a verify warning', () => {
+    const text = `DEMOGRAPHICS Name: name MARIA GARCIA Date of Birth: 01/15/1988 Sex: Female`;
+    const r = parseGeneralIntakeDocument(text);
+    expect(r.patientFields.givenName).toBe('MARIA');
+    expect(r.patientFields.familyName).toBe('GARCIA');
+    expect(r.fieldWarnings?.givenName?.reason).toBe('label_bleed');
+    expect(r.fieldWarnings?.familyName?.reason).toBe('label_bleed');
+  });
+
   it('does not use encounter note dates as DOB', () => {
     const text = `PATIENT DEMOGRAPHICS Child Name Lucas Martinez DOB 03/05/2018 Sex Male PROBLEMS asthma ENCOUNTER NOTE 1 Date: 2026-02-04 Facility: North Valley Clinic`;
     const r = parseGeneralIntakeDocument(text);
     expect(r.patientFields.dateOfBirth).toBe('2018-03-05');
     expect(r.hospitalVisit.visitDate).toBe('2026-02-04');
+  });
+
+  it('does not turn encounter SOAP fields into chronic conditions', () => {
+    const text = `PATIENT DEMOGRAPHICS Name Eleanor Watts DOB 10/02/1936 Sex Female
+ENCOUNTER NOTE 1 Date: 2026-02-04 Facility: North Valley Clinic
+Chief Complaint: Follow-up and review of active problems.
+Subjective: Patient reports symptoms are stable.
+Objective: Vitals reviewed. Medication reconciliation attempted.
+Assessment: Chronic conditions reviewed; no immediate emergency findings.
+Plan: Continue current care plan.`;
+    const r = parseGeneralIntakeDocument(text);
+    expect(r.hospitalVisit.facilityName).toBe('North Valley Clinic');
+    expect(r.chronicConditions).toEqual([]);
   });
 });
 

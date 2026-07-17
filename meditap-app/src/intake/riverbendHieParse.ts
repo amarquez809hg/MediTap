@@ -220,6 +220,13 @@ function parseChronicFromNarrative(block: string): Tab14ChronicRow[] {
   const rows: Tab14ChronicRow[] = [];
   if (!block.trim()) return rows;
 
+  // Encounter SOAP bodies (Subjective/Objective/…) are hospital-visit content.
+  if (
+    (block.match(/\b(?:Subjective|Objective|Assessment|Plan)\s*:/gi) || []).length >= 2
+  ) {
+    return rows;
+  }
+
   const icdMatch = block.match(/\bICD[-\s]?([A-Z]\d{2}(?:\.\d+)?)\b/i);
   const icd = icdMatch ? icdMatch[1].toUpperCase() : '';
 
@@ -230,6 +237,12 @@ function parseChronicFromNarrative(block: string): Tab14ChronicRow[] {
 
   for (const s of sentences.slice(0, 6)) {
     if (/^(stage|grade|specimen|cycle|regimen|margins|sentinel)/i.test(s)) continue;
+    if (
+      /^(subjective|objective|assessment|plan|chief complaint)\b/i.test(s) ||
+      /\b(vitals reviewed|medication reconciliation|external records unavailable)\b/i.test(s)
+    ) {
+      continue;
+    }
     rows.push({
       conditionName: s.slice(0, 180),
       icdCode: icd,
@@ -545,7 +558,7 @@ export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
   }
 
   const diagnosis = sliceSection(text, /\bDIAGNOSIS\b/i, /PATHOLOGY|CHEMOTHERAPY|LABS|MISSING|ENCOUNTER/i);
-  const problems = sliceSection(text, /\bPROBLEMS\b/i, /MISSING FIELDS|ENCOUNTER NOTE/i);
+  const problems = sliceSection(text, /(?:^|\n)\s*PROBLEMS\b/i, /MISSING FIELDS|ENCOUNTER NOTE/i);
   let chronicConditions = parseChronicFromNarrative(diagnosis);
   if (chronicConditions.length === 0) {
     chronicConditions = parseChronicFromNarrative(problems);

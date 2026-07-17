@@ -122,28 +122,34 @@ export async function ocrImageDataUrl(
 /**
  * If extracted PDF text is very short, render page 1 to a canvas and OCR it
  * (common for scanned intake PDFs).
+ * Returns whether OCR text was merged in.
  */
 export async function augmentPdfTextWithFirstPageOcr(
   extractedText: string,
   pdf: PDFDocumentProxy
-): Promise<string> {
-  if (!isSparseExtractedText(extractedText)) return extractedText;
+): Promise<{ text: string; usedOcr: boolean }> {
+  if (!isSparseExtractedText(extractedText)) {
+    return { text: extractedText, usedOcr: false };
+  }
   try {
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) return extractedText;
+    if (!ctx) return { text: extractedText, usedOcr: false };
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     const renderTask = page.render({ canvasContext: ctx, viewport });
     await renderTask.promise;
     const dataUrl = canvas.toDataURL('image/png');
     const ocrText = await ocrImageDataUrl(dataUrl, detectOcrLanguages(extractedText));
-    if (!ocrText) return extractedText;
-    return `${extractedText}\n\n${ocrText}`.trim();
+    if (!ocrText) return { text: extractedText, usedOcr: false };
+    return {
+      text: `${extractedText}\n\n${ocrText}`.trim(),
+      usedOcr: true,
+    };
   } catch {
-    return extractedText;
+    return { text: extractedText, usedOcr: false };
   }
 }
 
@@ -175,8 +181,14 @@ async function loadPdfFromArrayBuffer(arrayBuffer: ArrayBuffer): Promise<PDFDocu
   }
 }
 
+export type Tab14UploadTextResult = {
+  text: string;
+  /** True when first-page OCR was used (sparse PDF) or the upload was an image. */
+  usedOcr: boolean;
+};
+
 /** Extract plain text from a Tab14 upload file (PDF with optional OCR, or image OCR). */
-export async function extractTab14UploadFileText(file: File): Promise<string> {
+export async function extractTab14UploadFileText(file: File): Promise<Tab14UploadTextResult> {
   if (file.type === 'application/pdf') {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await loadPdfFromArrayBuffer(arrayBuffer);
@@ -186,12 +198,14 @@ export async function extractTab14UploadFileText(file: File): Promise<string> {
       const content = await page.getTextContent();
       fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
     }
-    return augmentPdfTextWithFirstPageOcr(fullText, pdf);
+    const augmented = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
+    return { text: augmented.text, usedOcr: augmented.usedOcr };
   }
 
   if (file.type.startsWith('image/')) {
     const dataUrl = await fileToDataUrl(file);
-    return ocrImageDataUrl(dataUrl, 'eng+spa');
+    const text = await ocrImageDataUrl(dataUrl, 'eng+spa');
+    return { text, usedOcr: true };
   }
 
   throw new Error('Unsupported file type');
