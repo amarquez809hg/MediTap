@@ -39,9 +39,17 @@ import {
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
 import type {
+    Tab14AllergyFieldKey,
+    Tab14AllergyRowWarnings,
     Tab14ChronicConditionWarnings,
     Tab14ChronicFieldKey,
+    Tab14HospitalFieldKey,
+    Tab14HospitalFieldWarnings,
+    Tab14InsuranceFieldKey,
+    Tab14InsuranceRowWarnings,
     Tab14IntakeParseResult,
+    Tab14MedicationFieldKey,
+    Tab14MedicationRowWarnings,
     Tab14PatientFieldKey,
     Tab14PatientFieldWarnings,
     Tab14PatientFields,
@@ -56,9 +64,15 @@ import {
 } from '../intake/documentTextExtraction';
 import {
     annotateOcrSparseWarnings,
+    buildAllergyRowWarnings,
     buildChronicConditionWarnings,
+    buildHospitalFieldWarnings,
+    buildInsuranceRowWarnings,
+    buildMedicationRowWarnings,
     clearChronicConditionWarning,
+    clearIndexedFieldWarning,
     FIELD_WARNING_MESSAGES,
+    removeIndexedWarningRow,
 } from '../intake/intakeFieldWarnings';
 import {
     bmiCategoryLabel,
@@ -443,6 +457,14 @@ const Tab14: React.FC = () => {
     );
     const [pdfChronicWarnings, setPdfChronicWarnings] =
         useState<Tab14ChronicConditionWarnings | undefined>(undefined);
+    const [pdfInsuranceWarnings, setPdfInsuranceWarnings] =
+        useState<Tab14InsuranceRowWarnings | undefined>(undefined);
+    const [pdfAllergyWarnings, setPdfAllergyWarnings] =
+        useState<Tab14AllergyRowWarnings | undefined>(undefined);
+    const [pdfMedicationWarnings, setPdfMedicationWarnings] =
+        useState<Tab14MedicationRowWarnings | undefined>(undefined);
+    const [pdfHospitalWarnings, setPdfHospitalWarnings] =
+        useState<Tab14HospitalFieldWarnings | undefined>(undefined);
     const [loadingIntake, setLoadingIntake] = useState(true);
     const [clearFormHintVisible, setClearFormHintVisible] = useState(false);
     const [savedFormSnapshot, setSavedFormSnapshot] = useState('');
@@ -632,13 +654,22 @@ const Tab14: React.FC = () => {
         });
     };
 
+    const clearAllPdfWarnings = () => {
+        setPdfFieldWarnings(undefined);
+        setPdfChronicWarnings(undefined);
+        setPdfInsuranceWarnings(undefined);
+        setPdfAllergyWarnings(undefined);
+        setPdfMedicationWarnings(undefined);
+        setPdfHospitalWarnings(undefined);
+    };
+
     const clearUploadedFiles = () => {
         setUploadedFiles((prev) => {
             prev.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
             return [];
         });
         setUploadParseMessage(null);
-        setPdfFieldWarnings(undefined);
+        clearAllPdfWarnings();
     };
 
     const uploadedFilesRef = useRef<UploadedFileEntry[]>([]);
@@ -667,7 +698,8 @@ const Tab14: React.FC = () => {
         let snapshot = buildMergeSnapshot();
         let patientFromUpload: Tab14PatientFields = {};
         let warningsFromUpload: Tab14PatientFieldWarnings | undefined;
-        let anyUsedOcr = false;
+        let anyHardToRead = false;
+        const hardToReadByBundle: boolean[] = [];
         const parsedBundles: Tab14IntakeParseResult[] = [];
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
@@ -684,9 +716,11 @@ const Tab14: React.FC = () => {
                 );
 
                 const extracted = await extractTab14UploadFileText(file);
-                if (extracted.usedOcr) anyUsedOcr = true;
+                const hardToRead = extracted.hardToRead;
+                if (hardToRead) anyHardToRead = true;
+                hardToReadByBundle.push(hardToRead);
                 const parsedBundle = parseTab14IntakeDocument(extracted.text);
-                const bundle: Tab14IntakeParseResult = extracted.usedOcr
+                const bundle: Tab14IntakeParseResult = hardToRead
                     ? {
                           ...parsedBundle,
                           fieldWarnings: annotateOcrSparseWarnings(
@@ -708,6 +742,10 @@ const Tab14: React.FC = () => {
                 );
 
                 let uploadMsg = summarizeTab14ParseResult(bundle);
+                if (hardToRead) {
+                    uploadMsg +=
+                        ' Document text looked sparse or hard to read — verify imported fields.';
+                }
                 fileMessages.push(uploadMsg);
 
                 newEntries.push({
@@ -737,8 +775,26 @@ const Tab14: React.FC = () => {
                 setActiveSection(0);
             }
             setPdfFieldWarnings(warningsFromUpload);
+            // Prefer hard-to-read from the last identity-bearing upload; otherwise any hard-to-read file.
+            const identityHardToRead = parsedBundles.some(
+                (bundle, i) => bundleHasPatientIdentity(bundle) && hardToReadByBundle[i]
+            );
+            const sectionHardToRead = identityHardToRead || anyHardToRead;
             setPdfChronicWarnings(
-                buildChronicConditionWarnings(snapshot.chronicConditions, anyUsedOcr)
+                buildChronicConditionWarnings(snapshot.chronicConditions, sectionHardToRead)
+            );
+            setPdfInsuranceWarnings(
+                buildInsuranceRowWarnings(snapshot.insurances, sectionHardToRead)
+            );
+            setPdfAllergyWarnings(
+                buildAllergyRowWarnings(snapshot.allergies, sectionHardToRead)
+            );
+            setPdfMedicationWarnings(
+                buildMedicationRowWarnings(snapshot.medications, sectionHardToRead)
+            );
+            const lastHospital = snapshot.hospitalVisits[snapshot.hospitalVisits.length - 1] ?? {};
+            setPdfHospitalWarnings(
+                buildHospitalFieldWarnings(lastHospital, sectionHardToRead)
             );
             if (replaceChartFromPdf) {
                 setNoAllergies(snapshot.noAllergies);
@@ -786,6 +842,25 @@ const Tab14: React.FC = () => {
                     field as Tab14ChronicFieldKey
                 )
             );
+        } else if (setArray === setInsurances) {
+            setPdfInsuranceWarnings((prev) =>
+                clearIndexedFieldWarning(prev, index, field as Tab14InsuranceFieldKey)
+            );
+        } else if (setArray === setAllergies) {
+            setPdfAllergyWarnings((prev) =>
+                clearIndexedFieldWarning(prev, index, field as Tab14AllergyFieldKey)
+            );
+        } else if (setArray === setMedications) {
+            setPdfMedicationWarnings((prev) =>
+                clearIndexedFieldWarning(prev, index, field as Tab14MedicationFieldKey)
+            );
+        } else if (setArray === setHospitalVisits) {
+            setPdfHospitalWarnings((prev) => {
+                if (!prev?.[field as Tab14HospitalFieldKey]) return prev;
+                const next = { ...prev };
+                delete next[field as Tab14HospitalFieldKey];
+                return Object.keys(next).length ? next : undefined;
+            });
         }
     };
 
@@ -798,6 +873,18 @@ const Tab14: React.FC = () => {
         const updated = [...array];
         updated.splice(index, 1);
         setArray(updated);
+        if (setArray === setChronicConditions) {
+            setPdfChronicWarnings((prev) => removeIndexedWarningRow(prev, index));
+        } else if (setArray === setInsurances) {
+            setPdfInsuranceWarnings((prev) => removeIndexedWarningRow(prev, index));
+        } else if (setArray === setAllergies) {
+            setPdfAllergyWarnings((prev) => removeIndexedWarningRow(prev, index));
+        } else if (setArray === setMedications) {
+            setPdfMedicationWarnings((prev) => removeIndexedWarningRow(prev, index));
+        } else if (setArray === setHospitalVisits) {
+            // Hospital warnings track the active visit fields, not every row index.
+            if (updated.length === 0) setPdfHospitalWarnings(undefined);
+        }
     };
 
     // required field checks + format checking + others 
@@ -929,6 +1016,10 @@ const Tab14: React.FC = () => {
         setNoChronicConditions(false);
         setPdfFieldWarnings(undefined);
         setPdfChronicWarnings(undefined);
+        setPdfInsuranceWarnings(undefined);
+        setPdfAllergyWarnings(undefined);
+        setPdfMedicationWarnings(undefined);
+        setPdfHospitalWarnings(undefined);
     };
 
     const loadSampleData = () => {
@@ -946,6 +1037,10 @@ const Tab14: React.FC = () => {
         setBackendError(null);
         setPdfFieldWarnings(undefined);
         setPdfChronicWarnings(undefined);
+        setPdfInsuranceWarnings(undefined);
+        setPdfAllergyWarnings(undefined);
+        setPdfMedicationWarnings(undefined);
+        setPdfHospitalWarnings(undefined);
     };
 
     const renderPdfFieldWarningIcon = (field: Tab14PatientFieldKey) => {
@@ -964,11 +1059,9 @@ const Tab14: React.FC = () => {
         );
     };
 
-    const renderPdfChronicWarningIcon = (
-        index: number,
-        field: Tab14ChronicFieldKey
+    const renderIndexedWarningIcon = (
+        warning: { message: string } | undefined
     ) => {
-        const warning = pdfChronicWarnings?.[index]?.[field];
         if (!warning) return null;
         const message = warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC;
         return (
@@ -982,6 +1075,29 @@ const Tab14: React.FC = () => {
             </span>
         );
     };
+
+    const renderPdfChronicWarningIcon = (
+        index: number,
+        field: Tab14ChronicFieldKey
+    ) => renderIndexedWarningIcon(pdfChronicWarnings?.[index]?.[field]);
+
+    const renderPdfInsuranceWarningIcon = (
+        index: number,
+        field: Tab14InsuranceFieldKey
+    ) => renderIndexedWarningIcon(pdfInsuranceWarnings?.[index]?.[field]);
+
+    const renderPdfAllergyWarningIcon = (
+        index: number,
+        field: Tab14AllergyFieldKey
+    ) => renderIndexedWarningIcon(pdfAllergyWarnings?.[index]?.[field]);
+
+    const renderPdfMedicationWarningIcon = (
+        index: number,
+        field: Tab14MedicationFieldKey
+    ) => renderIndexedWarningIcon(pdfMedicationWarnings?.[index]?.[field]);
+
+    const renderPdfHospitalWarningIcon = (field: Tab14HospitalFieldKey) =>
+        renderIndexedWarningIcon(pdfHospitalWarnings?.[field]);
 
     useEffect(() => {
         if (!authReady) return;
@@ -1533,7 +1649,10 @@ const Tab14: React.FC = () => {
                                         <h3> {t('patientIntake.fields.insuranceN', { n: index + 1 })} </h3>
 
                                         <div className = "form-field"> 
-                                            <label> {t('patientIntake.fields.providerName')} </label>
+                                            <label>
+                                                {t('patientIntake.fields.providerName')}
+                                                {renderPdfInsuranceWarningIcon(index, 'providerName')}
+                                            </label>
                                             <input value = {insurance.providerName}
                                             onChange={(e) => 
                                                 handleChange(index, "providerName", e.target.value, insurances, setInsurances)
@@ -1541,7 +1660,10 @@ const Tab14: React.FC = () => {
                                         </div> 
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.fields.policyNumber')}</label>
+                                            <label>
+                                                {t('patientIntake.fields.policyNumber')}
+                                                {renderPdfInsuranceWarningIcon(index, 'policyNumber')}
+                                            </label>
                                             <input
                                             value={insurance.policyNumber}
                                             onChange={(e) =>
@@ -1550,7 +1672,10 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.fields.planName')}</label>
+                                            <label>
+                                                {t('patientIntake.fields.planName')}
+                                                {renderPdfInsuranceWarningIcon(index, 'planName')}
+                                            </label>
                                             <input
                                             value={insurance.planName}
                                             onChange={(e) =>
@@ -1558,7 +1683,10 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
-                                            <label>{t('patientIntake.fields.memberId')}</label>
+                                            <label>
+                                                {t('patientIntake.fields.memberId')}
+                                                {renderPdfInsuranceWarningIcon(index, 'memberID')}
+                                            </label>
                                             <input
                                             value={insurance.memberID}
                                             onChange={(e) =>
@@ -1566,7 +1694,10 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
-                                            <label>{t('patientIntake.fields.groupNumber')}</label>
+                                            <label>
+                                                {t('patientIntake.fields.groupNumber')}
+                                                {renderPdfInsuranceWarningIcon(index, 'groupNumber')}
+                                            </label>
                                             <input
                                             value={insurance.groupNumber}
                                             onChange={(e) =>
@@ -1655,7 +1786,10 @@ const Tab14: React.FC = () => {
                                     <h3>Allergy {index + 1}</h3>
 
                                     <div className="form-field">
-                                        <label>Allergy Name</label>
+                                        <label>
+                                            Allergy Name
+                                            {renderPdfAllergyWarningIcon(index, 'allergyName')}
+                                        </label>
                                         <input
                                         value={allergy.allergyName}
                                         onChange={(e) =>
@@ -1664,7 +1798,10 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Type (e.g. food, drug)</label>
+                                        <label>
+                                            Type (e.g. food, drug)
+                                            {renderPdfAllergyWarningIcon(index, 'allergyType')}
+                                        </label>
                                         <select
                                         value={allergy.allergyType}
                                         onChange={(e) => {
@@ -1785,7 +1922,10 @@ const Tab14: React.FC = () => {
                                         <h3>Medication {index + 1}</h3>
 
                                         <div className="form-field">
-                                            <label>Generic Name</label>
+                                            <label>
+                                                Generic Name
+                                                {renderPdfMedicationWarningIcon(index, 'genericName')}
+                                            </label>
                                             <input
                                             value={med.genericName}
                                             onChange={(e) =>
@@ -1794,7 +1934,10 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>Brand Name</label>
+                                            <label>
+                                                Brand Name
+                                                {renderPdfMedicationWarningIcon(index, 'brandName')}
+                                            </label>
                                             <input
                                             value={med.brandName}
                                             onChange={(e) =>
@@ -1914,6 +2057,7 @@ const Tab14: React.FC = () => {
                                             const checked = e.target.checked;
                                             setNoChronicConditions(checked);
                                             setChronicConditions(checked ? [] : [defaultChronicCondition]);
+                                            if (checked) setPdfChronicWarnings(undefined);
                                         }}
                                     />
                                     Click here if no known chronic conditions are present
@@ -2028,7 +2172,10 @@ const Tab14: React.FC = () => {
                                 <div key={index} className="section-block">
                                     <h3>Hospital Visit {index + 1}</h3>
                                     <div className="form-field">
-                                        <label>Type</label>
+                                        <label>
+                                            Type
+                                            {renderPdfHospitalWarningIcon('visitType')}
+                                        </label>
                                         <input
                                             placeholder='e.g. Recent admission, ER, outpatient'
                                             value={visit.visitType}
@@ -2038,7 +2185,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Facility</label>
+                                        <label>
+                                            Facility
+                                            {renderPdfHospitalWarningIcon('facilityName')}
+                                        </label>
                                         <input
                                             value={visit.facilityName}
                                             onChange={(e) =>
@@ -2047,7 +2197,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Reason</label>
+                                        <label>
+                                            Reason
+                                            {renderPdfHospitalWarningIcon('reason')}
+                                        </label>
                                         <input
                                             value={visit.reason}
                                             onChange={(e) =>

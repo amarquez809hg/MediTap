@@ -4,6 +4,7 @@
 
 import { tryParseDateToIso } from './intakeDateParse';
 import { collapseWs, escapeRe, normalizeBloodType } from './intakeFieldLabels';
+import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -288,7 +289,7 @@ function parseChronicConditions(text: string): Tab14ChronicRow[] {
 export function parseSpanishMediTapRegistroDocument(raw: string): Tab14IntakeParseResult {
   const text = preprocessSpanishGluedText(raw);
   const hospitalVisit = parseHospitalVisits(text);
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields: parsePatientFields(text),
     noKnownDrugAllergies: false,
     insurances: parseInsurance(text),
@@ -296,5 +297,5 @@ export function parseSpanishMediTapRegistroDocument(raw: string): Tab14IntakePar
     medications: parseMedications(text),
     chronicConditions: parseChronicConditions(text),
     hospitalVisit,
-  };
+  });
 }

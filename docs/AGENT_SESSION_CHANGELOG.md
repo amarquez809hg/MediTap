@@ -1037,3 +1037,32 @@
 **Next register entry:** **79** / **`MT-AG-075`**
 
 *Last updated: entry 78 (PDF field provenance warnings).*
+
+---
+
+### 79) Complete PDF warning coverage and hard-to-read detection
+
+**Type:** Feature / Bug Fix
+**Key:** `MT-AG-075`
+
+**Summary:** Close the remaining PDF provenance-warning gaps: specialized parsers now emit warnings, hard-to-read text is detected beyond the sparse OCR threshold, clinical sections show verify icons, and chronic-row warning indexes stay aligned after row removal.
+
+**What was done:**
+
+- Added `sanitizePatientFieldsWithWarnings` / `withSanitizedPatientFieldWarnings` and wired Riverbend, Epic, Spanish, MediTap demo, and Athena parsers to emit demographic warnings.
+- Added `isHardToReadExtractedText` plus richer upload metadata (`wasSparse`, `hardToRead`, `ocrFailed`) so garbled text-layer PDFs warn even when OCR is not invoked.
+- Extended session warning coverage to allergies, medications, insurance, and hospital fields with clear-on-edit behavior.
+- Fixed chronic/insurance/allergy/medication warning index shifts on row remove; cleared chronic warnings when toggling “no conditions.”
+- Flagged name values containing digit bleed (for example DOB glued into a name) even without an explicit label token.
+- Added focused unit tests for specialized-parser sanitization, hard-to-read detection, digit bleed, and warning reindexing.
+
+**Outcome:** Warning icons appear for more misread uploads, including specialized-format PDFs and glued text layers. Removing a clinical row no longer leaves a warning on the wrong remaining row. All 116 unit/integration tests and the production build pass.
+
+**Primary paths:** `intakeFieldWarnings.ts`, `documentTextExtraction.ts`, `riverbendHieParse.ts`, `epicHealthSummaryParse.ts`, `spanishIntakeParse.ts`, `meditapDemoRecordParse.ts`, `tab14DocumentParse.ts`, `tab14IntakeTypes.ts`, `pages/Tab14.tsx`
+**Commit:** *(pending)*
+
+---
+
+**Next register entry:** **80** / **`MT-AG-076`**
+
+*Last updated: entry 79 (complete PDF warning coverage).*

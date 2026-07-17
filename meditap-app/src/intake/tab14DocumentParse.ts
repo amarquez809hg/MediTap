@@ -10,7 +10,7 @@ import {
   preprocessIntakeDocumentText,
 } from './generalIntakeExtract';
 import { tryParseDateToIso } from './intakeDateParse';
-import { assessDemographicRawValue } from './intakeFieldWarnings';
+import { assessDemographicRawValue, withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import {
   isMeditapDemoRecordDocument,
   parseMeditapDemoRecordDocument,
@@ -485,7 +485,7 @@ function parseAthenaHospital(text: string): Tab14HospitalFields {
 }
 
 function parseAthenaPortabilityDocument(text: string): Tab14IntakeParseResult {
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields: parseAthenaPatientFields(text),
     noKnownDrugAllergies: false,
     insurances: [],
@@ -493,7 +493,7 @@ function parseAthenaPortabilityDocument(text: string): Tab14IntakeParseResult {
     medications: parseAthenaMedications(text),
     chronicConditions: parseAthenaChronicConditions(text),
     hospitalVisit: parseAthenaHospital(text),
-  };
+  });
 }
 
 function isPlausibleMedicationLine(line: string): boolean {

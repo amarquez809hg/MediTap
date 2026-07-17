@@ -9,13 +9,21 @@ import {
   type DemographicFieldKey,
 } from './intakeFieldLabels';
 import type {
+  Tab14AllergyRow,
   Tab14ChronicConditionWarnings,
   Tab14ChronicFieldKey,
   Tab14ChronicRow,
   Tab14FieldWarning,
+  Tab14HospitalFields,
+  Tab14HospitalFieldKey,
+  Tab14HospitalFieldWarnings,
+  Tab14IndexedRowWarnings,
+  Tab14InsuranceRow,
+  Tab14MedicationRow,
   Tab14PatientFieldKey,
   Tab14PatientFieldWarnings,
   Tab14PatientFields,
+  Tab14IntakeParseResult,
 } from './tab14IntakeTypes';
 
 const VERIFY_GENERIC =
@@ -31,7 +39,10 @@ const VERIFY_SUSPICIOUS_NAME =
   'This name may have been misread; verify against source document.';
 
 const VERIFY_OCR =
-  'Document text was sparse or OCR-assisted; verify this value against the source document.';
+  'Document text was sparse, hard to read, or OCR-assisted; verify this value against the source document.';
+
+const VERIFY_VISIT_NOTE =
+  'This may be visit-note text rather than a clinical list entry; verify against the source document.';
 
 /** Leading tokens that often bleed into extracted values (e.g. "name MARIA GARCIA"). */
 const LEADING_LABEL_TOKENS: RegExp[] = [
@@ -40,15 +51,26 @@ const LEADING_LABEL_TOKENS: RegExp[] = [
   /^(?:nombre(?:\s+completo)?|apellido)\b[:#]?\s+/i,
   /^(?:d\.?o\.?b\.?|date\s+of\s+birth|birth\s+date|born)\b[:#]?\s+/i,
   /^(?:fecha\s+de\s+nacimiento)\b[:#]?\s+/i,
-  /^(?:email|e-mail|correo(?:\s+electr[où]nico)?)\b[:#]?\s+/i,
-  /^(?:phone(?:\s+number)?|mobile|cell|tel[eù]fono)\b[:#]?\s+/i,
-  /^(?:address|home\s+address|street\s+address|direcci[où]n)\b[:#]?\s+/i,
+  /^(?:email|e-mail|correo(?:\s+electr[o?]nico)?)\b[:#]?\s+/i,
+  /^(?:phone(?:\s+number)?|mobile|cell|tel[e?]fono)\b[:#]?\s+/i,
+  /^(?:address|home\s+address|street\s+address|direcci[o?]n)\b[:#]?\s+/i,
   /^(?:sex(?:\s+at\s+birth)?|gender|sexo)\b[:#]?\s+/i,
   /^(?:blood\s+type|tipo\s+de\s+sangre)\b[:#]?\s+/i,
   /^(?:race|raza|ethnicity|etnicidad)\b[:#]?\s+/i,
   /^(?:preferred\s+language|language|idioma(?:\s+preferido)?)\b[:#]?\s+/i,
   /^(?:marital\s+status|estado\s+civil)\b[:#]?\s+/i,
 ];
+
+const CLINICAL_LEADING_LABELS: RegExp[] = [
+  /^(?:allergy|allergies|allergen)\b[:#]?\s+/i,
+  /^(?:medication|medications|drug|rx)\b[:#]?\s+/i,
+  /^(?:condition|diagnosis|problem|icd)\b[:#]?\s+/i,
+  /^(?:insurance|payer|carrier|plan|member\s*id|group)\b[:#]?\s+/i,
+  /^(?:facility|hospital|visit|encounter|attending)\b[:#]?\s+/i,
+];
+
+const VISIT_NOTE_FRAGMENT =
+  /^(?:subjective|objective|assessment|plan|chief complaint)\b|vitals reviewed|medication reconciliation(?:\s+attempted)?|external records unavailable|no acute distress|continue current care plan/i;
 
 /** Aliases that indicate another field leaked into this value. */
 function otherFieldLabelPatterns(forField: DemographicFieldKey | Tab14PatientFieldKey): RegExp[] {
@@ -92,13 +114,54 @@ export function stripLeadingLabelBleed(raw: string): {
 }
 
 function looksAllCapsName(value: string): boolean {
-  const letters = value.replace(/[^A-Za-zù-ù]/g, '');
+  const letters = value.replace(/[^A-Za-z?-?]/g, '');
   if (letters.length < 4) return false;
-  return letters === letters.toUpperCase() && /[A-Zù-ù]/.test(letters);
+  return letters === letters.toUpperCase() && /[A-Z?-?]/.test(letters);
 }
 
 function nameTokenCount(value: string): number {
   return collapseWs(value).split(/\s+/).filter(Boolean).length;
+}
+
+function assessFreeTextValue(
+  raw: string,
+  opts?: { treatAsName?: boolean }
+): { value: string; warning?: Tab14FieldWarning } {
+  const collapsed = collapseWs(raw);
+  if (!collapsed) return { value: '' };
+
+  let value = collapsed;
+  let warning: Tab14FieldWarning | undefined;
+
+  for (const re of CLINICAL_LEADING_LABELS) {
+    if (re.test(value)) {
+      value = collapseWs(value.replace(re, ''));
+      warning = { message: VERIFY_LABEL_BLEED, reason: 'label_bleed' };
+      break;
+    }
+  }
+
+  const { value: stripped, stripped: hadBleed } = stripLeadingLabelBleed(value);
+  if (hadBleed) {
+    value = stripped;
+    warning = { message: VERIFY_LABEL_BLEED, reason: 'label_bleed' };
+  }
+
+  if (VISIT_NOTE_FRAGMENT.test(value)) {
+    warning = warning ?? { message: VERIFY_VISIT_NOTE, reason: 'other' };
+  }
+
+  if (opts?.treatAsName) {
+    const tokens = nameTokenCount(value);
+    if (tokens > 8 || value.length > 120) {
+      warning = warning ?? {
+        message: VERIFY_SUSPICIOUS_NAME,
+        reason: 'suspicious_name',
+      };
+    }
+  }
+
+  return { value, warning };
 }
 
 /**
@@ -131,6 +194,17 @@ export function assessDemographicRawValue(
     }
   }
 
+  // Digits in a name often mean DOB/phone bleed without an explicit label token.
+  if (
+    (field === 'givenName' || field === 'familyName' || field === 'fullName') &&
+    /\d{2,}/.test(value)
+  ) {
+    warning = warning ?? {
+      message: VERIFY_OTHER_LABEL,
+      reason: 'contains_other_label',
+    };
+  }
+
   if (field === 'givenName' || field === 'familyName' || field === 'fullName') {
     const tokens = nameTokenCount(value);
     if (tokens > 5 || (looksAllCapsName(value) && hadBleed) || /^name\b/i.test(collapsed)) {
@@ -139,7 +213,6 @@ export function assessDemographicRawValue(
         reason: 'suspicious_name',
       };
     }
-    // Repeated leading "name" after incomplete strip
     if (/^name\b/i.test(value)) {
       const again = stripLeadingLabelBleed(value);
       value = again.value;
@@ -148,6 +221,45 @@ export function assessDemographicRawValue(
   }
 
   return { value, warning };
+}
+
+/**
+ * Re-assess already-parsed patient fields (specialized parsers) and attach warnings.
+ * Safe for ISO dates and already-split names; also strips residual label bleed.
+ */
+export function sanitizePatientFieldsWithWarnings(
+  fields: Tab14PatientFields
+): { fields: Tab14PatientFields; warnings?: Tab14PatientFieldWarnings } {
+  const out: Tab14PatientFields = {};
+  const warnings: Tab14PatientFieldWarnings = {};
+  for (const key of Object.keys(fields) as Tab14PatientFieldKey[]) {
+    const raw = fields[key];
+    if (!raw?.trim()) continue;
+    const assessed = assessDemographicRawValue(key, raw);
+    if (!assessed.value) continue;
+    out[key] = assessed.value;
+    if (assessed.warning) warnings[key] = assessed.warning;
+  }
+  return {
+    fields: out,
+    warnings: Object.keys(warnings).length ? warnings : undefined,
+  };
+}
+
+/** Attach patient-field warnings onto a specialized parse result. */
+export function withSanitizedPatientFieldWarnings(
+  result: Tab14IntakeParseResult
+): Tab14IntakeParseResult {
+  const sanitized = sanitizePatientFieldsWithWarnings(result.patientFields);
+  return {
+    ...result,
+    patientFields: sanitized.fields,
+    ...(sanitized.warnings || result.fieldWarnings
+      ? {
+          fieldWarnings: mergeFieldWarnings(result.fieldWarnings, sanitized.warnings),
+        }
+      : {}),
+  };
 }
 
 /** Merge warning maps; later (or stronger) reasons replace weaker ones for the same key. */
@@ -179,7 +291,6 @@ export function warningsForWinningPatientFields(
   for (const key of Object.keys(finalFields) as Tab14PatientFieldKey[]) {
     const finalVal = finalFields[key]?.trim();
     if (!finalVal) continue;
-    // Prefer the last source that supplied this exact value and had a warning
     let found: Tab14FieldWarning | undefined;
     for (const src of sources) {
       if (src.fields[key]?.trim() === finalVal && src.warnings?.[key]) {
@@ -191,7 +302,7 @@ export function warningsForWinningPatientFields(
   return Object.keys(out).length ? out : undefined;
 }
 
-/** Mark all populated patient fields when OCR/sparse extraction was used. */
+/** Mark all populated patient fields when OCR / hard-to-read extraction was used. */
 export function annotateOcrSparseWarnings(
   fields: Tab14PatientFields,
   existing?: Tab14PatientFieldWarnings
@@ -206,32 +317,117 @@ export function annotateOcrSparseWarnings(
   return Object.keys(out).length ? out : undefined;
 }
 
-const CHRONIC_VISIT_FRAGMENT =
-  /^(?:subjective|objective|assessment|plan|chief complaint)\b|vitals reviewed|medication reconciliation(?:\s+attempted)?|external records unavailable|no acute distress|continue current care plan/i;
+function annotateRowObjectWarnings<T extends Record<string, string>>(
+  row: T,
+  hardToRead: boolean,
+  primaryKey?: keyof T & string
+): Partial<Record<keyof T & string, Tab14FieldWarning>> | undefined {
+  const out: Partial<Record<keyof T & string, Tab14FieldWarning>> = {};
+  const primary = primaryKey ? String(row[primaryKey] ?? '') : '';
+  const primaryAssessed = primary
+    ? assessFreeTextValue(primary, { treatAsName: true })
+    : { value: '', warning: undefined };
+
+  for (const key of Object.keys(row) as (keyof T & string)[]) {
+    const raw = String(row[key] ?? '');
+    if (!raw.trim()) continue;
+    if (hardToRead) {
+      out[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+      continue;
+    }
+    if (primaryKey && key === primaryKey && primaryAssessed.warning) {
+      out[key] = primaryAssessed.warning;
+      continue;
+    }
+    const assessed = assessFreeTextValue(raw);
+    if (assessed.warning) out[key] = assessed.warning;
+  }
+
+  return Object.keys(out).length ? out : undefined;
+}
+
+export function buildAllergyRowWarnings(
+  rows: Tab14AllergyRow[],
+  hardToRead = false
+): Tab14IndexedRowWarnings<'allergyName' | 'allergyType' | 'allergyTypeOther' | 'severity' | 'reactionNotes' | 'lastObserved'> | undefined {
+  const out: Tab14IndexedRowWarnings<'allergyName' | 'allergyType' | 'allergyTypeOther' | 'severity' | 'reactionNotes' | 'lastObserved'> = {};
+  rows.forEach((row, index) => {
+    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'allergyName');
+    if (rowWarnings) out[index] = rowWarnings;
+  });
+  return Object.keys(out).length ? out : undefined;
+}
+
+export function buildMedicationRowWarnings(
+  rows: Tab14MedicationRow[],
+  hardToRead = false
+): Tab14IndexedRowWarnings<keyof Tab14MedicationRow> | undefined {
+  const out: Tab14IndexedRowWarnings<keyof Tab14MedicationRow> = {};
+  rows.forEach((row, index) => {
+    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'genericName');
+    if (rowWarnings) out[index] = rowWarnings;
+  });
+  return Object.keys(out).length ? out : undefined;
+}
+
+export function buildInsuranceRowWarnings(
+  rows: Tab14InsuranceRow[],
+  hardToRead = false
+): Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> | undefined {
+  const out: Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> = {};
+  rows.forEach((row, index) => {
+    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'providerName');
+    if (rowWarnings) out[index] = rowWarnings;
+  });
+  return Object.keys(out).length ? out : undefined;
+}
+
+export function buildHospitalFieldWarnings(
+  visit: Tab14HospitalFields,
+  hardToRead = false
+): Tab14HospitalFieldWarnings | undefined {
+  const out: Tab14HospitalFieldWarnings = {};
+  for (const key of Object.keys(visit) as Tab14HospitalFieldKey[]) {
+    const raw = visit[key];
+    if (!raw?.trim()) continue;
+    if (hardToRead) {
+      out[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+      continue;
+    }
+    const assessed = assessFreeTextValue(raw, {
+      treatAsName: key === 'facilityName' || key === 'attendingPhysician' || key === 'reason',
+    });
+    if (assessed.warning) out[key] = assessed.warning;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
 
 /**
  * Build session-only warnings for chronic-condition rows.
- * OCR rows are all reviewable; text-layer rows are warned only when they look like
+ * OCR / hard-to-read rows are all reviewable; text-layer rows are warned when they look like
  * encounter-note fragments that should not be accepted as diagnoses.
  */
 export function buildChronicConditionWarnings(
   rows: Tab14ChronicRow[],
-  usedOcr = false
+  hardToRead = false
 ): Tab14ChronicConditionWarnings | undefined {
   const out: Tab14ChronicConditionWarnings = {};
   rows.forEach((row, index) => {
     const rowWarnings: Partial<Record<Tab14ChronicFieldKey, Tab14FieldWarning>> = {};
-    const suspicious = CHRONIC_VISIT_FRAGMENT.test(row.conditionName.trim());
+    const suspicious = VISIT_NOTE_FRAGMENT.test(row.conditionName.trim());
     for (const key of Object.keys(row) as Tab14ChronicFieldKey[]) {
       if (!row[key]?.trim()) continue;
-      if (usedOcr) {
+      // severity has no UI control on Tab14 ? skip invisible warnings
+      if (key === 'severity') continue;
+      if (hardToRead) {
         rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
-      } else if (suspicious) {
-        rowWarnings[key] = {
-          message:
-            'This may be visit-note text rather than a chronic condition; verify against the source document.',
-          reason: 'other',
-        };
+      } else if (suspicious || key === 'conditionName') {
+        const assessed = assessFreeTextValue(row[key], { treatAsName: key === 'conditionName' });
+        if (suspicious) {
+          rowWarnings[key] = { message: VERIFY_VISIT_NOTE, reason: 'other' };
+        } else if (assessed.warning) {
+          rowWarnings[key] = assessed.warning;
+        }
       }
     }
     if (Object.keys(rowWarnings).length) out[index] = rowWarnings;
@@ -239,17 +435,40 @@ export function buildChronicConditionWarnings(
   return Object.keys(out).length ? out : undefined;
 }
 
+export function clearIndexedFieldWarning<K extends string>(
+  warnings: Tab14IndexedRowWarnings<K> | undefined,
+  index: number,
+  field: K
+): Tab14IndexedRowWarnings<K> | undefined {
+  if (!warnings?.[index]?.[field]) return warnings;
+  const next: Tab14IndexedRowWarnings<K> = { ...warnings };
+  const row: Partial<Record<K, Tab14FieldWarning>> = { ...(next[index] ?? {}) };
+  delete row[field];
+  if (Object.keys(row).length) next[index] = row;
+  else delete next[index];
+  return Object.keys(next).length ? next : undefined;
+}
+
 export function clearChronicConditionWarning(
   warnings: Tab14ChronicConditionWarnings | undefined,
   index: number,
   field: Tab14ChronicFieldKey
 ): Tab14ChronicConditionWarnings | undefined {
-  if (!warnings?.[index]?.[field]) return warnings;
-  const next = { ...warnings };
-  const row = { ...next[index] };
-  delete row[field];
-  if (Object.keys(row).length) next[index] = row;
-  else delete next[index];
+  return clearIndexedFieldWarning(warnings, index, field);
+}
+
+/** Reindex warning maps after a row is removed so icons stay on the correct rows. */
+export function removeIndexedWarningRow<T>(
+  warnings: Partial<Record<number, T>> | undefined,
+  index: number
+): Partial<Record<number, T>> | undefined {
+  if (!warnings) return warnings;
+  const next: Partial<Record<number, T>> = {};
+  for (const [key, value] of Object.entries(warnings)) {
+    const i = Number(key);
+    if (Number.isNaN(i) || i === index) continue;
+    next[i > index ? i - 1 : i] = value as T;
+  }
   return Object.keys(next).length ? next : undefined;
 }
 
@@ -259,4 +478,5 @@ export const FIELD_WARNING_MESSAGES = {
   VERIFY_OTHER_LABEL,
   VERIFY_SUSPICIOUS_NAME,
   VERIFY_OCR,
+  VERIFY_VISIT_NOTE,
 } as const;

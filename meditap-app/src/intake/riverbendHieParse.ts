@@ -5,6 +5,7 @@
 
 import { tryParseDateToIso } from './intakeDateParse';
 import { normalizeBloodType } from './intakeFieldLabels';
+import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
   Tab14ChronicRow,
   Tab14HospitalFields,
@@ -520,7 +521,7 @@ function parseSyntheticDummyRecord(raw: string): Tab14IntakeParseResult | null {
   const hospitalVisit = Object.keys(parseSyntheticOcrHospital(flat)).length
     ? parseSyntheticOcrHospital(flat)
     : parseHospitalFromEncounters(preprocessRiverbendGluedText(raw));
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields: patientFromSynthetic(flat),
     noKnownDrugAllergies: nkda,
     insurances: [],
@@ -528,7 +529,7 @@ function parseSyntheticDummyRecord(raw: string): Tab14IntakeParseResult | null {
     medications: parseSyntheticMedications(flat),
     chronicConditions: parseSyntheticChronic(flat),
     hospitalVisit,
-  };
+  });
 }
 
 export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
@@ -567,7 +568,7 @@ export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
   const { rows: allergies, nkda } = parseAllergiesFromProblems(text);
   const hospitalVisit = parseHospitalFromEncounters(text);
 
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: nkda,
     insurances: [],
@@ -575,5 +576,5 @@ export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
     medications,
     chronicConditions,
     hospitalVisit,
-  };
+  });
 }

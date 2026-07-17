@@ -7,7 +7,7 @@ if (!GlobalWorkerOptions.workerSrc) {
   GlobalWorkerOptions.workerSrc = `${worker}?v=nginx-mjs-mime`;
 }
 
-const SPARSE_PDF_CHAR_THRESHOLD = 100;
+export const SPARSE_PDF_CHAR_THRESHOLD = 100;
 
 /** Build page text with line breaks (pdf.js hasEOL) instead of one long glued string. */
 export function extractTextFromPdfContentItems(items: unknown[]): string {
@@ -84,6 +84,33 @@ export function isSparseExtractedText(text: string): boolean {
   return text.replace(/\s/g, '').length < SPARSE_PDF_CHAR_THRESHOLD;
 }
 
+/**
+ * True when extracted text looks unreliable even if it is not sparse:
+ * glued labels, dense camelCase walls, or nearly line-less dumps.
+ */
+export function isHardToReadExtractedText(text: string): boolean {
+  if (isSparseExtractedText(text)) return true;
+  const trimmed = text.trim();
+  if (!trimmed) return true;
+
+  const chars = trimmed.replace(/\s/g, '');
+  if (chars.length < 40) return true;
+
+  const glueHits = (trimmed.match(/[a-zà-ÿ][A-ZÀ-Ÿ]/g) || []).length;
+  const labelGlue =
+    (trimmed.match(
+      /\b(?:Name|Given|Family|DOB|Phone|Email|Address|Sex|Blood)(?=[A-Za-z0-9])/gi
+    ) || []).length;
+  const lines = trimmed.split(/\n/).map((l) => l.trim()).filter(Boolean);
+  const spaceRatio = (trimmed.match(/ /g) || []).length / Math.max(chars.length, 1);
+
+  if (labelGlue >= 2) return true;
+  if (glueHits >= 8 && spaceRatio < 0.1) return true;
+  if (lines.length <= 2 && chars.length > 350) return true;
+  if (lines.length <= 4 && chars.length > 800 && spaceRatio < 0.12) return true;
+  return false;
+}
+
 /** Guess OCR languages from extracted text (English + Spanish by default). */
 export function detectOcrLanguages(existingText: string): string {
   const t = existingText.replace(/\s+/g, ' ').toLowerCase();
@@ -127,29 +154,36 @@ export async function ocrImageDataUrl(
 export async function augmentPdfTextWithFirstPageOcr(
   extractedText: string,
   pdf: PDFDocumentProxy
-): Promise<{ text: string; usedOcr: boolean }> {
-  if (!isSparseExtractedText(extractedText)) {
-    return { text: extractedText, usedOcr: false };
+): Promise<{ text: string; usedOcr: boolean; wasSparse: boolean; ocrFailed: boolean }> {
+  const wasSparse = isSparseExtractedText(extractedText);
+  if (!wasSparse) {
+    return { text: extractedText, usedOcr: false, wasSparse: false, ocrFailed: false };
   }
   try {
     const page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 2 });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (!ctx) return { text: extractedText, usedOcr: false };
+    if (!ctx) {
+      return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
+    }
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     const renderTask = page.render({ canvasContext: ctx, viewport });
     await renderTask.promise;
     const dataUrl = canvas.toDataURL('image/png');
     const ocrText = await ocrImageDataUrl(dataUrl, detectOcrLanguages(extractedText));
-    if (!ocrText) return { text: extractedText, usedOcr: false };
+    if (!ocrText) {
+      return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
+    }
     return {
       text: `${extractedText}\n\n${ocrText}`.trim(),
       usedOcr: true,
+      wasSparse: true,
+      ocrFailed: false,
     };
   } catch {
-    return { text: extractedText, usedOcr: false };
+    return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
   }
 }
 
@@ -185,6 +219,12 @@ export type Tab14UploadTextResult = {
   text: string;
   /** True when first-page OCR was used (sparse PDF) or the upload was an image. */
   usedOcr: boolean;
+  /** True when the PDF text layer was sparse before OCR. */
+  wasSparse: boolean;
+  /** True when extraction looks unreliable (sparse, OCR, or garbled text layer). */
+  hardToRead: boolean;
+  /** True when sparse PDF OCR was attempted but failed. */
+  ocrFailed: boolean;
 };
 
 /** Extract plain text from a Tab14 upload file (PDF with optional OCR, or image OCR). */
@@ -199,13 +239,30 @@ export async function extractTab14UploadFileText(file: File): Promise<Tab14Uploa
       fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
     }
     const augmented = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
-    return { text: augmented.text, usedOcr: augmented.usedOcr };
+    const hardToRead =
+      augmented.wasSparse ||
+      augmented.usedOcr ||
+      augmented.ocrFailed ||
+      isHardToReadExtractedText(augmented.text);
+    return {
+      text: augmented.text,
+      usedOcr: augmented.usedOcr,
+      wasSparse: augmented.wasSparse,
+      hardToRead,
+      ocrFailed: augmented.ocrFailed,
+    };
   }
 
   if (file.type.startsWith('image/')) {
     const dataUrl = await fileToDataUrl(file);
     const text = await ocrImageDataUrl(dataUrl, 'eng+spa');
-    return { text, usedOcr: true };
+    return {
+      text,
+      usedOcr: true,
+      wasSparse: true,
+      hardToRead: true,
+      ocrFailed: !text.trim(),
+    };
   }
 
   throw new Error('Unsupported file type');

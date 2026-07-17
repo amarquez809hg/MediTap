@@ -93,11 +93,22 @@ export type Tab14PatientFieldWarnings = Partial<
 >;
 
 export type Tab14ChronicFieldKey = keyof Tab14ChronicRow;
+export type Tab14InsuranceFieldKey = keyof Tab14InsuranceRow;
+export type Tab14AllergyFieldKey = keyof Tab14AllergyRow;
+export type Tab14MedicationFieldKey = keyof Tab14MedicationRow;
+export type Tab14HospitalFieldKey = keyof Tab14HospitalFields;
+
+/** Session-only verify warnings for indexed repeater rows. */
+export type Tab14IndexedRowWarnings<K extends string> = Partial<
+  Record<number, Partial<Record<K, Tab14FieldWarning>>>
+>;
 
 /** Session-only verify warnings for repeater chronic-condition fields. */
-export type Tab14ChronicConditionWarnings = Partial<
-  Record<number, Partial<Record<Tab14ChronicFieldKey, Tab14FieldWarning>>>
->;
+export type Tab14ChronicConditionWarnings = Tab14IndexedRowWarnings<Tab14ChronicFieldKey>;
+export type Tab14InsuranceRowWarnings = Tab14IndexedRowWarnings<Tab14InsuranceFieldKey>;
+export type Tab14AllergyRowWarnings = Tab14IndexedRowWarnings<Tab14AllergyFieldKey>;
+export type Tab14MedicationRowWarnings = Tab14IndexedRowWarnings<Tab14MedicationFieldKey>;
+export type Tab14HospitalFieldWarnings = Partial<Record<Tab14HospitalFieldKey, Tab14FieldWarning>>;
 
 export interface Tab14IntakeParseResult {
   patientFields: Tab14PatientFields;

@@ -4,6 +4,7 @@
 
 import { tryParseDateToIso } from './intakeDateParse';
 import { collapseWs, splitPersonName } from './intakeFieldLabels';
+import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -227,7 +228,7 @@ export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseRes
   const medications = parseEpicMedications(text);
   const chronicConditions = parseEpicChronicConditions(text);
 
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: nkda,
     insurances: parseEpicInsurance(text),
@@ -235,5 +236,5 @@ export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseRes
     medications,
     chronicConditions,
     hospitalVisit: parseEpicHospital(text),
-  };
+  });
 }

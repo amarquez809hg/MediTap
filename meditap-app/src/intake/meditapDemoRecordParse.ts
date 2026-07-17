@@ -4,6 +4,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -808,7 +809,7 @@ function parseDataPortabilityCompactRecord(raw: string): Tab14IntakeParseResult 
   const insurances = parseCompactInsurance(insuranceSection);
   const hospitalVisit = parseCompactHospital(hospitalSection);
 
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields: parseCompactPatient(text),
     noKnownDrugAllergies: detectNoKnownDrugAllergies(text, allergies.length),
     insurances,
@@ -816,7 +817,7 @@ function parseDataPortabilityCompactRecord(raw: string): Tab14IntakeParseResult 
     medications,
     chronicConditions,
     hospitalVisit,
-  };
+  });
 }
 
 export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseResult {
@@ -866,7 +867,7 @@ export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseRes
   const chronicConditions = parseDemoChronic(chronicSection);
   const hospitalVisit = pickHospitalVisit(hospitalSection);
 
-  return {
+  return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: detectNoKnownDrugAllergies(text, allergies.length),
     insurances,
@@ -874,5 +875,5 @@ export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseRes
     medications,
     chronicConditions,
     hospitalVisit,
-  };
+  });
 }
