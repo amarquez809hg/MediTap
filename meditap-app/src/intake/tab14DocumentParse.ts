@@ -10,6 +10,7 @@ import {
   preprocessIntakeDocumentText,
 } from './generalIntakeExtract';
 import { tryParseDateToIso } from './intakeDateParse';
+import { assessDemographicRawValue } from './intakeFieldWarnings';
 import {
   isMeditapDemoRecordDocument,
   parseMeditapDemoRecordDocument,
@@ -33,6 +34,7 @@ import type {
   Tab14InsuranceRow,
   Tab14IntakeParseResult,
   Tab14MedicationRow,
+  Tab14PatientFieldWarnings,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
 
@@ -119,9 +121,24 @@ function splitPersonName(full: string): { given?: string; family?: string } {
 
 const NAME_CHARS = "A-Za-zÀ-ÿ\\u00C0-\\u024F'\\-";
 
-function parsePatientFields(text: string): Tab14PatientFields {
+function parsePatientFields(text: string): {
+  fields: Tab14PatientFields;
+  warnings: Tab14PatientFieldWarnings;
+} {
   const t = text;
   const out: Tab14PatientFields = {};
+  const warnings: Tab14PatientFieldWarnings = {};
+
+  const assignName = (
+    key: 'givenName' | 'familyName',
+    raw: string | undefined
+  ) => {
+    if (!raw) return;
+    const assessed = assessDemographicRawValue(key, raw);
+    if (!assessed.value) return;
+    out[key] = assessed.value;
+    if (assessed.warning) warnings[key] = assessed.warning;
+  };
 
   const given = labelValue(t, [
     new RegExp(`(?:given|first)\\s*name\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
@@ -129,8 +146,8 @@ function parsePatientFields(text: string): Tab14PatientFields {
   const family = labelValue(t, [
     new RegExp(`(?:family|last)\\s*name\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
   ]);
-  if (given) out.givenName = given;
-  if (family) out.familyName = family;
+  assignName('givenName', given);
+  assignName('familyName', family);
 
   const fullNameLine =
     labelValueBounded(t, '(?:patient\\s*name|full\\s*name|(?:child\\s*)?name)') ||
@@ -138,9 +155,16 @@ function parsePatientFields(text: string): Tab14PatientFields {
       new RegExp(`(?:patient\\s*name|full\\s*name|(?:child\\s*)?name)\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
     ]);
   if (fullNameLine) {
-    const split = splitPersonName(fullNameLine);
-    if (!out.givenName && split.given) out.givenName = split.given;
-    if (!out.familyName && split.family) out.familyName = split.family;
+    const assessed = assessDemographicRawValue('fullName', fullNameLine);
+    const split = splitPersonName(assessed.value);
+    if (!out.givenName && split.given) {
+      out.givenName = split.given;
+      if (assessed.warning) warnings.givenName = assessed.warning;
+    }
+    if (!out.familyName && split.family) {
+      out.familyName = split.family;
+      if (assessed.warning) warnings.familyName = assessed.warning;
+    }
   }
 
   if (!out.givenName || !out.familyName) {
@@ -151,8 +175,8 @@ function parsePatientFields(text: string): Tab14PatientFields {
       )
     );
     if (namePair) {
-      if (!out.givenName) out.givenName = namePair[1];
-      if (!out.familyName) out.familyName = collapseWs(namePair[2]);
+      if (!out.givenName) assignName('givenName', namePair[1]);
+      if (!out.familyName) assignName('familyName', collapseWs(namePair[2]));
     }
   }
 
@@ -164,8 +188,8 @@ function parsePatientFields(text: string): Tab14PatientFields {
       )
     );
     if (m2) {
-      if (!out.givenName) out.givenName = m2[1];
-      if (!out.familyName) out.familyName = collapseWs(m2[2]);
+      if (!out.givenName) assignName('givenName', m2[1]);
+      if (!out.familyName) assignName('familyName', collapseWs(m2[2]));
     }
   }
 
@@ -175,8 +199,14 @@ function parsePatientFields(text: string): Tab14PatientFields {
       new RegExp(`\\bborn\\s+${LINE_VALUE}`, 'i'),
     ]) || undefined;
   if (dobRaw) {
-    const iso = tryParseDateToIso(dobRaw) || tryParseDateToIso(dobRaw.split(/[,\s]+/).slice(0, 5).join(' '));
-    if (iso) out.dateOfBirth = iso;
+    const assessed = assessDemographicRawValue('dateOfBirth', dobRaw);
+    const iso =
+      tryParseDateToIso(assessed.value) ||
+      tryParseDateToIso(assessed.value.split(/[,\s]+/).slice(0, 5).join(' '));
+    if (iso) {
+      out.dateOfBirth = iso;
+      if (assessed.warning) warnings.dateOfBirth = assessed.warning;
+    }
   }
   if (!out.dateOfBirth) {
     const isoInline = t.match(/\b(\d{4}-\d{2}-\d{2})\b/);
@@ -205,13 +235,20 @@ function parsePatientFields(text: string): Tab14PatientFields {
     new RegExp(`blood\\s*type\\s*[:#]?\\s*${LINE_VALUE}`, 'i'),
   ]);
   if (bt) {
-    const n = normalizeBloodType(bt);
-    if (n) out.bloodType = n;
+    const assessed = assessDemographicRawValue('bloodType', bt);
+    const n = normalizeBloodType(assessed.value);
+    if (n) {
+      out.bloodType = n;
+      if (assessed.warning) warnings.bloodType = assessed.warning;
+    }
   }
   // Avoid whole-document blood-type scans: text like "No blood type" or OCR noise can
   // contain incidental O/A/B tokens. Only labeled Blood Type values should populate this field.
 
-  return pickDefined(out as Record<string, string>);
+  return {
+    fields: pickDefined(out as Record<string, string>),
+    warnings,
+  };
 }
 
 const SECTION_END =
@@ -747,15 +784,19 @@ function parseGenericTab14Document(text: string): Tab14IntakeParseResult {
   }
   const medications = parseMedicationRows(medSection);
   const chronicConditions = parseChronicRows(chronicSection, text);
+  const parsedPatient = parsePatientFields(text);
 
   return {
-    patientFields: parsePatientFields(text),
+    patientFields: parsedPatient.fields,
     noKnownDrugAllergies,
     insurances: parseInsuranceFromText(text),
     allergies: allergyRows,
     medications,
     chronicConditions,
     hospitalVisit: parseHospital(text),
+    ...(Object.keys(parsedPatient.warnings).length
+      ? { fieldWarnings: parsedPatient.warnings }
+      : {}),
   };
 }
 

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
 import { GlassDateInput } from '../components/GlassDatePicker';
-import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { markOnboardingStep } from '../onboarding/onboardingStorage';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
@@ -23,15 +22,30 @@ import {
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
+import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
+import {
+    mergeChronicConditionsFromPdf,
+    mergeInsurancesFromPdf,
+    mergeMedicationsFromPdf,
+} from '../intake/mergeTab14IntakeUpload';
 import {
     applyTab14ParseBundle,
     bundleHasPatientIdentity,
+    clearPatientFieldWarning,
     emptyMergeSnapshot,
     formatTab14MergeStatsNotes,
+    mergePdfPatientFieldWarnings,
     mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
-import type { Tab14IntakeParseResult, Tab14PatientFields } from '../intake/tab14IntakeTypes';
+import type {
+    Tab14ChronicConditionWarnings,
+    Tab14ChronicFieldKey,
+    Tab14IntakeParseResult,
+    Tab14PatientFieldKey,
+    Tab14PatientFieldWarnings,
+    Tab14PatientFields,
+} from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -41,11 +55,11 @@ import {
     isTab14UploadFileType,
 } from '../intake/documentTextExtraction';
 import {
-    clearTab14PersistedUploads,
-    loadTab14UploadedFiles,
-    persistTab14UploadedFile,
-    removeTab14PersistedUpload,
-} from '../intake/tab14UploadStorage';
+    annotateOcrSparseWarnings,
+    buildChronicConditionWarnings,
+    clearChronicConditionWarning,
+    FIELD_WARNING_MESSAGES,
+} from '../intake/intakeFieldWarnings';
 import {
     bmiCategoryLabel,
     computeBmiFromMetric,
@@ -307,163 +321,40 @@ const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
     { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
 ];
 
-function summarizeTab14ParseResult(
-    b: ReturnType<typeof parseTab14IntakeDocument>,
-    t: (key: string, opts?: Record<string, unknown>) => string
-): string {
+function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
     const chips: string[] = [];
-    if (Object.keys(b.patientFields).length) chips.push(t('patientIntake.parse.chipPatientInfo'));
-    if (b.noKnownDrugAllergies) chips.push(t('patientIntake.parse.chipNkda'));
-    else if (b.allergies.length) chips.push(t('patientIntake.parse.chipAllergies', { count: b.allergies.length }));
-    if (b.medications.length) chips.push(t('patientIntake.parse.chipMedications', { count: b.medications.length }));
-    if (b.insurances.length) chips.push(t('patientIntake.parse.chipInsurance'));
-    if (b.chronicConditions.length) chips.push(t('patientIntake.parse.chipChronic', { count: b.chronicConditions.length }));
-    if (Object.keys(b.hospitalVisit).length) chips.push(t('patientIntake.parse.chipHospital'));
+    if (Object.keys(b.patientFields).length) chips.push('Patient info');
+    if (b.noKnownDrugAllergies) chips.push('NKDA (no known drug allergies)');
+    else if (b.allergies.length) chips.push(`Allergies (${b.allergies.length})`);
+    if (b.medications.length) chips.push(`Medications (${b.medications.length})`);
+    if (b.insurances.length) chips.push('Insurance');
+    if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
+    if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
     if (!chips.length) {
-        return t('patientIntake.parse.noMatch');
+        return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
     }
-    return t('patientIntake.parse.imported', { summary: chips.join(' · ') });
+    return `Imported: ${chips.join(' · ')} — open each sidebar section to verify, then Save.`;
 }
+
+/**
+ * Common + clinically recognizable allergy severity options.
+ * - Mild/Moderate/Severe are broadly used in clinical charting.
+ * - Anaphylaxis captures life-threatening systemic reactions.
+ */
+const ALLERGY_SEVERITY_OPTIONS = [
+    { value: '', label: 'Select severity' },
+    { value: 'Mild', label: 'Mild (localized symptoms)' },
+    { value: 'Moderate', label: 'Moderate (multi-system, stable)' },
+    { value: 'Severe', label: 'Severe (significant systemic symptoms)' },
+    { value: 'Anaphylaxis', label: 'Anaphylaxis (life-threatening)' },
+    { value: 'Unknown', label: 'Unknown / not documented' },
+] as const;
+
 
 function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
     const comma = stamp.indexOf(", ");
     if (comma < 0) return { date: stamp, time: "" };
     return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
-}
-
-function renderIntakeSelect(
-    value: string,
-    options: { value: string; label: string }[],
-    placeholder: string,
-    onChange: (next: string) => void
-) {
-    const known = new Set(options.map((o) => o.value));
-    return (
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-            <option value="">{placeholder}</option>
-            {options.map((o) => (
-                <option key={o.value} value={o.value}>
-                    {o.label}
-                </option>
-            ))}
-            {value && !known.has(value) ? (
-                <option value={value}>{value}</option>
-            ) : null}
-        </select>
-    );
-}
-
-type Tab14RepeaterSection = 'allergy' | 'medication' | 'chronic' | 'hospitalVisit';
-
-function repeaterAccordionKey(section: Tab14RepeaterSection, index: number) {
-    return `${section}:${index}`;
-}
-
-function isRepeaterAccordionOpen(
-    openMap: Record<string, boolean>,
-    section: Tab14RepeaterSection,
-    index: number
-) {
-    const key = repeaterAccordionKey(section, index);
-    if (key in openMap) return openMap[key];
-    return index === 0;
-}
-
-const REPEATER_SECTION_LABELS: Record<Tab14RepeaterSection, string> = {
-    allergy: 'Allergy',
-    medication: 'Medication',
-    chronic: 'Chronic Condition',
-    hospitalVisit: 'Hospital Visit',
-};
-
-function repeaterRowTitle(section: Tab14RepeaterSection, index: number, detail?: string) {
-    const base = REPEATER_SECTION_LABELS[section];
-    const trimmed = detail?.trim();
-    if (trimmed) return `${base} - ${trimmed}`;
-    return `${base} ${index + 1}`;
-}
-
-function repeaterToggleKeyDown(onActivate: () => void) {
-    return (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onActivate();
-        }
-    };
-}
-
-function Tab14RepeaterToolbar({
-    onExpandAll,
-    onCollapseAll,
-}: {
-    onExpandAll: () => void;
-    onCollapseAll: () => void;
-}) {
-    return (
-        <div className="tab14-repeater-toolbar">
-            <div
-                role="button"
-                tabIndex={0}
-                className="tab14-repeater-toolbar__action"
-                onClick={onExpandAll}
-                onKeyDown={repeaterToggleKeyDown(onExpandAll)}
-            >
-                Expand all
-            </div>
-            <div
-                role="button"
-                tabIndex={0}
-                className="tab14-repeater-toolbar__action"
-                onClick={onCollapseAll}
-                onKeyDown={repeaterToggleKeyDown(onCollapseAll)}
-            >
-                Collapse all
-            </div>
-        </div>
-    );
-}
-
-function Tab14RepeaterAccordion({
-    sectionKey,
-    index,
-    title,
-    isOpen,
-    onToggle,
-    children,
-}: {
-    sectionKey: Tab14RepeaterSection;
-    index: number;
-    title: string;
-    isOpen: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-}) {
-    const panelId = `tab14-accordion-${sectionKey}-${index}`;
-    return (
-        <div className="tab14-repeater-accordion section-block">
-            <div
-                role="button"
-                tabIndex={0}
-                className={`accordion-header tab14-repeater-accordion__header${
-                    isOpen ? ' tab14-repeater-accordion__header--open' : ''
-                }`}
-                onClick={onToggle}
-                onKeyDown={repeaterToggleKeyDown(onToggle)}
-                aria-expanded={isOpen}
-                aria-controls={panelId}
-            >
-                <span className="tab14-repeater-accordion__title">{title}</span>
-                <span className="tab14-repeater-accordion__chevron" aria-hidden="true">
-                    {isOpen ? '▾' : '▸'}
-                </span>
-            </div>
-            {isOpen ? (
-                <div id={panelId} className="accordion-content tab14-repeater-accordion__content">
-                    {children}
-                </div>
-            ) : null}
-        </div>
-    );
 }
 
 type UploadedFileEntry = {
@@ -476,53 +367,6 @@ type UploadedFileEntry = {
 
 const Tab14: React.FC = () => {
     const { t } = useTranslation();
-
-    const allergySeverityOptions = useMemo(
-        () => [
-            { value: '', label: t('patientIntake.selectSeverity') },
-            { value: 'Mild', label: t('patientIntake.severityOptions.mild') },
-            { value: 'Moderate', label: t('patientIntake.severityOptions.moderate') },
-            { value: 'Severe', label: t('patientIntake.severityOptions.severe') },
-            { value: 'Anaphylaxis', label: t('patientIntake.severityOptions.anaphylaxis') },
-            { value: 'Unknown', label: t('patientIntake.severityOptions.unknown') },
-            { value: 'Leve', label: 'Leve' },
-            { value: 'Moderada', label: 'Moderada' },
-            { value: 'Grave', label: 'Grave' },
-        ],
-        [t]
-    );
-
-    const sexAtBirthOptions = useMemo(
-        () => [
-            { value: 'Male', label: t('patientIntake.sexOptions.male') },
-            { value: 'Female', label: t('patientIntake.sexOptions.female') },
-            { value: 'Masculino', label: 'Masculino' },
-            { value: 'Femenino', label: 'Femenino' },
-        ],
-        [t]
-    );
-
-    const maritalStatusOptions = useMemo(
-        () => [
-            { value: 'Single', label: t('patientIntake.maritalOptions.single') },
-            { value: 'Married', label: t('patientIntake.maritalOptions.married') },
-            { value: 'Divorced', label: t('patientIntake.maritalOptions.divorced') },
-            { value: 'Widowed', label: t('patientIntake.maritalOptions.widowed') },
-            { value: 'Domestic Partnership', label: t('patientIntake.maritalOptions.domesticPartnership') },
-            { value: 'Other', label: t('patientIntake.maritalOptions.other') },
-            { value: 'Soltero', label: 'Soltero' },
-            { value: 'Soltera', label: 'Soltera' },
-            { value: 'Casado', label: 'Casado' },
-            { value: 'Casada', label: 'Casada' },
-            { value: 'Divorciado', label: 'Divorciado' },
-            { value: 'Divorciada', label: 'Divorciada' },
-            { value: 'Viudo', label: 'Viudo' },
-            { value: 'Viuda', label: 'Viuda' },
-            { value: 'Unión libre', label: 'Unión libre' },
-            { value: 'Otro', label: 'Otro' },
-        ],
-        [t]
-    );
     const location = useLocation();
     const { username, hasRealmRole, authReady } = useAuth();
     const recordEditorRole = getMeditapRecordEditorRole();
@@ -538,8 +382,6 @@ const Tab14: React.FC = () => {
     const kcParsedTab14 = getAccessTokenPayload() ?? undefined;
     const patientSub =
         typeof kcParsedTab14?.sub === 'string' ? kcParsedTab14.sub : undefined;
-
-    const uploadStorageScope = (patientSub ?? username ?? '').trim();
 
     const canEditPatientRecords =
         hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
@@ -582,17 +424,6 @@ const Tab14: React.FC = () => {
         }
     }, [location.search]);
 
-    useEffect(() => {
-        if (!authReady || !uploadStorageScope) return;
-        let cancelled = false;
-        void loadTab14UploadedFiles(uploadStorageScope).then((restored) => {
-            if (!cancelled) setUploadedFiles(restored);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [authReady, uploadStorageScope]);
-
     // message handling 
     const [saveMessage, setSaveMessage] = useState(false); 
     const [saveErrorMessage, setSaveErrorMessage] = useState(false); 
@@ -604,6 +435,12 @@ const Tab14: React.FC = () => {
     const [noChronicConditions, setNoChronicConditions] = useState(false);
     const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
     const [uploadParsing, setUploadParsing] = useState(false);
+    /** Session-only verify hints for PDF/OCR-populated patient fields. */
+    const [pdfFieldWarnings, setPdfFieldWarnings] = useState<Tab14PatientFieldWarnings | undefined>(
+        undefined
+    );
+    const [pdfChronicWarnings, setPdfChronicWarnings] =
+        useState<Tab14ChronicConditionWarnings | undefined>(undefined);
     const [loadingIntake, setLoadingIntake] = useState(true);
     const [clearFormHintVisible, setClearFormHintVisible] = useState(false);
     const [savedFormSnapshot, setSavedFormSnapshot] = useState('');
@@ -619,7 +456,6 @@ const Tab14: React.FC = () => {
         defaultChronicCondition,
     ]);
     const [hospitalVisits, setHospitalVisits] = useState<HospitalVisit[]>([defaultHospitalVisit]);
-    const [repeaterAccordionOpen, setRepeaterAccordionOpen] = useState<Record<string, boolean>>({});
 
     const formSnapshot = useMemo(
         () =>
@@ -792,9 +628,6 @@ const Tab14: React.FC = () => {
             if (entry) URL.revokeObjectURL(entry.previewUrl);
             return prev.filter((row) => row.id !== id);
         });
-        if (uploadStorageScope) {
-            void removeTab14PersistedUpload(uploadStorageScope, id);
-        }
     };
 
     const clearUploadedFiles = () => {
@@ -803,9 +636,7 @@ const Tab14: React.FC = () => {
             return [];
         });
         setUploadParseMessage(null);
-        if (uploadStorageScope) {
-            void clearTab14PersistedUploads(uploadStorageScope);
-        }
+        setPdfFieldWarnings(undefined);
     };
 
     const uploadedFilesRef = useRef<UploadedFileEntry[]>([]);
@@ -833,6 +664,8 @@ const Tab14: React.FC = () => {
 
         let snapshot = buildMergeSnapshot();
         let patientFromUpload: Tab14PatientFields = {};
+        let warningsFromUpload: Tab14PatientFieldWarnings | undefined;
+        let anyUsedOcr = false;
         const parsedBundles: Tab14IntakeParseResult[] = [];
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
@@ -848,15 +681,22 @@ const Tab14: React.FC = () => {
                     })
                 );
 
-                const fullText = await extractTab14UploadFileText(file);
-                const bundle = parseTab14IntakeDocument(fullText);
+                const extracted = await extractTab14UploadFileText(file);
+                if (extracted.usedOcr) anyUsedOcr = true;
+                const bundle = parseTab14IntakeDocument(extracted.text);
                 parsedBundles.push(bundle);
+                const fieldsBefore = patientFromUpload;
                 patientFromUpload = mergePdfPatientFields(
                     patientFromUpload,
                     bundle.patientFields
                 );
+                warningsFromUpload = mergePdfPatientFieldWarnings(
+                    warningsFromUpload,
+                    fieldsBefore,
+                    bundle
+                );
 
-                let uploadMsg = summarizeTab14ParseResult(bundle, t);
+                let uploadMsg = summarizeTab14ParseResult(bundle);
                 fileMessages.push(uploadMsg);
 
                 newEntries.push({
@@ -885,6 +725,14 @@ const Tab14: React.FC = () => {
                 setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
                 setActiveSection(0);
             }
+            let nextWarnings = warningsFromUpload;
+            if (anyUsedOcr && Object.keys(patientFromUpload).length > 0) {
+                nextWarnings = annotateOcrSparseWarnings(patientFromUpload, nextWarnings);
+            }
+            setPdfFieldWarnings(nextWarnings);
+            setPdfChronicWarnings(
+                buildChronicConditionWarnings(snapshot.chronicConditions, anyUsedOcr)
+            );
             if (replaceChartFromPdf) {
                 setNoAllergies(snapshot.noAllergies);
                 setNoMedications(snapshot.noMedications);
@@ -895,19 +743,12 @@ const Tab14: React.FC = () => {
                 parseStatus: fileMessages[i] ?? '',
             }));
             setUploadedFiles((prev) => [...prev, ...entriesWithStatus]);
-            if (uploadStorageScope) {
-                void Promise.all(
-                    entriesWithStatus.map((entry) =>
-                        persistTab14UploadedFile(uploadStorageScope, entry)
-                    )
-                );
-            }
             setUploadParseMessage(null);
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
             newEntries.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
             setUploadParseMessage(
-                err instanceof Error ? `${t('patientIntake.errors.couldNotReadFile')} ${err.message}` : t('patientIntake.errors.couldNotReadFile')
+                err instanceof Error ? `Could not read file: ${err.message}` : 'Could not read file.'
             );
         } finally {
             setUploadParsing(false);
@@ -918,6 +759,11 @@ const Tab14: React.FC = () => {
     const handleSingleChange = 
     <T,>(field: keyof T, value: string, obj: T, setObj: React.Dispatch<React.SetStateAction<T>>) => {
         setObj({ ...obj, [field]: value });
+        if (setObj === setPatientInfo) {
+            setPdfFieldWarnings((prev) =>
+                clearPatientFieldWarning(prev, field as Tab14PatientFieldKey)
+            );
+        }
     };
 
     const handleChange = 
@@ -925,6 +771,15 @@ const Tab14: React.FC = () => {
         const updated = [...array];
         updated[index] = { ...updated[index], [field]: value } as T;
         setArray(updated);
+        if (setArray === setChronicConditions) {
+            setPdfChronicWarnings((prev) =>
+                clearChronicConditionWarning(
+                    prev,
+                    index,
+                    field as Tab14ChronicFieldKey
+                )
+            );
+        }
     };
 
     const handleAddSection = 
@@ -938,74 +793,18 @@ const Tab14: React.FC = () => {
         setArray(updated);
     };
 
-    const toggleRepeaterAccordion = (section: Tab14RepeaterSection, index: number) => {
-        setRepeaterAccordionOpen((prev) => {
-            const key = repeaterAccordionKey(section, index);
-            const nextOpen = !isRepeaterAccordionOpen(prev, section, index);
-            return { ...prev, [key]: nextOpen };
-        });
-    };
-
-    const setAllRepeaterAccordion = (
-        section: Tab14RepeaterSection,
-        count: number,
-        open: boolean
-    ) => {
-        setRepeaterAccordionOpen((prev) => {
-            const next = { ...prev };
-            for (let i = 0; i < count; i += 1) {
-                next[repeaterAccordionKey(section, i)] = open;
-            }
-            return next;
-        });
-    };
-
-    const handleAddRepeaterSection = <T,>(
-        section: Tab14RepeaterSection,
-        array: T[],
-        setArray: React.Dispatch<React.SetStateAction<T[]>>,
-        defaultObj: T
-    ) => {
-        const newIndex = array.length;
-        setArray([...array, defaultObj]);
-        setRepeaterAccordionOpen((prev) => ({
-            ...prev,
-            [repeaterAccordionKey(section, newIndex)]: true,
-        }));
-    };
-
-    const handleRemoveRepeaterSection = <T,>(
-        section: Tab14RepeaterSection,
-        index: number,
-        array: T[],
-        setArray: React.Dispatch<React.SetStateAction<T[]>>
-    ) => {
-        handleRemoveSection(index, array, setArray);
-        setRepeaterAccordionOpen((prev) => {
-            const next: Record<string, boolean> = {};
-            for (const [key, value] of Object.entries(prev)) {
-                if (!key.startsWith(`${section}:`)) next[key] = value;
-            }
-            const remaining = array.length - 1;
-            if (remaining > 0) {
-                next[repeaterAccordionKey(section, Math.min(index, remaining - 1))] = true;
-            }
-            return next;
-        });
-    };
-
     // required field checks + format checking + others 
     const checkForm = () => {
         const newErrors: Record<string, string> = {};
 
         // required fields 
-        if (!patientInfo.givenName.trim()) newErrors.givenName = t('patientIntake.errors.givenNameRequired');
-        if (!patientInfo.familyName.trim()) newErrors.familyName = t('patientIntake.errors.familyNameRequired');
-        if (!patientInfo.dateOfBirth) newErrors.dateOfBirth = t('patientIntake.errors.dobRequired');
+        if (!patientInfo.givenName.trim()) newErrors.givenName = "Given Name is required.";
+        if (!patientInfo.familyName.trim()) newErrors.familyName = "Family Name is required.";
+        if (!patientInfo.dateOfBirth) newErrors.dateOfBirth = "Date of Birth is required.";
 
         // (not required) checks if email format is correct 
         if (patientInfo.email && !/\S+@\S+\.\S+/.test(patientInfo.email)) {
-            newErrors.email = t('patientIntake.errors.emailInvalid');
+            newErrors.email = "A valid email format is required.";
         }
 
         // dont let insurance dates start after they end 
@@ -1014,7 +813,7 @@ const Tab14: React.FC = () => {
                 const start = new Date(insurance.startDate);
                 const end = new Date(insurance.endDate);
                 if (start > end) {
-                    newErrors[`insurance-${index}`] = t('patientIntake.errors.dateRangeInsurance');
+                    newErrors[`insurance-${index}`] = "Start Date cannot be after End Date.";
                 }
             }
         });
@@ -1025,7 +824,7 @@ const Tab14: React.FC = () => {
                 const start = new Date(med.startDate);
                 const end = new Date(med.endDate);
                 if (start > end) {
-                    newErrors[`medication-${index}`] = t('patientIntake.errors.dateRangeMedication');
+                    newErrors[`medication-${index}`] = "Start Date cannot be after End Date.";
                 }
             }
         });
@@ -1078,7 +877,7 @@ const Tab14: React.FC = () => {
             return true;
         } catch (e) {
             setBackendError(
-                e instanceof Error ? e.message : t('patientIntake.errors.couldNotSave')
+                e instanceof Error ? e.message : 'Could not save to server.'
             );
             return false;
         } finally {
@@ -1112,7 +911,6 @@ const Tab14: React.FC = () => {
     const clearForm = () => {
         if (!canEditPatientRecords) return;
         clearTab14DraftKeysOnly();
-        clearUploadedFiles();
         setPatientInfo(defaultPatientInfo);
         setInsurances([defaultInsurance]);
         setAllergies([defaultAllergy]);
@@ -1122,6 +920,8 @@ const Tab14: React.FC = () => {
         setNoAllergies(false);
         setNoMedications(false);
         setNoChronicConditions(false);
+        setPdfFieldWarnings(undefined);
+        setPdfChronicWarnings(undefined);
     };
 
     const loadSampleData = () => {
@@ -1137,6 +937,43 @@ const Tab14: React.FC = () => {
         setErrors({});
         setSaveErrorMessage(false);
         setBackendError(null);
+        setPdfFieldWarnings(undefined);
+        setPdfChronicWarnings(undefined);
+    };
+
+    const renderPdfFieldWarningIcon = (field: Tab14PatientFieldKey) => {
+        const warning = pdfFieldWarnings?.[field];
+        if (!warning) return null;
+        const message = warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC;
+        return (
+            <span
+                className="tab14-pdf-field-warning"
+                title={message}
+                aria-label={message}
+                role="img"
+            >
+                <i className="fas fa-exclamation-triangle" aria-hidden />
+            </span>
+        );
+    };
+
+    const renderPdfChronicWarningIcon = (
+        index: number,
+        field: Tab14ChronicFieldKey
+    ) => {
+        const warning = pdfChronicWarnings?.[index]?.[field];
+        if (!warning) return null;
+        const message = warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC;
+        return (
+            <span
+                className="tab14-pdf-field-warning"
+                title={message}
+                aria-label={message}
+                role="img"
+            >
+                <i className="fas fa-exclamation-triangle" aria-hidden />
+            </span>
+        );
     };
 
     useEffect(() => {
@@ -1163,7 +1000,7 @@ const Tab14: React.FC = () => {
                             setBackendError(
                                 e instanceof Error
                                     ? e.message
-                                    : t('patientIntake.errors.couldNotSyncLegacy')
+                                    : 'Could not sync saved browser intake to your chart.'
                             );
                         }
                     }
@@ -1178,7 +1015,7 @@ const Tab14: React.FC = () => {
                     setBackendError(
                         e instanceof Error
                             ? e.message
-                            : t('patientIntake.errors.couldNotLoadRecord')
+                            : 'Could not load your saved patient record.'
                     );
                 }
             } finally {
@@ -1195,14 +1032,14 @@ const Tab14: React.FC = () => {
     const renderPatientVitalsFields = () => (
         <>
             <div className="form-field">
-                <label>{t('patientIntake.heightInches')}</label>
+                <label>Height (inches)</label>
                 <input
                     type="number"
                     min={1}
                     max={96}
                     step={0.1}
                     inputMode="decimal"
-                    placeholder={t('patientIntake.heightPlaceholder')}
+                    placeholder={'e.g. 70 for 5\'10"'}
                     value={patientInfo.heightInches}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1216,14 +1053,14 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>{t('patientIntake.weightLbs')}</label>
+                <label>Weight (lb)</label>
                 <input
                     type="number"
                     min={1}
                     max={999}
                     step={0.1}
                     inputMode="decimal"
-                    placeholder={t('patientIntake.weightPlaceholder')}
+                    placeholder="e.g. 180"
                     value={patientInfo.weightLbs}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1237,13 +1074,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>{t('patientIntake.bpSystolic')}</label>
+                <label>Blood pressure (systolic)</label>
                 <input
                     type="number"
                     min={1}
                     max={300}
                     inputMode="numeric"
-                    placeholder={t('patientIntake.vitalsPlaceholderSys')}
+                    placeholder="e.g. 120"
                     value={patientInfo.systolicBp}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1257,13 +1094,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>{t('patientIntake.bpDiastolic')}</label>
+                <label>Blood pressure (diastolic)</label>
                 <input
                     type="number"
                     min={1}
                     max={200}
                     inputMode="numeric"
-                    placeholder={t('patientIntake.vitalsPlaceholderDia')}
+                    placeholder="e.g. 80"
                     value={patientInfo.diastolicBp}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1277,13 +1114,13 @@ const Tab14: React.FC = () => {
             </div>
 
             <div className="form-field">
-                <label>{t('patientIntake.heartRate')}</label>
+                <label>Heart rate (bpm)</label>
                 <input
                     type="number"
                     min={1}
                     max={250}
                     inputMode="numeric"
-                    placeholder={t('patientIntake.vitalsPlaceholderHr')}
+                    placeholder="e.g. 72"
                     value={patientInfo.heartRate}
                     onChange={(e) =>
                         handleSingleChange(
@@ -1306,7 +1143,7 @@ const Tab14: React.FC = () => {
                 if (bmi == null) return null;
                 return (
                     <p className="tab14-vitals-bmi-preview" role="status">
-                        {t('patientIntake.calculatedBmi')} <strong>{formatBmiDisplay(bmi)}</strong> (
+                        Calculated BMI: <strong>{formatBmiDisplay(bmi)}</strong> (
                         {bmiCategoryLabel(bmi)})
                     </p>
                 );
@@ -1332,7 +1169,6 @@ const Tab14: React.FC = () => {
                                 <i className="fas fa-flask" aria-hidden />
                                 {t('patientIntake.loadSample')}
                             </button>
-                            <HeaderLanguagePicker />
                             <button type="button" className="book-btn">
                                 <a
                                     href="/tab1"
@@ -1432,7 +1268,9 @@ const Tab14: React.FC = () => {
                             <div className="tab14-section-card">
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.givenName')} *</label>
+                                    <label>
+                                        Given Name *{renderPdfFieldWarningIcon('givenName')}
+                                    </label>
                                     <input
                                         value={patientInfo.givenName}
                                         onChange={(e) =>
@@ -1451,7 +1289,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.familyName')} *</label>
+                                    <label>
+                                        Family Name *{renderPdfFieldWarningIcon('familyName')}
+                                    </label>
                                     <input
                                         value={patientInfo.familyName}
                                         onChange={(e) =>
@@ -1470,7 +1310,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.dateOfBirth')} *</label>
+                                    <label>
+                                        Date of Birth *{renderPdfFieldWarningIcon('dateOfBirth')}
+                                    </label>
                                     <GlassDateInput
                                         value={patientInfo.dateOfBirth}
                                         onChange={(iso) =>
@@ -1485,7 +1327,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.email')} </label>
+                                    <label>
+                                        Email {renderPdfFieldWarningIcon('email')}
+                                    </label>
                                     <input
                                         type="email"
                                         value={patientInfo.email}
@@ -1506,7 +1350,9 @@ const Tab14: React.FC = () => {
                                 </div>
                                 
                                 <div className = "form-field">
-                                    <label>{t('patientIntake.phoneNumber')}</label>
+                                    <label>
+                                        Phone Number {renderPdfFieldWarningIcon('phoneNumber')}
+                                    </label>
                                     <input 
                                     value = {patientInfo.phoneNumber}
                                     onChange={(e) =>
@@ -1520,7 +1366,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.address')}</label>
+                                    <label>
+                                        Address{renderPdfFieldWarningIcon('address')}
+                                    </label>
                                     <input
                                         value={patientInfo.address}
                                         onChange={(e) =>
@@ -1535,7 +1383,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.race')}</label>
+                                    <label>
+                                        Race{renderPdfFieldWarningIcon('race')}
+                                    </label>
                                     <input
                                         value={patientInfo.race}
                                         onChange={(e) =>
@@ -1550,7 +1400,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.ethnicity')}</label>
+                                    <label>
+                                        Ethnicity{renderPdfFieldWarningIcon('ethnicity')}
+                                    </label>
                                     <input
                                         value={patientInfo.ethnicity}
                                         onChange={(e) =>
@@ -1565,7 +1417,9 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.preferredLanguage')}</label>
+                                    <label>
+                                        Preferred Language{renderPdfFieldWarningIcon('preferredLanguage')}
+                                    </label>
                                     <input
                                         value={patientInfo.preferredLanguage}
                                         onChange={(e) =>
@@ -1580,29 +1434,40 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.maritalStatus')}</label>
-                                    {renderIntakeSelect(
-                                        patientInfo.maritalStatus,
-                                        maritalStatusOptions,
-                                        t('patientIntake.selectMaritalStatus'),
-                                        (next) =>
+                                    <label>
+                                        Marital Status{renderPdfFieldWarningIcon('maritalStatus')}
+                                    </label>
+                                    <select
+                                        value={patientInfo.maritalStatus}
+                                        onChange={(e) =>
                                             handleSingleChange(
                                                 'maritalStatus',
-                                                next,
+                                                e.target.value,
                                                 patientInfo,
                                                 setPatientInfo
                                             )
-                                    )}
+                                        }
+                                    >
+                                        <option value="">Select marital status</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Married">Married</option>
+                                        <option value="Divorced">Divorced</option>
+                                        <option value="Widowed">Widowed</option>
+                                        <option value="Domestic Partnership">Domestic Partnership</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
                                 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.bloodType')}</label>
+                                    <label>
+                                        Blood Type{renderPdfFieldWarningIcon('bloodType')}
+                                    </label>
                                     <select
                                     value={patientInfo.bloodType}
                                     onChange={(e) =>
                                         handleSingleChange("bloodType", e.target.value, patientInfo, setPatientInfo)
                                     }>
-                                        <option value="">{t('patientIntake.selectBloodType')}</option>
+                                        <option value="">Select Blood Type</option>
                                         <option value="A+">A+</option>
                                         <option value="A-">A-</option>
                                         <option value="B+">B+</option>
@@ -1615,19 +1480,18 @@ const Tab14: React.FC = () => {
                                 </div>
 
                                 <div className="form-field">
-                                    <label>{t('patientIntake.sexAtBirth')}</label>
-                                    {renderIntakeSelect(
-                                        patientInfo.sexAtBirth,
-                                        sexAtBirthOptions,
-                                        t('patientIntake.selectSexAtBirth'),
-                                        (next) =>
-                                            handleSingleChange(
-                                                'sexAtBirth',
-                                                next,
-                                                patientInfo,
-                                                setPatientInfo
-                                            )
-                                    )}
+                                    <label>
+                                        Sex at Birth{renderPdfFieldWarningIcon('sexAtBirth')}
+                                    </label>
+                                    <select
+                                    value={patientInfo.sexAtBirth}
+                                    onChange={(e) =>
+                                        handleSingleChange("sexAtBirth", e.target.value, patientInfo, setPatientInfo)
+                                    }>
+                                        <option value="">Select Sex at Birth</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
                                 </div>
 
                             </div>
@@ -1735,7 +1599,7 @@ const Tab14: React.FC = () => {
                                             className="remove-button"
                                             type="button"
                                             onClick={() => handleRemoveSection(index, insurances, setInsurances)}>
-                                                {t('patientIntake.removeInsurance')}
+                                                Remove Insurance
                                             </button>
                                         )}
                                     </div>
@@ -1779,25 +1643,12 @@ const Tab14: React.FC = () => {
                                     </span>
                                 </label>
 
-                                {!noAllergies && allergies.length > 0 && (
-                                    <Tab14RepeaterToolbar
-                                        onExpandAll={() => setAllRepeaterAccordion('allergy', allergies.length, true)}
-                                        onCollapseAll={() => setAllRepeaterAccordion('allergy', allergies.length, false)}
-                                    />
-                                )}
-
                                 {!noAllergies && allergies.map((allergy, index) => (
-                                    <Tab14RepeaterAccordion
-                                        key={index}
-                                        sectionKey="allergy"
-                                        index={index}
-                                        title={repeaterRowTitle('allergy', index, allergy.allergyName)}
-                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'allergy', index)}
-                                        onToggle={() => toggleRepeaterAccordion('allergy', index)}
-                                    >
+                                    <div key={index} className="section-block">
+                                    <h3>Allergy {index + 1}</h3>
 
                                     <div className="form-field">
-                                        <label>{t('patientIntake.allergyName')}</label>
+                                        <label>Allergy Name</label>
                                         <input
                                         value={allergy.allergyName}
                                         onChange={(e) =>
@@ -1806,7 +1657,7 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>{t('patientIntake.allergyType')}</label>
+                                        <label>Type (e.g. food, drug)</label>
                                         <select
                                         value={allergy.allergyType}
                                         onChange={(e) => {
@@ -1823,17 +1674,17 @@ const Tab14: React.FC = () => {
                                                 return next;
                                             });
                                         }}>
-                                            <option value="">{t('patientIntake.selectAllergyType')}</option>
-                                            <option value="Food">{t('patientIntake.allergyTypes.food')}</option>
-                                            <option value="Drug">{t('patientIntake.allergyTypes.drug')}</option>
-                                            <option value="Environmental">{t('patientIntake.allergyTypes.environmental')}</option>
-                                            <option value="Other">{t('patientIntake.allergyTypes.other')}</option>
+                                            <option value="">Select type</option>
+                                            <option value="Food">Food</option>
+                                            <option value="Drug">Drug</option>
+                                            <option value="Environmental">Environmental</option>
+                                            <option value="Other">Other</option>
                                         </select>
                                     </div>
 
                                     {allergy.allergyType === 'Other' && (
                                         <div className="form-field">
-                                            <label>{t('patientIntake.allergyTypeOther')}</label>
+                                            <label>Describe allergy type</label>
                                             <input
                                                 value={allergy.allergyTypeOther}
                                                 onChange={(e) =>
@@ -1845,33 +1696,28 @@ const Tab14: React.FC = () => {
                                                         setAllergies
                                                     )
                                                 }
-                                                placeholder={t('patientIntake.allergyTypeOtherPlaceholder')}
+                                                placeholder="e.g. Latex, contrast dye, insect sting"
                                             />
                                         </div>
                                     )}
 
                                     <div className="form-field">
-                                        <label>{t('patientIntake.severity')}</label>
-                                        {renderIntakeSelect(
-                                            allergy.severity,
-                                            allergySeverityOptions.map((opt) => ({
-                                                value: opt.value,
-                                                label: opt.label,
-                                            })),
-                                            t('patientIntake.selectSeverity'),
-                                            (next) =>
-                                                handleChange(
-                                                    index,
-                                                    'severity',
-                                                    next,
-                                                    allergies,
-                                                    setAllergies
-                                                )
-                                        )}
+                                        <label>Severity</label>
+                                        <select
+                                        value={allergy.severity}
+                                        onChange={(e) =>
+                                            handleChange(index, "severity", e.target.value, allergies, setAllergies)
+                                        }>
+                                            {ALLERGY_SEVERITY_OPTIONS.map((opt) => (
+                                                <option key={opt.value || 'blank'} value={opt.value}>
+                                                    {opt.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
 
                                     <div className="form-field">
-                                        <label>{t('patientIntake.reactionNotes')}</label>
+                                        <label>Reaction Notes</label>
                                         <input
                                         value={allergy.reactionNotes}
                                         onChange={(e) =>
@@ -1880,7 +1726,7 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
-                                        <label>{t('patientIntake.lastObserved')}</label>
+                                        <label>Last observed</label>
                                         <GlassDateInput
                                             value={allergy.lastObserved}
                                             onChange={(iso) =>
@@ -1894,17 +1740,17 @@ const Tab14: React.FC = () => {
                                         <button
                                         className="remove-button"
                                         type="button"
-                                        onClick={() => handleRemoveRepeaterSection('allergy', index, allergies, setAllergies)}>
-                                        {t('patientIntake.removeAllergy')}
+                                        onClick={() => handleRemoveSection(index, allergies, setAllergies)}>
+                                        Remove Allergy
                                         </button>
                                     )}
-                                    </Tab14RepeaterAccordion>
+                                    </div>
                                 ))}
 
                                 <button
                                     className="add-section-button"
                                     type="button"
-                                    onClick={() => handleAddRepeaterSection('allergy', allergies, setAllergies, defaultAllergy)}>
+                                    onClick={() => handleAddSection(allergies, setAllergies, defaultAllergy)}>
                                     + Add Another Allergy
                                 </button>
 
@@ -1927,29 +1773,12 @@ const Tab14: React.FC = () => {
                                     Click here if no known medications are present
                                 </label>
 
-                                {!noMedications && medications.length > 0 && (
-                                    <Tab14RepeaterToolbar
-                                        onExpandAll={() => setAllRepeaterAccordion('medication', medications.length, true)}
-                                        onCollapseAll={() => setAllRepeaterAccordion('medication', medications.length, false)}
-                                    />
-                                )}
-
                                 {!noMedications && medications.map((med, index) => (
-                                    <Tab14RepeaterAccordion
-                                        key={index}
-                                        sectionKey="medication"
-                                        index={index}
-                                        title={repeaterRowTitle(
-                                            'medication',
-                                            index,
-                                            med.genericName || med.brandName
-                                        )}
-                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'medication', index)}
-                                        onToggle={() => toggleRepeaterAccordion('medication', index)}
-                                    >
+                                    <div key={index} className="section-block">
+                                        <h3>Medication {index + 1}</h3>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.genericName')}</label>
+                                            <label>Generic Name</label>
                                             <input
                                             value={med.genericName}
                                             onChange={(e) =>
@@ -1958,7 +1787,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.brandName')}</label>
+                                            <label>Brand Name</label>
                                             <input
                                             value={med.brandName}
                                             onChange={(e) =>
@@ -1967,7 +1796,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.dosage')}</label>
+                                            <label>Dosage</label>
                                             <input
                                             value={med.dosage}
                                             onChange={(e) =>
@@ -1976,7 +1805,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.route')}</label>
+                                            <label>Route</label>
                                             <input
                                             value={med.route}
                                             onChange={(e) =>
@@ -1985,7 +1814,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.frequency')}</label>
+                                            <label>Frequency</label>
                                             <input
                                             value={med.frequency}
                                             onChange={(e) =>
@@ -1994,7 +1823,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.purpose')}</label>
+                                            <label>Purpose / indication</label>
                                             <input
                                             value={med.purpose}
                                             onChange={(e) =>
@@ -2003,7 +1832,7 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.prescribingPhysician')}</label>
+                                            <label>Prescribing physician</label>
                                             <input
                                             value={med.prescribingPhysician}
                                             onChange={(e) =>
@@ -2036,7 +1865,7 @@ const Tab14: React.FC = () => {
                                         <span className="save-error-message">{errors[`medication-${index}`]}</span>
                                         )}      
                                         <div className="form-field">
-                                            <label>{t('patientIntake.notes')}</label>
+                                            <label>Notes</label>
                                             <input
                                             value={med.notesMedication}
                                             onChange={(e) =>
@@ -2048,18 +1877,18 @@ const Tab14: React.FC = () => {
                                             <button
                                                 className="remove-button"
                                                 type="button"
-                                                onClick={() => handleRemoveRepeaterSection('medication', index, medications, setMedications)}>
-                                                {t('patientIntake.removeMedication')}
+                                                onClick={() => handleRemoveSection(index, medications, setMedications)}>
+                                                Remove Medication
                                             </button>
                                         )}
-                                    </Tab14RepeaterAccordion>
+                                    </div>
                                 ))}
 
                                 {!noMedications && (
                                     <button
                                         className="add-section-button"
                                         type="button"
-                                        onClick={() => handleAddRepeaterSection('medication', medications, setMedications, defaultMedication)}>
+                                        onClick={() => handleAddSection(medications, setMedications, defaultMedication)}>
                                         + Add Another Medication
                                     </button>
                                 )}
@@ -2083,29 +1912,16 @@ const Tab14: React.FC = () => {
                                     Click here if no known chronic conditions are present
                                 </label>
 
-                                {!noChronicConditions && chronicConditions.length > 0 && (
-                                    <Tab14RepeaterToolbar
-                                        onExpandAll={() =>
-                                            setAllRepeaterAccordion('chronic', chronicConditions.length, true)
-                                        }
-                                        onCollapseAll={() =>
-                                            setAllRepeaterAccordion('chronic', chronicConditions.length, false)
-                                        }
-                                    />
-                                )}
-
                                 {!noChronicConditions && chronicConditions.map((condition, index) => (
-                                    <Tab14RepeaterAccordion
-                                        key={index}
-                                        sectionKey="chronic"
-                                        index={index}
-                                        title={repeaterRowTitle('chronic', index, condition.conditionName)}
-                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'chronic', index)}
-                                        onToggle={() => toggleRepeaterAccordion('chronic', index)}
-                                    >
+                                    <div key={index} className="section-block">
+
+                                        <h3>Chronic Conditions {index + 1}</h3>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.conditionName')}</label>
+                                            <label>
+                                                Condition Name
+                                                {renderPdfChronicWarningIcon(index, 'conditionName')}
+                                            </label>
                                             <input
                                             value={condition.conditionName}
                                             onChange={(e) =>
@@ -2114,7 +1930,10 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.icdCode')}</label>
+                                            <label>
+                                                ICD Code
+                                                {renderPdfChronicWarningIcon(index, 'icdCode')}
+                                            </label>
                                             <input
                                             value={condition.icdCode}
                                             onChange={(e) =>
@@ -2123,7 +1942,10 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.diagnosisDate')}</label>
+                                            <label>
+                                                Diagnosis Date
+                                                {renderPdfChronicWarningIcon(index, 'diagnosisDate')}
+                                            </label>
                                             <GlassDateInput
                                                 value={condition.diagnosisDate}
                                                 onChange={(iso) =>
@@ -2140,7 +1962,10 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.preexisting')}</label>
+                                            <label>
+                                                Preexisting
+                                                {renderPdfChronicWarningIcon(index, 'prexisting')}
+                                            </label>
                                             <input
                                             value={condition.prexisting}
                                             onChange={(e) =>
@@ -2149,7 +1974,13 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
-                                            <label>{t('patientIntake.additionalNotes')}</label>
+                                            <label>
+                                                Additional Notes
+                                                {renderPdfChronicWarningIcon(
+                                                    index,
+                                                    'notesChronicConditions'
+                                                )}
+                                            </label>
                                             <input
                                             value={condition.notesChronicConditions}
                                             onChange={(e) =>
@@ -2162,19 +1993,19 @@ const Tab14: React.FC = () => {
                                                 className = "remove-button"
                                                 type="button"
                                                 onClick={() =>
-                                                    handleRemoveRepeaterSection('chronic', index, chronicConditions, setChronicConditions)
+                                                    handleRemoveSection(index, chronicConditions, setChronicConditions)
                                                   }>
-                                                {t('patientIntake.removeChronic')}
+                                                Remove Chronic Condition
                                             </button>
                                         )}
-                                    </Tab14RepeaterAccordion>
+                                    </div>
                                 ))}
 
                                 <button
                                     className = "add-section-button"
                                     type = "button"
                                     onClick={() =>
-                                    handleAddRepeaterSection('chronic', chronicConditions, setChronicConditions, defaultChronicCondition)}>
+                                    handleAddSection(chronicConditions, setChronicConditions, defaultChronicCondition)}>
                                     + Add Another Chronic Condition
                                 </button>
 
@@ -2186,33 +2017,13 @@ const Tab14: React.FC = () => {
                             <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
                                 Fill these fields to populate the Health Overview “Patient Hospital” card.
                             </p>
-                            {hospitalVisits.length > 0 && (
-                                <Tab14RepeaterToolbar
-                                    onExpandAll={() =>
-                                        setAllRepeaterAccordion('hospitalVisit', hospitalVisits.length, true)
-                                    }
-                                    onCollapseAll={() =>
-                                        setAllRepeaterAccordion('hospitalVisit', hospitalVisits.length, false)
-                                    }
-                                />
-                            )}
                             {hospitalVisits.map((visit, index) => (
-                                <Tab14RepeaterAccordion
-                                    key={index}
-                                    sectionKey="hospitalVisit"
-                                    index={index}
-                                    title={repeaterRowTitle(
-                                        'hospitalVisit',
-                                        index,
-                                        visit.facilityName || visit.visitType || visit.reason
-                                    )}
-                                    isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'hospitalVisit', index)}
-                                    onToggle={() => toggleRepeaterAccordion('hospitalVisit', index)}
-                                >
+                                <div key={index} className="section-block">
+                                    <h3>Hospital Visit {index + 1}</h3>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.visitType')}</label>
+                                        <label>Type</label>
                                         <input
-                                            placeholder={t('patientIntake.visitTypePlaceholder')}
+                                            placeholder='e.g. Recent admission, ER, outpatient'
                                             value={visit.visitType}
                                             onChange={(e) =>
                                                 handleChange(index, 'visitType', e.target.value, hospitalVisits, setHospitalVisits)
@@ -2220,7 +2031,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.facility')}</label>
+                                        <label>Facility</label>
                                         <input
                                             value={visit.facilityName}
                                             onChange={(e) =>
@@ -2229,7 +2040,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.reason')}</label>
+                                        <label>Reason</label>
                                         <input
                                             value={visit.reason}
                                             onChange={(e) =>
@@ -2238,7 +2049,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.visitDate')}</label>
+                                        <label>Date</label>
                                         <GlassDateInput
                                             value={visit.visitDate}
                                             onChange={(iso) =>
@@ -2248,7 +2059,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.dischargeDate')}</label>
+                                        <label>Discharge</label>
                                         <GlassDateInput
                                             value={visit.dischargeDate}
                                             onChange={(iso) =>
@@ -2257,7 +2068,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.attending')}</label>
+                                        <label>Attending</label>
                                         <input
                                             value={visit.attendingPhysician}
                                             onChange={(e) =>
@@ -2266,7 +2077,7 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>{t('patientIntake.reportId')}</label>
+                                        <label>ReportId</label>
                                         <input
                                             value={visit.reportId}
                                             onChange={(e) =>
@@ -2279,19 +2090,19 @@ const Tab14: React.FC = () => {
                                             className="remove-button"
                                             type="button"
                                             onClick={() =>
-                                                handleRemoveRepeaterSection('hospitalVisit', index, hospitalVisits, setHospitalVisits)
+                                                handleRemoveSection(index, hospitalVisits, setHospitalVisits)
                                             }
                                         >
-                                            {t('patientIntake.removeHospitalVisit')}
+                                            Remove Hospital Visit
                                         </button>
                                     )}
-                                </Tab14RepeaterAccordion>
+                                </div>
                             ))}
                             <button
                                 className="add-section-button"
                                 type="button"
                                 onClick={() =>
-                                    handleAddRepeaterSection('hospitalVisit', hospitalVisits, setHospitalVisits, defaultHospitalVisit)
+                                    handleAddSection(hospitalVisits, setHospitalVisits, defaultHospitalVisit)
                                 }
                             >
                                 + Add Another Hospital Visit
@@ -2356,14 +2167,10 @@ const Tab14: React.FC = () => {
                     <div className = "form"> 
                         {saveErrorMessage && (
                             <span className = "save-error-message">
-                                <Trans
-                                    i18nKey="patientIntake.saveErrorHint"
-                                    components={{
-                                        givenName: <strong />,
-                                        familyName: <strong />,
-                                        dob: <strong />,
-                                    }}
-                                />
+                                Unable to save. Upload a PDF or ensure{' '}
+                                <strong>Given Name</strong>, <strong>Family Name</strong>, and{' '}
+                                <strong>Date of Birth</strong> are filled (Patient Information
+                                section).
                             </span>
                         )}
                         {backendError && (
@@ -2396,12 +2203,12 @@ const Tab14: React.FC = () => {
                         {uploadedFiles.length > 0 && (
                         <div className="file-preview-list">
                             <div className="file-preview-row file-preview-row--head" aria-hidden="true">
-                                <span className="file-preview-cell file-preview-cell--name">{t('patientIntake.uploadTableName')}</span>
-                                <span className="file-preview-cell file-preview-cell--size">{t('patientIntake.uploadTableSize')}</span>
-                                <span className="file-preview-cell file-preview-cell--uploaded">{t('patientIntake.uploadTableUploaded')}</span>
-                                <span className="file-preview-cell file-preview-cell--status">{t('patientIntake.uploadTableStatus')}</span>
-                                <span className="file-preview-cell file-preview-cell--preview">{t('patientIntake.uploadTablePreview')}</span>
-                                <span className="file-preview-cell file-preview-cell--actions">{t('patientIntake.uploadTableActions')}</span>
+                                <span className="file-preview-cell file-preview-cell--name">Name</span>
+                                <span className="file-preview-cell file-preview-cell--size">Size</span>
+                                <span className="file-preview-cell file-preview-cell--uploaded">Uploaded</span>
+                                <span className="file-preview-cell file-preview-cell--status">Import status</span>
+                                <span className="file-preview-cell file-preview-cell--preview">Preview</span>
+                                <span className="file-preview-cell file-preview-cell--actions">Actions</span>
                             </div>
                             {uploadedFiles.map((entry) => (
                                 <div className="file-preview-row" key={entry.id}>
@@ -2437,7 +2244,7 @@ const Tab14: React.FC = () => {
                                                 type="button"
                                                 onClick={() => window.open(entry.previewUrl, '_blank')}
                                             >
-                                                {t('patientIntake.previewPdf')}
+                                                Preview PDF
                                             </button>
                                         ) : entry.file.type.startsWith('image/') ? (
                                             <button
@@ -2457,7 +2264,7 @@ const Tab14: React.FC = () => {
                                             type="button"
                                             onClick={() => removeUploadedFile(entry.id)}
                                         >
-                                            {t('patientIntake.removeFile')}
+                                            Remove
                                         </button>
                                     </span>
                                 </div>
@@ -2496,7 +2303,7 @@ const Tab14: React.FC = () => {
                                     onClick={() => void saveAndLeavePage()}
                                     disabled={saving}
                                 >
-                                    {saving ? t('patientIntake.saving') : t('patientIntake.save')}
+                                    {saving ? 'Saving...' : 'Save'}
                                 </button>
                                 <button
                                     type="button"

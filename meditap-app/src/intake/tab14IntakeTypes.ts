@@ -15,9 +15,6 @@ export type Tab14PatientFields = Partial<{
   sexAtBirth: string;
   heightInches: string;
   weightLbs: string;
-  systolicBp: string;
-  diastolicBp: string;
-  heartRate: string;
 }>;
 
 export type Tab14InsuranceRow = {
@@ -71,6 +68,34 @@ export type Tab14HospitalFields = Partial<{
   reportId: string;
 }>;
 
+/** Patient demographic keys that may carry PDF/OCR verification warnings. */
+export type Tab14PatientFieldKey = keyof Tab14PatientFields;
+
+export type Tab14FieldWarningReason =
+  | 'label_bleed'
+  | 'contains_other_label'
+  | 'suspicious_name'
+  | 'ocr_sparse'
+  | 'other';
+
+export type Tab14FieldWarning = {
+  /** Staff-facing copy: needs verification, not "wrong". */
+  message: string;
+  reason: Tab14FieldWarningReason;
+};
+
+/** Optional per-field warnings from PDF/OCR extraction (session UI only). */
+export type Tab14PatientFieldWarnings = Partial<
+  Record<Tab14PatientFieldKey, Tab14FieldWarning>
+>;
+
+export type Tab14ChronicFieldKey = keyof Tab14ChronicRow;
+
+/** Session-only verify warnings for repeater chronic-condition fields. */
+export type Tab14ChronicConditionWarnings = Partial<
+  Record<number, Partial<Record<Tab14ChronicFieldKey, Tab14FieldWarning>>>
+>;
+
 export interface Tab14IntakeParseResult {
   patientFields: Tab14PatientFields;
   /** When true, caller should set allergies UI to NKDA / empty list. */
@@ -80,4 +105,9 @@ export interface Tab14IntakeParseResult {
   medications: Tab14MedicationRow[];
   chronicConditions: Tab14ChronicRow[];
   hospitalVisit: Tab14HospitalFields;
+  /**
+   * Fields that may have been misread from the document.
+   * Not persisted with the patient chart — used for UI verify icons only.
+   */
+  fieldWarnings?: Tab14PatientFieldWarnings;
 }
