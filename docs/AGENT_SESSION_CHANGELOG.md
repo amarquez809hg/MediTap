@@ -1005,3 +1005,35 @@
 ---
 
 *Last updated: entry 77 (Riverbend HIE PDF parser); Set 6 entries 65–77.*
+
+---
+
+### 78) PDF field provenance warnings and verification UI
+
+**Type:** Feature / Bug Fix
+**Key:** `MT-AG-074`
+
+**Summary:** Add session-only verification warnings for potentially inaccurate PDF/OCR-populated intake fields and prevent encounter-note prose from being treated as chronic conditions.
+
+**What was done:**
+
+- Added optional per-field warning metadata to Tab14 parse results, with label-bleed, neighboring-label, suspicious-name, and OCR/sparse-text reasons.
+- Added safe demographic normalization and warnings for values such as repeated `Name` labels while preserving parsed values as strings.
+- Preserved warnings with their winning values across parser and multi-file merges; warnings from losing values no longer leak onto clean replacements.
+- Added accessible warning icons beside affected demographics and chronic-condition fields; manual edits clear only the edited field's warning.
+- Kept warnings session-only and non-blocking—saving remains allowed.
+- Improved chronic-condition classification so SOAP/encounter content is filtered from chronic diagnoses and retained as hospital-visit information where applicable.
+- Fixed production build regressions by restoring blood-pressure and heart-rate keys to the shared patient-field type.
+- Replaced an unavailable Font Awesome warning glyph with Ionic's bundled warning icon so indicators render reliably.
+- Added focused parser, warning merge, OCR annotation, edit-clear, and encounter-classification tests.
+
+**Outcome:** Uploaded values that need human verification now display visible, accessible warnings without being labeled incorrect or blocking save. Clean replacement values do not inherit stale warnings. All 110 unit/integration tests and the production build pass.
+
+**Primary paths:** `meditap-app/src/intake/intakeFieldWarnings.ts`, `tab14IntakeTypes.ts`, `generalIntakeExtract.ts`, `tab14DocumentParse.ts`, `applyTab14ParseBundle.ts`, `documentTextExtraction.ts`, `pages/Tab14.tsx`, `pages/Tab14.css`
+**Commits:** `b10183b`, `7078f53`
+
+---
+
+**Next register entry:** **79** / **`MT-AG-075`**
+
+*Last updated: entry 78 (PDF field provenance warnings).*
