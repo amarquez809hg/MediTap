@@ -13,6 +13,7 @@ git reset --hard origin/main
 if [[ -f "$DB_BAK" ]]; then
   mv "$DB_BAK" "$DB"
 fi
+bash scripts/check-tab14-accordion.sh "$HOME/MediTap"
 cd backend
 source ~/MediTap/venv/bin/activate
 python manage.py migrate
