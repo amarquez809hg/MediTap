@@ -63,6 +63,26 @@ describe('warningsForWinningPatientFields', () => {
     expect(warnings?.givenName?.reason).toBe('label_bleed');
     expect(warnings?.familyName).toBeUndefined();
   });
+
+  it('does not attach a warning from a losing value to a clean winner', () => {
+    const warnings = warningsForWinningPatientFields(
+      { givenName: 'Maria' },
+      [
+        {
+          fields: { givenName: 'Maria Garcia DOB 01/02/1990' },
+          warnings: {
+            givenName: {
+              message: FIELD_WARNING_MESSAGES.VERIFY_OTHER_LABEL,
+              reason: 'contains_other_label',
+            },
+          },
+        },
+        { fields: { givenName: 'Maria' } },
+      ]
+    );
+
+    expect(warnings?.givenName).toBeUndefined();
+  });
 });
 
 describe('annotateOcrSparseWarnings', () => {

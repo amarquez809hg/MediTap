@@ -127,4 +127,37 @@ describe('PDF field warning merge', () => {
     expect(cleared?.givenName).toBeUndefined();
     expect(cleared?.familyName?.reason).toBe('label_bleed');
   });
+
+  it('does not carry a warning to a different value supplied by a later upload', () => {
+    const first: Tab14IntakeParseResult = {
+      patientFields: { givenName: 'Maria Garcia DOB 01/02/1990' },
+      noKnownDrugAllergies: false,
+      insurances: [],
+      allergies: [],
+      medications: [],
+      chronicConditions: [],
+      hospitalVisit: {},
+      fieldWarnings: {
+        givenName: {
+          message: FIELD_WARNING_MESSAGES.VERIFY_OTHER_LABEL,
+          reason: 'contains_other_label',
+        },
+      },
+    };
+    const second: Tab14IntakeParseResult = {
+      patientFields: { givenName: 'Maria' },
+      noKnownDrugAllergies: false,
+      insurances: [],
+      allergies: [],
+      medications: [],
+      chronicConditions: [],
+      hospitalVisit: {},
+    };
+
+    const firstFields = mergePdfPatientFields({}, first.patientFields);
+    const firstWarnings = mergePdfPatientFieldWarnings(undefined, {}, first);
+    const warnings = mergePdfPatientFieldWarnings(firstWarnings, firstFields, second);
+
+    expect(warnings?.givenName).toBeUndefined();
+  });
 });

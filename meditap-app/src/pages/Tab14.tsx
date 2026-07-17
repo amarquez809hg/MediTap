@@ -69,8 +69,10 @@ import {
 } from '../vitals/bmi';
 import {
     IonPage,
-    IonContent
+    IonContent,
+    IonIcon
 } from '@ionic/react';
+import { warningOutline } from 'ionicons/icons';
 
 interface PatientInfo {
     givenName: string;
@@ -683,7 +685,16 @@ const Tab14: React.FC = () => {
 
                 const extracted = await extractTab14UploadFileText(file);
                 if (extracted.usedOcr) anyUsedOcr = true;
-                const bundle = parseTab14IntakeDocument(extracted.text);
+                const parsedBundle = parseTab14IntakeDocument(extracted.text);
+                const bundle: Tab14IntakeParseResult = extracted.usedOcr
+                    ? {
+                          ...parsedBundle,
+                          fieldWarnings: annotateOcrSparseWarnings(
+                              parsedBundle.patientFields,
+                              parsedBundle.fieldWarnings
+                          ),
+                      }
+                    : parsedBundle;
                 parsedBundles.push(bundle);
                 const fieldsBefore = patientFromUpload;
                 patientFromUpload = mergePdfPatientFields(
@@ -725,11 +736,7 @@ const Tab14: React.FC = () => {
                 setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
                 setActiveSection(0);
             }
-            let nextWarnings = warningsFromUpload;
-            if (anyUsedOcr && Object.keys(patientFromUpload).length > 0) {
-                nextWarnings = annotateOcrSparseWarnings(patientFromUpload, nextWarnings);
-            }
-            setPdfFieldWarnings(nextWarnings);
+            setPdfFieldWarnings(warningsFromUpload);
             setPdfChronicWarnings(
                 buildChronicConditionWarnings(snapshot.chronicConditions, anyUsedOcr)
             );
@@ -952,7 +959,7 @@ const Tab14: React.FC = () => {
                 aria-label={message}
                 role="img"
             >
-                <i className="fas fa-exclamation-triangle" aria-hidden />
+                <IonIcon icon={warningOutline} aria-hidden />
             </span>
         );
     };
@@ -971,7 +978,7 @@ const Tab14: React.FC = () => {
                 aria-label={message}
                 role="img"
             >
-                <i className="fas fa-exclamation-triangle" aria-hidden />
+                <IonIcon icon={warningOutline} aria-hidden />
             </span>
         );
     };

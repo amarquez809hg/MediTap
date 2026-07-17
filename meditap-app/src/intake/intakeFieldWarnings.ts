@@ -186,14 +186,6 @@ export function warningsForWinningPatientFields(
         found = src.warnings[key];
       }
     }
-    // Fallback: any source that set this key with a warning
-    if (!found) {
-      for (const src of sources) {
-        if (src.fields[key]?.trim() && src.warnings?.[key]) {
-          found = src.warnings[key];
-        }
-      }
-    }
     if (found) out[key] = found;
   }
   return Object.keys(out).length ? out : undefined;
