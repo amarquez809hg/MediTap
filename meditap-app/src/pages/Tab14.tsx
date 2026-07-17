@@ -373,6 +373,120 @@ function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
     return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
 }
 
+
+type Tab14RepeaterSection = 'allergy' | 'medication' | 'chronic' | 'hospitalVisit';
+
+function repeaterAccordionKey(section: Tab14RepeaterSection, index: number) {
+    return `${section}:${index}`;
+}
+
+function isRepeaterAccordionOpen(
+    openMap: Record<string, boolean>,
+    section: Tab14RepeaterSection,
+    index: number
+) {
+    const key = repeaterAccordionKey(section, index);
+    if (key in openMap) return openMap[key];
+    return index === 0;
+}
+
+const REPEATER_SECTION_LABELS: Record<Tab14RepeaterSection, string> = {
+    allergy: 'Allergy',
+    medication: 'Medication',
+    chronic: 'Chronic Condition',
+    hospitalVisit: 'Hospital Visit',
+};
+
+function repeaterRowTitle(section: Tab14RepeaterSection, index: number, detail?: string) {
+    const base = REPEATER_SECTION_LABELS[section];
+    const trimmed = detail?.trim();
+    if (trimmed) return `${base} - ${trimmed}`;
+    return `${base} ${index + 1}`;
+}
+
+function repeaterToggleKeyDown(onActivate: () => void) {
+    return (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onActivate();
+        }
+    };
+}
+
+function Tab14RepeaterToolbar({
+    onExpandAll,
+    onCollapseAll,
+}: {
+    onExpandAll: () => void;
+    onCollapseAll: () => void;
+}) {
+    return (
+        <div className="tab14-repeater-toolbar">
+            <div
+                role="button"
+                tabIndex={0}
+                className="tab14-repeater-toolbar__action"
+                onClick={onExpandAll}
+                onKeyDown={repeaterToggleKeyDown(onExpandAll)}
+            >
+                Expand all
+            </div>
+            <div
+                role="button"
+                tabIndex={0}
+                className="tab14-repeater-toolbar__action"
+                onClick={onCollapseAll}
+                onKeyDown={repeaterToggleKeyDown(onCollapseAll)}
+            >
+                Collapse all
+            </div>
+        </div>
+    );
+}
+
+function Tab14RepeaterAccordion({
+    sectionKey,
+    index,
+    title,
+    isOpen,
+    onToggle,
+    children,
+}: {
+    sectionKey: Tab14RepeaterSection;
+    index: number;
+    title: string;
+    isOpen: boolean;
+    onToggle: () => void;
+    children: React.ReactNode;
+}) {
+    const panelId = `tab14-accordion-${sectionKey}-${index}`;
+    return (
+        <div className="tab14-repeater-accordion section-block">
+            <div
+                role="button"
+                tabIndex={0}
+                className={`accordion-header tab14-repeater-accordion__header${
+                    isOpen ? ' tab14-repeater-accordion__header--open' : ''
+                }`}
+                onClick={onToggle}
+                onKeyDown={repeaterToggleKeyDown(onToggle)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+            >
+                <span className="tab14-repeater-accordion__title">{title}</span>
+                <span className="tab14-repeater-accordion__chevron" aria-hidden="true">
+                    {isOpen ? '▾' : '▸'}
+                </span>
+            </div>
+            {isOpen ? (
+                <div id={panelId} className="accordion-content tab14-repeater-accordion__content">
+                    {children}
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 type UploadedFileEntry = {
     id: string;
     file: File;
@@ -449,6 +563,7 @@ const Tab14: React.FC = () => {
     const [noAllergies, setNoAllergies] = useState(false);
     const [noMedications, setNoMedications] = useState(false);
     const [noChronicConditions, setNoChronicConditions] = useState(false);
+    const [repeaterAccordionOpen, setRepeaterAccordionOpen] = useState<Record<string, boolean>>({});
     const [uploadParseMessage, setUploadParseMessage] = useState<string | null>(null);
     const [uploadParsing, setUploadParsing] = useState(false);
     /** Session-only verify hints for PDF/OCR-populated patient fields. */
@@ -886,6 +1001,63 @@ const Tab14: React.FC = () => {
             if (updated.length === 0) setPdfHospitalWarnings(undefined);
         }
     };
+
+    const toggleRepeaterAccordion = (section: Tab14RepeaterSection, index: number) => {
+        setRepeaterAccordionOpen((prev) => {
+            const key = repeaterAccordionKey(section, index);
+            const nextOpen = !isRepeaterAccordionOpen(prev, section, index);
+            return { ...prev, [key]: nextOpen };
+        });
+    };
+
+    const setAllRepeaterAccordion = (
+        section: Tab14RepeaterSection,
+        count: number,
+        open: boolean
+    ) => {
+        setRepeaterAccordionOpen((prev) => {
+            const next = { ...prev };
+            for (let i = 0; i < count; i += 1) {
+                next[repeaterAccordionKey(section, i)] = open;
+            }
+            return next;
+        });
+    };
+
+    const handleAddRepeaterSection = <T,>(
+        section: Tab14RepeaterSection,
+        array: T[],
+        setArray: React.Dispatch<React.SetStateAction<T[]>>,
+        defaultObj: T
+    ) => {
+        const newIndex = array.length;
+        setArray([...array, defaultObj]);
+        setRepeaterAccordionOpen((prev) => ({
+            ...prev,
+            [repeaterAccordionKey(section, newIndex)]: true,
+        }));
+    };
+
+    const handleRemoveRepeaterSection = <T,>(
+        section: Tab14RepeaterSection,
+        index: number,
+        array: T[],
+        setArray: React.Dispatch<React.SetStateAction<T[]>>
+    ) => {
+        handleRemoveSection(index, array, setArray);
+        setRepeaterAccordionOpen((prev) => {
+            const next: Record<string, boolean> = {};
+            for (const [key, value] of Object.entries(prev)) {
+                if (!key.startsWith(`${section}:`)) next[key] = value;
+            }
+            const remaining = array.length - 1;
+            if (remaining > 0) {
+                next[repeaterAccordionKey(section, Math.min(index, remaining - 1))] = true;
+            }
+            return next;
+        });
+    };
+
 
     // required field checks + format checking + others 
     const checkForm = () => {
@@ -1781,9 +1953,22 @@ const Tab14: React.FC = () => {
                                     </span>
                                 </label>
 
+                                {!noAllergies && allergies.length > 0 && (
+                                    <Tab14RepeaterToolbar
+                                        onExpandAll={() => setAllRepeaterAccordion('allergy', allergies.length, true)}
+                                        onCollapseAll={() => setAllRepeaterAccordion('allergy', allergies.length, false)}
+                                    />
+                                )}
+
                                 {!noAllergies && allergies.map((allergy, index) => (
-                                    <div key={index} className="section-block">
-                                    <h3>Allergy {index + 1}</h3>
+                                    <Tab14RepeaterAccordion
+                                        key={index}
+                                        sectionKey="allergy"
+                                        index={index}
+                                        title={repeaterRowTitle('allergy', index, allergy.allergyName)}
+                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'allergy', index)}
+                                        onToggle={() => toggleRepeaterAccordion('allergy', index)}
+                                    >
 
                                     <div className="form-field">
                                         <label>
@@ -1884,17 +2069,17 @@ const Tab14: React.FC = () => {
                                         <button
                                         className="remove-button"
                                         type="button"
-                                        onClick={() => handleRemoveSection(index, allergies, setAllergies)}>
+                                        onClick={() => handleRemoveRepeaterSection('allergy', index, allergies, setAllergies)}>
                                         Remove Allergy
                                         </button>
                                     )}
-                                    </div>
+                                    </Tab14RepeaterAccordion>
                                 ))}
 
                                 <button
                                     className="add-section-button"
                                     type="button"
-                                    onClick={() => handleAddSection(allergies, setAllergies, defaultAllergy)}>
+                                    onClick={() => handleAddRepeaterSection('allergy', allergies, setAllergies, defaultAllergy)}>
                                     + Add Another Allergy
                                 </button>
 
@@ -1917,9 +2102,26 @@ const Tab14: React.FC = () => {
                                     Click here if no known medications are present
                                 </label>
 
+                                {!noMedications && medications.length > 0 && (
+                                    <Tab14RepeaterToolbar
+                                        onExpandAll={() => setAllRepeaterAccordion('medication', medications.length, true)}
+                                        onCollapseAll={() => setAllRepeaterAccordion('medication', medications.length, false)}
+                                    />
+                                )}
+
                                 {!noMedications && medications.map((med, index) => (
-                                    <div key={index} className="section-block">
-                                        <h3>Medication {index + 1}</h3>
+                                    <Tab14RepeaterAccordion
+                                        key={index}
+                                        sectionKey="medication"
+                                        index={index}
+                                        title={repeaterRowTitle(
+                                            'medication',
+                                            index,
+                                            med.genericName || med.brandName
+                                        )}
+                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'medication', index)}
+                                        onToggle={() => toggleRepeaterAccordion('medication', index)}
+                                    >
 
                                         <div className="form-field">
                                             <label>
@@ -2027,18 +2229,18 @@ const Tab14: React.FC = () => {
                                             <button
                                                 className="remove-button"
                                                 type="button"
-                                                onClick={() => handleRemoveSection(index, medications, setMedications)}>
+                                                onClick={() => handleRemoveRepeaterSection('medication', index, medications, setMedications)}>
                                                 Remove Medication
                                             </button>
                                         )}
-                                    </div>
+                                    </Tab14RepeaterAccordion>
                                 ))}
 
                                 {!noMedications && (
                                     <button
                                         className="add-section-button"
                                         type="button"
-                                        onClick={() => handleAddSection(medications, setMedications, defaultMedication)}>
+                                        onClick={() => handleAddRepeaterSection('medication', medications, setMedications, defaultMedication)}>
                                         + Add Another Medication
                                     </button>
                                 )}
@@ -2063,10 +2265,26 @@ const Tab14: React.FC = () => {
                                     Click here if no known chronic conditions are present
                                 </label>
 
-                                {!noChronicConditions && chronicConditions.map((condition, index) => (
-                                    <div key={index} className="section-block">
+                                {!noChronicConditions && chronicConditions.length > 0 && (
+                                    <Tab14RepeaterToolbar
+                                        onExpandAll={() =>
+                                            setAllRepeaterAccordion('chronic', chronicConditions.length, true)
+                                        }
+                                        onCollapseAll={() =>
+                                            setAllRepeaterAccordion('chronic', chronicConditions.length, false)
+                                        }
+                                    />
+                                )}
 
-                                        <h3>Chronic Conditions {index + 1}</h3>
+                                {!noChronicConditions && chronicConditions.map((condition, index) => (
+                                    <Tab14RepeaterAccordion
+                                        key={index}
+                                        sectionKey="chronic"
+                                        index={index}
+                                        title={repeaterRowTitle('chronic', index, condition.conditionName)}
+                                        isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'chronic', index)}
+                                        onToggle={() => toggleRepeaterAccordion('chronic', index)}
+                                    >
 
                                         <div className="form-field">
                                             <label>
@@ -2144,19 +2362,19 @@ const Tab14: React.FC = () => {
                                                 className = "remove-button"
                                                 type="button"
                                                 onClick={() =>
-                                                    handleRemoveSection(index, chronicConditions, setChronicConditions)
+                                                    handleRemoveRepeaterSection('chronic', index, chronicConditions, setChronicConditions)
                                                   }>
                                                 Remove Chronic Condition
                                             </button>
                                         )}
-                                    </div>
+                                    </Tab14RepeaterAccordion>
                                 ))}
 
                                 <button
                                     className = "add-section-button"
                                     type = "button"
                                     onClick={() =>
-                                    handleAddSection(chronicConditions, setChronicConditions, defaultChronicCondition)}>
+                                    handleAddRepeaterSection('chronic', chronicConditions, setChronicConditions, defaultChronicCondition)}>
                                     + Add Another Chronic Condition
                                 </button>
 
@@ -2168,9 +2386,29 @@ const Tab14: React.FC = () => {
                             <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
                                 Fill these fields to populate the Health Overview “Patient Hospital” card.
                             </p>
+                            {hospitalVisits.length > 0 && (
+                                <Tab14RepeaterToolbar
+                                    onExpandAll={() =>
+                                        setAllRepeaterAccordion('hospitalVisit', hospitalVisits.length, true)
+                                    }
+                                    onCollapseAll={() =>
+                                        setAllRepeaterAccordion('hospitalVisit', hospitalVisits.length, false)
+                                    }
+                                />
+                            )}
                             {hospitalVisits.map((visit, index) => (
-                                <div key={index} className="section-block">
-                                    <h3>Hospital Visit {index + 1}</h3>
+                                <Tab14RepeaterAccordion
+                                    key={index}
+                                    sectionKey="hospitalVisit"
+                                    index={index}
+                                    title={repeaterRowTitle(
+                                        'hospitalVisit',
+                                        index,
+                                        visit.facilityName || visit.visitType || visit.reason
+                                    )}
+                                    isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'hospitalVisit', index)}
+                                    onToggle={() => toggleRepeaterAccordion('hospitalVisit', index)}
+                                >
                                     <div className="form-field">
                                         <label>
                                             Type
@@ -2262,19 +2500,19 @@ const Tab14: React.FC = () => {
                                             className="remove-button"
                                             type="button"
                                             onClick={() =>
-                                                handleRemoveSection(index, hospitalVisits, setHospitalVisits)
+                                                handleRemoveRepeaterSection('hospitalVisit', index, hospitalVisits, setHospitalVisits)
                                             }
                                         >
                                             Remove Hospital Visit
                                         </button>
                                     )}
-                                </div>
+                                </Tab14RepeaterAccordion>
                             ))}
                             <button
                                 className="add-section-button"
                                 type="button"
                                 onClick={() =>
-                                    handleAddSection(hospitalVisits, setHospitalVisits, defaultHospitalVisit)
+                                    handleAddRepeaterSection('hospitalVisit', hospitalVisits, setHospitalVisits, defaultHospitalVisit)
                                 }
                             >
                                 + Add Another Hospital Visit
