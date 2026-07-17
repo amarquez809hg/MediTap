@@ -3,6 +3,8 @@ import {
   annotateOcrSparseWarnings,
   assessDemographicRawValue,
   buildChronicConditionWarnings,
+  buildHospitalFieldWarnings,
+  buildInsuranceRowWarnings,
   clearChronicConditionWarning,
   FIELD_WARNING_MESSAGES,
   removeIndexedWarningRow,
@@ -43,6 +45,60 @@ describe('assessDemographicRawValue', () => {
   it('flags digit bleed into names even without an explicit label token', () => {
     const r = assessDemographicRawValue('givenName', 'MARIA GARCIA 04/12/1985');
     expect(r.warning?.reason).toBe('contains_other_label');
+  });
+
+  it('flags Meditech-style phone values that include mailto/email', () => {
+    const r = assessDemographicRawValue(
+      'phoneNumber',
+      'tel:+1-(503) 555-0199 mailto:taylor.rivera.sample@example.com'
+    );
+    expect(r.warning?.reason).toBe('contains_other_label');
+  });
+
+  it('flags CCD glue on preferred language and marital status', () => {
+    expect(assessDemographicRawValue('preferredLanguage', 'English Previous').warning?.reason).toBe(
+      'contains_other_label'
+    );
+    expect(assessDemographicRawValue('maritalStatus', 'Married Preferred').warning?.reason).toBe(
+      'contains_other_label'
+    );
+  });
+
+  it('flags contact/address dumps in name fields', () => {
+    const r = assessDemographicRawValue(
+      'givenName',
+      'Contact: 452 HARBOR VIEW CT, PORTLAND, OR 97205-1122, USA'
+    );
+    expect(r.warning).toBeTruthy();
+  });
+});
+
+describe('hospital and insurance warnings', () => {
+  it('flags Meditech-style hospital and insurance label fragments', () => {
+    const hospital = buildHospitalFieldWarnings({
+      facilityName: 'Lab, 1200 NW Everett St, Portland',
+      reason: 'for Referral ù Results ù',
+      attendingPhysician: 'Name Organization Details Details',
+    });
+    expect(hospital?.facilityName).toBeTruthy();
+    expect(hospital?.reason).toBeTruthy();
+    expect(hospital?.attendingPhysician).toBeTruthy();
+
+    const insurance = buildInsuranceRowWarnings([
+      {
+        providerName: 'Organization Details Details',
+        policyNumber: 'Holder',
+        planName: '',
+        memberID: 'Guarantor',
+        groupNumber: 'entifier',
+        startDate: '',
+        endDate: '',
+      },
+    ]);
+    expect(insurance?.[0]?.providerName).toBeTruthy();
+    expect(insurance?.[0]?.policyNumber).toBeTruthy();
+    expect(insurance?.[0]?.memberID).toBeTruthy();
+    expect(insurance?.[0]?.groupNumber).toBeTruthy();
   });
 });
 

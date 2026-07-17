@@ -2209,7 +2209,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Date</label>
+                                        <label>
+                                            Date
+                                            {renderPdfHospitalWarningIcon('visitDate')}
+                                        </label>
                                         <GlassDateInput
                                             value={visit.visitDate}
                                             onChange={(iso) =>
@@ -2219,7 +2222,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Discharge</label>
+                                        <label>
+                                            Discharge
+                                            {renderPdfHospitalWarningIcon('dischargeDate')}
+                                        </label>
                                         <GlassDateInput
                                             value={visit.dischargeDate}
                                             onChange={(iso) =>
@@ -2228,7 +2234,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>Attending</label>
+                                        <label>
+                                            Attending
+                                            {renderPdfHospitalWarningIcon('attendingPhysician')}
+                                        </label>
                                         <input
                                             value={visit.attendingPhysician}
                                             onChange={(e) =>
@@ -2237,7 +2246,10 @@ const Tab14: React.FC = () => {
                                         />
                                     </div>
                                     <div className="form-field">
-                                        <label>ReportId</label>
+                                        <label>
+                                            ReportId
+                                            {renderPdfHospitalWarningIcon('reportId')}
+                                        </label>
                                         <input
                                             value={visit.reportId}
                                             onChange={(e) =>

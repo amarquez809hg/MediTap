@@ -830,8 +830,8 @@ export function parseTab14IntakeDocument(raw: string): Tab14IntakeParseResult {
   if (specialized.length === 0) {
     const text = normalizeExtractedDocumentText(preprocessed);
     const generic = parseGenericTab14Document(text);
-    return mergeIntakeParseResults(generic, general);
+    return withSanitizedPatientFieldWarnings(mergeIntakeParseResults(generic, general));
   }
 
-  return mergeIntakeParseResults(general, ...specialized);
+  return withSanitizedPatientFieldWarnings(mergeIntakeParseResults(general, ...specialized));
 }

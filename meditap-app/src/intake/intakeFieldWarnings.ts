@@ -114,18 +114,24 @@ export function stripLeadingLabelBleed(raw: string): {
 }
 
 function looksAllCapsName(value: string): boolean {
-  const letters = value.replace(/[^A-Za-z?-?]/g, '');
+  const letters = value.replace(/[^A-Za-z\u00C0-\u024F]/g, '');
   if (letters.length < 4) return false;
-  return letters === letters.toUpperCase() && /[A-Z?-?]/.test(letters);
+  return letters === letters.toUpperCase() && /[A-Z\u00C0-\u024F]/.test(letters);
 }
 
 function nameTokenCount(value: string): number {
   return collapseWs(value).split(/\s+/).filter(Boolean).length;
 }
 
+const LABEL_FRAGMENT_VALUE =
+  /^(?:holder|guarantor|identifier|entifier|details|organization|payer|subscriber|policy|member|group|provider|name)$/i;
+
+const CCD_SECTION_NOISE =
+  /\b(?:referral|results|problems|procedures|table of contents|demographics|payers|notes)\b/i;
+
 function assessFreeTextValue(
   raw: string,
-  opts?: { treatAsName?: boolean }
+  opts?: { treatAsName?: boolean; insuranceField?: boolean }
 ): { value: string; warning?: Tab14FieldWarning } {
   const collapsed = collapseWs(raw);
   if (!collapsed) return { value: '' };
@@ -151,9 +157,37 @@ function assessFreeTextValue(
     warning = warning ?? { message: VERIFY_VISIT_NOTE, reason: 'other' };
   }
 
+  if (CCD_SECTION_NOISE.test(value) || //.test(value)) {
+    warning = warning ?? {
+      message: VERIFY_OTHER_LABEL,
+      reason: 'contains_other_label',
+    };
+  }
+
+  if (/details\s+details/i.test(value) || LABEL_FRAGMENT_VALUE.test(value)) {
+    warning = warning ?? {
+      message: VERIFY_LABEL_BLEED,
+      reason: 'label_bleed',
+    };
+  }
+
+  if (opts?.insuranceField) {
+    // Truncated CCD payer labels often land as lone words without digits.
+    if (/^[A-Za-z]{3,20}$/.test(value) && !/\d/.test(value)) {
+      warning = warning ?? {
+        message: VERIFY_LABEL_BLEED,
+        reason: 'label_bleed',
+      };
+    }
+  }
+
   if (opts?.treatAsName) {
     const tokens = nameTokenCount(value);
-    if (tokens > 8 || value.length > 120) {
+    if (
+      tokens > 8 ||
+      value.length > 120 ||
+      /\d{2,5}\s+\w+.*(st|ave|blvd|rd|street|avenue)\b/i.test(value)
+    ) {
       warning = warning ?? {
         message: VERIFY_SUSPICIOUS_NAME,
         reason: 'suspicious_name',
@@ -207,7 +241,14 @@ export function assessDemographicRawValue(
 
   if (field === 'givenName' || field === 'familyName' || field === 'fullName') {
     const tokens = nameTokenCount(value);
-    if (tokens > 5 || (looksAllCapsName(value) && hadBleed) || /^name\b/i.test(collapsed)) {
+    if (
+      tokens > 5 ||
+      value.length > 55 ||
+      (looksAllCapsName(value) && hadBleed) ||
+      /^name\b/i.test(collapsed) ||
+      /^(?:contact|mailto|tel|address|ph\.?)\b/i.test(value) ||
+      /mailto:|tel:|@/.test(value)
+    ) {
       warning = warning ?? {
         message: VERIFY_SUSPICIOUS_NAME,
         reason: 'suspicious_name',
@@ -218,6 +259,55 @@ export function assessDemographicRawValue(
       value = again.value;
       warning = { message: VERIFY_LABEL_BLEED, reason: 'label_bleed' };
     }
+  }
+
+  // Phone fields that also contain email / mailto / long glued CCD text.
+  if (field === 'phoneNumber') {
+    if (/mailto:|@|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(value) || value.length > 40) {
+      warning = warning ?? {
+        message: VERIFY_OTHER_LABEL,
+        reason: 'contains_other_label',
+      };
+    }
+  }
+
+  // Email that still carries phone / tel: / mailto noise.
+  if (field === 'email') {
+    if (/\btel:|\bphone\b|\(\d{3}\)/i.test(value) || value.split(/\s+/).length > 2) {
+      warning = warning ?? {
+        message: VERIFY_OTHER_LABEL,
+        reason: 'contains_other_label',
+      };
+    }
+  }
+
+  // CCD exports often glue the next section title onto language / marital status.
+  if (field === 'preferredLanguage') {
+    if (
+      /\b(previous|name|contact|marital|status|preferred)\b/i.test(value) ||
+      value.split(/\s+/).length > 3
+    ) {
+      warning = warning ?? {
+        message: VERIFY_OTHER_LABEL,
+        reason: 'contains_other_label',
+      };
+    }
+  }
+
+  if (field === 'maritalStatus') {
+    if (/\b(preferred|language|previous|name|contact)\b/i.test(value)) {
+      warning = warning ?? {
+        message: VERIFY_OTHER_LABEL,
+        reason: 'contains_other_label',
+      };
+    }
+  }
+
+  if (field === 'address' && /mailto:|tel:|@/.test(value)) {
+    warning = warning ?? {
+      message: VERIFY_OTHER_LABEL,
+      reason: 'contains_other_label',
+    };
   }
 
   return { value, warning };
@@ -376,8 +466,21 @@ export function buildInsuranceRowWarnings(
 ): Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> | undefined {
   const out: Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> = {};
   rows.forEach((row, index) => {
-    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'providerName');
-    if (rowWarnings) out[index] = rowWarnings;
+    const rowWarnings: Partial<Record<keyof Tab14InsuranceRow, Tab14FieldWarning>> = {};
+    for (const key of Object.keys(row) as (keyof Tab14InsuranceRow)[]) {
+      const raw = String(row[key] ?? '');
+      if (!raw.trim()) continue;
+      if (hardToRead) {
+        rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+        continue;
+      }
+      const assessed = assessFreeTextValue(raw, {
+        treatAsName: key === 'providerName' || key === 'planName',
+        insuranceField: true,
+      });
+      if (assessed.warning) rowWarnings[key] = assessed.warning;
+    }
+    if (Object.keys(rowWarnings).length) out[index] = rowWarnings;
   });
   return Object.keys(out).length ? out : undefined;
 }
@@ -395,7 +498,8 @@ export function buildHospitalFieldWarnings(
       continue;
     }
     const assessed = assessFreeTextValue(raw, {
-      treatAsName: key === 'facilityName' || key === 'attendingPhysician' || key === 'reason',
+      treatAsName:
+        key === 'facilityName' || key === 'attendingPhysician' || key === 'reason',
     });
     if (assessed.warning) out[key] = assessed.warning;
   }
