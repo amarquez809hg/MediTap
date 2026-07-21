@@ -72,6 +72,28 @@ const CLINICAL_LEADING_LABELS: RegExp[] = [
 const VISIT_NOTE_FRAGMENT =
   /^(?:subjective|objective|assessment|plan|chief complaint)\b|vitals reviewed|medication reconciliation(?:\s+attempted)?|external records unavailable|no acute distress|continue current care plan/i;
 
+/**
+ * Clinical status / assessment phrasing that is not a diagnosis name.
+ * Meditech and similar CCD dumps often put these under problem lists.
+ */
+const CLINICAL_STATUS_AS_CONDITION =
+  /\b(?:well|poorly|inadequately)\s+controlled\b|\bcontrolled\s+on\b|\bon\s+(?:current\s+)?regimen\b|\bstable\s+on\b|\bcurrently\s+managed\b|\bas\s+tolerated\b|\bwithin\s+normal\s+limits\b|\bno\s+acute\b|\bfollow[\s-]?up\s+(?:as|in|with)\b|\breturn\s+in\s+\d|\bcontinue(?:s|d)?\s+(?:current|same)\b/i;
+
+/** True when a chronic condition name looks like visit-note prose rather than a diagnosis. */
+export function looksLikeVisitNoteConditionName(name: string): boolean {
+  const t = collapseWs(name);
+  if (!t) return false;
+  if (VISIT_NOTE_FRAGMENT.test(t) || CLINICAL_STATUS_AS_CONDITION.test(t)) return true;
+  // Short sentence-like notes with clinical verbs (e.g. "BP remains elevated").
+  if (
+    /\b(?:is|are|was|were|remains?|appears?|reports?|denies)\b/i.test(t) &&
+    t.split(/\s+/).length >= 4
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /** Aliases that indicate another field leaked into this value. */
 function otherFieldLabelPatterns(forField: DemographicFieldKey | Tab14PatientFieldKey): RegExp[] {
   const patterns: RegExp[] = [];
@@ -153,7 +175,7 @@ function assessFreeTextValue(
     warning = { message: VERIFY_LABEL_BLEED, reason: 'label_bleed' };
   }
 
-  if (VISIT_NOTE_FRAGMENT.test(value)) {
+  if (VISIT_NOTE_FRAGMENT.test(value) || CLINICAL_STATUS_AS_CONDITION.test(value)) {
     warning = warning ?? { message: VERIFY_VISIT_NOTE, reason: 'other' };
   }
 
@@ -518,10 +540,10 @@ export function buildChronicConditionWarnings(
   const out: Tab14ChronicConditionWarnings = {};
   rows.forEach((row, index) => {
     const rowWarnings: Partial<Record<Tab14ChronicFieldKey, Tab14FieldWarning>> = {};
-    const suspicious = VISIT_NOTE_FRAGMENT.test(row.conditionName.trim());
+    const suspicious = looksLikeVisitNoteConditionName(row.conditionName);
     for (const key of Object.keys(row) as Tab14ChronicFieldKey[]) {
       if (!row[key]?.trim()) continue;
-      // severity has no UI control on Tab14 ? skip invisible warnings
+      // severity has no UI control on Tab14 — skip invisible warnings
       if (key === 'severity') continue;
       if (hardToRead) {
         rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };

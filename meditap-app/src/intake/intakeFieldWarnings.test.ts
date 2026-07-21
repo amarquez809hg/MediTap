@@ -233,6 +233,39 @@ describe('chronic condition warnings', () => {
     expect(warnings?.[0]?.conditionName?.reason).toBe('other');
   });
 
+  it('flags Meditech-style clinical status lines as visit-note conditions', () => {
+    const warnings = buildChronicConditionWarnings([
+      {
+        conditionName: 'BP well controlled on current regimen',
+        icdCode: '',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+      {
+        conditionName:
+          'Hyperlipid Goals Section None Recorded Health Concerns Section None Recorded Advance Directiv',
+        icdCode: '',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+      {
+        conditionName: 'Essential hypertension',
+        icdCode: 'I10',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+    ]);
+    expect(warnings?.[0]?.conditionName?.reason).toBe('other');
+    expect(warnings?.[1]?.conditionName).toBeTruthy();
+    expect(warnings?.[2]?.conditionName).toBeUndefined();
+  });
+
   it('flags all populated OCR-derived chronic fields except severity', () => {
     const warnings = buildChronicConditionWarnings(
       [{ ...row, conditionName: 'Dementia', icdCode: 'F03.90', severity: 'Mild' }],
