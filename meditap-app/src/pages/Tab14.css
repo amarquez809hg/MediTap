@@ -668,6 +668,14 @@ ion-page.ct-page.ct-tab14 ion-content {
   outline-offset: 2px;
 }
 
+.tab14-repeater-accordion__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
 .tab14-repeater-accordion__title {
   font-size: 1rem;
   font-weight: 700;
@@ -676,6 +684,11 @@ ion-page.ct-page.ct-tab14 ion-content {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.tab14-pdf-field-warning--accordion {
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .tab14-repeater-accordion__chevron {

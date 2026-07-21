@@ -77,17 +77,19 @@ const VISIT_NOTE_FRAGMENT =
  * Meditech and similar CCD dumps often put these under problem lists.
  */
 const CLINICAL_STATUS_AS_CONDITION =
-  /\b(?:well|poorly|inadequately)\s+controlled\b|\bcontrolled\s+on\b|\bon\s+(?:current\s+)?regimen\b|\bstable\s+on\b|\bcurrently\s+managed\b|\bas\s+tolerated\b|\bwithin\s+normal\s+limits\b|\bno\s+acute\b|\bfollow[\s-]?up\s+(?:as|in|with)\b|\breturn\s+in\s+\d|\bcontinue(?:s|d)?\s+(?:current|same)\b/i;
+  /\b(?:well|poorly|inadequately)\s+controlled\b|\bcontrolled\s+on\b|\bon\s+(?:current\s+)?regimen\b|\bstable\s+on\b|\bcurrently\s+managed\b|\bas\s+tolerated\b|\bwithin\s+normal\s+limits\b|\bno\s+acute\b|\bno\s+new\s+complaints?\b|\bfollow[\s-]?up\s+(?:as|in|with)\b|\breturn\s+in\s+\d|\bcontinue(?:s|d)?\s+(?:current|same)\b|\bdiscussed\b|\bdiet\s*\/\s*exercise\b|\b\d+\s*mg\b|,\s*M\.?D\.?\b/i;
 
 /** True when a chronic condition name looks like visit-note prose rather than a diagnosis. */
 export function looksLikeVisitNoteConditionName(name: string): boolean {
   const t = collapseWs(name);
   if (!t) return false;
   if (VISIT_NOTE_FRAGMENT.test(t) || CLINICAL_STATUS_AS_CONDITION.test(t)) return true;
-  // Short sentence-like notes with clinical verbs (e.g. "BP remains elevated").
+  // Sentence-like notes with clinical verbs (e.g. "BP remains elevated", "Continues lisinopril").
   if (
-    /\b(?:is|are|was|were|remains?|appears?|reports?|denies)\b/i.test(t) &&
-    t.split(/\s+/).length >= 4
+    /\b(?:is|are|was|were|remains?|appears?|reports?|denies|continues?|discussed|advised|recommended?)\b/i.test(
+      t
+    ) &&
+    t.split(/\s+/).length >= 3
   ) {
     return true;
   }

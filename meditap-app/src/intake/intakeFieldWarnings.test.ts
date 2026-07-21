@@ -266,6 +266,47 @@ describe('chronic condition warnings', () => {
     expect(warnings?.[2]?.conditionName).toBeUndefined();
   });
 
+  it('flags Meditech visit-counseling and medication-instruction lines', () => {
+    const warnings = buildChronicConditionWarnings([
+      {
+        conditionName: 'Susan Whitfield, MD Continues lisinopril 10mg daily',
+        icdCode: '',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+      {
+        conditionName: 'No new complaints',
+        icdCode: '',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+      {
+        conditionName: 'Discussed diet/exercise',
+        icdCode: '',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+      {
+        conditionName: 'Type 2 diabetes mellitus',
+        icdCode: 'E11.9',
+        diagnosisDate: '',
+        severity: '',
+        prexisting: '',
+        notesChronicConditions: '',
+      },
+    ]);
+    expect(warnings?.[0]?.conditionName?.reason).toBe('other');
+    expect(warnings?.[1]?.conditionName?.reason).toBe('other');
+    expect(warnings?.[2]?.conditionName?.reason).toBe('other');
+    expect(warnings?.[3]?.conditionName).toBeUndefined();
+  });
+
   it('flags all populated OCR-derived chronic fields except severity', () => {
     const warnings = buildChronicConditionWarnings(
       [{ ...row, conditionName: 'Dementia', icdCode: 'F03.90', severity: 'Mild' }],

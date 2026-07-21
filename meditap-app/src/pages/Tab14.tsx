@@ -450,6 +450,7 @@ function Tab14RepeaterAccordion({
     title,
     isOpen,
     onToggle,
+    headerWarning,
     children,
 }: {
     sectionKey: Tab14RepeaterSection;
@@ -457,6 +458,7 @@ function Tab14RepeaterAccordion({
     title: string;
     isOpen: boolean;
     onToggle: () => void;
+    headerWarning?: string | null;
     children: React.ReactNode;
 }) {
     const panelId = `tab14-accordion-${sectionKey}-${index}`;
@@ -473,7 +475,20 @@ function Tab14RepeaterAccordion({
                 aria-expanded={isOpen}
                 aria-controls={panelId}
             >
-                <span className="tab14-repeater-accordion__title">{title}</span>
+                <span className="tab14-repeater-accordion__title-wrap">
+                    <span className="tab14-repeater-accordion__title">{title}</span>
+                    {headerWarning ? (
+                        <span
+                            className="tab14-pdf-field-warning tab14-pdf-field-warning--accordion"
+                            title={headerWarning}
+                            aria-label={headerWarning}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            <IonIcon icon={warningOutline} aria-hidden />
+                        </span>
+                    ) : null}
+                </span>
                 <span className="tab14-repeater-accordion__chevron" aria-hidden="true">
                     {isOpen ? '▾' : '▸'}
                 </span>
@@ -2284,6 +2299,12 @@ const Tab14: React.FC = () => {
                                         title={repeaterRowTitle('chronic', index, condition.conditionName)}
                                         isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'chronic', index)}
                                         onToggle={() => toggleRepeaterAccordion('chronic', index)}
+                                        headerWarning={
+                                            pdfChronicWarnings?.[index]
+                                                ? Object.values(pdfChronicWarnings[index]!).find(Boolean)
+                                                      ?.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC
+                                                : null
+                                        }
                                     >
 
                                         <div className="form-field">
