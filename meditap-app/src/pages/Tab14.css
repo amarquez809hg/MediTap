@@ -777,7 +777,7 @@ ion-page.ct-page.ct-tab14 ion-content {
     auto;
   gap: 8px 12px;
   align-items: center;
-  padding: 10px 0;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--meditap-border, #d9e2ec);
   color: var(--meditap-text);
 }
@@ -1032,6 +1032,8 @@ ion-page.ct-page.ct-tab14 ion-content {
 .remove-file-button--clear-all {
   align-self: flex-start;
   margin-top: 24px;
+  margin-left: 16px;
+  margin-right: 16px;
 }
 
 @media (max-width: 768px) {
@@ -1046,7 +1048,7 @@ ion-page.ct-page.ct-tab14 ion-content {
   .file-preview-row:not(.file-preview-row--head) {
     grid-template-columns: 1fr 1fr;
     gap: 6px 10px;
-    padding: 14px 0;
+    padding: 14px 16px;
   }
 
   .file-preview-cell--name,
