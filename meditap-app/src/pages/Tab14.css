@@ -868,10 +868,10 @@ ion-page.ct-page.ct-tab14 ion-content {
 
 .file-preview-cell--actions {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .file-preview-empty {
@@ -1087,7 +1087,7 @@ ion-page.ct-page.ct-tab14 ion-content {
 
   .file-preview-cell--actions {
     grid-column: 1 / -1;
-    justify-content: flex-start;
+    align-items: flex-start;
   }
 }
 
