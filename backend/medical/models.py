@@ -17,6 +17,16 @@ class Patient(models.Model):
     ethnicity = models.CharField(max_length=100, blank=True, null=True)
     preferred_language = models.CharField(max_length=64, blank=True, null=True)
     marital_status = models.CharField(max_length=64, blank=True, null=True)
+    legal_sex = models.CharField(max_length=64, blank=True, null=True)
+    gender_identity = models.CharField(max_length=120, blank=True, null=True)
+    sexual_orientation = models.CharField(max_length=120, blank=True, null=True)
+    sex_at_birth_recorded_on = models.DateField(blank=True, null=True)
+    additional_emails = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Extra patient emails beyond the primary email field.",
+    )
+    other_notes = models.TextField(blank=True, null=True)
     # Latest vitals snapshot (MyChart-style summary on dashboard / Quick Status).
     height_cm = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
@@ -216,10 +226,22 @@ class PatientLabPanel(models.Model):
     collected_on = models.DateField()
     status = models.CharField(max_length=32, default="Reviewed")
     is_new = models.BooleanField(default=False)
+    category = models.CharField(
+        max_length=32,
+        default="lab",
+        blank=True,
+        help_text="lab | imaging | vitals | clinical | social | contact",
+    )
+    notes = models.TextField(blank=True, null=True)
+    clinical_indication = models.TextField(blank=True, null=True)
+    impression = models.TextField(blank=True, null=True)
+    accession_number = models.CharField(max_length=64, blank=True, null=True)
+    modality = models.CharField(max_length=120, blank=True, null=True)
+    signed_by = models.CharField(max_length=200, blank=True, null=True)
     components = models.JSONField(
         default=list,
         blank=True,
-        help_text='List of {name, value, unit, range, critical, interpretation?}',
+        help_text='List of {name, value?, textValue?, unit, range, critical, interpretation?}',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

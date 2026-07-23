@@ -17,6 +17,7 @@ import type {
   Tab14InsuranceRow,
   Tab14MedicationRow,
 } from "./tab14IntakeTypes";
+import { emptyInsuranceRow } from "./tab14IntakeTypes";
 
 const metformin: Tab14MedicationRow = {
   genericName: "Metformin",
@@ -63,6 +64,7 @@ const hypertension: Tab14ChronicRow = {
 };
 
 const aetnaPrimary: Tab14InsuranceRow = {
+  ...emptyInsuranceRow(),
   providerName: "Aetna",
   policyNumber: "POL-12345",
   planName: "Gold PPO",
@@ -73,6 +75,7 @@ const aetnaPrimary: Tab14InsuranceRow = {
 };
 
 const aetnaSecondary: Tab14InsuranceRow = {
+  ...emptyInsuranceRow(),
   providerName: "Blue Cross",
   policyNumber: "BC-67890",
   planName: "Silver HMO",
@@ -146,6 +149,7 @@ describe("mergeInsurancesFromPdf", () => {
 
   it("dedupes by policy number and fills empty fields", () => {
     const partial: Tab14InsuranceRow = {
+      ...emptyInsuranceRow(),
       providerName: "Aetna",
       policyNumber: "POL-12345",
       planName: "",

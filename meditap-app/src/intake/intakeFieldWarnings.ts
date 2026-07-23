@@ -181,7 +181,7 @@ function assessFreeTextValue(
     warning = warning ?? { message: VERIFY_VISIT_NOTE, reason: 'other' };
   }
 
-  if (CCD_SECTION_NOISE.test(value) || //.test(value)) {
+  if (CCD_SECTION_NOISE.test(value) || /ï¿½/.test(value)) {
     warning = warning ?? {
       message: VERIFY_OTHER_LABEL,
       reason: 'contains_other_label',
@@ -348,10 +348,16 @@ export function sanitizePatientFieldsWithWarnings(
   const warnings: Tab14PatientFieldWarnings = {};
   for (const key of Object.keys(fields) as Tab14PatientFieldKey[]) {
     const raw = fields[key];
-    if (!raw?.trim()) continue;
+    if (key === 'additionalEmails') {
+      if (Array.isArray(raw) && raw.length > 0) {
+        out.additionalEmails = raw.map((e) => String(e).trim()).filter(Boolean);
+      }
+      continue;
+    }
+    if (typeof raw !== 'string' || !raw.trim()) continue;
     const assessed = assessDemographicRawValue(key, raw);
     if (!assessed.value) continue;
-    out[key] = assessed.value;
+    (out as Record<string, string>)[key] = assessed.value;
     if (assessed.warning) warnings[key] = assessed.warning;
   }
   return {
@@ -403,11 +409,13 @@ export function warningsForWinningPatientFields(
 ): Tab14PatientFieldWarnings | undefined {
   const out: Tab14PatientFieldWarnings = {};
   for (const key of Object.keys(finalFields) as Tab14PatientFieldKey[]) {
-    const finalVal = finalFields[key]?.trim();
+    if (key === 'additionalEmails') continue;
+    const finalVal = typeof finalFields[key] === 'string' ? finalFields[key]?.trim() : '';
     if (!finalVal) continue;
     let found: Tab14FieldWarning | undefined;
     for (const src of sources) {
-      if (src.fields[key]?.trim() === finalVal && src.warnings?.[key]) {
+      const srcVal = typeof src.fields[key] === 'string' ? src.fields[key]?.trim() : '';
+      if (srcVal === finalVal && src.warnings?.[key]) {
         found = src.warnings[key];
       }
     }
@@ -423,7 +431,11 @@ export function annotateOcrSparseWarnings(
 ): Tab14PatientFieldWarnings | undefined {
   const out: Tab14PatientFieldWarnings = { ...(existing ?? {}) };
   for (const key of Object.keys(fields) as Tab14PatientFieldKey[]) {
-    if (!fields[key]?.trim()) continue;
+    if (key === 'additionalEmails') {
+      if (!Array.isArray(fields.additionalEmails) || fields.additionalEmails.length === 0) continue;
+    } else if (typeof fields[key] !== 'string' || !fields[key]?.trim()) {
+      continue;
+    }
     if (!out[key]) {
       out[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
     }
@@ -545,7 +557,7 @@ export function buildChronicConditionWarnings(
     const suspicious = looksLikeVisitNoteConditionName(row.conditionName);
     for (const key of Object.keys(row) as Tab14ChronicFieldKey[]) {
       if (!row[key]?.trim()) continue;
-      // severity has no UI control on Tab14 — skip invisible warnings
+      // severity has no UI control on Tab14 ï¿½ skip invisible warnings
       if (key === 'severity') continue;
       if (hardToRead) {
         rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };

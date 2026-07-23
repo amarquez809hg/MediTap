@@ -6,6 +6,7 @@
 import { normalizeExtractedDocumentText } from './documentTextExtraction';
 import {
   mergeIntakeParseResults,
+  mergeLabPanels,
   parseGeneralIntakeDocument,
   preprocessIntakeDocumentText,
 } from './generalIntakeExtract';
@@ -37,6 +38,7 @@ import type {
   Tab14PatientFieldWarnings,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
+import { emptyInsuranceRow } from './tab14IntakeTypes';
 
 export type {
   Tab14AllergyRow,
@@ -493,6 +495,7 @@ function parseAthenaPortabilityDocument(text: string): Tab14IntakeParseResult {
     medications: parseAthenaMedications(text),
     chronicConditions: parseAthenaChronicConditions(text),
     hospitalVisit: parseAthenaHospital(text),
+    labPanels: [],
   });
 }
 
@@ -540,6 +543,7 @@ function mergeTab14ParseResults(
       ...fallback.hospitalVisit,
       ...primary.hospitalVisit,
     },
+    labPanels: mergeLabPanels(primary.labPanels, fallback.labPanels),
   };
 }
 
@@ -656,15 +660,7 @@ function parseChronicRows(sectionLines: string[], fullText: string): Tab14Chroni
 
 function parseInsuranceFromText(text: string): Tab14InsuranceRow[] {
   const rows: Tab14InsuranceRow[] = [];
-  const one: Tab14InsuranceRow = {
-    providerName: '',
-    policyNumber: '',
-    planName: '',
-    memberID: '',
-    groupNumber: '',
-    startDate: '',
-    endDate: '',
-  };
+  const one: Tab14InsuranceRow = emptyInsuranceRow();
   const payer =
     labelValue(text, [
       /(?:payer|insurance|carrier|provider)\s*name\s*[:#]?\s*([^\n]+)/i,
@@ -794,6 +790,7 @@ function parseGenericTab14Document(text: string): Tab14IntakeParseResult {
     medications,
     chronicConditions,
     hospitalVisit: parseHospital(text),
+    labPanels: [],
     ...(Object.keys(parsedPatient.warnings).length
       ? { fieldWarnings: parsedPatient.warnings }
       : {}),

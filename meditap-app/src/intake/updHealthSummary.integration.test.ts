@@ -39,14 +39,23 @@ describe('upd My Health Summary PDF', () => {
     expect(r.patientFields.address).toMatch(/123 Duffy Dr/i);
     expect(r.patientFields.address).toMatch(/Albany, NY 12054/);
     expect(r.patientFields.email).toBe('Personalemail@gmail.com');
+    expect(r.patientFields.additionalEmails?.some((e) => /emergencycontact@gmail\.com/i.test(e))).toBe(
+      true
+    );
+    expect(r.patientFields.phoneNumber).toMatch(/555-555-555/);
     expect(r.patientFields.heightInches).toBe('67');
     expect(r.patientFields.weightLbs).toBe('140');
+    expect(r.patientFields.systolicBp).toBe('120');
+    expect(r.patientFields.diastolicBp).toBe('80');
+    expect(r.patientFields.heartRate).toBe('83');
 
     expect(r.noKnownDrugAllergies).toBe(true);
     expect(r.allergies).toHaveLength(0);
 
     expect(r.medications.length).toBeGreaterThanOrEqual(1);
-    expect(r.medications.some((m) => /cephalexin/i.test(m.genericName))).toBe(true);
+    const ceph = r.medications.find((m) => /cephalexin/i.test(m.genericName));
+    expect(ceph).toBeTruthy();
+    expect(ceph?.dosage).toMatch(/500\s*mg/i);
 
     expect(r.chronicConditions.length).toBeGreaterThanOrEqual(2);
     expect(r.chronicConditions.some((c) => /abdominal pain/i.test(c.conditionName))).toBe(true);
@@ -60,5 +69,15 @@ describe('upd My Health Summary PDF', () => {
 
     expect(r.insurances[0]?.providerName).toMatch(/BLUE CROSS/i);
     expect(r.insurances[0]?.groupNumber).toBe('105');
+    expect(r.insurances[0]?.memberID).toBe('');
+    expect(r.insurances[0]?.payerId).toBeTruthy();
+
+    expect(r.labPanels.some((p) => /CBC|Complete Blood/i.test(p.testName))).toBe(true);
+    expect(r.labPanels.some((p) => /CMP|Metabolic/i.test(p.testName))).toBe(true);
+    expect(
+      r.labPanels.some(
+        (p) => p.category === 'imaging' && /appendicitis|cyst|pelvis|abdomen/i.test(p.impression ?? p.testName)
+      )
+    ).toBe(true);
   });
 });

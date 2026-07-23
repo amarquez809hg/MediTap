@@ -4,11 +4,13 @@ import type {
   Tab14HospitalFields,
   Tab14InsuranceRow,
   Tab14IntakeParseResult,
+  Tab14LabPanel,
   Tab14MedicationRow,
   Tab14PatientFieldKey,
   Tab14PatientFieldWarnings,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
+import { mergeLabPanels } from './generalIntakeExtract';
 import { mergeAllergiesFromPdf } from "./mergeTab14Allergies";
 import {
   hasHospitalVisitData,
@@ -28,6 +30,7 @@ export type Tab14MergeSnapshot = {
   chronicConditions: Tab14ChronicRow[];
   noChronicConditions: boolean;
   hospitalVisits: Tab14HospitalFields[];
+  labPanels: Tab14LabPanel[];
 };
 
 export type Tab14MergeStats = {
@@ -38,6 +41,7 @@ export type Tab14MergeStats = {
   chronicMergeAdded: number;
   hospitalVisitsAdded: number;
   hospitalFieldsAdded: number;
+  labPanelsAdded: number;
 };
 
 /** True when a parsed bundle identifies a specific patient (given + family name). */
@@ -57,6 +61,7 @@ export function emptyMergeSnapshot(): Tab14MergeSnapshot {
     chronicConditions: [],
     noChronicConditions: false,
     hospitalVisits: [],
+    labPanels: [],
   };
 }
 
@@ -104,6 +109,7 @@ const emptyStats = (): Tab14MergeStats => ({
   chronicMergeAdded: 0,
   hospitalVisitsAdded: 0,
   hospitalFieldsAdded: 0,
+  labPanelsAdded: 0,
 });
 
 /** Human-readable merge counts for upload status messages. */
@@ -142,6 +148,11 @@ export function formatTab14MergeStatsNotes(stats: Tab14MergeStats): string[] {
   if (stats.hospitalFieldsAdded > 0) {
     notes.push(
       `${stats.hospitalFieldsAdded} hospital visit field(s) filled in (existing values kept)`
+    );
+  }
+  if (stats.labPanelsAdded > 0) {
+    notes.push(
+      `${stats.labPanelsAdded} new lab result panel(s) added (existing kept)`
     );
   }
   return notes;
@@ -219,6 +230,13 @@ export function applyTab14ParseBundle(
     stats.hospitalVisitsAdded = mergedHospital.addedCount;
     stats.hospitalFieldsAdded = mergedHospital.filledFieldCount;
     next = { ...next, hospitalVisits: mergedHospital.rows };
+  }
+
+  if (bundle.labPanels.length > 0) {
+    const before = next.labPanels.length;
+    const mergedLabPanels = mergeLabPanels(next.labPanels, bundle.labPanels);
+    stats.labPanelsAdded = mergedLabPanels.length - before;
+    next = { ...next, labPanels: mergedLabPanels };
   }
 
   return { snapshot: next, stats };

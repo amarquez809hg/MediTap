@@ -6,6 +6,8 @@ export type Tab14PatientFields = Partial<{
   dateOfBirth: string;
   bloodType: string;
   email: string;
+  /** Extra emails beyond the primary `email` field. */
+  additionalEmails: string[];
   phoneNumber: string;
   address: string;
   race: string;
@@ -13,6 +15,11 @@ export type Tab14PatientFields = Partial<{
   preferredLanguage: string;
   maritalStatus: string;
   sexAtBirth: string;
+  legalSex: string;
+  genderIdentity: string;
+  sexualOrientation: string;
+  sexAtBirthRecordedOn: string;
+  otherNotes: string;
   heightInches: string;
   weightLbs: string;
   systolicBp: string;
@@ -28,6 +35,14 @@ export type Tab14InsuranceRow = {
   groupNumber: string;
   startDate: string;
   endDate: string;
+  payerId: string;
+  guarantor: string;
+  memberName: string;
+  relationToSubscriber: string;
+  subscriberName: string;
+  subscriberId: string;
+  subscriberDob: string;
+  billingAddress: string;
 };
 
 export type Tab14AllergyRow = {
@@ -70,6 +85,43 @@ export type Tab14HospitalFields = Partial<{
   attendingPhysician: string;
   reportId: string;
 }>;
+
+/** Lab / imaging / related result panel imported from PDF (maps to PatientLabPanel). */
+export type Tab14LabComponent = {
+  name: string;
+  /** Numeric value when available. */
+  value?: number;
+  /** Qualitative / comparator value e.g. "<0.6". */
+  textValue?: string;
+  unit: string;
+  range: string;
+  critical: boolean;
+  interpretation?: string;
+};
+
+export type Tab14LabPanelCategory =
+  | 'lab'
+  | 'imaging'
+  | 'vitals'
+  | 'clinical'
+  | 'social'
+  | 'contact';
+
+export type Tab14LabPanel = {
+  testName: string;
+  date: string;
+  status: string;
+  isNew: boolean;
+  category: Tab14LabPanelCategory;
+  displayCode?: string;
+  notes?: string;
+  clinicalIndication?: string;
+  impression?: string;
+  accessionNumber?: string;
+  modality?: string;
+  signedBy?: string;
+  components: Tab14LabComponent[];
+};
 
 /** Patient demographic keys that may carry PDF/OCR verification warnings. */
 export type Tab14PatientFieldKey = keyof Tab14PatientFields;
@@ -119,9 +171,31 @@ export interface Tab14IntakeParseResult {
   medications: Tab14MedicationRow[];
   chronicConditions: Tab14ChronicRow[];
   hospitalVisit: Tab14HospitalFields;
+  /** Lab / imaging / related panels from the document. */
+  labPanels: Tab14LabPanel[];
   /**
    * Fields that may have been misread from the document.
    * Not persisted with the patient chart — used for UI verify icons only.
    */
   fieldWarnings?: Tab14PatientFieldWarnings;
+}
+
+export function emptyInsuranceRow(): Tab14InsuranceRow {
+  return {
+    providerName: '',
+    policyNumber: '',
+    planName: '',
+    memberID: '',
+    groupNumber: '',
+    startDate: '',
+    endDate: '',
+    payerId: '',
+    guarantor: '',
+    memberName: '',
+    relationToSubscriber: '',
+    subscriberName: '',
+    subscriberId: '',
+    subscriberDob: '',
+    billingAddress: '',
+  };
 }

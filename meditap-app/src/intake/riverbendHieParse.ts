@@ -529,6 +529,7 @@ function parseSyntheticDummyRecord(raw: string): Tab14IntakeParseResult | null {
     medications: parseSyntheticMedications(flat),
     chronicConditions: parseSyntheticChronic(flat),
     hospitalVisit,
+    labPanels: [],
   });
 }
 
@@ -576,5 +577,6 @@ export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
     medications,
     chronicConditions,
     hospitalVisit,
+    labPanels: [],
   });
 }

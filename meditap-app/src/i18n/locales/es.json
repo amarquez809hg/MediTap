@@ -769,7 +769,8 @@
       "allergies": "Alergias",
       "medications": "Medicamentos",
       "insurance": "Seguro",
-      "chronicConditions": "Condiciones crónicas"
+      "chronicConditions": "Condiciones crónicas",
+      "labResults": "Resultados de laboratorio"
     },
     "loadingRecord": "Cargando su expediente de paciente guardado…",
     "staffActiveBanner": "Edición del personal activa para este paciente. El paciente sigue con sesión iniciada. Cuando termine, use Finalizar modo personal para volver a solo lectura.",

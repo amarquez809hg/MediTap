@@ -34,6 +34,23 @@
   cursor: pointer;
 }
 
+.lab-card--embedded {
+  box-shadow: none;
+  border-color: transparent;
+  background: transparent;
+}
+
+.lab-card--embedded .card-summary--embedded {
+  cursor: default;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--meditap-border);
+  margin-bottom: 4px;
+}
+
+.lab-card--embedded .card-details {
+  padding-top: 8px;
+}
+
 .test-name {
   font-size: 20px;
   font-weight: 600;

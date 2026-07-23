@@ -14,6 +14,7 @@ import type {
   Tab14MedicationRow,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
+import { emptyInsuranceRow } from './tab14IntakeTypes';
 
 const ICD_RE = /\(([A-TV-Z]\d{2}(?:\.\d+)?[A-Z0-9]{0,4})\)/;
 
@@ -205,6 +206,7 @@ function parseInsurance(text: string): Tab14InsuranceRow[] {
   if (!provider && !policy && !member) return [];
   return [
     {
+      ...emptyInsuranceRow(),
       providerName: provider ?? '',
       policyNumber: policy ?? '',
       planName: plan ?? '',
@@ -297,5 +299,6 @@ export function parseSpanishMediTapRegistroDocument(raw: string): Tab14IntakePar
     medications: parseMedications(text),
     chronicConditions: parseChronicConditions(text),
     hospitalVisit,
+    labPanels: [],
   });
 }

@@ -24,15 +24,17 @@ import {
   assessDemographicRawValue,
   warningsForWinningPatientFields,
 } from './intakeFieldWarnings';
-import type {
-  Tab14AllergyRow,
-  Tab14ChronicRow,
-  Tab14HospitalFields,
-  Tab14InsuranceRow,
-  Tab14IntakeParseResult,
-  Tab14MedicationRow,
-  Tab14PatientFieldWarnings,
-  Tab14PatientFields,
+import {
+  emptyInsuranceRow,
+  type Tab14AllergyRow,
+  type Tab14ChronicRow,
+  type Tab14HospitalFields,
+  type Tab14InsuranceRow,
+  type Tab14IntakeParseResult,
+  type Tab14LabPanel,
+  type Tab14MedicationRow,
+  type Tab14PatientFieldWarnings,
+  type Tab14PatientFields,
 } from './tab14IntakeTypes';
 
 type LabelHit = {
@@ -338,8 +340,19 @@ function extractPatientFieldsFromLabels(text: string): {
 function mergePatientFields(...parts: Tab14PatientFields[]): Tab14PatientFields {
   const out: Tab14PatientFields = {};
   for (const p of parts) {
-    for (const [k, v] of Object.entries(p) as [keyof Tab14PatientFields, string][]) {
-      if (typeof v === 'string' && v.trim() && !out[k]) out[k] = v.trim();
+    for (const [k, v] of Object.entries(p) as [
+      keyof Tab14PatientFields,
+      Tab14PatientFields[keyof Tab14PatientFields],
+    ][]) {
+      if (k === 'additionalEmails') {
+        if (Array.isArray(v) && v.length > 0 && !out.additionalEmails?.length) {
+          out.additionalEmails = v.filter((e) => String(e).trim());
+        }
+        continue;
+      }
+      if (typeof v === 'string' && v.trim() && !(out as Record<string, unknown>)[k]) {
+        (out as Record<string, string>)[k] = v.trim();
+      }
     }
   }
   return out;
@@ -788,15 +801,7 @@ function parseHospital(text: string): Tab14HospitalFields {
 }
 
 function parseInsuranceFromText(text: string): Tab14InsuranceRow[] {
-  const one: Tab14InsuranceRow = {
-    providerName: '',
-    policyNumber: '',
-    planName: '',
-    memberID: '',
-    groupNumber: '',
-    startDate: '',
-    endDate: '',
-  };
+  const one = emptyInsuranceRow();
 
   const label = (re: RegExp) => text.match(re)?.[1]?.trim();
   const payer =
@@ -829,8 +834,17 @@ function parseInsuranceFromText(text: string): Tab14InsuranceRow[] {
 
 function pickDefinedPatient(obj: Tab14PatientFields): Tab14PatientFields {
   const out: Tab14PatientFields = {};
-  for (const [k, v] of Object.entries(obj) as [keyof Tab14PatientFields, string | undefined][]) {
-    if (typeof v === 'string' && v.trim()) out[k] = v.trim();
+  for (const [k, v] of Object.entries(obj) as [
+    keyof Tab14PatientFields,
+    Tab14PatientFields[keyof Tab14PatientFields],
+  ][]) {
+    if (k === 'additionalEmails') {
+      if (Array.isArray(v) && v.length > 0) out.additionalEmails = v;
+      continue;
+    }
+    if (typeof v === 'string' && v.trim()) {
+      (out as Record<string, string>)[k] = v.trim();
+    }
   }
   return out;
 }
@@ -906,8 +920,24 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
     medications,
     chronicConditions,
     hospitalVisit: parseHospital(text),
+    labPanels: [],
     ...(fieldWarnings ? { fieldWarnings } : {}),
   };
+}
+
+/** Concatenate lab panels from multiple parse results; dedupe on testName + date. */
+export function mergeLabPanels(...lists: Tab14LabPanel[][]): Tab14LabPanel[] {
+  const seen = new Set<string>();
+  const out: Tab14LabPanel[] = [];
+  for (const list of lists) {
+    for (const panel of list) {
+      const key = `${panel.testName}|${panel.date}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(panel);
+    }
+  }
+  return out;
 }
 
 /** Merge multiple parse results — prefer validated, non-empty values; longer lists win. */
@@ -918,8 +948,19 @@ export function mergeIntakeParseResults(
   const hospitalVisit: Tab14HospitalFields = {};
 
   for (const r of results) {
-    for (const [k, v] of Object.entries(r.patientFields) as [keyof Tab14PatientFields, string][]) {
-      if (v?.trim()) patientFields[k] = v.trim();
+    for (const [k, v] of Object.entries(r.patientFields) as [
+      keyof Tab14PatientFields,
+      Tab14PatientFields[keyof Tab14PatientFields],
+    ][]) {
+      if (k === 'additionalEmails') {
+        if (Array.isArray(v) && v.length > 0) {
+          patientFields.additionalEmails = v.filter((e) => String(e).trim());
+        }
+        continue;
+      }
+      if (typeof v === 'string' && v.trim()) {
+        (patientFields as Record<string, string>)[k] = v.trim();
+      }
     }
     for (const [k, v] of Object.entries(r.hospitalVisit) as [keyof Tab14HospitalFields, string][]) {
       if (v?.trim()) hospitalVisit[k] = v.trim();
@@ -937,25 +978,14 @@ export function mergeIntakeParseResults(
   };
 
   const mergeInsurance = (): Tab14InsuranceRow[] => {
-    const template: Tab14InsuranceRow = {
-      providerName: '',
-      policyNumber: '',
-      planName: '',
-      memberID: '',
-      groupNumber: '',
-      startDate: '',
-      endDate: '',
-    };
-    const merged = { ...template };
+    // Prefer the last non-empty insurance list (specialized parsers run after general).
+    let chosen: Tab14InsuranceRow[] = [];
     for (const r of results) {
-      for (const row of r.insurances) {
-        for (const key of Object.keys(template) as (keyof Tab14InsuranceRow)[]) {
-          const v = row[key]?.trim();
-          if (v && !merged[key]) merged[key] = v;
-        }
+      if (r.insurances.length > 0) {
+        chosen = r.insurances.map((row) => ({ ...emptyInsuranceRow(), ...row }));
       }
     }
-    return Object.values(merged).some((v) => v.trim()) ? [merged] : [];
+    return chosen;
   };
 
   const specialized = results.slice(1);
@@ -988,6 +1018,7 @@ export function mergeIntakeParseResults(
   const medications = pickBestList((r) => r.medications);
   const chronicConditions = pickBestChronic();
   const insurances = mergeInsurance();
+  const labPanels = mergeLabPanels(...results.map((r) => r.labPanels));
 
   return {
     patientFields,
@@ -997,6 +1028,7 @@ export function mergeIntakeParseResults(
     medications,
     chronicConditions,
     hospitalVisit,
+    labPanels,
     ...(fieldWarnings ? { fieldWarnings } : {}),
   };
 }

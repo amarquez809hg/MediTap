@@ -768,7 +768,8 @@
       "allergies": "Allergies",
       "medications": "Medications",
       "insurance": "Insurance",
-      "chronicConditions": "Chronic Conditions"
+      "chronicConditions": "Chronic Conditions",
+      "labResults": "Lab Results"
     },
     "loadingRecord": "Loading your saved patient record…",
     "staffActiveBanner": "Staff editing is active for this patient. The patient stays signed in. When you're done, use End staff mode to return this form to view-only.",

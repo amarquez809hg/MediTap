@@ -14,6 +14,7 @@ import type {
   Tab14MedicationRow,
   Tab14PatientFields,
 } from './tab14IntakeTypes';
+import { emptyInsuranceRow } from './tab14IntakeTypes';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 
@@ -320,6 +321,7 @@ function parseDemoInsurances(section: string): Tab14InsuranceRow[] {
     const f = parseFieldsInBlock(block, INSURANCE_FIELDS);
     if (!f.providerName && !f.policyNumber) return null;
     return {
+      ...emptyInsuranceRow(),
       providerName: (f.providerName || '').split(/\s+Policy Number:/i)[0].trim(),
       policyNumber: (f.policyNumber || '').split(/\s+Plan Name:/i)[0].trim(),
       planName: (f.planName || '').split(/\s+Member ID:/i)[0].trim(),
@@ -754,6 +756,7 @@ function parseCompactInsurance(section: string): Tab14InsuranceRow[] {
 
   return [
     {
+      ...emptyInsuranceRow(),
       providerName: provider,
       policyNumber: policy,
       planName: plan,
@@ -817,6 +820,7 @@ function parseDataPortabilityCompactRecord(raw: string): Tab14IntakeParseResult 
     medications,
     chronicConditions,
     hospitalVisit,
+    labPanels: [],
   });
 }
 
@@ -875,5 +879,6 @@ export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseRes
     medications,
     chronicConditions,
     hospitalVisit,
+    labPanels: [],
   });
 }

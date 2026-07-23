@@ -25,7 +25,7 @@ grep -qF "Collapse all" "$TSX" ||
 grep -qF ".tab14-repeater-accordion" "$CSS" ||
   fail "accordion CSS is missing"
 
-for section in allergy medication chronic hospitalVisit; do
+for section in allergy medication chronic hospitalVisit labResult; do
   grep -qF "sectionKey=\"$section\"" "$TSX" ||
     fail "$section section is not protected by the accordion"
 done

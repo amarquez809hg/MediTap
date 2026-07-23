@@ -21,7 +21,7 @@ function readJson<T>(key: string): T | null {
   }
 }
 
-/** True when any legacy Tab14 localStorage keys exist (pre–API-only builds). */
+/** True when any legacy Tab14 localStorage keys exist (preï¿½API-only builds). */
 export function hasTab14LegacyLocalStorage(): boolean {
   if (typeof window === 'undefined') return false;
   return TAB14_LEGACY_KEYS.some((k) => localStorage.getItem(k) != null);
@@ -65,6 +65,9 @@ export function loadTab14LegacyFromLocalStorage(): Tab14LoadResult | null {
       dateOfBirth: String(patient.dateOfBirth ?? '').trim(),
       bloodType: String(patient.bloodType ?? '').trim(),
       email: String(patient.email ?? '').trim(),
+      additionalEmails: Array.isArray(patient.additionalEmails)
+        ? (patient.additionalEmails as string[])
+        : [],
       phoneNumber: String(patient.phoneNumber ?? patient.phone ?? '').trim(),
       address: String(patient.address ?? '').trim(),
       race: String(patient.race ?? '').trim(),
@@ -72,6 +75,11 @@ export function loadTab14LegacyFromLocalStorage(): Tab14LoadResult | null {
       preferredLanguage: String(patient.preferredLanguage ?? '').trim(),
       maritalStatus: String(patient.maritalStatus ?? '').trim(),
       sexAtBirth: String(patient.sexAtBirth ?? '').trim(),
+      legalSex: String(patient.legalSex ?? '').trim(),
+      genderIdentity: String(patient.genderIdentity ?? '').trim(),
+      sexualOrientation: String(patient.sexualOrientation ?? '').trim(),
+      sexAtBirthRecordedOn: String(patient.sexAtBirthRecordedOn ?? '').trim(),
+      otherNotes: String(patient.otherNotes ?? '').trim(),
       heightInches: String(patient.heightInches ?? '').trim(),
       weightLbs: String(patient.weightLbs ?? '').trim(),
       systolicBp: '',

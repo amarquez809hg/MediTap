@@ -768,7 +768,8 @@
       "allergies": "过敏史",
       "medications": "用药",
       "insurance": "保险",
-      "chronicConditions": "慢性病"
+      "chronicConditions": "慢性病",
+      "labResults": "检验结果"
     },
     "loadingRecord": "正在加载您已保存的患者档案…",
     "staffActiveBanner": "该患者已启用工作人员编辑。患者保持登录状态。完成后，请使用「结束工作人员模式」将此表单恢复为仅查看。",

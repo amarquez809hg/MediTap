@@ -542,14 +542,14 @@ ion-page.ct-page.ct-tab14 ion-content {
 }
 
 .add-section-button {
-  background-color: var(--meditap-primary-shade);
+  background-color: var(--ion-color-tertiary-shade, #219187);
   color: #fff;
   padding: 8px 14px;
   margin-top: 15px;
 }
 
 .add-section-button:hover {
-  background-color: var(--meditap-primary);
+  background-color: var(--ion-color-tertiary, #26a69a);
 }
 
 .preview-button {
@@ -575,7 +575,7 @@ ion-page.ct-page.ct-tab14 ion-content {
   border-radius: var(--meditap-radius);
   margin: 8px 0;
   padding: 14px 16px;
-  background: var(--meditap-primary);
+  background: var(--ion-color-tertiary, #26a69a);
   color: #fff;
   border: none;
   cursor: pointer;
@@ -586,11 +586,11 @@ ion-page.ct-page.ct-tab14 ion-content {
 }
 
 .accordion-header:hover {
-  background: var(--meditap-accent);
+  background: var(--ion-color-tertiary-tint, #3cafa4);
 }
 
 .accordion-header:active {
-  background: var(--meditap-accent-hover);
+  background: var(--ion-color-tertiary-shade, #219187);
 }
 
 .accordion-content {
@@ -700,6 +700,22 @@ ion-page.ct-page.ct-tab14 ion-content {
 .tab14-repeater-accordion__content {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.tab14-lab-components-heading {
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.tab14-lab-component-block {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--meditap-border, #dbe3df);
+}
+
+.tab14-lab-component-block:last-of-type {
+  border-bottom: none;
 }
 
 .form-field {

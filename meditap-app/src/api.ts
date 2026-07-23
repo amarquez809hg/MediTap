@@ -35,6 +35,12 @@ export type PatientApi = {
   date_of_birth: string;
   blood_type: string | null;
   sex_at_birth: string | null;
+  legal_sex?: string | null;
+  gender_identity?: string | null;
+  sexual_orientation?: string | null;
+  sex_at_birth_recorded_on?: string | null;
+  additional_emails?: string[] | null;
+  other_notes?: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -119,7 +125,8 @@ export type PatientChronicDiseaseApi = {
 /** Tab7 — matches Django PatientLabPanel.components JSON */
 export type PatientLabPanelComponentApi = {
   name: string;
-  value: number;
+  value?: number;
+  textValue?: string;
   unit: string;
   range: string;
   critical: boolean;
@@ -134,6 +141,13 @@ export type PatientLabPanelApi = {
   collected_on: string;
   status: string;
   is_new: boolean;
+  category?: string;
+  notes?: string | null;
+  clinical_indication?: string | null;
+  impression?: string | null;
+  accession_number?: string | null;
+  modality?: string | null;
+  signed_by?: string | null;
   components: PatientLabPanelComponentApi[];
 };
 
@@ -144,6 +158,13 @@ export type PatientLabPanelWriteBody = {
   collected_on: string;
   status: string;
   is_new: boolean;
+  category?: string;
+  notes?: string | null;
+  clinical_indication?: string | null;
+  impression?: string | null;
+  accession_number?: string | null;
+  modality?: string | null;
+  signed_by?: string | null;
   components: PatientLabPanelComponentApi[];
 };
 
@@ -1362,6 +1383,7 @@ export type Tab14SavePatient = {
   dateOfBirth: string;
   bloodType: string;
   email: string;
+  additionalEmails: string[];
   phoneNumber: string;
   address: string;
   race: string;
@@ -1369,6 +1391,11 @@ export type Tab14SavePatient = {
   preferredLanguage: string;
   maritalStatus: string;
   sexAtBirth: string;
+  legalSex: string;
+  genderIdentity: string;
+  sexualOrientation: string;
+  sexAtBirthRecordedOn: string;
+  otherNotes: string;
   heightInches: string;
   weightLbs: string;
   systolicBp: string;
@@ -1384,6 +1411,14 @@ export type Tab14SaveInsurance = {
   groupNumber: string;
   startDate: string;
   endDate: string;
+  payerId: string;
+  guarantor: string;
+  memberName: string;
+  relationToSubscriber: string;
+  subscriberName: string;
+  subscriberId: string;
+  subscriberDob: string;
+  billingAddress: string;
 };
 
 export type Tab14SaveAllergy = {
@@ -1455,6 +1490,33 @@ export type Tab14LoadResult = {
 function dashToEmpty(v: string | null | undefined): string {
   if (!v || v === '—' || v === 'N/A') return '';
   return v;
+}
+
+function coverageDetailString(
+  cd: Record<string, unknown> | null | undefined,
+  key: string
+): string {
+  if (!cd || typeof cd !== 'object' || Array.isArray(cd)) return '';
+  const v = cd[key];
+  if (v == null) return '';
+  return dashToEmpty(String(v));
+}
+
+function tab14InsuranceCoverageDetails(
+  ins: Tab14SaveInsurance,
+  preserved: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...preserved,
+    payerId: (ins.payerId || '').trim(),
+    guarantor: (ins.guarantor || '').trim(),
+    memberName: (ins.memberName || '').trim(),
+    relationToSubscriber: (ins.relationToSubscriber || '').trim(),
+    subscriberName: (ins.subscriberName || '').trim(),
+    subscriberId: (ins.subscriberId || '').trim(),
+    subscriberDob: (ins.subscriberDob || '').trim(),
+    billingAddress: (ins.billingAddress || '').trim(),
+  };
 }
 
 function isoDateForInput(isoLike?: string | null): string {
@@ -1546,6 +1608,7 @@ export async function loadTab14FromBackend(
       dateOfBirth: '',
       bloodType: '',
       email: '',
+      additionalEmails: [],
       phoneNumber: '',
       address: '',
       race: '',
@@ -1553,6 +1616,11 @@ export async function loadTab14FromBackend(
       preferredLanguage: '',
       maritalStatus: '',
       sexAtBirth: '',
+      legalSex: '',
+      genderIdentity: '',
+      sexualOrientation: '',
+      sexAtBirthRecordedOn: '',
+      otherNotes: '',
       heightInches: '',
       weightLbs: '',
       systolicBp: '',
@@ -1651,6 +1719,12 @@ export async function loadTab14FromBackend(
       const pol = policyById.get(row.policy);
       const prov = pol ? providerById.get(pol.provider) : undefined;
       const pg = parsePlanGroup(pol?.plan_name);
+      const cd =
+        row.coverage_details &&
+        typeof row.coverage_details === 'object' &&
+        !Array.isArray(row.coverage_details)
+          ? (row.coverage_details as Record<string, unknown>)
+          : {};
       return {
         providerName: dashToEmpty(prov?.name),
         policyNumber: dashToEmpty(pol?.policy_number),
@@ -1659,6 +1733,14 @@ export async function loadTab14FromBackend(
         groupNumber: dashToEmpty(pg.group),
         startDate: isoDateForInput(row.start_date),
         endDate: isoDateForInput(row.end_date),
+        payerId: coverageDetailString(cd, 'payerId'),
+        guarantor: coverageDetailString(cd, 'guarantor'),
+        memberName: coverageDetailString(cd, 'memberName'),
+        relationToSubscriber: coverageDetailString(cd, 'relationToSubscriber'),
+        subscriberName: coverageDetailString(cd, 'subscriberName'),
+        subscriberId: coverageDetailString(cd, 'subscriberId'),
+        subscriberDob: coverageDetailString(cd, 'subscriberDob'),
+        billingAddress: coverageDetailString(cd, 'billingAddress'),
       };
     })
     .filter((i) => i.providerName || i.policyNumber);
@@ -1706,6 +1788,9 @@ export async function loadTab14FromBackend(
       dateOfBirth: isoDateForInput(current.date_of_birth),
       bloodType: dashToEmpty(current.blood_type),
       email: current.email || '',
+      additionalEmails: Array.isArray(current.additional_emails)
+        ? current.additional_emails
+        : [],
       phoneNumber: current.phone || '',
       address: current.address || '',
       race: current.race || '',
@@ -1713,6 +1798,11 @@ export async function loadTab14FromBackend(
       preferredLanguage: current.preferred_language || '',
       maritalStatus: current.marital_status || '',
       sexAtBirth: current.sex_at_birth || '',
+      legalSex: dashToEmpty(current.legal_sex),
+      genderIdentity: dashToEmpty(current.gender_identity),
+      sexualOrientation: dashToEmpty(current.sexual_orientation),
+      sexAtBirthRecordedOn: isoDateForInput(current.sex_at_birth_recorded_on),
+      otherNotes: dashToEmpty(current.other_notes),
       ...patientVitalsFromApi(current),
     },
     insurances,
@@ -2027,6 +2117,15 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     date_of_birth: input.patient.dateOfBirth,
     blood_type: input.patient.bloodType.trim() || null,
     sex_at_birth: input.patient.sexAtBirth.trim() || null,
+    legal_sex: (input.patient.legalSex || '').trim() || null,
+    gender_identity: (input.patient.genderIdentity || '').trim() || null,
+    sexual_orientation: (input.patient.sexualOrientation || '').trim() || null,
+    sex_at_birth_recorded_on:
+      (input.patient.sexAtBirthRecordedOn || '').trim() || null,
+    additional_emails: (input.patient.additionalEmails || [])
+      .map((e) => e.trim())
+      .filter(Boolean),
+    other_notes: (input.patient.otherNotes || '').trim() || null,
     email: saveEmail,
     phone: (input.patient.phoneNumber || '').trim() || null,
     address: (input.patient.address || '').trim() || null,
@@ -2232,7 +2331,7 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
         member_id: (ins.memberID || '').trim() || null,
         start_date: (ins.startDate || '').trim() || null,
         end_date: (ins.endDate || '').trim() || null,
-        coverage_details: preserved,
+        coverage_details: tab14InsuranceCoverageDetails(ins, preserved),
       }),
     });
     }

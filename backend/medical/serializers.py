@@ -78,7 +78,7 @@ class PatientLabPanelSerializer(serializers.ModelSerializer):
     def validate_components(self, value):
         if not isinstance(value, list):
             raise serializers.ValidationError("components must be a JSON array.")
-        required = ("name", "value", "unit", "range", "critical")
+        required = ("name", "unit", "range", "critical")
         for i, item in enumerate(value):
             if not isinstance(item, dict):
                 raise serializers.ValidationError(f"components[{i}] must be an object.")
@@ -91,14 +91,20 @@ class PatientLabPanelSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"components[{i}].critical must be a boolean."
                 )
-            v = item["value"]
-            if isinstance(v, bool) or v is None:
+            v = item.get("value", None)
+            text_value = item.get("textValue", item.get("text_value", None))
+            if v is not None:
+                if isinstance(v, bool) or not isinstance(v, (int, float)):
+                    raise serializers.ValidationError(
+                        f"components[{i}].value must be a number when provided."
+                    )
+            if text_value is not None and not isinstance(text_value, str):
                 raise serializers.ValidationError(
-                    f"components[{i}].value must be a number."
+                    f"components[{i}].textValue must be a string or omitted."
                 )
-            if not isinstance(v, (int, float)):
+            if v is None and not (isinstance(text_value, str) and text_value.strip()):
                 raise serializers.ValidationError(
-                    f"components[{i}].value must be a number."
+                    f"components[{i}] requires value or textValue."
                 )
             interp = item.get("interpretation")
             if interp is not None and not isinstance(interp, str):

@@ -1,8 +1,10 @@
 import type { PatientLabPanelApi } from '../api';
+import type { Tab14LabPanel, Tab14LabPanelCategory } from '../intake/tab14IntakeTypes';
 
 export type LabResultLineItem = {
   name: string;
-  value: number;
+  value?: number;
+  textValue?: string;
   unit: string;
   range: string;
   critical: boolean;
@@ -19,6 +21,13 @@ export type LabResultRow = {
   date: string;
   status: string;
   isNew: boolean;
+  category?: Tab14LabPanelCategory;
+  notes?: string;
+  clinicalIndication?: string;
+  impression?: string;
+  accessionNumber?: string;
+  modality?: string;
+  signedBy?: string;
   results: LabResultLineItem[];
 };
 
@@ -34,9 +43,44 @@ export function mapPatientLabPanelToRow(p: PatientLabPanelApi): LabResultRow {
     date: p.collected_on,
     status: p.status,
     isNew: p.is_new,
+    category: (p.category as Tab14LabPanelCategory) || 'lab',
+    notes: p.notes || undefined,
+    clinicalIndication: p.clinical_indication || undefined,
+    impression: p.impression || undefined,
+    accessionNumber: p.accession_number || undefined,
+    modality: p.modality || undefined,
+    signedBy: p.signed_by || undefined,
     results: p.components.map((c) => ({
       name: c.name,
       value: c.value,
+      textValue: c.textValue,
+      unit: c.unit,
+      range: c.range,
+      critical: c.critical,
+      interpretation: c.interpretation,
+    })),
+  };
+}
+
+export function mapTab14LabPanelToRow(panel: Tab14LabPanel, index: number): LabResultRow {
+  return {
+    id: panel.displayCode || `PDF-${index + 1}`,
+    displayCode: panel.displayCode || null,
+    testName: panel.testName,
+    date: panel.date,
+    status: panel.status,
+    isNew: panel.isNew,
+    category: panel.category,
+    notes: panel.notes,
+    clinicalIndication: panel.clinicalIndication,
+    impression: panel.impression,
+    accessionNumber: panel.accessionNumber,
+    modality: panel.modality,
+    signedBy: panel.signedBy,
+    results: panel.components.map((c) => ({
+      name: c.name,
+      value: c.value,
+      textValue: c.textValue,
       unit: c.unit,
       range: c.range,
       critical: c.critical,
@@ -52,6 +96,7 @@ export const mockLabResults: LabResultRow[] = [
     date: '2025-11-05',
     status: 'Reviewed',
     isNew: true,
+    category: 'lab',
     results: [
       {
         name: 'Hemoglobin',
@@ -83,6 +128,7 @@ export const mockLabResults: LabResultRow[] = [
     date: '2025-10-10',
     status: 'Reviewed',
     isNew: false,
+    category: 'lab',
     results: [
       {
         name: 'Glucose (Fasting)',
@@ -114,6 +160,7 @@ export const mockLabResults: LabResultRow[] = [
     date: '2025-08-15',
     status: 'Pending',
     isNew: false,
+    category: 'lab',
     results: [],
   },
 ];

@@ -19,6 +19,11 @@ import {
     loadTab14FromBackend,
     requestPatientIntakeStaffElevation,
     saveTab14ToBackend,
+    createPatientLabPanel,
+    updatePatientLabPanel,
+    deletePatientLabPanel,
+    fetchPatientLabPanels,
+    type PatientLabPanelWriteBody,
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
@@ -48,12 +53,15 @@ import type {
     Tab14InsuranceFieldKey,
     Tab14InsuranceRowWarnings,
     Tab14IntakeParseResult,
+    Tab14LabPanel,
+    Tab14LabPanelCategory,
     Tab14MedicationFieldKey,
     Tab14MedicationRowWarnings,
     Tab14PatientFieldKey,
     Tab14PatientFieldWarnings,
     Tab14PatientFields,
 } from '../intake/tab14IntakeTypes';
+import { emptyInsuranceRow } from '../intake/tab14IntakeTypes';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -82,6 +90,13 @@ import {
     lbsToKg,
 } from '../vitals/bmi';
 import {
+    mapPatientLabPanelToRow,
+    mapTab14LabPanelToRow,
+    type LabResultLineItem,
+    type LabResultRow,
+} from '../labResults/labResultModel';
+import { LAB_STATUS_OPTIONS } from '../labResults/labResultFieldCatalog';
+import {
     IonPage,
     IonContent,
     IonIcon
@@ -94,6 +109,7 @@ interface PatientInfo {
     dateOfBirth: string;
     bloodType: string;
     email: string;
+    additionalEmails: string[];
     phoneNumber: string;
     address: string;
     race: string;
@@ -101,6 +117,11 @@ interface PatientInfo {
     preferredLanguage: string;
     maritalStatus: string;
     sexAtBirth: string;
+    legalSex: string;
+    genderIdentity: string;
+    sexualOrientation: string;
+    sexAtBirthRecordedOn: string;
+    otherNotes: string;
     heightInches: string;
     weightLbs: string;
     systolicBp: string;
@@ -115,6 +136,14 @@ interface Insurance {
     groupNumber: string;
     startDate: string;
     endDate: string;
+    payerId: string;
+    guarantor: string;
+    memberName: string;
+    relationToSubscriber: string;
+    subscriberName: string;
+    subscriberId: string;
+    subscriberDob: string;
+    billingAddress: string;
 };
 interface Allergy {
     allergyName: string;
@@ -162,6 +191,7 @@ const defaultPatientInfo: PatientInfo = {
     dateOfBirth: '',
     bloodType: '', 
     email: '',
+    additionalEmails: [],
     phoneNumber: '',
     address: '',
     race: '',
@@ -169,21 +199,18 @@ const defaultPatientInfo: PatientInfo = {
     preferredLanguage: '',
     maritalStatus: '',
     sexAtBirth:'',
+    legalSex: '',
+    genderIdentity: '',
+    sexualOrientation: '',
+    sexAtBirthRecordedOn: '',
+    otherNotes: '',
     heightInches: '',
     weightLbs: '',
     systolicBp: '',
     diastolicBp: '',
     heartRate: '',
 };
-const defaultInsurance: Insurance = {
-    providerName:'',
-    policyNumber:'',
-    planName: '', 
-    memberID: '',
-    groupNumber: '',
-    startDate:'', 
-    endDate:'',
-};
+const defaultInsurance: Insurance = emptyInsuranceRow();
 const defaultAllergy: Allergy = {
     allergyName: '', 
     allergyType: '',
@@ -262,6 +289,7 @@ const samplePatientInfo: PatientInfo = {
     dateOfBirth: '1990-03-15',
     bloodType: 'O+',
     email: 'jordan.rivera@example.com',
+    additionalEmails: ['jordan.alt@example.com'],
     phoneNumber: '555-201-8844',
     address: '1200 Market St, San Francisco, CA 94103',
     race: 'Asian',
@@ -269,6 +297,11 @@ const samplePatientInfo: PatientInfo = {
     preferredLanguage: 'English',
     maritalStatus: 'Married',
     sexAtBirth: 'Female',
+    legalSex: 'Female',
+    genderIdentity: 'Woman',
+    sexualOrientation: 'Straight',
+    sexAtBirthRecordedOn: '2020-01-15',
+    otherNotes: 'Prefers afternoon appointments.',
     heightInches: '65',
     weightLbs: '148',
     systolicBp: '118',
@@ -277,6 +310,7 @@ const samplePatientInfo: PatientInfo = {
 };
 
 const sampleInsurance: Insurance = {
+    ...emptyInsuranceRow(),
     providerName: 'Blue Cross Blue Shield',
     policyNumber: 'POL-778821',
     planName: 'PPO Select Gold',
@@ -284,6 +318,11 @@ const sampleInsurance: Insurance = {
     groupNumber: 'GRP-4400',
     startDate: '2024-01-01',
     endDate: '2025-12-31',
+    payerId: 'BCBS-001',
+    memberName: 'Jordan Rivera',
+    relationToSubscriber: 'Self',
+    subscriberName: 'Jordan Rivera',
+    subscriberId: 'SUB-009921',
 };
 
 const sampleAllergy: Allergy = {
@@ -335,7 +374,108 @@ const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
     { id: 3, labelKey: 'patientIntake.sections.medications', icon: 'fa-pills' },
     { id: 4, labelKey: 'patientIntake.sections.insurance', icon: 'fa-file-medical' },
     { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
+    { id: 7, labelKey: 'patientIntake.sections.labResults', icon: 'fa-flask' },
 ];
+
+function labResultRowToTab14Panel(row: LabResultRow): Tab14LabPanel {
+    return {
+        testName: row.testName,
+        date: row.date,
+        status: row.status,
+        isNew: row.isNew,
+        category: row.category || 'lab',
+        displayCode: row.displayCode || undefined,
+        notes: row.notes,
+        clinicalIndication: row.clinicalIndication,
+        impression: row.impression,
+        accessionNumber: row.accessionNumber,
+        modality: row.modality,
+        signedBy: row.signedBy,
+        components: row.results.map((c) => ({
+            name: c.name,
+            value: c.value,
+            textValue: c.textValue,
+            unit: c.unit,
+            range: c.range,
+            critical: c.critical,
+            interpretation: c.interpretation,
+        })),
+    };
+}
+
+const TAB14_LAB_CATEGORIES: Tab14LabPanelCategory[] = [
+    'lab',
+    'imaging',
+    'vitals',
+    'clinical',
+    'social',
+    'contact',
+];
+
+function emptyLabComponent(): LabResultLineItem {
+    return {
+        name: '',
+        unit: '',
+        range: '',
+        critical: false,
+    };
+}
+
+function createEmptyLabPanel(): LabResultRow {
+    return {
+        id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        testName: '',
+        date: '',
+        status: 'Final',
+        isNew: true,
+        category: 'lab',
+        results: [emptyLabComponent()],
+    };
+}
+
+function labPanelToWriteBody(
+    patientId: string,
+    row: LabResultRow
+): PatientLabPanelWriteBody {
+    return {
+        patient: patientId,
+        display_code: row.displayCode?.trim() || null,
+        test_name: row.testName.trim(),
+        collected_on: row.date || new Date().toISOString().slice(0, 10),
+        status: row.status || 'Final',
+        is_new: row.isNew,
+        category: row.category || 'lab',
+        notes: row.notes?.trim() || null,
+        clinical_indication: row.clinicalIndication?.trim() || null,
+        impression: row.impression?.trim() || null,
+        accession_number: row.accessionNumber?.trim() || null,
+        modality: row.modality?.trim() || null,
+        signed_by: row.signedBy?.trim() || null,
+        components: row.results
+            .map((c) => ({
+                name: c.name.trim(),
+                value: c.value,
+                textValue: c.textValue?.trim() || undefined,
+                unit: c.unit || '',
+                range: c.range || '',
+                critical: !!c.critical,
+                interpretation: c.interpretation?.trim() || undefined,
+            }))
+            .filter((c) => c.name && (c.value != null || c.textValue)),
+    };
+}
+
+function isInsuranceRowEmpty(row: Insurance): boolean {
+    return !Object.values(row).some((v) => String(v ?? '').trim());
+}
+
+function isInsuranceAccordionOpen(
+    openMap: Record<number, boolean>,
+    index: number
+) {
+    if (index in openMap) return openMap[index];
+    return index === 0;
+}
 
 function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
     const chips: string[] = [];
@@ -346,6 +486,7 @@ function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument
     if (b.insurances.length) chips.push('Insurance');
     if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
     if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
+    if (b.labPanels.length) chips.push(`Lab Results (${b.labPanels.length})`);
     if (!chips.length) {
         return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
     }
@@ -374,7 +515,12 @@ function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
 }
 
 
-type Tab14RepeaterSection = 'allergy' | 'medication' | 'chronic' | 'hospitalVisit';
+type Tab14RepeaterSection =
+    | 'allergy'
+    | 'medication'
+    | 'chronic'
+    | 'hospitalVisit'
+    | 'labResult';
 
 function repeaterAccordionKey(section: Tab14RepeaterSection, index: number) {
     return `${section}:${index}`;
@@ -395,6 +541,7 @@ const REPEATER_SECTION_LABELS: Record<Tab14RepeaterSection, string> = {
     medication: 'Medication',
     chronic: 'Chronic Condition',
     hospitalVisit: 'Hospital Visit',
+    labResult: 'Lab Result',
 };
 
 function repeaterRowTitle(section: Tab14RepeaterSection, index: number, detail?: string) {
@@ -603,13 +750,19 @@ const Tab14: React.FC = () => {
     const suppressUnsavedPromptRef = useRef(false);
 
     const [patientInfo, setPatientInfo] = useState<PatientInfo>(defaultPatientInfo);
+    const [addAnotherEmail, setAddAnotherEmail] = useState(false);
     const [insurances, setInsurances] = useState<Insurance[]>([defaultInsurance]);
+    const [addAnotherInsurance, setAddAnotherInsurance] = useState(false);
+    const [expandedInsuranceIds, setExpandedInsuranceIds] = useState<Record<number, boolean>>({});
     const [allergies, setAllergies] = useState<Allergy[]>([defaultAllergy]);
     const [medications, setMedications] = useState<Medication[]>([defaultMedication]);
     const [chronicConditions, setChronicConditions] = useState<ChronicCondition[]>([
         defaultChronicCondition,
     ]);
     const [hospitalVisits, setHospitalVisits] = useState<HospitalVisit[]>([defaultHospitalVisit]);
+    const [labPanels, setLabPanels] = useState<LabResultRow[]>([]);
+    const [removedLabPanelServerIds, setRemovedLabPanelServerIds] = useState<string[]>([]);
+    const [labSaveNotice, setLabSaveNotice] = useState<string | null>(null);
 
     const formSnapshot = useMemo(
         () =>
@@ -620,11 +773,12 @@ const Tab14: React.FC = () => {
                 medications,
                 chronicConditions,
                 hospitalVisits,
+                labPanels,
                 noAllergies,
                 noMedications,
                 noChronicConditions,
             }),
-        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisits, noAllergies, noMedications, noChronicConditions]
+        [patientInfo, insurances, allergies, medications, chronicConditions, hospitalVisits, labPanels, noAllergies, noMedications, noChronicConditions]
     );
 
     const hasUnsavedChanges =
@@ -676,10 +830,16 @@ const Tab14: React.FC = () => {
 
     const applyTab14Bundle = (bundle: Tab14LoadResult) => {
         if (!bundle.hasPatient) return;
-        setPatientInfo(bundle.patient);
-        setInsurances(
-            bundle.insurances.length > 0 ? bundle.insurances : [defaultInsurance]
-        );
+        setPatientInfo({
+            ...defaultPatientInfo,
+            ...bundle.patient,
+            additionalEmails: bundle.patient.additionalEmails ?? [],
+        });
+        setAddAnotherEmail((bundle.patient.additionalEmails ?? []).length > 0);
+        const loadedInsurances =
+            bundle.insurances.length > 0 ? bundle.insurances : [defaultInsurance];
+        setInsurances(loadedInsurances);
+        setAddAnotherInsurance(loadedInsurances.length > 1);
         setAllergies(
             bundle.allergies.length > 0
                 ? bundle.allergies.map((row) => ({
@@ -756,6 +916,8 @@ const Tab14: React.FC = () => {
                   }))
                 : [defaultHospitalVisit]
         );
+        setLabPanels(snapshot.labPanels.map(mapTab14LabPanelToRow));
+        setRemovedLabPanelServerIds([]);
     };
 
     const buildMergeSnapshot = (): Tab14MergeSnapshot => ({
@@ -774,6 +936,7 @@ const Tab14: React.FC = () => {
         })),
         noChronicConditions,
         hospitalVisits: hospitalVisits.map((row) => ({ ...defaultHospitalVisit, ...row })),
+        labPanels: labPanels.map(labResultRowToTab14Panel),
     });
 
     const removeUploadedFile = (id: string) => {
@@ -887,7 +1050,13 @@ const Tab14: React.FC = () => {
             }
 
             const replaceChartFromPdf = parsedBundles.some(bundleHasPatientIdentity);
-            snapshot = replaceChartFromPdf ? emptyMergeSnapshot() : buildMergeSnapshot();
+            if (replaceChartFromPdf) {
+                const empty = emptyMergeSnapshot();
+                const prior = buildMergeSnapshot();
+                snapshot = { ...empty, insurances: prior.insurances, labPanels: prior.labPanels };
+            } else {
+                snapshot = buildMergeSnapshot();
+            }
 
             for (let i = 0; i < parsedBundles.length; i += 1) {
                 const bundle = parsedBundles[i];
@@ -901,7 +1070,14 @@ const Tab14: React.FC = () => {
 
             applySnapshotToForm(snapshot);
             if (Object.keys(patientFromUpload).length > 0) {
-                setPatientInfo({ ...defaultPatientInfo, ...patientFromUpload });
+                setPatientInfo({
+                    ...defaultPatientInfo,
+                    ...patientFromUpload,
+                    additionalEmails: patientFromUpload.additionalEmails ?? [],
+                });
+                if ((patientFromUpload.additionalEmails ?? []).length > 0) {
+                    setAddAnotherEmail(true);
+                }
                 setActiveSection(0);
             }
             setPdfFieldWarnings(warningsFromUpload);
@@ -1073,6 +1249,70 @@ const Tab14: React.FC = () => {
         });
     };
 
+    const updateLabPanelField = (index: number, patch: Partial<LabResultRow>) => {
+        setLabPanels((prev) =>
+            prev.map((panel, i) => (i === index ? { ...panel, ...patch } : panel))
+        );
+    };
+
+    const updateLabComponentField = (
+        panelIndex: number,
+        componentIndex: number,
+        patch: Partial<LabResultLineItem>
+    ) => {
+        setLabPanels((prev) =>
+            prev.map((panel, i) => {
+                if (i !== panelIndex) return panel;
+                const results = panel.results.map((comp, j) =>
+                    j === componentIndex ? { ...comp, ...patch } : comp
+                );
+                return { ...panel, results };
+            })
+        );
+    };
+
+    const addLabComponent = (panelIndex: number) => {
+        setLabPanels((prev) =>
+            prev.map((panel, i) =>
+                i === panelIndex
+                    ? { ...panel, results: [...panel.results, emptyLabComponent()] }
+                    : panel
+            )
+        );
+    };
+
+    const removeLabComponent = (panelIndex: number, componentIndex: number) => {
+        setLabPanels((prev) =>
+            prev.map((panel, i) => {
+                if (i !== panelIndex) return panel;
+                const results = panel.results.filter((_, j) => j !== componentIndex);
+                return {
+                    ...panel,
+                    results: results.length > 0 ? results : [emptyLabComponent()],
+                };
+            })
+        );
+    };
+
+    const removeLabPanelAt = (index: number) => {
+        const panel = labPanels[index];
+        if (panel?.serverId) {
+            setRemovedLabPanelServerIds((prev) =>
+                prev.includes(panel.serverId!) ? prev : [...prev, panel.serverId!]
+            );
+        }
+        handleRemoveRepeaterSection('labResult', index, labPanels, setLabPanels);
+    };
+
+    const addLabPanel = () => {
+        handleAddRepeaterSection(
+            'labResult',
+            labPanels,
+            setLabPanels,
+            createEmptyLabPanel()
+        );
+    };
+
 
     // required field checks + format checking + others 
     const checkForm = () => {
@@ -1087,6 +1327,11 @@ const Tab14: React.FC = () => {
         if (patientInfo.email && !/\S+@\S+\.\S+/.test(patientInfo.email)) {
             newErrors.email = "A valid email format is required.";
         }
+        patientInfo.additionalEmails.forEach((extraEmail, index) => {
+            if (extraEmail.trim() && !/\S+@\S+\.\S+/.test(extraEmail.trim())) {
+                newErrors[`additionalEmail-${index}`] = "A valid email format is required.";
+            }
+        });
 
         // dont let insurance dates start after they end 
         insurances.forEach((insurance, index) => {
@@ -1134,6 +1379,7 @@ const Tab14: React.FC = () => {
 
         setSaveErrorMessage(false);
         setBackendError(null);
+        setLabSaveNotice(null);
         setSaving(true);
         try {
             await saveTab14ToBackend({
@@ -1147,12 +1393,105 @@ const Tab14: React.FC = () => {
                 noAllergies,
                 allowStaffOnlySections: canEditPatientRecords,
             });
+
+            const draftLabPanels = labPanels.filter((row) => !row.serverId);
+            const existingLabPanels = labPanels.filter((row) => row.serverId);
+            let nextLabPanels = labPanels;
+            if (
+                canEditPatientRecords &&
+                (draftLabPanels.length > 0 ||
+                    existingLabPanels.length > 0 ||
+                    removedLabPanelServerIds.length > 0)
+            ) {
+                try {
+                    const { patientId } = await fetchPatientLabPanels(username);
+                    if (patientId) {
+                        for (const labPanelId of removedLabPanelServerIds) {
+                            await deletePatientLabPanel(labPanelId);
+                        }
+                        for (const row of existingLabPanels) {
+                            if (!row.testName.trim() || !row.serverId) continue;
+                            await updatePatientLabPanel(
+                                row.serverId,
+                                labPanelToWriteBody(patientId, row)
+                            );
+                        }
+                        for (const row of draftLabPanels) {
+                            if (!row.testName.trim()) continue;
+                            await createPatientLabPanel(
+                                labPanelToWriteBody(patientId, row)
+                            );
+                        }
+                        const { panels } = await fetchPatientLabPanels(username);
+                        nextLabPanels = panels.map(mapPatientLabPanelToRow);
+                        setLabPanels(nextLabPanels);
+                        setRemovedLabPanelServerIds([]);
+                    }
+                } catch (labErr) {
+                    const msg =
+                        labErr instanceof Error ? labErr.message : 'Lab save failed.';
+                    if (msg.includes('403')) {
+                        setLabSaveNotice(
+                            'Chart saved. Lab results need staff sign-in to persist — use Staff sign-in and Save again.'
+                        );
+                    } else {
+                        setLabSaveNotice(
+                            `Chart saved. Some lab results could not be saved: ${msg}`
+                        );
+                    }
+                }
+            }
+
             clearTab14DraftKeysOnly();
             const refreshed = await loadTab14FromBackend(username);
             if (refreshed.hasPatient) {
                 applyTab14Bundle(refreshed);
             }
-            setSavedFormSnapshot(formSnapshot);
+            const snapshotPatient = refreshed.hasPatient
+                ? {
+                      ...defaultPatientInfo,
+                      ...refreshed.patient,
+                      additionalEmails: refreshed.patient.additionalEmails ?? [],
+                  }
+                : patientInfo;
+            const snapshotInsurances =
+                refreshed.hasPatient && refreshed.insurances.length > 0
+                    ? refreshed.insurances
+                    : insurances;
+            setSavedFormSnapshot(
+                JSON.stringify({
+                    patientInfo: snapshotPatient,
+                    insurances: snapshotInsurances,
+                    allergies: refreshed.hasPatient
+                        ? refreshed.allergies.length > 0
+                            ? refreshed.allergies.map((row) => ({
+                                  ...defaultAllergy,
+                                  ...row,
+                                  allergyTypeOther: row.allergyTypeOther ?? '',
+                              }))
+                            : [defaultAllergy]
+                        : allergies,
+                    medications:
+                        refreshed.hasPatient && refreshed.medications.length > 0
+                            ? refreshed.medications
+                            : medications,
+                    chronicConditions:
+                        refreshed.hasPatient && refreshed.chronicConditions.length > 0
+                            ? refreshed.chronicConditions
+                            : chronicConditions,
+                    hospitalVisits: refreshed.hasPatient
+                        ? mapStoredHospitalVisits(refreshed.hospitalVisits)
+                        : hospitalVisits,
+                    labPanels: nextLabPanels,
+                    noAllergies: refreshed.hasPatient ? refreshed.noAllergies : noAllergies,
+                    noMedications: refreshed.hasPatient
+                        ? refreshed.medications.length === 0
+                        : noMedications,
+                    noChronicConditions: refreshed.hasPatient
+                        ? refreshed.chronicConditions.length === 0
+                        : noChronicConditions,
+                })
+            );
             setSaveMessage(true);
             setTimeout(() => setSaveMessage(false), 2000);
             return true;
@@ -1193,11 +1532,17 @@ const Tab14: React.FC = () => {
         if (!canEditPatientRecords) return;
         clearTab14DraftKeysOnly();
         setPatientInfo(defaultPatientInfo);
+        setAddAnotherEmail(false);
         setInsurances([defaultInsurance]);
+        setAddAnotherInsurance(false);
+        setExpandedInsuranceIds({});
         setAllergies([defaultAllergy]);
         setMedications([defaultMedication]);
         setChronicConditions([defaultChronicCondition]);
         setHospitalVisits([defaultHospitalVisit]);
+        setLabPanels([]);
+        setRemovedLabPanelServerIds([]);
+        setLabSaveNotice(null);
         setNoAllergies(false);
         setNoMedications(false);
         setNoChronicConditions(false);
@@ -1211,7 +1556,10 @@ const Tab14: React.FC = () => {
 
     const loadSampleData = () => {
         setPatientInfo({ ...samplePatientInfo });
+        setAddAnotherEmail(samplePatientInfo.additionalEmails.length > 0);
         setInsurances([{ ...sampleInsurance }]);
+        setAddAnotherInsurance(false);
+        setExpandedInsuranceIds({});
         setAllergies([{ ...sampleAllergy }]);
         setMedications([{ ...sampleMedication }]);
         setChronicConditions([{ ...sampleChronicCondition }]);
@@ -1319,6 +1667,15 @@ const Tab14: React.FC = () => {
                 if (cancelled) return;
                 if (bundle.hasPatient) {
                     applyTab14Bundle(bundle);
+                    try {
+                        const { panels } = await fetchPatientLabPanels(username);
+                        if (!cancelled && panels.length > 0) {
+                            setLabPanels(panels.map(mapPatientLabPanelToRow));
+                            setRemovedLabPanelServerIds([]);
+                        }
+                    } catch {
+                        /* lab panels optional on load */
+                    }
                 }
             } catch (e) {
                 if (!cancelled) {
@@ -1658,6 +2015,81 @@ const Tab14: React.FC = () => {
                                         </span>
                                     )}
                                 </div>
+
+                                <label className="no-allergies-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={addAnotherEmail}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setAddAnotherEmail(checked);
+                                            if (checked) {
+                                                setPatientInfo((prev) => ({
+                                                    ...prev,
+                                                    additionalEmails:
+                                                        prev.additionalEmails.length > 0
+                                                            ? prev.additionalEmails
+                                                            : [''],
+                                                }));
+                                            } else {
+                                                setPatientInfo((prev) => ({
+                                                    ...prev,
+                                                    additionalEmails: [],
+                                                }));
+                                            }
+                                        }}
+                                    />
+                                    <span>Add another email</span>
+                                </label>
+
+                                {addAnotherEmail &&
+                                    (patientInfo.additionalEmails.length > 0
+                                        ? patientInfo.additionalEmails
+                                        : ['']
+                                    ).map((extraEmail, emailIndex) => (
+                                        <div className="form-field" key={`extra-email-${emailIndex}`}>
+                                            <label>
+                                                Additional email {emailIndex + 1}
+                                                {renderPdfFieldWarningIcon('additionalEmails')}
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={extraEmail}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setPatientInfo((prev) => {
+                                                        const next = [...prev.additionalEmails];
+                                                        if (next.length === 0) next.push('');
+                                                        next[emailIndex] = value;
+                                                        return { ...prev, additionalEmails: next };
+                                                    });
+                                                    setPdfFieldWarnings((prev) =>
+                                                        clearPatientFieldWarning(prev, 'additionalEmails')
+                                                    );
+                                                }}
+                                            />
+                                            {errors[`additionalEmail-${emailIndex}`] && (
+                                                <span className="error-message">
+                                                    {errors[`additionalEmail-${emailIndex}`]}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                {addAnotherEmail && (
+                                    <button
+                                        type="button"
+                                        className="add-section-button"
+                                        onClick={() =>
+                                            setPatientInfo((prev) => ({
+                                                ...prev,
+                                                additionalEmails: [...prev.additionalEmails, ''],
+                                            }))
+                                        }
+                                    >
+                                        + Add another email address
+                                    </button>
+                                )}
                                 
                                 <div className = "form-field">
                                     <label>
@@ -1804,6 +2236,100 @@ const Tab14: React.FC = () => {
                                     </select>
                                 </div>
 
+                                <div className="form-field">
+                                    <label>
+                                        Legal sex{renderPdfFieldWarningIcon('legalSex')}
+                                    </label>
+                                    <select
+                                        value={patientInfo.legalSex}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'legalSex',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    >
+                                        <option value="">Select legal sex</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Unknown">Unknown</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Gender identity{renderPdfFieldWarningIcon('genderIdentity')}
+                                    </label>
+                                    <input
+                                        value={patientInfo.genderIdentity}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'genderIdentity',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Sexual orientation{renderPdfFieldWarningIcon('sexualOrientation')}
+                                    </label>
+                                    <input
+                                        value={patientInfo.sexualOrientation}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'sexualOrientation',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Sex at birth date recorded
+                                        {renderPdfFieldWarningIcon('sexAtBirthRecordedOn')}
+                                    </label>
+                                    <GlassDateInput
+                                        value={patientInfo.sexAtBirthRecordedOn}
+                                        onChange={(iso) =>
+                                            handleSingleChange(
+                                                'sexAtBirthRecordedOn',
+                                                iso,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                        max={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Other notes{renderPdfFieldWarningIcon('otherNotes')}
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        value={patientInfo.otherNotes}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'otherNotes',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
                             </div>
                                 </fieldset>
                             </>
@@ -1821,6 +2347,367 @@ const Tab14: React.FC = () => {
                             </div>
                         )}
 
+                        {activeSection === 7 && (
+                            <fieldset
+                                className="tab14-record-fieldset"
+                                disabled={!canEditPatientRecords}
+                            >
+                            <div className="tab14-section-card">
+                                {!canEditPatientRecords && (
+                                    <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
+                                        Staff sign-in is required to edit lab results.
+                                    </p>
+                                )}
+                                {labPanels.length === 0 ? (
+                                    <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
+                                        Upload a PDF with lab or imaging results, or add a panel below.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <Tab14RepeaterToolbar
+                                            onExpandAll={() =>
+                                                setAllRepeaterAccordion('labResult', labPanels.length, true)
+                                            }
+                                            onCollapseAll={() =>
+                                                setAllRepeaterAccordion('labResult', labPanels.length, false)
+                                            }
+                                        />
+                                        {labPanels.map((panel, index) => (
+                                            <Tab14RepeaterAccordion
+                                                key={panel.serverId ?? panel.id}
+                                                sectionKey="labResult"
+                                                index={index}
+                                                title={repeaterRowTitle(
+                                                    'labResult',
+                                                    index,
+                                                    panel.testName || panel.displayCode || undefined
+                                                )}
+                                                isOpen={isRepeaterAccordionOpen(
+                                                    repeaterAccordionOpen,
+                                                    'labResult',
+                                                    index
+                                                )}
+                                                onToggle={() => toggleRepeaterAccordion('labResult', index)}
+                                            >
+                                                <div className="form-field">
+                                                    <label>Test / panel name</label>
+                                                    <input
+                                                        value={panel.testName}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                testName: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Display code</label>
+                                                    <input
+                                                        value={panel.displayCode ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                displayCode: e.target.value || null,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Collected on</label>
+                                                    <GlassDateInput
+                                                        value={panel.date}
+                                                        onChange={(iso) =>
+                                                            updateLabPanelField(index, { date: iso })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Status</label>
+                                                    <select
+                                                        value={panel.status}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                status: e.target.value,
+                                                            })
+                                                        }
+                                                    >
+                                                        {!LAB_STATUS_OPTIONS.includes(
+                                                            panel.status as (typeof LAB_STATUS_OPTIONS)[number]
+                                                        ) && panel.status ? (
+                                                            <option value={panel.status}>{panel.status}</option>
+                                                        ) : null}
+                                                        {LAB_STATUS_OPTIONS.map((status) => (
+                                                            <option key={status} value={status}>
+                                                                {status}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Category</label>
+                                                    <select
+                                                        value={panel.category || 'lab'}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                category: e.target
+                                                                    .value as Tab14LabPanelCategory,
+                                                            })
+                                                        }
+                                                    >
+                                                        {TAB14_LAB_CATEGORIES.map((cat) => (
+                                                            <option key={cat} value={cat}>
+                                                                {cat}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <label className="no-allergies-row">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={panel.isNew}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                isNew: e.target.checked,
+                                                            })
+                                                        }
+                                                    />
+                                                    Mark as new
+                                                </label>
+                                                <div className="form-field">
+                                                    <label>Clinical indication</label>
+                                                    <textarea
+                                                        rows={2}
+                                                        value={panel.clinicalIndication ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                clinicalIndication: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Impression</label>
+                                                    <textarea
+                                                        rows={2}
+                                                        value={panel.impression ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                impression: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Accession number</label>
+                                                    <input
+                                                        value={panel.accessionNumber ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                accessionNumber: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Modality</label>
+                                                    <input
+                                                        value={panel.modality ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                modality: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Signed by</label>
+                                                    <input
+                                                        value={panel.signedBy ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                signedBy: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="form-field">
+                                                    <label>Notes</label>
+                                                    <textarea
+                                                        rows={2}
+                                                        value={panel.notes ?? ''}
+                                                        onChange={(e) =>
+                                                            updateLabPanelField(index, {
+                                                                notes: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </div>
+
+                                                <h4 className="tab14-lab-components-heading">Components</h4>
+                                                {panel.results.map((comp, compIndex) => (
+                                                    <div
+                                                        key={`${panel.id}-comp-${compIndex}`}
+                                                        className="tab14-lab-component-block section-block"
+                                                    >
+                                                        <div className="form-field">
+                                                            <label>Analyte / component name</label>
+                                                            <input
+                                                                value={comp.name}
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        { name: e.target.value }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="form-field">
+                                                            <label>Numeric value</label>
+                                                            <input
+                                                                type="number"
+                                                                step="any"
+                                                                value={
+                                                                    comp.value == null
+                                                                        ? ''
+                                                                        : String(comp.value)
+                                                                }
+                                                                onChange={(e) => {
+                                                                    const raw = e.target.value.trim();
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        {
+                                                                            value:
+                                                                                raw === ''
+                                                                                    ? undefined
+                                                                                    : Number(raw),
+                                                                        }
+                                                                    );
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="form-field">
+                                                            <label>Text / qualitative value</label>
+                                                            <input
+                                                                value={comp.textValue ?? ''}
+                                                                placeholder='e.g. &lt;0.6'
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        {
+                                                                            textValue:
+                                                                                e.target.value,
+                                                                        }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="form-field">
+                                                            <label>Unit</label>
+                                                            <input
+                                                                value={comp.unit}
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        { unit: e.target.value }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="form-field">
+                                                            <label>Reference range</label>
+                                                            <input
+                                                                value={comp.range}
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        { range: e.target.value }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="form-field">
+                                                            <label>Interpretation</label>
+                                                            <input
+                                                                value={comp.interpretation ?? ''}
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        {
+                                                                            interpretation:
+                                                                                e.target.value,
+                                                                        }
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <label className="no-allergies-row">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={comp.critical}
+                                                                onChange={(e) =>
+                                                                    updateLabComponentField(
+                                                                        index,
+                                                                        compIndex,
+                                                                        {
+                                                                            critical:
+                                                                                e.target.checked,
+                                                                        }
+                                                                    )
+                                                                }
+                                                            />
+                                                            Critical / flagged
+                                                        </label>
+                                                        {panel.results.length > 1 && (
+                                                            <button
+                                                                className="remove-button"
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeLabComponent(
+                                                                        index,
+                                                                        compIndex
+                                                                    )
+                                                                }
+                                                            >
+                                                                Remove component
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    className="add-section-button"
+                                                    type="button"
+                                                    onClick={() => addLabComponent(index)}
+                                                >
+                                                    + Add component
+                                                </button>
+
+                                                <button
+                                                    className="remove-button"
+                                                    type="button"
+                                                    onClick={() => removeLabPanelAt(index)}
+                                                >
+                                                    Remove lab result
+                                                </button>
+                                            </Tab14RepeaterAccordion>
+                                        ))}
+                                    </>
+                                )}
+                                <button
+                                    className="add-section-button"
+                                    type="button"
+                                    onClick={addLabPanel}
+                                >
+                                    + Add lab result
+                                </button>
+                            </div>
+                            </fieldset>
+                        )}
+
                         {activeSection >= 1 && activeSection <= 5 && (
                                 <fieldset
                                     className="tab14-record-fieldset"
@@ -1830,11 +2717,47 @@ const Tab14: React.FC = () => {
                     {/* Insurance */}
                         {activeSection === 4 && (
                             <div className="tab14-section-card">
-                                {insurances.map((insurance, index) => (
-                                    <div key = {index} className = "section-block">
-
-                                        <h3> {t('patientIntake.fields.insuranceN', { n: index + 1 })} </h3>
-
+                                {insurances.map((insurance, index) => {
+                                    const insuranceTitle = `${t('patientIntake.fields.insuranceN', { n: index + 1 })}${
+                                        insurance.providerName.trim()
+                                            ? ` — ${insurance.providerName.trim()}`
+                                            : ''
+                                    }`;
+                                    const isOpen = isInsuranceAccordionOpen(expandedInsuranceIds, index);
+                                    const panelId = `tab14-insurance-${index}`;
+                                    return (
+                                        <div key={index} className="tab14-repeater-accordion section-block">
+                                            <div
+                                                role="button"
+                                                tabIndex={0}
+                                                className={`accordion-header tab14-repeater-accordion__header${
+                                                    isOpen ? ' tab14-repeater-accordion__header--open' : ''
+                                                }`}
+                                                onClick={() =>
+                                                    setExpandedInsuranceIds((prev) => ({
+                                                        ...prev,
+                                                        [index]: !isOpen,
+                                                    }))
+                                                }
+                                                onKeyDown={repeaterToggleKeyDown(() =>
+                                                    setExpandedInsuranceIds((prev) => ({
+                                                        ...prev,
+                                                        [index]: !isOpen,
+                                                    }))
+                                                )}
+                                                aria-expanded={isOpen}
+                                                aria-controls={panelId}
+                                            >
+                                                <span className="tab14-repeater-accordion__title">{insuranceTitle}</span>
+                                                <span className="tab14-repeater-accordion__chevron" aria-hidden="true">
+                                                    {isOpen ? '▾' : '▸'}
+                                                </span>
+                                            </div>
+                                            {isOpen ? (
+                                                <div
+                                                    id={panelId}
+                                                    className="accordion-content tab14-repeater-accordion__content"
+                                                >
                                         <div className = "form-field"> 
                                             <label>
                                                 {t('patientIntake.fields.providerName')}
@@ -1892,6 +2815,78 @@ const Tab14: React.FC = () => {
                                             }/>
                                         </div>
                                         <div className="form-field">
+                                            <label>Payer ID{renderPdfInsuranceWarningIcon(index, 'payerId')}</label>
+                                            <input
+                                                value={insurance.payerId}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'payerId', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Guarantor{renderPdfInsuranceWarningIcon(index, 'guarantor')}</label>
+                                            <input
+                                                value={insurance.guarantor}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'guarantor', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Member name{renderPdfInsuranceWarningIcon(index, 'memberName')}</label>
+                                            <input
+                                                value={insurance.memberName}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'memberName', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Relation to subscriber{renderPdfInsuranceWarningIcon(index, 'relationToSubscriber')}</label>
+                                            <input
+                                                value={insurance.relationToSubscriber}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'relationToSubscriber', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Subscriber name{renderPdfInsuranceWarningIcon(index, 'subscriberName')}</label>
+                                            <input
+                                                value={insurance.subscriberName}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'subscriberName', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Subscriber ID{renderPdfInsuranceWarningIcon(index, 'subscriberId')}</label>
+                                            <input
+                                                value={insurance.subscriberId}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'subscriberId', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Subscriber date of birth{renderPdfInsuranceWarningIcon(index, 'subscriberDob')}</label>
+                                            <GlassDateInput
+                                                value={insurance.subscriberDob}
+                                                onChange={(iso) =>
+                                                    handleChange(index, 'subscriberDob', iso, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Billing address{renderPdfInsuranceWarningIcon(index, 'billingAddress')}</label>
+                                            <input
+                                                value={insurance.billingAddress}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'billingAddress', e.target.value, insurances, setInsurances)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
                                             <label>{t('patientIntake.fields.startDate')}</label>
                                             <GlassDateInput
                                                 value={insurance.startDate}
@@ -1911,34 +2906,67 @@ const Tab14: React.FC = () => {
                                             />
                                         </div>
 
-                                        {/* Inavlid date range message*/}
                                         {errors[`insurance-${index}`] && (
                                             <span className="save-error-message">
                                                 {errors[`insurance-${index}`]}
                                             </span>
                                         )}
 
-                                        {/* Space to remove section*/}
                                             {insurances.length > 1 && (
                                             <button
                                             className="remove-button"
                                             type="button"
-                                            onClick={() => handleRemoveSection(index, insurances, setInsurances)}>
+                                            onClick={() => {
+                                                handleRemoveSection(index, insurances, setInsurances);
+                                                setExpandedInsuranceIds((prev) => {
+                                                    const next: Record<number, boolean> = {};
+                                                    for (const [key, value] of Object.entries(prev)) {
+                                                        const k = Number(key);
+                                                        if (k < index) next[k] = value;
+                                                        else if (k > index) next[k - 1] = value;
+                                                    }
+                                                    return next;
+                                                });
+                                                if (insurances.length <= 2) {
+                                                    setAddAnotherInsurance(false);
+                                                }
+                                            }}>
                                                 Remove Insurance
                                             </button>
                                         )}
-                                    </div>
-                                ))}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    );
+                                })}
 
-                                {/*Add another section*/}
-                                <button
-                                className="add-section-button"
-                                type="button"
-                                onClick={() =>
-                                handleAddSection(insurances, setInsurances, defaultInsurance)
-                                }>
-                                    + Add Another Insurance
-                                </button>
+                                <label className="no-allergies-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={addAnotherInsurance}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setAddAnotherInsurance(checked);
+                                            if (checked) {
+                                                if (insurances.length === 1) {
+                                                    const newIndex = insurances.length;
+                                                    setInsurances((prev) => [...prev, { ...defaultInsurance }]);
+                                                    setExpandedInsuranceIds((prev) => ({
+                                                        ...prev,
+                                                        [newIndex]: true,
+                                                    }));
+                                                }
+                                            } else if (insurances.length > 1) {
+                                                const last = insurances[insurances.length - 1];
+                                                if (isInsuranceRowEmpty(last)) {
+                                                    setInsurances((prev) => prev.slice(0, -1));
+                                                    setExpandedInsuranceIds({});
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <span>Add another insurance</span>
+                                </label>
 
                             </div>
                         )}
@@ -2607,6 +3635,14 @@ const Tab14: React.FC = () => {
                         {backendError && (
                             <span className = "save-error-message" style={{ display: 'block', marginTop: 8 }}>
                                 {backendError}
+                            </span>
+                        )}
+                        {labSaveNotice && (
+                            <span
+                                className="tab14-upload-parse"
+                                style={{ display: 'block', marginTop: 8 }}
+                            >
+                                {labSaveNotice}
                             </span>
                         )}
                     </div>

@@ -171,6 +171,14 @@ const INSURANCE_FIELDS: (keyof Tab14InsuranceRow)[] = [
   "groupNumber",
   "startDate",
   "endDate",
+  "payerId",
+  "guarantor",
+  "memberName",
+  "relationToSubscriber",
+  "subscriberName",
+  "subscriberId",
+  "subscriberDob",
+  "billingAddress",
 ];
 
 /** Fill empty insurance fields from incoming without overwriting populated values. */

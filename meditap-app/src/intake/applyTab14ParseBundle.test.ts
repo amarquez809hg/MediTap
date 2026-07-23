@@ -20,6 +20,7 @@ describe('bundleHasPatientIdentity', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
     };
     expect(bundleHasPatientIdentity(bundle)).toBe(true);
   });
@@ -57,6 +58,7 @@ describe('replace chart from PDF upload', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
     };
     const merged = applyTab14ParseBundle(emptyMergeSnapshot(), pdfBundle);
     expect(merged.snapshot.allergies).toHaveLength(1);
@@ -75,6 +77,7 @@ describe('PDF field warning merge', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
       fieldWarnings: {
         givenName: {
           message: FIELD_WARNING_MESSAGES.VERIFY_LABEL_BLEED,
@@ -90,6 +93,7 @@ describe('PDF field warning merge', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
       fieldWarnings: {
         email: {
           message: FIELD_WARNING_MESSAGES.VERIFY_OCR,
@@ -137,6 +141,7 @@ describe('PDF field warning merge', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
       fieldWarnings: {
         givenName: {
           message: FIELD_WARNING_MESSAGES.VERIFY_OTHER_LABEL,
@@ -152,6 +157,7 @@ describe('PDF field warning merge', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
     };
 
     const firstFields = mergePdfPatientFields({}, first.patientFields);

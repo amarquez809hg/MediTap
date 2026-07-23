@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { emptyInsuranceRow } from './tab14IntakeTypes';
 import {
   annotateOcrSparseWarnings,
   assessDemographicRawValue,
@@ -77,7 +78,7 @@ describe('hospital and insurance warnings', () => {
   it('flags Meditech-style hospital and insurance label fragments', () => {
     const hospital = buildHospitalFieldWarnings({
       facilityName: 'Lab, 1200 NW Everett St, Portland',
-      reason: 'for Referral  Results ',
+      reason: 'for Referral ï¿½ Results ï¿½',
       attendingPhysician: 'Name Organization Details Details',
     });
     expect(hospital?.facilityName).toBeTruthy();
@@ -86,13 +87,11 @@ describe('hospital and insurance warnings', () => {
 
     const insurance = buildInsuranceRowWarnings([
       {
+        ...emptyInsuranceRow(),
         providerName: 'Organization Details Details',
         policyNumber: 'Holder',
-        planName: '',
         memberID: 'Guarantor',
         groupNumber: 'entifier',
-        startDate: '',
-        endDate: '',
       },
     ]);
     expect(insurance?.[0]?.providerName).toBeTruthy();
@@ -121,6 +120,7 @@ describe('sanitizePatientFieldsWithWarnings', () => {
       medications: [],
       chronicConditions: [],
       hospitalVisit: {},
+      labPanels: [],
     });
     expect(wrapped.fieldWarnings?.givenName?.reason).toBe('label_bleed');
   });
