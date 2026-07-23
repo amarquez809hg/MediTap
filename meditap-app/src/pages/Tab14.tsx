@@ -3674,7 +3674,6 @@ const Tab14: React.FC = () => {
                                 <span className="file-preview-cell file-preview-cell--size">Size</span>
                                 <span className="file-preview-cell file-preview-cell--uploaded">Uploaded</span>
                                 <span className="file-preview-cell file-preview-cell--status">Import status</span>
-                                <span className="file-preview-cell file-preview-cell--preview">Preview</span>
                                 <span className="file-preview-cell file-preview-cell--actions">Actions</span>
                             </div>
                             {uploadedFiles.map((entry) => (
@@ -3704,7 +3703,7 @@ const Tab14: React.FC = () => {
                                     <span className="file-preview-cell file-preview-cell--status">
                                         {entry.parseStatus?.trim() || '-'}
                                     </span>
-                                    <span className="file-preview-cell file-preview-cell--preview">
+                                    <span className="file-preview-cell file-preview-cell--actions">
                                         {entry.file.type === 'application/pdf' ? (
                                             <button
                                                 className="preview-button"
@@ -3721,11 +3720,7 @@ const Tab14: React.FC = () => {
                                             >
                                                 View Image
                                             </button>
-                                        ) : (
-                                            <span className="file-preview-empty">-</span>
-                                        )}
-                                    </span>
-                                    <span className="file-preview-cell file-preview-cell--actions">
+                                        ) : null}
                                         <button
                                             className="remove-file-button"
                                             type="button"

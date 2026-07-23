@@ -793,6 +793,8 @@ ion-page.ct-page.ct-tab14 ion-content {
   max-width: 920px;
   margin: 12px auto 0;
   text-align: left;
+  display: flex;
+  flex-direction: column;
 }
 
 .file-preview-row {
@@ -802,7 +804,6 @@ ion-page.ct-page.ct-tab14 ion-content {
     minmax(58px, 0.45fr)
     minmax(108px, 0.85fr)
     minmax(0, 1.8fr)
-    minmax(96px, 0.65fr)
     auto;
   gap: 8px 12px;
   align-items: center;
@@ -865,15 +866,12 @@ ion-page.ct-page.ct-tab14 ion-content {
   white-space: normal;
 }
 
-.file-preview-cell--preview,
 .file-preview-cell--actions {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-}
-
-.file-preview-cell--actions {
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .file-preview-empty {
@@ -1060,7 +1058,8 @@ ion-page.ct-page.ct-tab14 ion-content {
 
 .remove-file-button--clear-all {
   align-self: flex-start;
-  margin-top: 24px;
+  margin-top: 28px;
+  margin-bottom: 4px;
   margin-left: 16px;
   margin-right: 16px;
 }
@@ -1086,8 +1085,8 @@ ion-page.ct-page.ct-tab14 ion-content {
     white-space: normal;
   }
 
-  .file-preview-cell--preview,
   .file-preview-cell--actions {
+    grid-column: 1 / -1;
     justify-content: flex-start;
   }
 }
