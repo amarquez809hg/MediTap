@@ -3,11 +3,13 @@ import { emptyInsuranceRow } from './tab14IntakeTypes';
 import {
   annotateOcrSparseWarnings,
   assessDemographicRawValue,
+  assessEmailValue,
   buildChronicConditionWarnings,
   buildHospitalFieldWarnings,
   buildInsuranceRowWarnings,
   clearChronicConditionWarning,
   FIELD_WARNING_MESSAGES,
+  isValidEmailFormat,
   removeIndexedWarningRow,
   sanitizePatientFieldsWithWarnings,
   stripLeadingLabelBleed,
@@ -174,10 +176,58 @@ describe('warningsForWinningPatientFields', () => {
   });
 });
 
+describe('email verify warnings', () => {
+  it('accepts standard emails with no warning', () => {
+    expect(isValidEmailFormat('Personalemail@gmail.com')).toBe(true);
+    expect(assessEmailValue('Personalemail@gmail.com').warning).toBeUndefined();
+    expect(assessDemographicRawValue('email', 'Personalemail@gmail.com').warning).toBeUndefined();
+  });
+
+  it('flags missing email when identity is present', () => {
+    const sanitized = sanitizePatientFieldsWithWarnings({
+      givenName: 'Joanna',
+      familyName: 'Smith',
+      email: '',
+    });
+    expect(sanitized.warnings?.email?.message).toBe(FIELD_WARNING_MESSAGES.VERIFY_EMAIL);
+  });
+
+  it('flags invalid email formats', () => {
+    expect(assessEmailValue('not-an-email').warning?.message).toBe(
+      FIELD_WARNING_MESSAGES.VERIFY_EMAIL
+    );
+    expect(
+      assessEmailValue('tel:+1-(503) 555-0199 mailto:broken').warning?.message
+    ).toBe(FIELD_WARNING_MESSAGES.VERIFY_EMAIL);
+  });
+
+  it('does not OCR-annotate a valid primary email', () => {
+    const annotated = annotateOcrSparseWarnings(
+      { givenName: 'Joanna', familyName: 'Smith', email: 'Personalemail@gmail.com' },
+      undefined
+    );
+    expect(annotated?.email).toBeUndefined();
+    expect(annotated?.givenName?.reason).toBe('ocr_sparse');
+  });
+
+  it('flags invalid additional emails only', () => {
+    const sanitized = sanitizePatientFieldsWithWarnings({
+      givenName: 'Joanna',
+      familyName: 'Smith',
+      email: 'Personalemail@gmail.com',
+      additionalEmails: ['emergencycontact@gmail.com', 'not-valid'],
+    });
+    expect(sanitized.warnings?.email).toBeUndefined();
+    expect(sanitized.warnings?.additionalEmails?.message).toBe(
+      FIELD_WARNING_MESSAGES.VERIFY_EMAIL
+    );
+  });
+});
+
 describe('annotateOcrSparseWarnings', () => {
   it('adds OCR warnings only for populated fields without existing warnings', () => {
     const annotated = annotateOcrSparseWarnings(
-      { givenName: 'Maria', familyName: 'Garcia', email: '' },
+      { givenName: 'Maria', familyName: 'Garcia', email: 'maria@example.com' },
       {
         givenName: {
           message: FIELD_WARNING_MESSAGES.VERIFY_LABEL_BLEED,
@@ -213,6 +263,23 @@ describe('isHardToReadExtractedText', () => {
       'Sex at Birth: Female',
       'Race: White',
       'Ethnicity: Not Hispanic or Latino',
+    ].join('\n');
+    expect(isHardToReadExtractedText(text)).toBe(false);
+  });
+
+  it('does not treat Sexual Orientation as Sex label glue', () => {
+    const text = [
+      'Patient Demographics - Female',
+      'Language Race / Ethnicity Marital Status',
+      'English - Written (Preferred) White / Unknown Never Married',
+      'born Sep. 14, 2004',
+      'Sex Assigned at Birth Female 01/30/2025',
+      'Legal Sex Female 01/30/2025',
+      'Gender Identity Not on file',
+      'Sexual Orientation Not on file',
+      'Sexual Orientation Not on file',
+      'Patient Name Joanna Smith',
+      'Communication 555-555-555 (Mobile) Personalemail@gmail.com',
     ].join('\n');
     expect(isHardToReadExtractedText(text)).toBe(false);
   });

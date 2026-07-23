@@ -44,6 +44,40 @@ const VERIFY_OCR =
 const VERIFY_VISIT_NOTE =
   'This may be visit-note text rather than a clinical list entry; verify against the source document.';
 
+const VERIFY_EMAIL =
+  'This email address is missing or does not look valid; verify against the source document.';
+
+/** Standard email shape used by intake validation and PDF verify warnings. */
+export function isValidEmailFormat(value: string): boolean {
+  return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(collapseWs(value));
+}
+
+/**
+ * Normalize an email candidate and warn when it is missing or not a valid address.
+ * Valid addresses never receive a verify warning.
+ */
+export function assessEmailValue(
+  raw: string,
+  opts?: { warnIfEmpty?: boolean }
+): { value: string; warning?: Tab14FieldWarning } {
+  const collapsed = collapseWs(raw).replace(/^mailto:/i, '').trim();
+  if (!collapsed) {
+    if (opts?.warnIfEmpty) {
+      return { value: '', warning: { message: VERIFY_EMAIL, reason: 'other' } };
+    }
+    return { value: '' };
+  }
+
+  const { value: stripped } = stripLeadingLabelBleed(collapsed);
+  const value = stripped.replace(/^mailto:/i, '').trim();
+  if (isValidEmailFormat(value)) {
+    return { value };
+  }
+  return {
+    value,
+    warning: { message: VERIFY_EMAIL, reason: 'other' },
+  };
+}
 /** Leading tokens that often bleed into extracted values (e.g. "name MARIA GARCIA"). */
 const LEADING_LABEL_TOKENS: RegExp[] = [
   /^(?:patient\s+)?(?:full\s+)?name\b[:#]?\s+/i,
@@ -295,14 +329,12 @@ export function assessDemographicRawValue(
     }
   }
 
-  // Email that still carries phone / tel: / mailto noise.
+  // Email: warn only when missing (caller opts) or not a valid address. Valid emails stay clean.
   if (field === 'email') {
-    if (/\btel:|\bphone\b|\(\d{3}\)/i.test(value) || value.split(/\s+/).length > 2) {
-      warning = warning ?? {
-        message: VERIFY_OTHER_LABEL,
-        reason: 'contains_other_label',
-      };
-    }
+    const emailAssessed = assessEmailValue(collapsed);
+    value = emailAssessed.value;
+    warning = emailAssessed.warning;
+    return { value, warning };
   }
 
   // CCD exports often glue the next section title onto language / marital status.
@@ -346,20 +378,46 @@ export function sanitizePatientFieldsWithWarnings(
 ): { fields: Tab14PatientFields; warnings?: Tab14PatientFieldWarnings } {
   const out: Tab14PatientFields = {};
   const warnings: Tab14PatientFieldWarnings = {};
+  const hasIdentity = Boolean(fields.givenName?.trim() || fields.familyName?.trim());
+
   for (const key of Object.keys(fields) as Tab14PatientFieldKey[]) {
     const raw = fields[key];
     if (key === 'additionalEmails') {
-      if (Array.isArray(raw) && raw.length > 0) {
-        out.additionalEmails = raw.map((e) => String(e).trim()).filter(Boolean);
+      if (!Array.isArray(raw) || raw.length === 0) continue;
+      const cleaned: string[] = [];
+      let anyInvalid = false;
+      for (const entry of raw) {
+        const assessed = assessEmailValue(String(entry ?? ''), { warnIfEmpty: false });
+        if (assessed.value) cleaned.push(assessed.value);
+        else if (String(entry ?? '').trim()) {
+          cleaned.push(collapseWs(String(entry)));
+          anyInvalid = true;
+        }
+        if (assessed.warning && String(entry ?? '').trim()) anyInvalid = true;
+      }
+      if (cleaned.length) out.additionalEmails = cleaned;
+      if (anyInvalid) {
+        warnings.additionalEmails = { message: VERIFY_EMAIL, reason: 'other' };
       }
       continue;
     }
+    if (key === 'email') continue;
     if (typeof raw !== 'string' || !raw.trim()) continue;
     const assessed = assessDemographicRawValue(key, raw);
     if (!assessed.value) continue;
     (out as Record<string, string>)[key] = assessed.value;
     if (assessed.warning) warnings[key] = assessed.warning;
   }
+
+  // Primary email: valid format → no icon; missing (with identity) or invalid → warn.
+  if (hasIdentity || typeof fields.email === 'string') {
+    const emailAssessed = assessEmailValue(fields.email ?? '', {
+      warnIfEmpty: hasIdentity,
+    });
+    if (emailAssessed.value) out.email = emailAssessed.value;
+    if (emailAssessed.warning) warnings.email = emailAssessed.warning;
+  }
+
   return {
     fields: out,
     warnings: Object.keys(warnings).length ? warnings : undefined,
@@ -431,9 +489,26 @@ export function annotateOcrSparseWarnings(
 ): Tab14PatientFieldWarnings | undefined {
   const out: Tab14PatientFieldWarnings = { ...(existing ?? {}) };
   for (const key of Object.keys(fields) as Tab14PatientFieldKey[]) {
+    if (key === 'email') {
+      const assessed = assessEmailValue(fields.email ?? '', {
+        warnIfEmpty: Boolean(fields.givenName?.trim() || fields.familyName?.trim()),
+      });
+      if (assessed.warning) out.email = assessed.warning;
+      else delete out.email;
+      continue;
+    }
     if (key === 'additionalEmails') {
-      if (!Array.isArray(fields.additionalEmails) || fields.additionalEmails.length === 0) continue;
-    } else if (typeof fields[key] !== 'string' || !fields[key]?.trim()) {
+      if (!Array.isArray(fields.additionalEmails) || fields.additionalEmails.length === 0) {
+        continue;
+      }
+      const anyInvalid = fields.additionalEmails.some(
+        (e) => String(e).trim() && !isValidEmailFormat(String(e))
+      );
+      if (anyInvalid) out.additionalEmails = { message: VERIFY_EMAIL, reason: 'other' };
+      else delete out.additionalEmails;
+      continue;
+    }
+    if (typeof fields[key] !== 'string' || !fields[key]?.trim()) {
       continue;
     }
     if (!out[key]) {
@@ -619,4 +694,5 @@ export const FIELD_WARNING_MESSAGES = {
   VERIFY_SUSPICIOUS_NAME,
   VERIFY_OCR,
   VERIFY_VISIT_NOTE,
+  VERIFY_EMAIL,
 } as const;

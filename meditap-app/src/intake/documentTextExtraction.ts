@@ -97,9 +97,10 @@ export function isHardToReadExtractedText(text: string): boolean {
   if (chars.length < 40) return true;
 
   const glueHits = (trimmed.match(/[a-zà-ÿ][A-ZÀ-Ÿ]/g) || []).length;
+  // Require true label|value glue (NameMARIA / SexFemale). Do not match "Sexual".
   const labelGlue =
     (trimmed.match(
-      /\b(?:Name|Given|Family|DOB|Phone|Email|Address|Sex|Blood)(?=[A-Za-z0-9])/gi
+      /\b(?:Name|Given|Family|DOB|Phone|Email|Address|Blood)(?=[A-Za-z0-9])|\bSex(?!ual)(?=[A-Za-z0-9])/gi
     ) || []).length;
   const lines = trimmed.split(/\n/).map((l) => l.trim()).filter(Boolean);
   const spaceRatio = (trimmed.match(/ /g) || []).length / Math.max(chars.length, 1);
