@@ -189,7 +189,7 @@ const CCD_SECTION_NOISE =
 
 function assessFreeTextValue(
   raw: string,
-  opts?: { treatAsName?: boolean; insuranceField?: boolean }
+  opts?: { treatAsName?: boolean }
 ): { value: string; warning?: Tab14FieldWarning } {
   const collapsed = collapseWs(raw);
   if (!collapsed) return { value: '' };
@@ -229,15 +229,8 @@ function assessFreeTextValue(
     };
   }
 
-  if (opts?.insuranceField) {
-    // Truncated CCD payer labels often land as lone words without digits.
-    if (/^[A-Za-z]{3,20}$/.test(value) && !/\d/.test(value)) {
-      warning = warning ?? {
-        message: VERIFY_LABEL_BLEED,
-        reason: 'label_bleed',
-      };
-    }
-  }
+  // Do not flag short real insurer names (Aetna, Cigna, etc.). Truncated CCD
+  // label junk is already covered by LABEL_FRAGMENT_VALUE above.
 
   if (opts?.treatAsName) {
     const tokens = nameTokenCount(value);
@@ -587,7 +580,6 @@ export function buildInsuranceRowWarnings(
       }
       const assessed = assessFreeTextValue(raw, {
         treatAsName: key === 'providerName' || key === 'planName',
-        insuranceField: true,
       });
       if (assessed.warning) rowWarnings[key] = assessed.warning;
     }

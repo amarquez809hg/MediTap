@@ -101,6 +101,16 @@ describe('hospital and insurance warnings', () => {
     expect(insurance?.[0]?.memberID).toBeTruthy();
     expect(insurance?.[0]?.groupNumber).toBeTruthy();
   });
+
+  it('does not warn on real short insurer names like Aetna', () => {
+    const insurance = buildInsuranceRowWarnings([
+      {
+        ...emptyInsuranceRow(),
+        providerName: 'Aetna',
+      },
+    ]);
+    expect(insurance?.[0]?.providerName).toBeUndefined();
+  });
 });
 
 describe('sanitizePatientFieldsWithWarnings', () => {
