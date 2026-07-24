@@ -53,7 +53,15 @@ export type PatientApi = {
   systolic_bp: number | null;
   diastolic_bp: number | null;
   heart_rate_bpm: number | null;
+  temperature_f?: string | number | null;
+  temperature_c?: string | number | null;
+  respiratory_rate?: number | null;
+  oxygen_saturation_pct?: number | null;
+  body_mass_index?: string | number | null;
   vitals_recorded_at: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_relationship?: string | null;
+  emergency_contact_phone?: string | null;
 };
 
 export type AllergyCatalogApi = { allergy_id: string; name: string };
@@ -1401,6 +1409,14 @@ export type Tab14SavePatient = {
   systolicBp: string;
   diastolicBp: string;
   heartRate: string;
+  temperatureF: string;
+  temperatureC: string;
+  respiratoryRate: string;
+  oxygenSaturation: string;
+  bodyMassIndex: string;
+  emergencyContactName: string;
+  emergencyContactRelationship: string;
+  emergencyContactPhone: string;
 };
 
 export type Tab14SaveInsurance = {
@@ -1541,12 +1557,33 @@ function patientVitalsFromApi(
   p: PatientApi
 ): Pick<
   Tab14SavePatient,
-  'heightInches' | 'weightLbs' | 'systolicBp' | 'diastolicBp' | 'heartRate'
+  | 'heightInches'
+  | 'weightLbs'
+  | 'systolicBp'
+  | 'diastolicBp'
+  | 'heartRate'
+  | 'temperatureF'
+  | 'temperatureC'
+  | 'respiratoryRate'
+  | 'oxygenSaturation'
+  | 'bodyMassIndex'
 > {
   const heightCm =
     p.height_cm != null && p.height_cm !== '' ? Number(p.height_cm) : null;
   const weightKg =
     p.weight_kg != null && p.weight_kg !== '' ? Number(p.weight_kg) : null;
+  const tempF =
+    p.temperature_f != null && p.temperature_f !== ''
+      ? Number(p.temperature_f)
+      : null;
+  const tempC =
+    p.temperature_c != null && p.temperature_c !== ''
+      ? Number(p.temperature_c)
+      : null;
+  const bmi =
+    p.body_mass_index != null && p.body_mass_index !== ''
+      ? Number(p.body_mass_index)
+      : null;
   return {
     heightInches:
       heightCm != null && heightCm > 0
@@ -1566,6 +1603,17 @@ function patientVitalsFromApi(
       p.heart_rate_bpm != null && p.heart_rate_bpm > 0
         ? String(p.heart_rate_bpm)
         : '',
+    temperatureF: tempF != null && tempF > 0 ? String(tempF) : '',
+    temperatureC: tempC != null && tempC > 0 ? String(tempC) : '',
+    respiratoryRate:
+      p.respiratory_rate != null && p.respiratory_rate > 0
+        ? String(p.respiratory_rate)
+        : '',
+    oxygenSaturation:
+      p.oxygen_saturation_pct != null && p.oxygen_saturation_pct > 0
+        ? String(p.oxygen_saturation_pct)
+        : '',
+    bodyMassIndex: bmi != null && bmi > 0 ? String(bmi) : '',
   };
 }
 
@@ -1577,12 +1625,22 @@ function vitalsPayloadFromTab14Patient(
   const sys = parseOptionalPositiveInt(patient.systolicBp);
   const dia = parseOptionalPositiveInt(patient.diastolicBp);
   const hr = parseOptionalPositiveInt(patient.heartRate);
+  const tempF = parseOptionalPositiveNumber(patient.temperatureF);
+  const tempC = parseOptionalPositiveNumber(patient.temperatureC);
+  const rr = parseOptionalPositiveInt(patient.respiratoryRate);
+  const spo2 = parseOptionalPositiveInt(patient.oxygenSaturation);
+  const bmi = parseOptionalPositiveNumber(patient.bodyMassIndex);
   const hasVitals =
     heightIn != null ||
     weightLb != null ||
     sys != null ||
     dia != null ||
-    hr != null;
+    hr != null ||
+    tempF != null ||
+    tempC != null ||
+    rr != null ||
+    spo2 != null ||
+    bmi != null;
 
   return {
     height_cm:
@@ -1592,6 +1650,11 @@ function vitalsPayloadFromTab14Patient(
     systolic_bp: sys,
     diastolic_bp: dia,
     heart_rate_bpm: hr,
+    temperature_f: tempF,
+    temperature_c: tempC,
+    respiratory_rate: rr,
+    oxygen_saturation_pct: spo2,
+    body_mass_index: bmi,
     vitals_recorded_at: hasVitals ? new Date().toISOString() : null,
   };
 }
@@ -1626,6 +1689,14 @@ export async function loadTab14FromBackend(
       systolicBp: '',
       diastolicBp: '',
       heartRate: '',
+      temperatureF: '',
+      temperatureC: '',
+      respiratoryRate: '',
+      oxygenSaturation: '',
+      bodyMassIndex: '',
+      emergencyContactName: '',
+      emergencyContactRelationship: '',
+      emergencyContactPhone: '',
     },
     insurances: [],
     allergies: [],
@@ -1803,6 +1874,11 @@ export async function loadTab14FromBackend(
       sexualOrientation: dashToEmpty(current.sexual_orientation),
       sexAtBirthRecordedOn: isoDateForInput(current.sex_at_birth_recorded_on),
       otherNotes: dashToEmpty(current.other_notes),
+      emergencyContactName: dashToEmpty(current.emergency_contact_name),
+      emergencyContactRelationship: dashToEmpty(
+        current.emergency_contact_relationship
+      ),
+      emergencyContactPhone: dashToEmpty(current.emergency_contact_phone),
       ...patientVitalsFromApi(current),
     },
     insurances,
@@ -2126,6 +2202,12 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       .map((e) => e.trim())
       .filter(Boolean),
     other_notes: (input.patient.otherNotes || '').trim() || null,
+    emergency_contact_name:
+      (input.patient.emergencyContactName || '').trim() || null,
+    emergency_contact_relationship:
+      (input.patient.emergencyContactRelationship || '').trim() || null,
+    emergency_contact_phone:
+      (input.patient.emergencyContactPhone || '').trim() || null,
     email: saveEmail,
     phone: (input.patient.phoneNumber || '').trim() || null,
     address: (input.patient.address || '').trim() || null,

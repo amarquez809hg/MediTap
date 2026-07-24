@@ -149,6 +149,50 @@ function parseEpicVitals(flat: string): Tab14PatientFields {
   }
   const pulse = flat.match(/\bPulse\s+(\d+)\b/i);
   if (pulse) out.heartRate = pulse[1];
+
+  const temp = flat.match(
+    /Temperature\s+([\d.]+)\s*[°∞]?C\s*\(([\d.]+)\s*[°∞]?F\)/i
+  );
+  if (temp) {
+    out.temperatureC = temp[1];
+    out.temperatureF = temp[2];
+  }
+  const rr = flat.match(/Respiratory Rate\s+(\d+)/i);
+  if (rr) out.respiratoryRate = rr[1];
+  const spo2 = flat.match(/Oxygen Saturation\s+(\d+)\s*%/i);
+  if (spo2) out.oxygenSaturation = spo2[1];
+  const bmi = flat.match(/Body Mass Index\s+([\d.]+)/i);
+  if (bmi) out.bodyMassIndex = bmi[1];
+
+  return out;
+}
+
+function parseEpicEmergencyContact(flat: string): Tab14PatientFields {
+  const out: Tab14PatientFields = {};
+  const name =
+    flat.match(/Contact Name\s+([A-Za-z][A-Za-z .'-]+?)(?=\s+Communication|\s+Copyright|$)/i)?.[1] ??
+    flat.match(/Emergency Contact[\s\S]{0,80}?Contact Name\s+([A-Za-z][A-Za-z .'-]+)/i)?.[1];
+  if (name) out.emergencyContactName = collapseWs(name);
+
+  const relationship = flat.match(
+    /Relationship to Patient\s+\w+\s+((?:Mother|Father|Spouse|Sibling|Friend|Guardian|Other)[^]*?Emergency Contact)/i
+  )?.[1];
+  if (relationship) {
+    out.emergencyContactRelationship = collapseWs(relationship);
+  } else {
+    const relAlt = flat.match(
+      /\b((?:Mother|Father|Spouse|Sibling|Friend|Guardian),\s*Emergency Contact)\b/i
+    )?.[1];
+    if (relAlt) out.emergencyContactRelationship = collapseWs(relAlt);
+  }
+
+  const phone =
+    flat.match(
+      /Contact Name\s+[A-Za-z .'-]+\s+Communication\s+([\d()-\s]{7,20})\s*\(\s*Mobile\s*\)/i
+    )?.[1] ??
+    flat.match(/Emergency Contact[\s\S]{0,160}?Communication\s+([\d()-\s]{7,20})/i)?.[1];
+  if (phone) out.emergencyContactPhone = collapseWs(phone);
+
   return out;
 }
 
@@ -198,7 +242,13 @@ function parseEpicMedications(raw: string): Tab14MedicationRow[] {
   for (const m of flatBlock.matchAll(
     /([a-z][a-z0-9 ()-]+?)\s+(\d+(?:\.\d+)?\s*(?:mg|mcg|g|mL|ml))\s+(capsule|tablet|tab|solution|injection)[\s\S]*?(?:(\d+(?:\.\d+)?)\s*(capsule|tablet|tab|mL|ml))?[\s\S]*?(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}\/\d{1,2}\/\d{4})/gi
   )) {
-    const genericRaw = collapseWs(m[1]);
+    const genericRaw = collapseWs(m[1])
+      .replace(
+        /^(?:Medication\s+Sig(?:Dispense)?(?:\s*Quantity)?(?:\s*Last Filled)?(?:\s*Start Date)?(?:\s*End Date)?(?:\s*Status)?\s*)/i,
+        ''
+      )
+      .trim();
+    if (!genericRaw || /^(?:Sig|Dispense|Quantity|Status)$/i.test(genericRaw)) continue;
     const brand = genericRaw.match(/^(.+?)\s+\(([^)]+)\)$/);
     const strength = collapseWs(`${m[2]}`);
     const dispense =
@@ -221,6 +271,67 @@ function parseEpicMedications(raw: string): Tab14MedicationRow[] {
       notesMedication: collapseWs(m[0].replace(genericRaw, '').slice(0, 160)),
     });
   }
+  return rows;
+}
+
+/** Contrast / MAR-administered meds from the encounter (e.g. iohexol). */
+function parseEpicAdministeredMedications(raw: string): Tab14MedicationRow[] {
+  const rows: Tab14MedicationRow[] = [];
+  const block =
+    raw.match(
+      /Administered Medications[\s\S]*?(?=Insurance - documented|Account Type|Document Information|BLUE CROSS|$)/i
+    )?.[0] ?? '';
+  if (!block) return rows;
+  const flatBlock = collapseWs(block);
+
+  for (const m of flatBlock.matchAll(
+    /([a-z][a-z0-9-]*)\s*\(([^)]+)\)\s+(\d+(?:\.\d+)?\s*mg(?:\s+iodine\/mL)?)\s+injection\s+(\d+(?:\.\d+)?\s*mL)(?:\s+\4)?[^]*?(intravenous|IV|oral|by mouth)?[^]*?(?:Given\s+(\d{1,2}\/\d{1,2}\/\d{4}))?/gi
+  )) {
+    const routeRaw = m[5] ?? '';
+    const route = /intravenous|^IV$/i.test(routeRaw)
+      ? 'IV'
+      : /oral|by mouth/i.test(routeRaw)
+        ? 'Oral'
+        : routeRaw
+          ? collapseWs(routeRaw)
+          : 'IV';
+    rows.push({
+      genericName: collapseWs(m[1]),
+      brandName: collapseWs(m[2]),
+      dosage: collapseWs(m[4]),
+      route,
+      frequency: /Once|once/i.test(m[0]) ? 'Once' : '',
+      startDate: m[6] ? (tryParseDateToIso(m[6]) ?? m[6]) : '',
+      endDate: '',
+      purpose: 'Imaging contrast / administered',
+      prescribingPhysician: '',
+      notesMedication: collapseWs(m[0]).slice(0, 220),
+    });
+  }
+
+  if (rows.length === 0) {
+    const loose = flatBlock.match(
+      /((?:iohexol|OMNIPAQUE)[^]*?\d+(?:\.\d+)?\s*mL[^]*?(?:intravenous|IV)?[^]*?(?:\d{1,2}\/\d{1,2}\/\d{4})?)/i
+    )?.[1];
+    if (loose) {
+      const brand = loose.match(/\(([^)]+)\)/)?.[1] ?? 'OMNIPAQUE';
+      const dose = loose.match(/(\d+(?:\.\d+)?\s*mL)/i)?.[1] ?? '';
+      const given = loose.match(/(\d{1,2}\/\d{1,2}\/\d{4})/)?.[1];
+      rows.push({
+        genericName: 'iohexol',
+        brandName: collapseWs(brand),
+        dosage: dose,
+        route: 'IV',
+        frequency: 'Once',
+        startDate: given ? (tryParseDateToIso(given) ?? given) : '',
+        endDate: '',
+        purpose: 'Imaging contrast / administered',
+        prescribingPhysician: '',
+        notesMedication: collapseWs(loose).slice(0, 220),
+      });
+    }
+  }
+
   return rows;
 }
 
@@ -488,29 +599,65 @@ function parseEpicLabPanels(flat: string, raw: string): Tab14LabPanel[] {
     }
   }
 
-  // Imaging studies
+  // Imaging studies — match exam modality titles only (avoid "Results …" / provider preamble pollution).
+  const seenImaging = new Set<string>();
   for (const m of raw.matchAll(
-    /([A-Z][A-Z0-9 /,-]+?)\s*-\s*Final result\s*\((\d{1,2}\/\d{1,2}\/\d{4})[^)]*\)([\s\S]*?)(?=(?:[A-Z][A-Z0-9 /,-]+?\s*-\s*Final result)|Visit Diagnoses|Insurance - documented|Document Information|$)/gi
+    /\b((?:CT|US|XR|MRI)\s+[A-Z0-9 /,-]+?)\s*-\s*Final result\s*\((\d{1,2}\/\d{1,2}\/\d{4})[^)]*\)([\s\S]*?)(?=\b(?:CT|US|XR|MRI)\s+[A-Z0-9 /,-]+?\s*-\s*Final result\b|Visit Diagnoses|Insurance - documented|Document Information|Tick Panel|CBC W\/|COMPREHENSIVE METABOLIC|C-REACTIVE|HCG BETA|LIPASE|LACTIC ACID|MICRO URINE|URINALYSIS|Urine Culture|$)/gi
   )) {
-    const title = collapseWs(m[1]);
-    if (/CBC|CMP|CRP|HCG|LIPASE|LACTATE|PROTEIN|SODIUM|WBC|CHEMISTRY|HEMATOLOGY/i.test(title)) {
-      continue;
-    }
-    if (!/CT |US |XR |MRI |ULTRASOUND|X-RAY|IMAGING/i.test(title) && !/ABDOMEN|PELVIS|BRAIN|CHEST/i.test(title)) {
+    const examMatches = [
+      ...collapseWs(m[1])
+        .toUpperCase()
+        .matchAll(/\b((?:CT|US|XR|MRI)\s+(?!PROCEDURES\b)[A-Z0-9 /,-]+)/g),
+    ];
+    let title = examMatches.length
+      ? collapseWs(examMatches[examMatches.length - 1][1])
+      : collapseWs(m[1]).toUpperCase();
+    title = title
+      .replace(/^(?:RESULTS(?:\s*-\s*DOCUMENTED IN THIS ENCOUNTER)?\s+)/i, '')
+      .replace(/\s+(?:FINAL RESULT|PROCEDURES|ORDERABLES).*$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (
+      !title ||
+      /CBC|CMP|CRP|HCG|LIPASE|LACTATE|PROTEIN|SODIUM|WBC|CHEMISTRY|HEMATOLOGY|URINE|TICK|LYME|PREGNANCY|PROCEDURES/i.test(
+        title
+      )
+    ) {
       continue;
     }
     const examDate = tryParseDateToIso(m[2]) ?? m[2];
+    const dedupeKey = `${title}|${examDate}`;
+    if (seenImaging.has(dedupeKey)) continue;
+    seenImaging.add(dedupeKey);
+
     const body = m[3];
     const flatBody = collapseWs(body);
     const impression =
-      firstMatch(body, /Impressions?\s*[\d/:\sAPM]*\s*([\s\S]*?)(?=Signed|Authorizing|Accession|Clinical Indication|CT |US |$)/i) ??
-      firstMatch(flatBody, /Impressions?\s+(.+?)(?=Signed|Authorizing|Accession|$)/i);
+      firstMatch(
+        body,
+        /Impressions?\s*[\d/:\sAPM]*\s*([\s\S]*?)(?=Signed|Authorizing|Accession|Clinical Indication|Narrative|CT |US |$)/i
+      ) ??
+      firstMatch(flatBody, /Impressions?\s+(.+?)(?=Signed|Authorizing|Accession|Narrative|$)/i) ??
+      firstMatch(
+        flatBody,
+        /IMPRESSION:\s*(.+?)(?=Signed|Authorizing|Dictated|THIS DOCUMENT|Narrative|$)/i
+      );
     const indication =
-      firstMatch(flatBody, /Clinical Indication\s+(.+?)(?=Impressions?|Signed|Authorizing|$)/i) ??
-      firstMatch(flatBody, /Indication\s+(.+?)(?=Impressions?|Signed|$)/i);
+      firstMatch(flatBody, /Clinical [Ii]ndication:\s*(.+?)(?=TECHNIQUE|Impressions?|Signed|Authorizing|$)/i) ??
+      firstMatch(flatBody, /Clinical Indication\s+(.+?)(?=Impressions?|Signed|Authorizing|TECHNIQUE|$)/i) ??
+      firstMatch(flatBody, /Indication\s+(.+?)(?=Impressions?|Signed|TECHNIQUE|$)/i);
     const accession = firstMatch(flatBody, /Accession(?: Number)?[:\s]+([A-Z0-9-]+)/i);
-    const signedBy = firstMatch(flatBody, /Signed By\s+([A-Za-z .,'-]+?)(?=\s+on\s+\d|Authorizing|$)/i);
-    const modality = firstMatch(flatBody, /Modality\s+([A-Za-z ]+)/i);
+    const signedBy =
+      firstMatch(flatBody, /ELECTRONICALLY SIGNED BY[^\n]*?([A-Z][A-Za-z .,'-]+?,\s*MD)/i) ??
+      firstMatch(flatBody, /Signed By\s+([A-Za-z .,'-]+?)(?=\s+on\s+\d|Authorizing|$)/i) ??
+      firstMatch(flatBody, /Dictated and Authenticated by:\s*([A-Za-z .,'-]+?)(?:\s+MD)?\s+\d/i);
+    const modality =
+      firstMatch(flatBody, /Modality\s+([A-Za-z ]+?)(?=\s+Specimen|\s+Anatomical|$)/i) ??
+      (/^CT\b/i.test(title)
+        ? 'Computed Tomography'
+        : /^US\b/i.test(title)
+          ? 'Ultrasound'
+          : undefined);
 
     panels.push({
       testName: title,
@@ -527,270 +674,78 @@ function parseEpicLabPanels(flat: string, raw: string): Tab14LabPanel[] {
     });
   }
 
-  // Administered medications → notes on a clinical panel
-  const admin =
-    flat.match(
-      /Administered Medications[\s\S]*?((?:iohexol|OMNIPAQUE)[^]*?\d{1,2}\/\d{1,2}\/\d{4})/i
-    )?.[1] ?? firstMatch(flat, /((?:iohexol|OMNIPAQUE)[^.]{0,120})/i);
-  if (admin) {
-    panels.push({
-      testName: 'Administered Medications',
-      date: dateIso,
-      status: 'Final',
-      isNew: false,
-      category: 'clinical',
-      notes: collapseWs(admin).slice(0, 400),
-      components: [
-        {
-          name: 'iohexol (OMNIPAQUE)',
-          textValue: collapseWs(admin).slice(0, 120),
-          unit: '',
-          range: '',
-          critical: false,
-        },
-      ],
-    });
-  }
-
-  // Vitals snapshot panel (extras beyond Tab14 patient vitals)
-  const vitalsComps: Tab14LabComponent[] = [];
-  const temp = flat.match(/Temperature\s+([\d.]+)\s*[°∞]?C\s*\(([\d.]+)\s*[°∞]?F\)/i);
-  if (temp) {
-    vitalsComps.push({
-      name: 'Temperature',
-      value: Number(temp[2]),
-      unit: 'F',
-      range: '',
-      critical: false,
-      textValue: `${temp[1]} C (${temp[2]} F)`,
-    });
-  }
-  const rr = flat.match(/Respiratory Rate\s+(\d+)/i);
-  if (rr) {
-    vitalsComps.push({
-      name: 'Respiratory Rate',
-      value: Number(rr[1]),
-      unit: '/min',
-      range: '',
-      critical: false,
-    });
-  }
-  const spo2 = flat.match(/Oxygen Saturation\s+(\d+)\s*%/i);
-  if (spo2) {
-    vitalsComps.push({
-      name: 'Oxygen Saturation',
-      value: Number(spo2[1]),
-      unit: '%',
-      range: '',
-      critical: false,
-    });
-  }
-  const bmi = flat.match(/Body Mass Index\s+([\d.]+)/i);
-  if (bmi) {
-    vitalsComps.push({
-      name: 'Body Mass Index',
-      value: Number(bmi[1]),
-      unit: 'kg/m2',
-      range: '',
-      critical: false,
-    });
-  }
-  if (vitalsComps.length > 0) {
-    panels.push({
-      testName: 'Last Filed Vital Signs',
-      date: dateIso,
-      status: 'Final',
-      isNew: false,
-      category: 'vitals',
-      components: vitalsComps,
-    });
-  }
-
-  // ED triage
-  const edBlock = flat.match(/ED Triage[\s\S]{0,400}/i)?.[0] ?? '';
-  if (edBlock) {
-    const edComps: Tab14LabComponent[] = [];
-    const edTemp = edBlock.match(/Temp\s+([\d.]+)\s*[°∞]?C/i);
-    if (edTemp) {
-      edComps.push({
-        name: 'Temp',
-        value: Number(edTemp[1]),
-        unit: 'C',
+  // Functional / mental status (scoped to encounter Functional Status block — not global vitals noise)
+  const funcBlock =
+    raw.match(
+      /Functional Status[\s\S]*?(?=Mental Status - documented|Discharge Instructions|Visit Diagnoses|Insurance - documented|$)/i
+    )?.[0] ??
+    flat.match(/Functional Status[\s\S]{0,3500}/i)?.[0] ??
+    '';
+  const funcFlat = collapseWs(funcBlock);
+  if (funcFlat) {
+    const funcComps: Tab14LabComponent[] = [];
+    const pain = funcFlat.match(/Pain Score\s+(\d+)/i);
+    if (pain) {
+      funcComps.push({
+        name: 'Pain Score',
+        value: Number(pain[1]),
+        unit: '',
         range: '',
         critical: false,
       });
     }
-    const edHr = edBlock.match(/Heart Rate\s+(\d+)/i);
-    if (edHr) {
-      edComps.push({
-        name: 'Heart Rate',
-        value: Number(edHr[1]),
-        unit: 'bpm',
+    const cssrs =
+      funcFlat.match(
+        /Calculated C-SSRS Risk Score[^]*?Author\s+(No Risk Indicated|[A-Za-z ]+?)(?=\s+\d{1,2}\/|\s+Columbia|\s+Pain|\s+Departure|$)/i
+      )?.[1] ??
+      funcFlat.match(/Calculated C-SSRS Risk Score[^]*?(No Risk Indicated)/i)?.[1];
+    if (cssrs) {
+      funcComps.push({
+        name: 'C-SSRS Risk Score',
+        textValue: collapseWs(cssrs),
+        unit: '',
         range: '',
         critical: false,
       });
     }
-    const edBp = edBlock.match(/BP\s+(\d+)\s*\/\s*(\d+)/i);
-    if (edBp) {
-      edComps.push({
-        name: 'BP',
-        textValue: `${edBp[1]}/${edBp[2]}`,
-        unit: 'mmHg',
+    const departure = funcFlat.match(
+      /Departure Condition\s+(Good|Fair|Poor|Critical)\b/i
+    )?.[1];
+    if (departure) {
+      funcComps.push({
+        name: 'Departure Condition',
+        textValue: departure,
+        unit: '',
         range: '',
         critical: false,
       });
     }
-    const edSpo2 = edBlock.match(/SpO2\s+(\d+)\s*%/i);
-    if (edSpo2) {
-      edComps.push({
-        name: 'SpO2',
-        value: Number(edSpo2[1]),
-        unit: '%',
+    const mobility = funcFlat.match(
+      /Mobility at Departure\s+(Ambulatory|Wheelchair|Stretcher|[A-Za-z]+)/i
+    )?.[1];
+    if (mobility) {
+      funcComps.push({
+        name: 'Mobility at Departure',
+        textValue: collapseWs(mobility),
+        unit: '',
         range: '',
         critical: false,
       });
     }
-    if (edComps.length > 0) {
+    if (funcComps.length > 0) {
       panels.push({
-        testName: 'ED Triage Vitals',
+        testName: 'Functional / Mental Status',
         date: dateIso,
         status: 'Final',
         isNew: false,
-        category: 'vitals',
-        components: edComps,
+        category: 'clinical',
+        components: funcComps,
       });
     }
   }
 
-  // Functional / mental status
-  const funcComps: Tab14LabComponent[] = [];
-  const pain = flat.match(/Pain Score\s+(\d+)/i);
-  if (pain) {
-    funcComps.push({
-      name: 'Pain Score',
-      value: Number(pain[1]),
-      unit: '',
-      range: '',
-      critical: false,
-    });
-  }
-  const cssrs = flat.match(/C-SSRS Risk Score\s+([A-Za-z ]+)/i)?.[1];
-  if (cssrs) {
-    funcComps.push({
-      name: 'C-SSRS Risk Score',
-      textValue: collapseWs(cssrs),
-      unit: '',
-      range: '',
-      critical: false,
-    });
-  }
-  const departure = flat.match(/Departure Condition\s+(\w+)/i)?.[1];
-  if (departure) {
-    funcComps.push({
-      name: 'Departure Condition',
-      textValue: departure,
-      unit: '',
-      range: '',
-      critical: false,
-    });
-  }
-  const mobility = flat.match(/Mobility at Departure\s+([A-Za-z ]+)/i)?.[1];
-  if (mobility) {
-    funcComps.push({
-      name: 'Mobility at Departure',
-      textValue: collapseWs(mobility),
-      unit: '',
-      range: '',
-      critical: false,
-    });
-  }
-  if (funcComps.length > 0) {
-    panels.push({
-      testName: 'Functional / Mental Status',
-      date: dateIso,
-      status: 'Final',
-      isNew: false,
-      category: 'clinical',
-      components: funcComps,
-    });
-  }
-
-  // Emergency contact
-  const ecName = flat.match(/Emergency Contact\s+Name\s+([A-Za-z ]+)/i)?.[1]
-    ?? flat.match(/Ruth Smith/i)?.[0];
-  const ecRel = flat.match(/Relationship\s+([A-Za-z, ]*Emergency Contact)/i)?.[1];
-  const ecPhone = flat.match(/222-222-2222|Emergency Contact[\s\S]{0,120}?([\d-]{10,})/i)?.[1];
-  if (ecName || ecRel || ecPhone) {
-    const comps: Tab14LabComponent[] = [];
-    if (ecName) {
-      comps.push({
-        name: 'Name',
-        textValue: collapseWs(ecName),
-        unit: '',
-        range: '',
-        critical: false,
-      });
-    }
-    if (ecRel) {
-      comps.push({
-        name: 'Relationship',
-        textValue: collapseWs(ecRel),
-        unit: '',
-        range: '',
-        critical: false,
-      });
-    }
-    if (ecPhone) {
-      comps.push({
-        name: 'Phone',
-        textValue: collapseWs(ecPhone),
-        unit: '',
-        range: '',
-        critical: false,
-      });
-    }
-    panels.push({
-      testName: 'Emergency Contact',
-      date: dateIso,
-      status: 'Final',
-      isNew: false,
-      category: 'contact',
-      components: comps,
-    });
-  }
-
-  // Social history
-  const tobacco = flat.match(/Smoking Tobacco:\s*(\w+)/i)?.[1];
-  const pregnant = flat.match(/Pregnant\s+(?:Comments\s+)?(Unknown|Yes|No|Positive|Negative)/i)?.[1];
-  if (tobacco || pregnant) {
-    const comps: Tab14LabComponent[] = [];
-    if (tobacco) {
-      comps.push({
-        name: 'Smoking Tobacco',
-        textValue: tobacco,
-        unit: '',
-        range: '',
-        critical: false,
-      });
-    }
-    if (pregnant) {
-      comps.push({
-        name: 'Pregnant',
-        textValue: pregnant,
-        unit: '',
-        range: '',
-        critical: false,
-      });
-    }
-    panels.push({
-      testName: 'Social History',
-      date: dateIso,
-      status: 'Final',
-      isNew: false,
-      category: 'social',
-      components: comps,
-    });
-  }
+  // Vitals, administered meds, emergency contact, and social history are routed elsewhere
+  // (patient vitals / medications / patient information) — not emitted as lab panels.
 
   return panels;
 }
@@ -805,10 +760,21 @@ export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseRes
     ...parseEpicContact(flat),
     ...parseEpicSexGender(flat),
     ...parseEpicVitals(flat),
+    ...parseEpicEmergencyContact(flat),
   };
 
   const { nkda, rows: allergies } = parseEpicAllergies(flat, text);
-  const medications = parseEpicMedications(text);
+  const outpatientMeds = parseEpicMedications(text);
+  const administeredMeds = parseEpicAdministeredMedications(text);
+  const medications = [...outpatientMeds];
+  for (const admin of administeredMeds) {
+    const already = medications.some(
+      (m) =>
+        m.genericName.toLowerCase() === admin.genericName.toLowerCase() &&
+        collapseWs(m.dosage).toLowerCase() === collapseWs(admin.dosage).toLowerCase()
+    );
+    if (!already) medications.push(admin);
+  }
   const chronicConditions = parseEpicChronicConditions(flat);
   const labPanels = parseEpicLabPanels(flat, text);
 

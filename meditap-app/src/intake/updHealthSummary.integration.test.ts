@@ -48,6 +48,14 @@ describe('upd My Health Summary PDF', () => {
     expect(r.patientFields.systolicBp).toBe('120');
     expect(r.patientFields.diastolicBp).toBe('80');
     expect(r.patientFields.heartRate).toBe('83');
+    expect(r.patientFields.temperatureF).toBe('97.3');
+    expect(r.patientFields.respiratoryRate).toBe('16');
+    expect(r.patientFields.oxygenSaturation).toBe('100');
+    expect(r.patientFields.bodyMassIndex).toBe('21.93');
+
+    expect(r.patientFields.emergencyContactName).toMatch(/Ruth Smith/i);
+    expect(r.patientFields.emergencyContactRelationship).toMatch(/Mother.*Emergency Contact/i);
+    expect(r.patientFields.emergencyContactPhone).toMatch(/222-222-2222/);
 
     expect(r.noKnownDrugAllergies).toBe(true);
     expect(r.allergies).toHaveLength(0);
@@ -56,6 +64,10 @@ describe('upd My Health Summary PDF', () => {
     const ceph = r.medications.find((m) => /cephalexin/i.test(m.genericName));
     expect(ceph).toBeTruthy();
     expect(ceph?.dosage).toMatch(/500\s*mg/i);
+    const iohexol = r.medications.find((m) => /iohexol/i.test(m.genericName));
+    expect(iohexol).toBeTruthy();
+    expect(iohexol?.route).toMatch(/IV/i);
+    expect(iohexol?.dosage).toMatch(/100\s*mL/i);
 
     expect(r.chronicConditions.length).toBeGreaterThanOrEqual(2);
     expect(r.chronicConditions.some((c) => /abdominal pain/i.test(c.conditionName))).toBe(true);
@@ -77,6 +89,38 @@ describe('upd My Health Summary PDF', () => {
     expect(
       r.labPanels.some(
         (p) => p.category === 'imaging' && /appendicitis|cyst|pelvis|abdomen/i.test(p.impression ?? p.testName)
+      )
+    ).toBe(true);
+
+    const imagingTitles = r.labPanels
+      .filter((p) => p.category === 'imaging')
+      .map((p) => p.testName);
+    expect(imagingTitles).toContain('CT ABDOMEN PELVIS W IV CONTRAST');
+    expect(imagingTitles).toContain('US PELVIS TRANSVAGINAL');
+    expect(imagingTitles).toContain('CT HEAD WO IV CONTRAST');
+    expect(imagingTitles.every((t) => !/Results|Authorizing Provider/i.test(t))).toBe(true);
+    expect(imagingTitles.filter((t) => t === 'CT ABDOMEN PELVIS W IV CONTRAST')).toHaveLength(1);
+
+    expect(r.labPanels.some((p) => /Last Filed Vital|Administered Medications|Emergency Contact|Social History/i.test(p.testName))).toBe(
+      false
+    );
+
+    const func = r.labPanels.find((p) => /Functional/i.test(p.testName));
+    expect(func).toBeTruthy();
+    expect(func?.components.some((c) => c.name === 'Pain Score' && c.value === 7)).toBe(true);
+    expect(
+      func?.components.some(
+        (c) => c.name === 'C-SSRS Risk Score' && /No Risk Indicated/i.test(c.textValue ?? '')
+      )
+    ).toBe(true);
+    expect(
+      func?.components.some(
+        (c) => c.name === 'Departure Condition' && /Good/i.test(c.textValue ?? '')
+      )
+    ).toBe(true);
+    expect(
+      func?.components.some(
+        (c) => c.name === 'Mobility at Departure' && /Ambulatory/i.test(c.textValue ?? '')
       )
     ).toBe(true);
   });

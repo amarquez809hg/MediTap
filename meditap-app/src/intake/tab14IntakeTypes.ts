@@ -25,6 +25,14 @@ export type Tab14PatientFields = Partial<{
   systolicBp: string;
   diastolicBp: string;
   heartRate: string;
+  temperatureF: string;
+  temperatureC: string;
+  respiratoryRate: string;
+  oxygenSaturation: string;
+  bodyMassIndex: string;
+  emergencyContactName: string;
+  emergencyContactRelationship: string;
+  emergencyContactPhone: string;
 }>;
 
 export type Tab14InsuranceRow = {

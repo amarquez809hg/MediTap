@@ -33,7 +33,15 @@ class Patient(models.Model):
     systolic_bp = models.PositiveSmallIntegerField(blank=True, null=True)
     diastolic_bp = models.PositiveSmallIntegerField(blank=True, null=True)
     heart_rate_bpm = models.PositiveSmallIntegerField(blank=True, null=True)
+    temperature_f = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    temperature_c = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    respiratory_rate = models.PositiveSmallIntegerField(blank=True, null=True)
+    oxygen_saturation_pct = models.PositiveSmallIntegerField(blank=True, null=True)
+    body_mass_index = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     vitals_recorded_at = models.DateTimeField(blank=True, null=True)
+    emergency_contact_name = models.CharField(max_length=120, blank=True, null=True)
+    emergency_contact_relationship = models.CharField(max_length=120, blank=True, null=True)
+    emergency_contact_phone = models.CharField(max_length=32, blank=True, null=True)
     # Portal account that owns this chart (null = legacy / demo rows not tied to a login).
     portal_user = models.OneToOneField(
         User,

@@ -127,6 +127,14 @@ interface PatientInfo {
     systolicBp: string;
     diastolicBp: string;
     heartRate: string;
+    temperatureF: string;
+    temperatureC: string;
+    respiratoryRate: string;
+    oxygenSaturation: string;
+    bodyMassIndex: string;
+    emergencyContactName: string;
+    emergencyContactRelationship: string;
+    emergencyContactPhone: string;
 };
 interface Insurance {
     providerName: string;
@@ -209,6 +217,14 @@ const defaultPatientInfo: PatientInfo = {
     systolicBp: '',
     diastolicBp: '',
     heartRate: '',
+    temperatureF: '',
+    temperatureC: '',
+    respiratoryRate: '',
+    oxygenSaturation: '',
+    bodyMassIndex: '',
+    emergencyContactName: '',
+    emergencyContactRelationship: '',
+    emergencyContactPhone: '',
 };
 const defaultInsurance: Insurance = emptyInsuranceRow();
 const defaultAllergy: Allergy = {
@@ -307,6 +323,14 @@ const samplePatientInfo: PatientInfo = {
     systolicBp: '118',
     diastolicBp: '76',
     heartRate: '72',
+    temperatureF: '98.6',
+    temperatureC: '37.0',
+    respiratoryRate: '16',
+    oxygenSaturation: '98',
+    bodyMassIndex: '24.6',
+    emergencyContactName: 'Alex Rivera',
+    emergencyContactRelationship: 'Spouse, Emergency Contact',
+    emergencyContactPhone: '555-201-9900',
 };
 
 const sampleInsurance: Insurance = {
@@ -1800,6 +1824,109 @@ const Tab14: React.FC = () => {
                 />
             </div>
 
+            <div className="form-field">
+                <label>Temperature (°F)</label>
+                <input
+                    type="number"
+                    min={80}
+                    max={110}
+                    step={0.1}
+                    inputMode="decimal"
+                    placeholder="e.g. 97.3"
+                    value={patientInfo.temperatureF}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'temperatureF',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            <div className="form-field">
+                <label>Temperature (°C)</label>
+                <input
+                    type="number"
+                    min={30}
+                    max={45}
+                    step={0.1}
+                    inputMode="decimal"
+                    placeholder="e.g. 36.3"
+                    value={patientInfo.temperatureC}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'temperatureC',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            <div className="form-field">
+                <label>Respiratory rate</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={80}
+                    inputMode="numeric"
+                    placeholder="e.g. 16"
+                    value={patientInfo.respiratoryRate}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'respiratoryRate',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            <div className="form-field">
+                <label>Oxygen saturation (%)</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    inputMode="numeric"
+                    placeholder="e.g. 100"
+                    value={patientInfo.oxygenSaturation}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'oxygenSaturation',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
+            <div className="form-field">
+                <label>Body mass index (BMI)</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={0.01}
+                    inputMode="decimal"
+                    placeholder="e.g. 21.93"
+                    value={patientInfo.bodyMassIndex}
+                    onChange={(e) =>
+                        handleSingleChange(
+                            'bodyMassIndex',
+                            e.target.value,
+                            patientInfo,
+                            setPatientInfo
+                        )
+                    }
+                />
+            </div>
+
             {(() => {
                 const hi = Number(patientInfo.heightInches);
                 const wl = Number(patientInfo.weightLbs);
@@ -2322,6 +2449,62 @@ const Tab14: React.FC = () => {
                                         onChange={(e) =>
                                             handleSingleChange(
                                                 'otherNotes',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Emergency contact name
+                                        {renderPdfFieldWarningIcon('emergencyContactName')}
+                                    </label>
+                                    <input
+                                        value={patientInfo.emergencyContactName}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'emergencyContactName',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Emergency contact relationship
+                                        {renderPdfFieldWarningIcon(
+                                            'emergencyContactRelationship'
+                                        )}
+                                    </label>
+                                    <input
+                                        value={patientInfo.emergencyContactRelationship}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'emergencyContactRelationship',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Emergency contact phone
+                                        {renderPdfFieldWarningIcon('emergencyContactPhone')}
+                                    </label>
+                                    <input
+                                        value={patientInfo.emergencyContactPhone}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'emergencyContactPhone',
                                                 e.target.value,
                                                 patientInfo,
                                                 setPatientInfo
