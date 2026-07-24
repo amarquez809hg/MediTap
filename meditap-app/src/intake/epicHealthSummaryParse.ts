@@ -136,13 +136,6 @@ function parseEpicContact(flat: string): Tab14PatientFields {
   return out;
 }
 
-function splitPersonName(full: string): { given: string; family: string } {
-  const parts = collapseWs(full).split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { given: '', family: '' };
-  if (parts.length === 1) return { given: parts[0], family: '' };
-  return { given: parts[0], family: parts.slice(1).join(' ') };
-}
-
 function parseEpicVitals(flat: string): Tab14PatientFields {
   const out: Tab14PatientFields = {};
   const height = flat.match(/Height\s+[\d.]+\s*cm\s*\((\d+)'\s*(\d+)"/i);
@@ -184,9 +177,9 @@ function parseEpicEmergencyContact(flat: string): Tab14PatientFields {
     flat.match(/Contact Name\s+([A-Za-z][A-Za-z .'-]+?)(?=\s+Communication|\s+Copyright|\s+Subscriber|$)/i)?.[1] ??
     flat.match(/Emergency Contact[\s\S]{0,80}?Contact Name\s+([A-Za-z][A-Za-z .'-]+)/i)?.[1];
   if (name) {
-    const { given, family } = splitPersonName(name);
-    if (given) out.emergencyContactGivenName = given;
-    if (family) out.emergencyContactFamilyName = family;
+    const split = splitPersonName(name);
+    if (split.given) out.emergencyContactGivenName = split.given;
+    if (split.family) out.emergencyContactFamilyName = split.family;
   }
 
   const relationship = flat.match(
