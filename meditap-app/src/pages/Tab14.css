@@ -422,6 +422,30 @@ ion-page.ct-page.ct-tab14 ion-content {
   box-sizing: border-box;
 }
 
+.tab14-emergency-contact-section {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--meditap-border);
+}
+
+.tab14-subsection-heading {
+  margin: 0 0 1rem;
+}
+
+.tab14-subsection-heading h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--meditap-text);
+}
+
+.tab14-subsection-heading p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--meditap-text-secondary);
+}
+
 .tab14-section-card .form-field input,
 .tab14-section-card .form-field textarea,
 .tab14-section-card .form-field select {

@@ -39,9 +39,11 @@ class Patient(models.Model):
     oxygen_saturation_pct = models.PositiveSmallIntegerField(blank=True, null=True)
     body_mass_index = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     vitals_recorded_at = models.DateTimeField(blank=True, null=True)
-    emergency_contact_name = models.CharField(max_length=120, blank=True, null=True)
+    emergency_contact_given_name = models.CharField(max_length=100, blank=True, null=True)
+    emergency_contact_family_name = models.CharField(max_length=100, blank=True, null=True)
     emergency_contact_relationship = models.CharField(max_length=120, blank=True, null=True)
     emergency_contact_phone = models.CharField(max_length=32, blank=True, null=True)
+    emergency_contact_email = models.EmailField(blank=True, null=True)
     # Portal account that owns this chart (null = legacy / demo rows not tied to a login).
     portal_user = models.OneToOneField(
         User,

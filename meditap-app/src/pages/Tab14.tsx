@@ -132,9 +132,11 @@ interface PatientInfo {
     respiratoryRate: string;
     oxygenSaturation: string;
     bodyMassIndex: string;
-    emergencyContactName: string;
+    emergencyContactGivenName: string;
+    emergencyContactFamilyName: string;
     emergencyContactRelationship: string;
     emergencyContactPhone: string;
+    emergencyContactEmail: string;
 };
 interface Insurance {
     providerName: string;
@@ -222,9 +224,11 @@ const defaultPatientInfo: PatientInfo = {
     respiratoryRate: '',
     oxygenSaturation: '',
     bodyMassIndex: '',
-    emergencyContactName: '',
+    emergencyContactGivenName: '',
+    emergencyContactFamilyName: '',
     emergencyContactRelationship: '',
     emergencyContactPhone: '',
+    emergencyContactEmail: '',
 };
 const defaultInsurance: Insurance = emptyInsuranceRow();
 const defaultAllergy: Allergy = {
@@ -328,9 +332,11 @@ const samplePatientInfo: PatientInfo = {
     respiratoryRate: '16',
     oxygenSaturation: '98',
     bodyMassIndex: '24.6',
-    emergencyContactName: 'Alex Rivera',
+    emergencyContactGivenName: 'Alex',
+    emergencyContactFamilyName: 'Rivera',
     emergencyContactRelationship: 'Spouse, Emergency Contact',
     emergencyContactPhone: '555-201-9900',
+    emergencyContactEmail: 'alex.rivera.ec@example.com',
 };
 
 const sampleInsurance: Insurance = {
@@ -2457,16 +2463,28 @@ const Tab14: React.FC = () => {
                                     />
                                 </div>
 
+                            </div>
+
+                            <div className="tab14-section-card tab14-emergency-contact-section">
+                                <div className="tab14-subsection-heading">
+                                    <h3>Emergency Contact</h3>
+                                    <p>
+                                        Separate from the patient&apos;s own contact details —
+                                        name, relationship, and phone or email for who to reach
+                                        in an emergency.
+                                    </p>
+                                </div>
+
                                 <div className="form-field">
                                     <label>
-                                        Emergency contact name
-                                        {renderPdfFieldWarningIcon('emergencyContactName')}
+                                        First name
+                                        {renderPdfFieldWarningIcon('emergencyContactGivenName')}
                                     </label>
                                     <input
-                                        value={patientInfo.emergencyContactName}
+                                        value={patientInfo.emergencyContactGivenName}
                                         onChange={(e) =>
                                             handleSingleChange(
-                                                'emergencyContactName',
+                                                'emergencyContactGivenName',
                                                 e.target.value,
                                                 patientInfo,
                                                 setPatientInfo
@@ -2477,7 +2495,25 @@ const Tab14: React.FC = () => {
 
                                 <div className="form-field">
                                     <label>
-                                        Emergency contact relationship
+                                        Last name
+                                        {renderPdfFieldWarningIcon('emergencyContactFamilyName')}
+                                    </label>
+                                    <input
+                                        value={patientInfo.emergencyContactFamilyName}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'emergencyContactFamilyName',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-field">
+                                    <label>
+                                        Relationship
                                         {renderPdfFieldWarningIcon(
                                             'emergencyContactRelationship'
                                         )}
@@ -2497,7 +2533,7 @@ const Tab14: React.FC = () => {
 
                                 <div className="form-field">
                                     <label>
-                                        Emergency contact phone
+                                        Phone number
                                         {renderPdfFieldWarningIcon('emergencyContactPhone')}
                                     </label>
                                     <input
@@ -2513,6 +2549,24 @@ const Tab14: React.FC = () => {
                                     />
                                 </div>
 
+                                <div className="form-field">
+                                    <label>
+                                        Email
+                                        {renderPdfFieldWarningIcon('emergencyContactEmail')}
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={patientInfo.emergencyContactEmail}
+                                        onChange={(e) =>
+                                            handleSingleChange(
+                                                'emergencyContactEmail',
+                                                e.target.value,
+                                                patientInfo,
+                                                setPatientInfo
+                                            )
+                                        }
+                                    />
+                                </div>
                             </div>
                                 </fieldset>
                             </>

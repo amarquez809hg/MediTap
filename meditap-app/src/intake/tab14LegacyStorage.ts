@@ -90,11 +90,17 @@ export function loadTab14LegacyFromLocalStorage(): Tab14LoadResult | null {
       respiratoryRate: String(patient.respiratoryRate ?? '').trim(),
       oxygenSaturation: String(patient.oxygenSaturation ?? '').trim(),
       bodyMassIndex: String(patient.bodyMassIndex ?? '').trim(),
-      emergencyContactName: String(patient.emergencyContactName ?? '').trim(),
+      emergencyContactGivenName: String(
+        patient.emergencyContactGivenName ?? ''
+      ).trim(),
+      emergencyContactFamilyName: String(
+        patient.emergencyContactFamilyName ?? ''
+      ).trim(),
       emergencyContactRelationship: String(
         patient.emergencyContactRelationship ?? ''
       ).trim(),
       emergencyContactPhone: String(patient.emergencyContactPhone ?? '').trim(),
+      emergencyContactEmail: String(patient.emergencyContactEmail ?? '').trim(),
     },
     insurances: Array.isArray(insurances) ? insurances : [],
     allergies: Array.isArray(allergies) ? allergies : [],

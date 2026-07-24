@@ -39,9 +39,8 @@ describe('upd My Health Summary PDF', () => {
     expect(r.patientFields.address).toMatch(/123 Duffy Dr/i);
     expect(r.patientFields.address).toMatch(/Albany, NY 12054/);
     expect(r.patientFields.email).toBe('Personalemail@gmail.com');
-    expect(r.patientFields.additionalEmails?.some((e) => /emergencycontact@gmail\.com/i.test(e))).toBe(
-      true
-    );
+    expect(r.patientFields.additionalEmails ?? []).toEqual([]);
+    expect(r.patientFields.emergencyContactEmail).toMatch(/emergencycontact@gmail\.com/i);
     expect(r.patientFields.phoneNumber).toMatch(/555-555-555/);
     expect(r.patientFields.heightInches).toBe('67');
     expect(r.patientFields.weightLbs).toBe('140');
@@ -53,7 +52,8 @@ describe('upd My Health Summary PDF', () => {
     expect(r.patientFields.oxygenSaturation).toBe('100');
     expect(r.patientFields.bodyMassIndex).toBe('21.93');
 
-    expect(r.patientFields.emergencyContactName).toMatch(/Ruth Smith/i);
+    expect(r.patientFields.emergencyContactGivenName).toBe('Ruth');
+    expect(r.patientFields.emergencyContactFamilyName).toBe('Smith');
     expect(r.patientFields.emergencyContactRelationship).toMatch(/Mother.*Emergency Contact/i);
     expect(r.patientFields.emergencyContactPhone).toMatch(/222-222-2222/);
 

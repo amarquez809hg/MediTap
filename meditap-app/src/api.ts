@@ -59,9 +59,11 @@ export type PatientApi = {
   oxygen_saturation_pct?: number | null;
   body_mass_index?: string | number | null;
   vitals_recorded_at: string | null;
-  emergency_contact_name?: string | null;
+  emergency_contact_given_name?: string | null;
+  emergency_contact_family_name?: string | null;
   emergency_contact_relationship?: string | null;
   emergency_contact_phone?: string | null;
+  emergency_contact_email?: string | null;
 };
 
 export type AllergyCatalogApi = { allergy_id: string; name: string };
@@ -1414,9 +1416,11 @@ export type Tab14SavePatient = {
   respiratoryRate: string;
   oxygenSaturation: string;
   bodyMassIndex: string;
-  emergencyContactName: string;
+  emergencyContactGivenName: string;
+  emergencyContactFamilyName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
+  emergencyContactEmail: string;
 };
 
 export type Tab14SaveInsurance = {
@@ -1694,9 +1698,11 @@ export async function loadTab14FromBackend(
       respiratoryRate: '',
       oxygenSaturation: '',
       bodyMassIndex: '',
-      emergencyContactName: '',
+      emergencyContactGivenName: '',
+      emergencyContactFamilyName: '',
       emergencyContactRelationship: '',
       emergencyContactPhone: '',
+      emergencyContactEmail: '',
     },
     insurances: [],
     allergies: [],
@@ -1874,11 +1880,17 @@ export async function loadTab14FromBackend(
       sexualOrientation: dashToEmpty(current.sexual_orientation),
       sexAtBirthRecordedOn: isoDateForInput(current.sex_at_birth_recorded_on),
       otherNotes: dashToEmpty(current.other_notes),
-      emergencyContactName: dashToEmpty(current.emergency_contact_name),
+      emergencyContactGivenName: dashToEmpty(
+        current.emergency_contact_given_name
+      ),
+      emergencyContactFamilyName: dashToEmpty(
+        current.emergency_contact_family_name
+      ),
       emergencyContactRelationship: dashToEmpty(
         current.emergency_contact_relationship
       ),
       emergencyContactPhone: dashToEmpty(current.emergency_contact_phone),
+      emergencyContactEmail: dashToEmpty(current.emergency_contact_email),
       ...patientVitalsFromApi(current),
     },
     insurances,
@@ -2202,12 +2214,16 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       .map((e) => e.trim())
       .filter(Boolean),
     other_notes: (input.patient.otherNotes || '').trim() || null,
-    emergency_contact_name:
-      (input.patient.emergencyContactName || '').trim() || null,
+    emergency_contact_given_name:
+      (input.patient.emergencyContactGivenName || '').trim() || null,
+    emergency_contact_family_name:
+      (input.patient.emergencyContactFamilyName || '').trim() || null,
     emergency_contact_relationship:
       (input.patient.emergencyContactRelationship || '').trim() || null,
     emergency_contact_phone:
       (input.patient.emergencyContactPhone || '').trim() || null,
+    emergency_contact_email:
+      (input.patient.emergencyContactEmail || '').trim() || null,
     email: saveEmail,
     phone: (input.patient.phoneNumber || '').trim() || null,
     address: (input.patient.address || '').trim() || null,
