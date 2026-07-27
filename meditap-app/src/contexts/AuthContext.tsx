@@ -44,9 +44,21 @@ interface AuthContextValue {
   permissions: string[];
   sessionExpired: boolean;
   dismissSessionExpired: () => void;
-  /** Django JWT login (username + password). Returns portal home for redirect. */
-  loginWithPassword: (username: string, password: string) => Promise<PortalHome>;
-  logout: () => void;
+  /**
+   * Django JWT login. Returns portal home for redirect.
+   * If `requirePortalHome` is set and the account does not match, tokens are not kept
+   * and an Error is thrown (message should be set by the caller for i18n).
+   */
+  loginWithPassword: (
+    username: string,
+    password: string,
+    opts?: { requirePortalHome?: PortalHome }
+  ) => Promise<PortalHome>;
+  /**
+   * Clear session. By default redirects to the patient login door.
+   * Pass `redirectTo: null` to stay on the current page (e.g. wrong-portal rejection).
+   */
+  logout: (opts?: { redirectTo?: string | null }) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -170,7 +182,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [applyTokenPayload]);
 
   const loginWithPassword = useCallback(
-    async (user: string, password: string): Promise<PortalHome> => {
+    async (
+      user: string,
+      password: string,
+      opts?: { requirePortalHome?: PortalHome }
+    ): Promise<PortalHome> => {
       setAuthInitError(null);
       const base = getApiBase();
       if (!base) {
@@ -199,16 +215,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error(detail);
         }
         const data = (await r.json()) as { access: string; refresh: string };
-        const nextUser = user.trim().toLowerCase();
-        const prevUser = sessionStorage.getItem('meditap_last_username');
-        if (!prevUser || prevUser !== nextUser) {
-          clearMediTapWorkflowLocalState();
-        }
-        sessionStorage.setItem('meditap_last_username', nextUser);
-        setStoredTokens(data.access, data.refresh);
-        setSessionExpired(false);
-        setIsAuthenticated(true);
-        applyTokenPayload(data.access);
         const p = parseJwtPayload(data.access);
         const roles = parseRealmRoles(p ?? undefined);
         const staff = boolJwtClaim(p, 'is_staff');
@@ -221,8 +227,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 isSuperuser: superuser,
                 realmRoles: roles,
               });
+
+        if (opts?.requirePortalHome && identity.portalHome !== opts.requirePortalHome) {
+          // Do not persist a wrong-door session (e.g. patient on admin login).
+          clearStoredTokens();
+          const mismatch = new Error('PORTAL_MISMATCH');
+          (mismatch as Error & { portalHome: PortalHome }).portalHome = identity.portalHome;
+          throw mismatch;
+        }
+
+        const nextUser = user.trim().toLowerCase();
+        const prevUser = sessionStorage.getItem('meditap_last_username');
+        if (!prevUser || prevUser !== nextUser) {
+          clearMediTapWorkflowLocalState();
+        }
+        sessionStorage.setItem('meditap_last_username', nextUser);
+        setStoredTokens(data.access, data.refresh);
+        setSessionExpired(false);
+        setIsAuthenticated(true);
+        applyTokenPayload(data.access);
         return identity.portalHome;
       } catch (e) {
+        if (e instanceof Error && e.message === 'PORTAL_MISMATCH') {
+          throw e;
+        }
         const isNetwork =
           e instanceof TypeError ||
           (e instanceof Error && /network|fetch|load failed|failed to fetch/i.test(e.message));
@@ -242,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [applyTokenPayload]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback((opts?: { redirectTo?: string | null }) => {
     clearMediTapWorkflowLocalState();
     try {
       sessionStorage.removeItem('meditap_last_username');
@@ -256,8 +284,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsStaff(false);
     setIsSuperuser(false);
     setPortalIdentity(EMPTY_PORTAL);
+    setAuthInitError(null);
+    const redirectTo = opts && 'redirectTo' in opts ? opts.redirectTo : '/tab3';
+    if (redirectTo == null) return;
     try {
-      window.location.assign(`${window.location.origin}/tab3`);
+      window.location.assign(`${window.location.origin}${redirectTo}`);
     } catch {
       /* ignore */
     }

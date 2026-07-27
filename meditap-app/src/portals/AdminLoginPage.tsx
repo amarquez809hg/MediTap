@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { Trans, useTranslation } from 'react-i18next';
-import './Tab3.css';
-import bgImage from './MediTapBG.jpg';
+import { useTranslation } from 'react-i18next';
+import '../pages/Tab3.css';
+import './adminLogin.css';
+import bgImage from '../pages/MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
-import { ADMIN_LOGIN_PATH, resolvePostLoginPath } from '../portals/portalPaths';
+import {
+  ADMIN_PORTAL_HOME,
+  PATIENT_LOGIN_PATH,
+  resolvePostLoginPath,
+  USER_PORTAL_HOME,
+} from './portalPaths';
 
-const HERO_POINT_KEYS = ['login.heroPoint1', 'login.heroPoint2', 'login.heroPoint3'] as const;
-
-const Tab3: React.FC = () => {
+/**
+ * Staff / org-admin login door. Same JWT API as patient login; rejects patient-only accounts.
+ */
+const AdminLoginPage: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const { authReady, authInitError, isAuthenticated, loginWithPassword, portalHome } = useAuth();
+  const {
+    authReady,
+    authInitError,
+    isAuthenticated,
+    loginWithPassword,
+    portalHome,
+  } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,9 +33,13 @@ const Tab3: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   React.useEffect(() => {
-    if (authReady && isAuthenticated) {
-      history.replace(resolvePostLoginPath(portalHome));
+    if (!authReady || !isAuthenticated) return;
+    if (portalHome === 'admin') {
+      history.replace(ADMIN_PORTAL_HOME);
+      return;
     }
+    // Patient session on admin door → send them to their portal
+    history.replace(USER_PORTAL_HOME);
   }, [authReady, isAuthenticated, history, portalHome]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -30,15 +47,18 @@ const Tab3: React.FC = () => {
     setFormError(null);
     const u = username.trim();
     if (!u || !password) {
-      setFormError(t('login.credentialsRequired'));
+      setFormError(t('adminLogin.credentialsRequired'));
       return;
     }
     setSubmitting(true);
     try {
-      const home = await loginWithPassword(u, password);
+      const home = await loginWithPassword(u, password, { requirePortalHome: 'admin' });
       history.replace(resolvePostLoginPath(home));
-    } catch {
-      /* authInitError set by context */
+    } catch (err) {
+      if (err instanceof Error && err.message === 'PORTAL_MISMATCH') {
+        setFormError(t('adminLogin.patientAccountRejected'));
+      }
+      /* other errors: authInitError set by context */
     } finally {
       setSubmitting(false);
     }
@@ -48,52 +68,46 @@ const Tab3: React.FC = () => {
 
   return (
     <div
-      className="login-container"
+      className="login-container admin-login"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <header className="header">
         <div className="logo">MediTap</div>
         <nav className="nav" aria-label="Site">
           <HeaderLanguagePicker tone="nav" />
-          <Link to="/tab10">{t('login.aboutUs')}</Link>
+          <Link to={PATIENT_LOGIN_PATH}>{t('adminLogin.patientSignIn')}</Link>
           <Link to="/tab8">{t('login.support')}</Link>
-          <Link to={ADMIN_LOGIN_PATH}>{t('login.staffSignIn')}</Link>
         </nav>
       </header>
 
       <main className="main-content">
-        <div className="overlay">
+        <div className="overlay admin-login__overlay">
           <div className="text-section">
             <div className="slogan">
-              {t('login.sloganLine1')}
+              {t('adminLogin.sloganLine1')}
               <br />
-              {t('login.sloganLine2')}
+              {t('adminLogin.sloganLine2')}
             </div>
-            <ul className="hero-proof-points" aria-label={t('login.heroHighlightsAria')}>
-              {HERO_POINT_KEYS.map((key) => (
-                <li key={key}>{t(key)}</li>
-              ))}
+            <ul className="hero-proof-points" aria-label={t('adminLogin.heroHighlightsAria')}>
+              <li>{t('adminLogin.heroPoint1')}</li>
+              <li>{t('adminLogin.heroPoint2')}</li>
+              <li>{t('adminLogin.heroPoint3')}</li>
             </ul>
           </div>
 
           <aside
-            className="login-card"
+            className="login-card admin-login__card"
             role="complementary"
-            aria-labelledby="login-card-title"
+            aria-labelledby="admin-login-card-title"
           >
             <div className="login-card__accent" aria-hidden="true" />
 
             <div className="login-card__header">
-              <span className="login-card__badge">{t('login.badge')}</span>
-              <h2 id="login-card-title" className="login-card__title">
-                {t('login.title')}
+              <span className="login-card__badge">{t('adminLogin.badge')}</span>
+              <h2 id="admin-login-card-title" className="login-card__title">
+                {t('adminLogin.title')}
               </h2>
-              <p className="login-card__subtitle">
-                <Trans
-                  i18nKey="login.subtitle"
-                  components={[<strong key="u" />, <strong key="e" />, <strong key="c" />]}
-                />
-              </p>
+              <p className="login-card__subtitle">{t('adminLogin.subtitle')}</p>
             </div>
 
             {displayError && (
@@ -102,15 +116,8 @@ const Tab3: React.FC = () => {
                   !
                 </span>
                 <div className="login-card__alert-body">
-                  <strong>{t('login.loginProblem')}</strong>
+                  <strong>{t('adminLogin.loginProblem')}</strong>
                   <p>{displayError}</p>
-                  <button
-                    type="button"
-                    className="login-card__alert-retry"
-                    onClick={() => window.location.reload()}
-                  >
-                    {t('common.retry')}
-                  </button>
                 </div>
               </div>
             )}
@@ -154,9 +161,6 @@ const Tab3: React.FC = () => {
                   </button>
                 </div>
               </label>
-              <p className="login-card__forgot">
-                <Link to="/forgot-password">{t('login.forgotPassword')}</Link>
-              </p>
               <button
                 type="submit"
                 className="login-card__btn login-card__btn--primary"
@@ -166,34 +170,23 @@ const Tab3: React.FC = () => {
                   {submitting
                     ? t('login.loggingIn')
                     : authReady
-                      ? t('login.logIn')
+                      ? t('adminLogin.logIn')
                       : t('common.loading')}
                 </span>
               </button>
 
               <div className="login-card__divider">
-                <span>{t('login.newHere')}</span>
+                <span>{t('adminLogin.patientInstead')}</span>
               </div>
 
               <Link
-                to="/tab9"
+                to={PATIENT_LOGIN_PATH}
                 className="login-card__btn login-card__btn--secondary"
                 style={{ textDecoration: 'none', textAlign: 'center', display: 'block' }}
               >
-                <span className="login-card__btn-label">{t('login.createAccount')}</span>
+                <span className="login-card__btn-label">{t('adminLogin.patientSignIn')}</span>
               </Link>
-
-              <p className="login-card__terms" style={{ marginTop: '0.85rem' }}>
-                {t('login.staffEntranceHint')}{' '}
-                <Link to={ADMIN_LOGIN_PATH}>{t('login.staffSignIn')}</Link>
-              </p>
             </form>
-
-            <p className="login-card__terms">
-              {t('login.termsPrefix')}{' '}
-              <Link to="/terms">{t('login.termsOfService')}</Link> {t('login.and')}{' '}
-              <Link to="/privacy">{t('login.privacyPolicy')}</Link>.
-            </p>
           </aside>
         </div>
       </main>
@@ -201,4 +194,4 @@ const Tab3: React.FC = () => {
   );
 };
 
-export default Tab3;
+export default AdminLoginPage;

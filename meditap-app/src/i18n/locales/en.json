@@ -125,7 +125,26 @@
     "termsOfService": "Terms of Service",
     "and": "and",
     "privacyPolicy": "Privacy Policy",
-    "credentialsRequired": "Enter username (or email) and password."
+    "credentialsRequired": "Enter username (or email) and password.",
+    "staffSignIn": "Staff sign in",
+    "staffEntranceHint": "Clinic staff?"
+  },
+  "adminLogin": {
+    "sloganLine1": "Staff workspace.",
+    "sloganLine2": "Review and chart",
+    "heroHighlightsAria": "Admin portal highlights",
+    "heroPoint1": "Review intake and warned PDF fields",
+    "heroPoint2": "Manage hospitals and Epic integrations",
+    "heroPoint3": "Act on behalf of a selected patient (coming next)",
+    "badge": "Staff access",
+    "title": "Admin portal sign in",
+    "subtitle": "Sign in with a MediTap staff or org-admin account. Patients should use the patient portal.",
+    "loginProblem": "Sign-in problem",
+    "logIn": "Sign in to admin",
+    "credentialsRequired": "Enter username (or email) and password.",
+    "patientAccountRejected": "This account is for the patient portal. Use Patient sign in instead.",
+    "patientInstead": "Not staff?",
+    "patientSignIn": "Patient sign in"
   },
   "dashboard": {
     "title": "MediTap Dashboard",

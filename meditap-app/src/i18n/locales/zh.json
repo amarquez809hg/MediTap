@@ -125,7 +125,26 @@
     "termsOfService": "服务条款",
     "and": "和",
     "privacyPolicy": "隐私政策",
-    "credentialsRequired": "请输入用户名（或电子邮箱）和密码。"
+    "credentialsRequired": "请输入用户名（或电子邮箱）和密码。",
+    "staffSignIn": "工作人员登录",
+    "staffEntranceHint": "诊所工作人员？"
+  },
+  "adminLogin": {
+    "sloganLine1": "工作人员工作区。",
+    "sloganLine2": "审阅与建档",
+    "heroHighlightsAria": "管理门户亮点",
+    "heroPoint1": "审阅入院资料与需核实的 PDF 字段",
+    "heroPoint2": "管理医院与 Epic 集成",
+    "heroPoint3": "代表所选患者操作（即将推出）",
+    "badge": "工作人员访问",
+    "title": "管理门户登录",
+    "subtitle": "请使用 MediTap 工作人员或机构管理员账户登录。患者请使用患者门户。",
+    "loginProblem": "登录问题",
+    "logIn": "登录管理门户",
+    "credentialsRequired": "请输入用户名（或电子邮箱）和密码。",
+    "patientAccountRejected": "此账户属于患者门户。请改用患者登录。",
+    "patientInstead": "不是工作人员？",
+    "patientSignIn": "患者登录"
   },
   "dashboard": {
     "title": "MediTap 仪表盘",

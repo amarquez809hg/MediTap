@@ -125,7 +125,26 @@
     "termsOfService": "Términos de servicio",
     "and": "y",
     "privacyPolicy": "Política de privacidad",
-    "credentialsRequired": "Ingrese usuario (o correo) y contraseña."
+    "credentialsRequired": "Ingrese usuario (o correo) y contraseña.",
+    "staffSignIn": "Acceso del personal",
+    "staffEntranceHint": "¿Personal clínico?"
+  },
+  "adminLogin": {
+    "sloganLine1": "Espacio del personal.",
+    "sloganLine2": "Revisar y documentar",
+    "heroHighlightsAria": "Aspectos del portal de administración",
+    "heroPoint1": "Revisar ingresos y campos PDF con aviso",
+    "heroPoint2": "Gestionar hospitales e integraciones Epic",
+    "heroPoint3": "Actuar en nombre de un paciente seleccionado (próximamente)",
+    "badge": "Acceso del personal",
+    "title": "Inicio de sesión del portal admin",
+    "subtitle": "Entre con una cuenta de personal u org-admin de MediTap. Los pacientes deben usar el portal del paciente.",
+    "loginProblem": "Problema al iniciar sesión",
+    "logIn": "Entrar al admin",
+    "credentialsRequired": "Ingrese usuario (o correo) y contraseña.",
+    "patientAccountRejected": "Esta cuenta es del portal del paciente. Use Acceso del paciente.",
+    "patientInstead": "¿No es personal?",
+    "patientSignIn": "Acceso del paciente"
   },
   "dashboard": {
     "title": "Panel de MediTap",

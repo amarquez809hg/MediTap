@@ -29,6 +29,15 @@ Separate **User (patient) portal** and **Admin (staff) portal** experiences whil
 - **Staff elevation** (`X-Meditap-Elevation`): temporary unlock to edit the **logged-in patient’s** chart on a shared device (kiosk). Lives inside the **user** portal.
 - **Admin portal login**: staff / org_admin account whose home is `/admin-portal/...`. Acts **on behalf of** a selected `patientId` (Phase 3), not by sharing the patient password.
 
+## Bilateral login entrances (same JWT API)
+
+| Door | Path | Rule |
+|------|------|------|
+| Patient | `/tab3` | Patients land in `/app/...`; staff who use this door are sent to admin home |
+| Admin | `/admin-portal/login` | Staff / org_admin only; **patient accounts are rejected** (no session kept) |
+
+Cross-links: “Staff sign in” on the patient door; “Patient sign in” on the admin door.
+
 ## Roles (Phase 1)
 
 | Role | How resolved (v1) | Default home |
@@ -53,6 +62,7 @@ Separate **User (patient) portal** and **Admin (staff) portal** experiences whil
 | `/tab12` | `/app/insurance` |
 | `/tab14` | `/app/intake` |
 | `/tab13` | `/admin-portal/panel` |
+| — | `/admin-portal/login` (staff entrance) |
 | — | `/admin-portal/home` (admin landing stub) |
 
 Public routes (`/tab3` login, `/tab8` support, `/tab10` about, terms/privacy) stay outside portal shells.

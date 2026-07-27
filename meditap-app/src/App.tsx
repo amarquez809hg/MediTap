@@ -39,6 +39,7 @@ import CookieConsentBanner from './components/CookieConsentBanner';
 import UserPortalLayout from './portals/UserPortalLayout';
 import AdminPortalLayout from './portals/AdminPortalLayout';
 import AdminPortalHome from './portals/AdminPortalHome';
+import AdminLoginPage from './portals/AdminLoginPage';
 import { LEGACY_TAB_REDIRECTS, LOGIN_PATH, resolvePostLoginPath } from './portals/portalPaths';
 
 /* Core CSS required for Ionic components to work properly */
@@ -228,6 +229,9 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             {/* Admin portal */}
+            <Route exact path="/admin-portal/login">
+              <AdminLoginPage />
+            </Route>
             <Route exact path="/admin-portal/home">
               <AdminPortalRoute>
                 <AdminPortalLayout>
