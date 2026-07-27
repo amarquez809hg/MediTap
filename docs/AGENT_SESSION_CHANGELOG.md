@@ -1091,6 +1091,27 @@
 
 ---
 
-**Next register entry:** **81** / **`MT-AG-077`**
+### 81) Bilateral login entrances (patient + admin)
 
-*Last updated: entry 80 (portal split Phase 0–1).*
+**Type:** Feature / UX  
+**Key:** `MT-AG-077`
+
+**Summary:** Add separate patient and staff login doors that share the same JWT API, so the portal remodel has a clear bilateral entrance without a second auth stack.
+
+**What was done:**
+
+- Added `/admin-portal/login` (`AdminLoginPage`) with staff branding; patient-only accounts are rejected before a session is stored (`requirePortalHome: 'admin'`).
+- Patient login (`/tab3`) links to staff sign-in; staff who use the patient door still land in the admin home.
+- Unauthenticated admin-portal routes redirect to the admin login door (not the patient door).
+- i18n (EN/ES/ZH) for admin login copy; ADR updated for bilateral entrances.
+
+**Outcome:** Two front doors, one API. Patients cannot open the admin portal via the staff login. Not deployed to production (`feature/portal-split` only).
+
+**Primary paths:** `portals/AdminLoginPage.tsx`, `portals/portalPaths.ts`, `contexts/AuthContext.tsx`, `pages/Tab3.tsx`, `App.tsx`, `docs/PORTAL_SPLIT_DECISIONS.md`  
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **82** / **`MT-AG-078`**
+
+*Last updated: entry 81 (bilateral portal login doors).*
