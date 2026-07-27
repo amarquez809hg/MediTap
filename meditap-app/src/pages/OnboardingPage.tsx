@@ -11,6 +11,7 @@ import {
   type OnboardingSteps,
 } from '../onboarding/onboardingStorage';
 import { loadTab14FromBackend } from '../api';
+import { USER_PORTAL_HOME, LOGIN_PATH } from '../portals/portalPaths';
 import './OnboardingPage.css';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 
@@ -24,28 +25,28 @@ const OnboardingPage: React.FC = () => {
       id: 'profile' as const,
       title: t('onboarding.stepProfileTitle'),
       body: t('onboarding.stepProfileBody'),
-      href: '/tab14',
+      href: '/app/intake',
       cta: t('onboarding.stepProfileCta'),
     },
     {
       id: 'upload' as const,
       title: t('onboarding.stepUploadTitle'),
       body: t('onboarding.stepUploadBody'),
-      href: '/tab14',
+      href: '/app/intake',
       cta: t('onboarding.stepUploadCta'),
     },
     {
       id: 'finished' as const,
       title: t('onboarding.stepReadyTitle'),
       body: t('onboarding.stepReadyBody'),
-      href: '/tab1',
+      href: USER_PORTAL_HOME,
       cta: t('onboarding.stepReadyCta'),
     },
   ];
 
   useEffect(() => {
     if (authReady && !isAuthenticated) {
-      history.replace('/tab3');
+      history.replace(LOGIN_PATH);
     }
   }, [authReady, isAuthenticated, history]);
 
@@ -85,7 +86,7 @@ const OnboardingPage: React.FC = () => {
 
   useEffect(() => {
     if (isOnboardingComplete(username)) {
-      history.replace('/tab1');
+      history.replace(USER_PORTAL_HOME);
     }
   }, [username, history, steps]);
 
@@ -119,12 +120,12 @@ const OnboardingPage: React.FC = () => {
 
   const finishAndGoDashboard = () => {
     markOnboardingStep(username, 'finished', true);
-    history.replace('/tab1');
+    history.replace(USER_PORTAL_HOME);
   };
 
   const onSkip = () => {
     skipOnboarding(username);
-    history.replace('/tab1');
+    history.replace(USER_PORTAL_HOME);
   };
 
   if (!steps) {

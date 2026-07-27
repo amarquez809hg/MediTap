@@ -1063,6 +1063,34 @@
 
 ---
 
-**Next register entry:** **80** / **`MT-AG-076`**
+**Next register entry:** **81** / **`MT-AG-077`**
 
-*Last updated: entry 79 (complete PDF warning coverage).*
+*Last updated: entry 80 (portal split Phase 0–1).*
+
+---
+
+### 80) Portal split — Phase 0 decisions + Phase 1 shells
+
+**Type:** Spike / Feature  
+**Key:** `MT-AG-076`
+
+**Summary:** Start the user/admin portal remodel on `feature/portal-split` (localhost): lock decisions in an ADR, expose portal role identity from auth, and route patients vs staff into separate shells with legacy `/tabN` redirects.
+
+**What was done:**
+
+- Added `docs/PORTAL_SPLIT_DECISIONS.md` (one SPA / two shells, elevation vs staff login, clean URLs, org membership, chat deferred to Phase 5).
+- Added `medapp/portal_identity.py` and extended `/api/auth/me/` + JWT claims with `role`, `org_ids`, `permissions`, `portal_home`.
+- Added `UserPortalLayout` / `AdminPortalLayout`, admin home stub, `AdminPortalRoute` guard, and `/app/*` + `/admin-portal/*` routes in `App.tsx`.
+- Login / register / onboarding / Epic callback redirect to the correct portal home; patients cannot open admin shell.
+- Staff elevation for kiosk chart edits remains unchanged inside the user portal.
+
+**Outcome:** Phase 1 exit criteria met on the feature branch — login lands in the correct shell; wrong shell blocked for patients. Phases 2–6 (content carve-out, vault/audit, chat, cutover) remain pending. Not deployed to production.
+
+**Primary paths:** `docs/PORTAL_SPLIT_DECISIONS.md`, `backend/medapp/portal_identity.py`, `backend/medapp/native_auth_views.py`, `meditap-app/src/portals/*`, `meditap-app/src/App.tsx`, `meditap-app/src/contexts/AuthContext.tsx`  
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **81** / **`MT-AG-077`**
+
+*Last updated: entry 80 (portal split Phase 0–1).*

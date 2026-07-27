@@ -7,6 +7,7 @@ import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { getApiBase } from '../config/api';
 import { startOnboardingForNewUser } from '../onboarding/onboardingStorage';
+import { resolvePostLoginPath } from '../portals/portalPaths';
 
 const EPIC_ON_FHIR_PORTAL =
   (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
@@ -37,7 +38,7 @@ function formatRegisterApiErrors(body: Record<string, unknown>): string {
 const Tab9: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const { authReady, isAuthenticated, loginWithPassword } = useAuth();
+  const { authReady, isAuthenticated, loginWithPassword, portalHome } = useAuth();
   const [accUsername, setAccUsername] = useState('');
   const [accEmail, setAccEmail] = useState('');
   const [accPassword, setAccPassword] = useState('');
@@ -50,9 +51,9 @@ const Tab9: React.FC = () => {
 
   React.useEffect(() => {
     if (authReady && isAuthenticated) {
-      history.replace('/tab1');
+      history.replace(resolvePostLoginPath(portalHome));
     }
-  }, [authReady, isAuthenticated, history]);
+  }, [authReady, isAuthenticated, history, portalHome]);
 
   const registerMediTapAccount = async (e: React.FormEvent) => {
     e.preventDefault();

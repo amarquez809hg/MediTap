@@ -5,6 +5,8 @@ import { IonContent, IonPage, IonSpinner } from '@ionic/react';
 import { completeEpicOAuth, formatSessionOrTokenErrorForUi } from '../api';
 import './Tab13.css';
 
+const ADMIN_PANEL_PATH = '/admin-portal/panel';
+
 /**
  * OAuth redirect target for Epic sandbox (must match EPIC_REDIRECT_URI on the backend).
  */
@@ -32,7 +34,7 @@ const EpicCallback: React.FC = () => {
         if (!cancelled) {
           setMessage(t('epicCallback.linked'));
           setBusy(false);
-          window.setTimeout(() => history.replace('/tab13'), 900);
+          window.setTimeout(() => history.replace(ADMIN_PANEL_PATH), 900);
         }
       } catch (e) {
         if (!cancelled) {
@@ -63,7 +65,7 @@ const EpicCallback: React.FC = () => {
             <button
               type="button"
               className="tab13-epic-callback__back"
-              onClick={() => history.replace('/tab13')}
+              onClick={() => history.replace(ADMIN_PANEL_PATH)}
             >
               {t('epicCallback.backToAdmin')}
             </button>

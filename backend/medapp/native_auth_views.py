@@ -28,6 +28,8 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from medapp.portal_identity import resolve_portal_identity
+
 _username_validator = UnicodeUsernameValidator()
 
 
@@ -66,6 +68,11 @@ class MediTapTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["realm_access"] = {"roles": role_names}
         token["is_staff"] = bool(user.is_staff)
         token["is_superuser"] = bool(user.is_superuser)
+        portal = resolve_portal_identity(user)
+        token["portal_role"] = portal["role"]
+        token["portal_home"] = portal["portal_home"]
+        token["org_ids"] = portal["org_ids"]
+        token["permissions"] = portal["permissions"]
         return token
 
 
@@ -188,6 +195,7 @@ def register(request):
 @permission_classes([IsAuthenticated])
 def auth_me(request):
     u = request.user
+    portal = resolve_portal_identity(u)
     return Response(
         {
             "id": u.pk,
@@ -195,5 +203,9 @@ def auth_me(request):
             "email": u.email or "",
             "is_staff": bool(u.is_staff),
             "is_superuser": bool(u.is_superuser),
+            "role": portal["role"],
+            "org_ids": portal["org_ids"],
+            "permissions": portal["permissions"],
+            "portal_home": portal["portal_home"],
         }
     )

@@ -14,4 +14,4 @@ Cursor rule: `.cursor/rules/meditap-agent.mdc` (always applied in this workspace
 
 Append a register entry (Type / Summary / What was done / Outcome), then update `REGISTER_CHECKPOINT.md`.
 
-**Next entry:** 74 (`MT-AG-070`).
+**Next entry:** 81 (`MT-AG-077`).

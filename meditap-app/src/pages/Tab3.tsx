@@ -5,13 +5,14 @@ import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import { useAuth } from '../contexts/AuthContext';
+import { resolvePostLoginPath } from '../portals/portalPaths';
 
 const HERO_POINT_KEYS = ['login.heroPoint1', 'login.heroPoint2', 'login.heroPoint3'] as const;
 
 const Tab3: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const { authReady, authInitError, isAuthenticated, loginWithPassword } = useAuth();
+  const { authReady, authInitError, isAuthenticated, loginWithPassword, portalHome } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,9 +21,9 @@ const Tab3: React.FC = () => {
 
   React.useEffect(() => {
     if (authReady && isAuthenticated) {
-      history.replace('/tab1');
+      history.replace(resolvePostLoginPath(portalHome));
     }
-  }, [authReady, isAuthenticated, history]);
+  }, [authReady, isAuthenticated, history, portalHome]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +35,8 @@ const Tab3: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await loginWithPassword(u, password);
-      history.replace('/tab1');
+      const home = await loginWithPassword(u, password);
+      history.replace(resolvePostLoginPath(home));
     } catch {
       /* authInitError set by context */
     } finally {

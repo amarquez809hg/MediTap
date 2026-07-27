@@ -33,8 +33,13 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminPortalRoute from './components/AdminPortalRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import UserPortalLayout from './portals/UserPortalLayout';
+import AdminPortalLayout from './portals/AdminPortalLayout';
+import AdminPortalHome from './portals/AdminPortalHome';
+import { LEGACY_TAB_REDIRECTS, LOGIN_PATH, resolvePostLoginPath } from './portals/portalPaths';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -63,6 +68,7 @@ setupIonicReact();
 
 const RootRoute: React.FC = () => {
   const location = useLocation();
+  const { isAuthenticated, portalHome } = useAuth();
   const params = new URLSearchParams(location.search);
   const isEpicOAuthReturn = Boolean(params.get('code') && params.get('state'));
 
@@ -74,7 +80,16 @@ const RootRoute: React.FC = () => {
     );
   }
 
-  return <Redirect to="/tab3" />;
+  if (isAuthenticated) {
+    return <Redirect to={resolvePostLoginPath(portalHome)} />;
+  }
+
+  return <Redirect to={LOGIN_PATH} />;
+};
+
+const LegacyTabRedirect: React.FC<{ from: string }> = ({ from }) => {
+  const to = LEGACY_TAB_REDIRECTS[from];
+  return <Redirect to={to || LOGIN_PATH} />;
 };
 
 const AppRoutes: React.FC = () => {
@@ -147,56 +162,94 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             </Route>
 
-            <Route exact path="/tab1">
+            {/* User portal */}
+            <Route exact path="/app/dashboard">
               <ProtectedRoute>
-                <Tab1 />
+                <UserPortalLayout>
+                  <Tab1 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab2">
+            <Route exact path="/app/status">
               <ProtectedRoute>
-                <Tab2 />
+                <UserPortalLayout>
+                  <Tab2 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab4">
+            <Route exact path="/app/appointments">
               <ProtectedRoute>
-                <Tab4 />
+                <UserPortalLayout>
+                  <Tab4 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab5">
+            <Route exact path="/app/conditions">
               <ProtectedRoute>
-                <Tab5 />
+                <UserPortalLayout>
+                  <Tab5 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab6">
+            <Route exact path="/app/incidents">
               <ProtectedRoute>
-                <Tab6 />
+                <UserPortalLayout>
+                  <Tab6 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab7">
+            <Route exact path="/app/labs">
               <ProtectedRoute>
-                <Tab7 />
+                <UserPortalLayout>
+                  <Tab7 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab11">
+            <Route exact path="/app/settings">
               <ProtectedRoute>
-                <Tab11 />
+                <UserPortalLayout>
+                  <Tab11 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab12">
+            <Route exact path="/app/insurance">
               <ProtectedRoute>
-                <Tab12 />
+                <UserPortalLayout>
+                  <Tab12 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab13">
+            <Route exact path="/app/intake">
               <ProtectedRoute>
-                <Tab13 />
+                <UserPortalLayout>
+                  <Tab14 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab14">
-              <ProtectedRoute>
-                <Tab14 />
-              </ProtectedRoute>
+
+            {/* Admin portal */}
+            <Route exact path="/admin-portal/home">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPortalHome />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
             </Route>
+            <Route exact path="/admin-portal/panel">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <Tab13 />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+
+            {/* Legacy /tabN → clean portal paths */}
+            {Object.keys(LEGACY_TAB_REDIRECTS).map((from) => (
+              <Route exact path={from} key={from}>
+                <LegacyTabRedirect from={from} />
+              </Route>
+            ))}
+
             <Route exact path="/epic-callback">
               <ProtectedRoute>
                 <EpicCallback />
