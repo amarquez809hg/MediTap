@@ -240,7 +240,7 @@ const Tab13: React.FC = () => {
             <div className="admin-panel-header__actions">
               <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
               <a
-                href={fullAppUrl('/tab1')}
+                href={fullAppUrl('/admin-portal/home')}
                 className="book-btn patient-insurance-header__action-btn"
               >
                 <i className="fas fa-arrow-left" aria-hidden />

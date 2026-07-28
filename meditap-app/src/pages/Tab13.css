@@ -486,3 +486,154 @@ ion-page.ct-page.ct-tab13 ion-content {
   cursor: pointer;
   font: inherit;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Admin portal dark theme — only inside AdminPortalLayout (.portal-shell--admin) */
+/* -------------------------------------------------------------------------- */
+
+.portal-shell--admin ion-page.ct-page.ct-tab13 {
+  --ion-background-color: var(--admin-portal-bg, #0f1c2a);
+  --ion-text-color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin ion-page.ct-page.ct-tab13 ion-content {
+  --background: var(--admin-portal-bg, #0f1c2a);
+  --color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin .admin-panel-container {
+  background-color: var(--admin-portal-bg, #0f1c2a);
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin .admin-panel-container > .admin-panel-header {
+  background: linear-gradient(135deg, #152536 0%, #0f1c2a 100%);
+  border-bottom: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  box-shadow: none;
+}
+
+.portal-shell--admin .admin-panel-container > .admin-panel-header > h1 {
+  color: #f3f7fb;
+}
+
+.portal-shell--admin .admin-panel-container > .admin-panel-header .admin-panel-header__actions .book-btn,
+.portal-shell--admin .admin-panel-container > .admin-panel-header .patient-insurance-header__action-btn {
+  background: rgba(110, 196, 212, 0.14);
+  border-color: rgba(110, 196, 212, 0.28);
+  color: #e8eef5;
+}
+
+.portal-shell--admin .tab13-zone__label {
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-readonly-hint {
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-intro {
+  background: var(--admin-portal-surface, #162636);
+  border-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.portal-shell--admin .tab13-intro__icon {
+  color: var(--admin-portal-accent, #6ec4d4);
+}
+
+.portal-shell--admin .tab13-intro__body h2 {
+  color: #f3f7fb;
+}
+
+.portal-shell--admin .tab13-intro__body p {
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-staff-banner {
+  background: rgba(110, 196, 212, 0.1);
+  border-color: rgba(110, 196, 212, 0.28);
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin .tab13-ops__btn {
+  background: var(--admin-portal-surface, #162636);
+  border-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  color: var(--admin-portal-text, #e8eef5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.portal-shell--admin .tab13-ops__btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+.portal-shell--admin .tab13-ops__btn--primary {
+  background: linear-gradient(135deg, #2a6f7e 0%, #1a4554 100%);
+  border-color: rgba(110, 196, 212, 0.35);
+  color: #f3f7fb;
+}
+
+.portal-shell--admin .tab13-section-card,
+.portal-shell--admin .tab13-epic-card {
+  background: var(--admin-portal-surface, #162636);
+  border-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+
+.portal-shell--admin .tab13-section-card__head,
+.portal-shell--admin .tab13-epic-card__head {
+  background: linear-gradient(135deg, #1a4554 0%, #152536 100%);
+}
+
+.portal-shell--admin .tab13-section-card__link {
+  color: var(--admin-portal-text, #e8eef5);
+  border-bottom-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+}
+
+.portal-shell--admin .tab13-section-card__link:hover {
+  background: rgba(110, 196, 212, 0.1);
+}
+
+.portal-shell--admin .tab13-section-card__link ion-icon:first-child {
+  color: var(--admin-portal-accent, #6ec4d4);
+}
+
+.portal-shell--admin .tab13-section-card__link-chevron {
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-epic-card__lead,
+.portal-shell--admin .tab13-epic-card__meta {
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-epic-card__status {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell--admin .tab13-epic-card__status strong {
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin .tab13-epic-manual {
+  border-top-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+}
+
+.portal-shell--admin .tab13-epic-card__actions ion-button {
+  --background: rgba(110, 196, 212, 0.18);
+  --background-hover: rgba(110, 196, 212, 0.28);
+  --background-activated: rgba(110, 196, 212, 0.32);
+  --color: #e8eef5;
+  --border-color: rgba(110, 196, 212, 0.35);
+}
+
+.portal-shell--admin .tab13-epic-callback {
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.portal-shell--admin .tab13-epic-callback__back {
+  border-color: var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  color: var(--admin-portal-text, #e8eef5);
+}

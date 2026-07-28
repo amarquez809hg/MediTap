@@ -65,10 +65,35 @@
   min-height: 0;
 }
 
+/* Admin portal: full-page dark workspace (matches chrome) */
+.portal-shell--admin {
+  --admin-portal-bg: #0f1c2a;
+  --admin-portal-surface: #162636;
+  --admin-portal-surface-elevated: #1c3144;
+  --admin-portal-border: rgba(232, 238, 245, 0.12);
+  --admin-portal-text: #e8eef5;
+  --admin-portal-muted: #9aabbc;
+  --admin-portal-accent: #6ec4d4;
+  --admin-portal-primary: #1a4554;
+  --admin-portal-primary-tint: #256578;
+  background: var(--admin-portal-bg);
+  color: var(--admin-portal-text);
+  min-height: 100vh;
+}
+
+.portal-shell--admin .portal-shell__body {
+  background: var(--admin-portal-bg);
+  color: var(--admin-portal-text);
+}
+
 .portal-home {
   max-width: 720px;
   margin: 0 auto;
   padding: 1.75rem 1.25rem 2.5rem;
+}
+
+.portal-shell--admin .portal-home {
+  color: var(--admin-portal-text);
 }
 
 .portal-home h1 {
@@ -76,10 +101,23 @@
   font-size: 1.65rem;
 }
 
+.portal-shell--admin .portal-home h1 {
+  color: #f3f7fb;
+}
+
 .portal-home p {
   margin: 0 0 1.25rem;
   line-height: 1.5;
   opacity: 0.85;
+}
+
+.portal-shell--admin .portal-home p {
+  opacity: 1;
+  color: var(--admin-portal-muted);
+}
+
+.portal-shell--admin .portal-home p strong {
+  color: var(--admin-portal-text);
 }
 
 .portal-home__actions {
@@ -100,9 +138,14 @@
 }
 
 .portal-shell--admin .portal-home__actions a {
-  background: rgba(120, 180, 255, 0.12);
-  border-color: rgba(120, 180, 255, 0.28);
+  background: rgba(110, 196, 212, 0.14);
+  border-color: rgba(110, 196, 212, 0.35);
   color: #e8eef5;
+}
+
+.portal-shell--admin .portal-home__actions a:hover,
+.portal-shell--admin .portal-home__actions a:focus-visible {
+  background: rgba(110, 196, 212, 0.22);
 }
 
 body.ion-palette-dark .portal-shell--user .portal-shell__chrome {
