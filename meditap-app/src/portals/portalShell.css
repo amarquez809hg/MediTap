@@ -60,6 +60,29 @@
   text-decoration: underline;
 }
 
+.portal-shell__nav-link--admin-return {
+  margin-left: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 28, 42, 0.22);
+  background: rgba(15, 28, 42, 0.08);
+  font-weight: 600;
+  opacity: 1 !important;
+  text-decoration: none !important;
+}
+
+.portal-shell__nav-link--admin-return:hover,
+.portal-shell__nav-link--admin-return:focus-visible {
+  background: rgba(15, 28, 42, 0.14);
+  text-decoration: none !important;
+}
+
+body.ion-palette-dark .portal-shell--user .portal-shell__nav-link--admin-return {
+  border-color: rgba(110, 196, 212, 0.35);
+  background: rgba(110, 196, 212, 0.14);
+  color: #e8eef5;
+}
+
 .portal-shell__body {
   flex: 1;
   min-height: 0;

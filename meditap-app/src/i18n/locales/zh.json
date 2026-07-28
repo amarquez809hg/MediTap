@@ -129,6 +129,15 @@
     "staffSignIn": "工作人员登录",
     "staffEntranceHint": "诊所工作人员？"
   },
+  "portal": {
+    "patientLabel": "患者门户",
+    "navDashboard": "仪表盘",
+    "navStatus": "状态",
+    "navIntake": "入院资料",
+    "navAppointments": "预约",
+    "navSettings": "设置",
+    "backToAdmin": "管理门户"
+  },
   "adminLogin": {
     "sloganLine1": "工作人员工作区。",
     "sloganLine2": "审阅与建档",

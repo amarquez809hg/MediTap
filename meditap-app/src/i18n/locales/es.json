@@ -129,6 +129,15 @@
     "staffSignIn": "Acceso del personal",
     "staffEntranceHint": "¿Personal clínico?"
   },
+  "portal": {
+    "patientLabel": "Portal del paciente",
+    "navDashboard": "Panel",
+    "navStatus": "Estado",
+    "navIntake": "Ingreso",
+    "navAppointments": "Citas",
+    "navSettings": "Ajustes",
+    "backToAdmin": "Portal admin"
+  },
   "adminLogin": {
     "sloganLine1": "Espacio del personal.",
     "sloganLine2": "Revisar y documentar",

@@ -129,6 +129,15 @@
     "staffSignIn": "Staff sign in",
     "staffEntranceHint": "Clinic staff?"
   },
+  "portal": {
+    "patientLabel": "Patient portal",
+    "navDashboard": "Dashboard",
+    "navStatus": "Status",
+    "navIntake": "Intake",
+    "navAppointments": "Appointments",
+    "navSettings": "Settings",
+    "backToAdmin": "Admin portal"
+  },
   "adminLogin": {
     "sloganLine1": "Staff workspace.",
     "sloganLine2": "Review and chart",
