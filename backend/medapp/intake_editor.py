@@ -70,6 +70,9 @@ def can_edit_intake_records(request) -> bool:
     user = getattr(request, "user", None)
     if user is not None and user.is_authenticated and getattr(user, "is_superuser", False):
         return True
+    # Staff portal on-behalf edits (admin JWT) — no elevation required.
+    if user is not None and user.is_authenticated and getattr(user, "is_staff", False):
+        return True
     if patient_has_intake_editor_role(request):
         return True
     if intake_elevation_valid(request):

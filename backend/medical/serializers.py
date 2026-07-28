@@ -201,3 +201,39 @@ class PortalUserPreferencesSerializer(serializers.ModelSerializer):
             "updated_at",
         )
         read_only_fields = ("updated_at",)
+
+
+class AdminActivityEventSerializer(serializers.ModelSerializer):
+    actor_username = serializers.SerializerMethodField()
+    patient_label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.AdminActivityEvent
+        fields = (
+            "event_id",
+            "action",
+            "actor",
+            "actor_username",
+            "patient",
+            "patient_label",
+            "detail",
+            "created_at",
+        )
+        read_only_fields = (
+            "event_id",
+            "actor",
+            "actor_username",
+            "patient_label",
+            "created_at",
+        )
+
+    def get_actor_username(self, obj):
+        if obj.actor_id and obj.actor:
+            return obj.actor.get_username()
+        return None
+
+    def get_patient_label(self, obj):
+        if not obj.patient_id or not obj.patient:
+            return None
+        p = obj.patient
+        return f"{p.family_name}, {p.given_name}".strip(", ")

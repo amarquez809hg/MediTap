@@ -1112,6 +1112,27 @@
 
 ---
 
-**Next register entry:** **82** / **`MT-AG-078`**
+### 82) Admin portal Phase 3 core — on-behalf ops console
 
-*Last updated: entry 81 (bilateral portal login doors).*
+**Type:** Feature  
+**Key:** `MT-AG-078`
+
+**Summary:** Make the Admin portal operational: capability matrix, patient search with selected-patient context, staff on-behalf chart resolution, hospitals management, and an activity trail replacing the View Logs stub.
+
+**What was done:**
+
+- Added `docs/ADMIN_PORTAL_CAPABILITIES.md` to track every admin function status.
+- Backend: `GET /api/patients/?q=`, staff write via `is_staff`, `X-Meditap-Patient-Id` header support in SPA requests, `AdminActivityEvent` model + `/api/admin-activity/`.
+- Frontend: Admin patient context, Patients / Patient hub / Hospitals / Activity pages, rebuilt Admin home + nav.
+- `api.ts` resolves the selected admin patient for intake/labs/appointments/insurance loaders/savers; Tab13 View Logs opens Activity.
+
+**Outcome:** Staff can select a patient and edit charts without using the patient login. Activity trail records selects and hospital/patient mutations. Document vault, full HIPAA audit, and messaging remain deferred.
+
+**Primary paths:** `docs/ADMIN_PORTAL_CAPABILITIES.md`, `backend/medical/models.py`, `backend/medical/views.py`, `meditap-app/src/portals/*`, `meditap-app/src/api.ts`, `meditap-app/src/App.tsx`  
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **83** / **`MT-AG-079`**
+
+*Last updated: entry 82 (admin portal Phase 3 core).*

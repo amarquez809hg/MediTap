@@ -5,6 +5,7 @@ import { parseRealmRoles } from './auth/realmRoles';
 import { getAuthHeaders } from './auth/getAuthHeaders';
 import { emitSessionExpired } from './auth/sessionEvents';
 import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage';
+import { getAdminPatientRequestHeaders, getAdminSelectedPatientId } from './portals/adminPatientStorage';
 import type { IncidentRecord } from './incidents/incidentModel';
 import {
   bmiCategoryLabel,
@@ -426,7 +427,16 @@ export async function deleteTab5ChronicDisease(apiId: number): Promise<void> {
   });
 }
 
-export type HospitalApi = { hospital_id: string; name: string };
+export type HospitalApi = {
+  hospital_id: string;
+  name: string;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+};
 export type IncidentApi = {
   incident_id: string;
   patient: string;
@@ -638,11 +648,13 @@ async function apiRequest<T>(
   }
   const headers = await getAuthHeaders();
   const elevation = getMeditapElevationRequestHeaders();
+  const adminPatient = getAdminPatientRequestHeaders();
   const response = await fetch(`${API_BASE}${normalizeApiPath(path)}`, {
     ...init,
     headers: {
       ...headers,
       ...elevation,
+      ...adminPatient,
       ...(init?.headers || {}),
     },
   });
@@ -712,6 +724,14 @@ function pickCurrentPatient(
   username: string | null
 ): PatientApi | null {
   if (!patients.length) return null;
+
+  // Admin on-behalf: preferred selected chart for staff/editor sessions.
+  const adminId = getAdminSelectedPatientId();
+  if (adminId && currentUserMayBrowseAllPatientsFromToken()) {
+    const byAdmin = patients.find((pt) => pt.patient_id === adminId);
+    if (byAdmin) return byAdmin;
+  }
+
   if (patients.length === 1) return patients[0];
   if (username) {
     const normalized = username.toLowerCase();
@@ -2481,5 +2501,76 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
         }),
       });
     }
+  }
+}
+
+/** Admin portal: search/list patients (staff/editor). */
+export async function searchPatientsForAdmin(q: string): Promise<PatientApi[]> {
+  const query = q.trim();
+  const path = query
+    ? `/api/patients/?q=${encodeURIComponent(query)}`
+    : '/api/patients/';
+  return fetchAllPages<PatientApi>(path);
+}
+
+export async function listHospitalsForAdmin(): Promise<HospitalApi[]> {
+  return fetchAllPages<HospitalApi>('/api/hospitals/');
+}
+
+export async function createHospitalForAdmin(payload: {
+  name: string;
+  address_line1?: string;
+  city?: string;
+  region?: string;
+  postal_code?: string;
+  country?: string;
+}): Promise<HospitalApi> {
+  return requestJson<HospitalApi>('/api/hospitals/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateHospitalForAdmin(
+  hospitalId: string,
+  payload: Partial<HospitalApi>
+): Promise<HospitalApi> {
+  return requestJson<HospitalApi>(`/api/hospitals/${hospitalId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export type AdminActivityApi = {
+  event_id: string;
+  action: string;
+  actor: number | null;
+  actor_username: string | null;
+  patient: string | null;
+  patient_label: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+};
+
+export async function listAdminActivity(): Promise<AdminActivityApi[]> {
+  return fetchAllPages<AdminActivityApi>('/api/admin-activity/');
+}
+
+export async function logAdminActivityEvent(
+  action: string,
+  patientId: string | null,
+  detail: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    await requestJson<AdminActivityApi>('/api/admin-activity/', {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        patient: patientId,
+        detail,
+      }),
+    });
+  } catch {
+    /* non-blocking */
   }
 }

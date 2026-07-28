@@ -315,9 +315,9 @@ const Tab13: React.FC = () => {
                   <button
                     type="button"
                     className="tab13-ops__btn"
-                    onClick={() =>
-                      window.alert(t('admin.viewLogsAlert'))
-                    }
+                    onClick={() => {
+                      window.location.assign('/admin-portal/activity');
+                    }}
                   >
                     <IonIcon icon={settingsOutline} aria-hidden />
                     {t('admin.viewLogs')}

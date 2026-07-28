@@ -40,6 +40,11 @@ import UserPortalLayout from './portals/UserPortalLayout';
 import AdminPortalLayout from './portals/AdminPortalLayout';
 import AdminPortalHome from './portals/AdminPortalHome';
 import AdminLoginPage from './portals/AdminLoginPage';
+import AdminPatientsPage from './portals/AdminPatientsPage';
+import AdminPatientHubPage from './portals/AdminPatientHubPage';
+import AdminHospitalsPage from './portals/AdminHospitalsPage';
+import AdminActivityPage from './portals/AdminActivityPage';
+import { AdminPatientProvider } from './portals/AdminPatientContext';
 import { LEGACY_TAB_REDIRECTS, LOGIN_PATH, resolvePostLoginPath } from './portals/portalPaths';
 
 /* Core CSS required for Ionic components to work properly */
@@ -239,6 +244,34 @@ const AppRoutes: React.FC = () => {
                 </AdminPortalLayout>
               </AdminPortalRoute>
             </Route>
+            <Route exact path="/admin-portal/patients">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/patients/:patientId">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientHubPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/hospitals">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminHospitalsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/activity">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminActivityPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
             <Route exact path="/admin-portal/panel">
               <AdminPortalRoute>
                 <AdminPortalLayout>
@@ -272,13 +305,15 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => (
   <AuthProvider>
-    <UserPreferencesProvider>
-      <LanguageProvider>
-        <DarkModeProvider>
-          <AppRoutes />
-        </DarkModeProvider>
-      </LanguageProvider>
-    </UserPreferencesProvider>
+    <AdminPatientProvider>
+      <UserPreferencesProvider>
+        <LanguageProvider>
+          <DarkModeProvider>
+            <AppRoutes />
+          </DarkModeProvider>
+        </LanguageProvider>
+      </UserPreferencesProvider>
+    </AdminPatientProvider>
   </AuthProvider>
 );
 

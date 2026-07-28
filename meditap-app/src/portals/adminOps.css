@@ -1,0 +1,259 @@
+.admin-ops {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.admin-ops__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.55rem;
+  color: #f3f7fb;
+}
+
+.admin-ops__header p {
+  margin: 0 0 0.75rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.45;
+}
+
+.admin-ops__crumb {
+  font-size: 0.85rem;
+}
+
+.admin-ops__crumb a {
+  color: var(--admin-portal-accent, #6ec4d4);
+}
+
+.admin-ops__active {
+  margin-top: 0.35rem !important;
+}
+
+.admin-ops__active a {
+  color: var(--admin-portal-accent, #6ec4d4);
+  margin-left: 0.35rem;
+}
+
+.admin-ops__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.admin-ops__search input {
+  flex: 1 1 220px;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  background: var(--admin-portal-surface, #162636);
+  color: inherit;
+}
+
+.admin-ops__search button,
+.admin-ops__actions button,
+.admin-ops__table button {
+  min-height: 42px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(110, 196, 212, 0.35);
+  background: rgba(110, 196, 212, 0.14);
+  color: #e8eef5;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-ops__search button:disabled,
+.admin-ops__actions button:disabled,
+.admin-ops__table button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.admin-ops__error {
+  color: #f0a4a4;
+}
+
+.admin-ops__ok {
+  color: #7bc96f;
+}
+
+.admin-ops__table-wrap {
+  overflow: auto;
+  border: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  border-radius: 10px;
+  background: var(--admin-portal-surface, #162636);
+}
+
+.admin-ops__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-ops__table th,
+.admin-ops__table td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-ops__table th {
+  color: var(--admin-portal-muted, #9aabbc);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-ops__detail {
+  font-size: 0.75rem;
+  word-break: break-word;
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.admin-ops__card-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  margin-top: 1rem;
+}
+
+.admin-ops__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--admin-portal-surface, #162636);
+  border: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+}
+
+.admin-ops__card strong {
+  color: #f3f7fb;
+}
+
+.admin-ops__card span {
+  font-size: 0.82rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.4;
+}
+
+.admin-ops__card:hover {
+  border-color: rgba(110, 196, 212, 0.4);
+}
+
+.admin-home-console {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 2.5rem;
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.admin-home-console h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.7rem;
+  color: #f3f7fb;
+}
+
+.admin-home-console__lead {
+  margin: 0 0 1.25rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.5;
+}
+
+.admin-home-console__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(110, 196, 212, 0.12);
+  border: 1px solid rgba(110, 196, 212, 0.28);
+  font-size: 0.88rem;
+}
+
+.admin-home-console__chip a,
+.admin-home-console__chip button {
+  color: var(--admin-portal-accent, #6ec4d4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.admin-home-console__grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.admin-home-console__grid a {
+  display: block;
+  padding: 1rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--admin-portal-surface, #162636);
+  border: 1px solid var(--admin-portal-border, rgba(232, 238, 245, 0.12));
+}
+
+.admin-home-console__grid a strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #f3f7fb;
+}
+
+.admin-home-console__grid a span {
+  font-size: 0.82rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.4;
+}
+
+.admin-home-console__queue {
+  margin-top: 1.5rem;
+}
+
+.admin-home-console__queue h2 {
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell__patient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(110, 196, 212, 0.35);
+  background: rgba(110, 196, 212, 0.12);
+  font-size: 0.78rem;
+  max-width: 240px;
+}
+
+.portal-shell__patient-chip a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-shell__patient-chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 0;
+  font: inherit;
+}

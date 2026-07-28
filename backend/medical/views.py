@@ -1,5 +1,7 @@
 from rest_framework import permissions, viewsets
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+import uuid
 
 from . import models, serializers
 from .patient_api_scoping import (
@@ -7,6 +9,7 @@ from .patient_api_scoping import (
     scoped_patient_queryset,
 )
 from .permissions import IntakeEditorWritePermission
+from medapp.admin_ops import log_admin_activity, request_admin_patient_id, user_is_admin_operator
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -18,17 +21,66 @@ class PatientViewSet(BaseViewSet):
     serializer_class = serializers.PatientSerializer
 
     def get_queryset(self):
-        return scoped_patient_queryset(self.request)
+        qs = scoped_patient_queryset(self.request)
+        q = (self.request.query_params.get("q") or "").strip()
+        if not q:
+            return qs
+        filters = (
+            Q(given_name__icontains=q)
+            | Q(family_name__icontains=q)
+            | Q(email__icontains=q)
+            | Q(phone__icontains=q)
+        )
+        try:
+            filters = filters | Q(patient_id=uuid.UUID(q))
+        except (ValueError, TypeError, AttributeError):
+            pass
+        return qs.filter(filters)
 
     def perform_create(self, serializer):
-        serializer.save(portal_user=self.request.user)
+        user = self.request.user
+        # Staff creating a chart should not claim it as their own portal profile.
+        if user_is_admin_operator(self.request):
+            serializer.save()
+        else:
+            serializer.save(portal_user=user)
+        log_admin_activity(
+            actor=user if user.is_authenticated else None,
+            action="patient.create",
+            patient_id=str(serializer.instance.patient_id),
+            detail={"source": "api"},
+        )
+
+    def perform_update(self, serializer):
+        serializer.save()
+        log_admin_activity(
+            actor=self.request.user if self.request.user.is_authenticated else None,
+            action="patient.update",
+            patient_id=str(serializer.instance.patient_id),
+            detail={"source": "api", "admin_patient_header": request_admin_patient_id(self.request)},
+        )
 
 
 class HospitalViewSet(viewsets.ModelViewSet):
-    queryset = models.Hospital.objects.all()
+    queryset = models.Hospital.objects.all().order_by("name")
     serializer_class = serializers.HospitalSerializer
     permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
 
+    def perform_create(self, serializer):
+        serializer.save()
+        log_admin_activity(
+            actor=self.request.user if self.request.user.is_authenticated else None,
+            action="hospital.create",
+            detail={"hospital_id": str(serializer.instance.hospital_id), "name": serializer.instance.name},
+        )
+
+    def perform_update(self, serializer):
+        serializer.save()
+        log_admin_activity(
+            actor=self.request.user if self.request.user.is_authenticated else None,
+            action="hospital.update",
+            detail={"hospital_id": str(serializer.instance.hospital_id), "name": serializer.instance.name},
+        )
 
 class IncidentViewSet(BaseViewSet):
     queryset = models.Incident.objects.select_related("patient", "hospital").all().order_by(
@@ -174,3 +226,21 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
         if appointment_id:
             return qs.filter(appointment_id=appointment_id)
         return qs.none()
+
+
+class AdminActivityEventViewSet(viewsets.ModelViewSet):
+    """Staff/ops activity feed for the admin portal (create = client-noted events)."""
+
+    http_method_names = ["get", "post", "head", "options"]
+    serializer_class = serializers.AdminActivityEventSerializer
+    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    queryset = models.AdminActivityEvent.objects.select_related("actor", "patient").all()
+
+    def get_queryset(self):
+        if not user_is_admin_operator(self.request):
+            return models.AdminActivityEvent.objects.none()
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(actor=user)

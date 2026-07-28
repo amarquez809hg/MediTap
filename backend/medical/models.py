@@ -445,3 +445,34 @@ class PortalUserPreferences(models.Model):
 
     def __str__(self):
         return f"Preferences for {self.user.get_username()}"
+
+
+class AdminActivityEvent(models.Model):
+    """Lightweight admin/ops activity trail (Phase 3 starter; not a full HIPAA audit product)."""
+
+    event_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admin_activity_events",
+    )
+    action = models.CharField(max_length=64)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admin_activity_events",
+    )
+    detail = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        who = self.actor.get_username() if self.actor_id else "system"
+        return f"{self.action} by {who} @ {self.created_at}"
+
