@@ -20,9 +20,20 @@
 }
 
 .portal-shell--admin .portal-shell__chrome {
-  background: rgba(15, 28, 42, 0.94);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 42%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    rgba(12, 24, 38, 0.72);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
   color: #e8eef5;
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .portal-shell__brand {
@@ -88,24 +99,27 @@ body.ion-palette-dark .portal-shell--user .portal-shell__nav-link--admin-return 
   min-height: 0;
 }
 
-/* Admin portal: full-page dark workspace (matches chrome) */
+/* Admin portal: atmospheric dark workspace so frosted glass reads clearly */
 .portal-shell--admin {
-  --admin-portal-bg: #0f1c2a;
-  --admin-portal-surface: #162636;
-  --admin-portal-surface-elevated: #1c3144;
-  --admin-portal-border: rgba(232, 238, 245, 0.12);
+  --admin-portal-bg: #0c1624;
+  --admin-portal-surface: rgba(22, 40, 58, 0.55);
+  --admin-portal-surface-elevated: rgba(28, 52, 72, 0.62);
+  --admin-portal-border: rgba(255, 255, 255, 0.14);
   --admin-portal-text: #e8eef5;
   --admin-portal-muted: #9aabbc;
   --admin-portal-accent: #6ec4d4;
   --admin-portal-primary: #1a4554;
   --admin-portal-primary-tint: #256578;
-  background: var(--admin-portal-bg);
+  background:
+    radial-gradient(1200px 520px at 12% -10%, rgba(110, 196, 212, 0.16), transparent 55%),
+    radial-gradient(900px 480px at 88% 8%, rgba(26, 99, 86, 0.22), transparent 50%),
+    linear-gradient(165deg, #0b1420 0%, #101e2e 48%, #0d1826 100%);
   color: var(--admin-portal-text);
   min-height: 100vh;
 }
 
 .portal-shell--admin .portal-shell__body {
-  background: var(--admin-portal-bg);
+  background: transparent;
   color: var(--admin-portal-text);
 }
 
