@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { ADMIN_PORTAL_HOME } from '../portals/portalPaths';
 import {
   IonContent,
   IonHeader,
@@ -239,13 +241,10 @@ const Tab13: React.FC = () => {
             </h1>
             <div className="admin-panel-header__actions">
               <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
-              <a
-                href={fullAppUrl('/tab1')}
-                className="book-btn patient-insurance-header__action-btn"
-              >
-                <i className="fas fa-arrow-left" aria-hidden />
-                {t('common.goBackToDashboard')}
-              </a>
+              <GoBackButton
+                fallback={ADMIN_PORTAL_HOME}
+                className="patient-insurance-header__action-btn"
+              />
             </div>
           </header>
 
@@ -315,9 +314,9 @@ const Tab13: React.FC = () => {
                   <button
                     type="button"
                     className="tab13-ops__btn"
-                    onClick={() =>
-                      window.alert(t('admin.viewLogsAlert'))
-                    }
+                    onClick={() => {
+                      window.location.assign('/admin-portal/activity');
+                    }}
                   >
                     <IonIcon icon={settingsOutline} aria-hidden />
                     {t('admin.viewLogs')}

@@ -445,3 +445,84 @@ class PortalUserPreferences(models.Model):
 
     def __str__(self):
         return f"Preferences for {self.user.get_username()}"
+
+
+class AdminActivityEvent(models.Model):
+    """Lightweight admin/ops activity trail (Phase 3 starter; not a full HIPAA audit product)."""
+
+    event_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admin_activity_events",
+    )
+    action = models.CharField(max_length=64)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admin_activity_events",
+    )
+    detail = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        who = self.actor.get_username() if self.actor_id else "system"
+        return f"{self.action} by {who} @ {self.created_at}"
+
+
+class PatientDocument(models.Model):
+    """
+    Patient-uploaded documents for clinic review (document vault v1).
+    Patients may create; staff review/update status. Chart field edits stay staff-only.
+    """
+
+    STATUS_PENDING = "pending_review"
+    STATUS_REVIEWED = "reviewed"
+    STATUS_APPLIED = "applied"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending review"),
+        (STATUS_REVIEWED, "Reviewed"),
+        (STATUS_APPLIED, "Applied to chart"),
+        (STATUS_REJECTED, "Rejected"),
+    ]
+
+    document_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="documents"
+    )
+    file = models.FileField(upload_to="patient_documents/%Y/%m/")
+    original_filename = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=128, blank=True, default="")
+    size_bytes = models.PositiveIntegerField(default=0)
+    status = models.CharField(
+        max_length=32, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    notes = models.TextField(blank=True, null=True)
+    # Client-parsed intake snapshot (demographics + sections) for staff apply-to-chart.
+    parse_snapshot = models.JSONField(default=dict, blank=True)
+    parsed_given_name = models.CharField(max_length=100, blank=True, default="")
+    parsed_family_name = models.CharField(max_length=100, blank=True, default="")
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="uploaded_patient_documents",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.original_filename} ({self.status})"
+

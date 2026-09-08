@@ -20,6 +20,8 @@ import {
   mergeMedicationsFromPdf,
 } from "./mergeTab14IntakeUpload";
 import { warningsForWinningPatientFields } from './intakeFieldWarnings';
+import { noKnownProblemsChronicRow } from './detectNoKnownProblems';
+import { isPlaceholderChronic } from './mergeTab14IntakeUpload';
 
 export type Tab14MergeSnapshot = {
   allergies: Tab14AllergyRow[];
@@ -209,26 +211,49 @@ export function applyTab14ParseBundle(
     };
   }
 
-  if (bundle.chronicConditions.length > 0) {
-    const mergedChronic = mergeChronicConditionsFromPdf(
-      next.chronicConditions,
-      bundle.chronicConditions
-    );
-    stats.chronicMergeAdded = mergedChronic.addedCount;
-    next = {
-      ...next,
-      noChronicConditions: false,
-      chronicConditions: mergedChronic.rows,
-    };
+  if (bundle.chronicConditions.length > 0 || bundle.noKnownProblems) {
+    if (bundle.noKnownProblems) {
+      const kept = next.chronicConditions.filter((row) => !isPlaceholderChronic(row));
+      const realProblems = kept.filter(
+        (row) => !/no\s+known\s+problems/i.test(row.conditionName)
+      );
+      if (realProblems.length === 0) {
+        stats.chronicMergeAdded = kept.length === 0 ? 1 : 0;
+        next = {
+          ...next,
+          noChronicConditions: true,
+          // Keep the document statement in fields (Condition Name / Notes).
+          chronicConditions: [noKnownProblemsChronicRow()],
+        };
+      } else {
+        next = {
+          ...next,
+          noChronicConditions: false,
+          chronicConditions: realProblems,
+        };
+      }
+    } else {
+      const mergedChronic = mergeChronicConditionsFromPdf(
+        next.chronicConditions,
+        bundle.chronicConditions
+      );
+      stats.chronicMergeAdded = mergedChronic.addedCount;
+      next = {
+        ...next,
+        noChronicConditions: false,
+        chronicConditions: mergedChronic.rows,
+      };
+    }
   }
 
-  if (hasHospitalVisitData(bundle.hospitalVisit)) {
-    const mergedHospital = mergeHospitalVisitsFromPdf(
-      next.hospitalVisits,
-      bundle.hospitalVisit
-    );
-    stats.hospitalVisitsAdded = mergedHospital.addedCount;
-    stats.hospitalFieldsAdded = mergedHospital.filledFieldCount;
+  const incomingVisits = bundle.hospitalVisits?.length
+    ? bundle.hospitalVisits
+    : [bundle.hospitalVisit];
+  for (const visit of incomingVisits) {
+    if (!hasHospitalVisitData(visit)) continue;
+    const mergedHospital = mergeHospitalVisitsFromPdf(next.hospitalVisits, visit);
+    stats.hospitalVisitsAdded += mergedHospital.addedCount;
+    stats.hospitalFieldsAdded += mergedHospital.filledFieldCount;
     next = { ...next, hospitalVisits: mergedHospital.rows };
   }
 

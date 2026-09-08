@@ -4,25 +4,30 @@ import { Trans, useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import AlreadySignedInCard from '../components/AlreadySignedInCard';
 import { useAuth } from '../contexts/AuthContext';
+import { ADMIN_LOGIN_PATH, resolvePostLoginPath } from '../portals/portalPaths';
 
 const HERO_POINT_KEYS = ['login.heroPoint1', 'login.heroPoint2', 'login.heroPoint3'] as const;
 
 const Tab3: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const { authReady, authInitError, isAuthenticated, loginWithPassword } = useAuth();
+  const { authReady, authInitError, isAuthenticated, loginWithPassword, portalHome } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Patients already signed in → continue to their portal.
+  // Staff sessions stay on this door with a chooser (do not force Admin home).
   React.useEffect(() => {
-    if (authReady && isAuthenticated) {
-      history.replace('/tab1');
+    if (!authReady || !isAuthenticated) return;
+    if (portalHome === 'user') {
+      history.replace(resolvePostLoginPath('user'));
     }
-  }, [authReady, isAuthenticated, history]);
+  }, [authReady, isAuthenticated, history, portalHome]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +39,8 @@ const Tab3: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await loginWithPassword(u, password);
-      history.replace('/tab1');
+      const home = await loginWithPassword(u, password);
+      history.replace(resolvePostLoginPath(home));
     } catch {
       /* authInitError set by context */
     } finally {
@@ -56,6 +61,7 @@ const Tab3: React.FC = () => {
           <HeaderLanguagePicker tone="nav" />
           <Link to="/tab10">{t('login.aboutUs')}</Link>
           <Link to="/tab8">{t('login.support')}</Link>
+          <Link to={ADMIN_LOGIN_PATH}>{t('login.staffSignIn')}</Link>
         </nav>
       </header>
 
@@ -112,6 +118,10 @@ const Tab3: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {authReady && isAuthenticated && portalHome === 'admin' ? (
+              <AlreadySignedInCard door="patient" />
+            ) : null}
 
             <form className="login-card__actions" onSubmit={onSubmit}>
               <label className="login-card__field">
@@ -180,6 +190,11 @@ const Tab3: React.FC = () => {
               >
                 <span className="login-card__btn-label">{t('login.createAccount')}</span>
               </Link>
+
+              <p className="login-card__terms" style={{ marginTop: '0.85rem' }}>
+                {t('login.staffEntranceHint')}{' '}
+                <Link to={ADMIN_LOGIN_PATH}>{t('login.staffSignIn')}</Link>
+              </p>
             </form>
 
             <p className="login-card__terms">

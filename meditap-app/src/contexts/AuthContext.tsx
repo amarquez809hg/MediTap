@@ -18,6 +18,13 @@ import {
 import { parseJwtPayload } from '../auth/accessTokenClaims';
 import { clearMediTapWorkflowLocalState } from '../auth/clearWorkflowLocalState';
 import { ensureFreshAccessToken } from '../auth/ensureFreshAccessToken';
+import {
+  portalIdentityFromJwt,
+  portalIdentityFromLegacyFlags,
+  type PortalIdentity,
+  type PortalRole,
+} from '../portals/portalIdentity';
+import type { PortalHome } from '../portals/portalPaths';
 
 interface AuthContextValue {
   /** True after initial token hydrate / refresh attempt (SPA may render routes). */
@@ -30,14 +37,38 @@ interface AuthContextValue {
   isSuperuser: boolean;
   realmRoles: string[];
   hasRealmRole: (role: string) => boolean;
+  /** Portal split Phase 1 — role / home / permissions from JWT (or legacy fallback). */
+  portalIdentity: PortalIdentity;
+  portalRole: PortalRole;
+  portalHome: PortalHome;
+  permissions: string[];
   sessionExpired: boolean;
   dismissSessionExpired: () => void;
-  /** Django JWT login (username + password). */
-  loginWithPassword: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  /**
+   * Django JWT login. Returns portal home for redirect.
+   * If `requirePortalHome` is set and the account does not match, tokens are not kept
+   * and an Error is thrown (message should be set by the caller for i18n).
+   */
+  loginWithPassword: (
+    username: string,
+    password: string,
+    opts?: { requirePortalHome?: PortalHome }
+  ) => Promise<PortalHome>;
+  /**
+   * Clear session. By default redirects to the patient login door.
+   * Pass `redirectTo: null` to stay on the current page (e.g. wrong-portal rejection).
+   */
+  logout: (opts?: { redirectTo?: string | null }) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const EMPTY_PORTAL: PortalIdentity = {
+  role: 'patient',
+  portalHome: 'user',
+  orgIds: [],
+  permissions: [],
+};
 
 function usernameFromPayload(p: Record<string, unknown> | null): string | null {
   if (!p) return null;
@@ -63,14 +94,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [realmRoles, setRealmRoles] = useState<string[]>([]);
   const [isStaff, setIsStaff] = useState(false);
   const [isSuperuser, setIsSuperuser] = useState(false);
+  const [portalIdentity, setPortalIdentity] = useState<PortalIdentity>(EMPTY_PORTAL);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const applyTokenPayload = useCallback((access: string) => {
     const p = parseJwtPayload(access);
+    const roles = parseRealmRoles(p ?? undefined);
+    const staff = boolJwtClaim(p, 'is_staff');
+    const superuser = boolJwtClaim(p, 'is_superuser');
     setUsername(usernameFromPayload(p));
-    setRealmRoles(parseRealmRoles(p ?? undefined));
-    setIsStaff(boolJwtClaim(p, 'is_staff'));
-    setIsSuperuser(boolJwtClaim(p, 'is_superuser'));
+    setRealmRoles(roles);
+    setIsStaff(staff);
+    setIsSuperuser(superuser);
+    const fromJwt = portalIdentityFromJwt(p);
+    if (p && typeof p.portal_role === 'string') {
+      setPortalIdentity(fromJwt);
+    } else {
+      setPortalIdentity(
+        portalIdentityFromLegacyFlags({
+          isStaff: staff,
+          isSuperuser: superuser,
+          realmRoles: roles,
+        })
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -87,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRealmRoles([]);
       setIsStaff(false);
       setIsSuperuser(false);
+      setPortalIdentity(EMPTY_PORTAL);
       setSessionExpired(true);
     });
   }, []);
@@ -109,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRealmRoles([]);
           setIsStaff(false);
           setIsSuperuser(false);
+          setPortalIdentity(EMPTY_PORTAL);
         }
         setAuthInitError(null);
       } catch (e) {
@@ -121,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRealmRoles([]);
           setIsStaff(false);
           setIsSuperuser(false);
+          setPortalIdentity(EMPTY_PORTAL);
         }
       } finally {
         if (!cancelled) setAuthReady(true);
@@ -132,7 +182,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [applyTokenPayload]);
 
   const loginWithPassword = useCallback(
-    async (user: string, password: string) => {
+    async (
+      user: string,
+      password: string,
+      opts?: { requirePortalHome?: PortalHome }
+    ): Promise<PortalHome> => {
       setAuthInitError(null);
       const base = getApiBase();
       if (!base) {
@@ -161,6 +215,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error(detail);
         }
         const data = (await r.json()) as { access: string; refresh: string };
+        const p = parseJwtPayload(data.access);
+        const roles = parseRealmRoles(p ?? undefined);
+        const staff = boolJwtClaim(p, 'is_staff');
+        const superuser = boolJwtClaim(p, 'is_superuser');
+        const identity =
+          p && typeof p.portal_role === 'string'
+            ? portalIdentityFromJwt(p)
+            : portalIdentityFromLegacyFlags({
+                isStaff: staff,
+                isSuperuser: superuser,
+                realmRoles: roles,
+              });
+
+        if (opts?.requirePortalHome && identity.portalHome !== opts.requirePortalHome) {
+          // Do not persist a wrong-door session (e.g. patient on admin login).
+          clearStoredTokens();
+          const mismatch = new Error('PORTAL_MISMATCH');
+          (mismatch as Error & { portalHome: PortalHome }).portalHome = identity.portalHome;
+          throw mismatch;
+        }
+
         const nextUser = user.trim().toLowerCase();
         const prevUser = sessionStorage.getItem('meditap_last_username');
         if (!prevUser || prevUser !== nextUser) {
@@ -171,7 +246,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSessionExpired(false);
         setIsAuthenticated(true);
         applyTokenPayload(data.access);
+        return identity.portalHome;
       } catch (e) {
+        if (e instanceof Error && e.message === 'PORTAL_MISMATCH') {
+          throw e;
+        }
         const isNetwork =
           e instanceof TypeError ||
           (e instanceof Error && /network|fetch|load failed|failed to fetch/i.test(e.message));
@@ -191,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [applyTokenPayload]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback((opts?: { redirectTo?: string | null }) => {
     clearMediTapWorkflowLocalState();
     try {
       sessionStorage.removeItem('meditap_last_username');
@@ -204,8 +283,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRealmRoles([]);
     setIsStaff(false);
     setIsSuperuser(false);
+    setPortalIdentity(EMPTY_PORTAL);
+    setAuthInitError(null);
+    const redirectTo = opts && 'redirectTo' in opts ? opts.redirectTo : '/tab3';
+    if (redirectTo == null) return;
     try {
-      window.location.assign(`${window.location.origin}/tab3`);
+      window.location.assign(`${window.location.origin}${redirectTo}`);
     } catch {
       /* ignore */
     }
@@ -230,6 +313,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isSuperuser,
       realmRoles,
       hasRealmRole,
+      portalIdentity,
+      portalRole: portalIdentity.role,
+      portalHome: portalIdentity.portalHome,
+      permissions: portalIdentity.permissions,
       sessionExpired,
       dismissSessionExpired,
       loginWithPassword,
@@ -244,6 +331,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isSuperuser,
       realmRoles,
       hasRealmRole,
+      portalIdentity,
       sessionExpired,
       dismissSessionExpired,
       loginWithPassword,

@@ -4,6 +4,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { detectNoKnownProblems } from './detectNoKnownProblems';
 import { normalizeBloodType } from './intakeFieldLabels';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
@@ -524,6 +525,7 @@ function parseSyntheticDummyRecord(raw: string): Tab14IntakeParseResult | null {
   return withSanitizedPatientFieldWarnings({
     patientFields: patientFromSynthetic(flat),
     noKnownDrugAllergies: nkda,
+    noKnownProblems: detectNoKnownProblems(raw),
     insurances: [],
     allergies,
     medications: parseSyntheticMedications(flat),
@@ -572,6 +574,7 @@ export function parseRiverbendHieDocument(raw: string): Tab14IntakeParseResult {
   return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: nkda,
+    noKnownProblems: detectNoKnownProblems(text),
     insurances: [],
     allergies,
     medications,

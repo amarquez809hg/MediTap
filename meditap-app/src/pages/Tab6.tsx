@@ -24,6 +24,8 @@ import {
 } from '../api';
 import IncidentRecordCard from '../incidents/IncidentRecordCard';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import type { IncidentRecord } from '../incidents/incidentModel';
 import StaffPresetField from '../components/StaffPresetField';
 import {
@@ -113,7 +115,7 @@ function draftToPatchPayload(d: IncidentDraft): Partial<Tab6IncidentPayload> {
 
 const Tab6: React.FC = () => {
   const { t } = useTranslation();
-  const { username, hasRealmRole } = useAuth();
+  const { username, hasRealmRole, isStaff, isSuperuser } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
@@ -146,7 +148,10 @@ const Tab6: React.FC = () => {
     typeof kcParsedTab6?.sub === 'string' ? kcParsedTab6.sub : undefined;
 
   const canEditIncidents =
-    hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
+    isStaff ||
+    isSuperuser ||
+    hasEditorRealmRole ||
+    isMeditapIntakeElevationValidForPatient(patientSub);
 
   const defaultHospitalId = useMemo(
     () => hospitals[0]?.hospital_id || '',
@@ -319,13 +324,10 @@ const Tab6: React.FC = () => {
             <i className="fas fa-plus"></i> {t('incidents.logNew')}
           </button>
           <HeaderLanguagePicker className="incident-records-header__action-btn" />
-          <a
-            href="/tab1"
-            className="book-btn incident-records-header__action-btn"
-          >
-            <i className="fas fa-arrow-left"></i>
-            {t('common.goBackToDashboard')}
-          </a>
+          <GoBackButton
+            fallback={chartPageGoBackFallback()}
+            className="incident-records-header__action-btn"
+          />
         </div>
       </header>
 

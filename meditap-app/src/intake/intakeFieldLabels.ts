@@ -7,6 +7,48 @@ export function collapseWs(s: string): string {
   return s.replace(/\s+/g, ' ').trim();
 }
 
+/** Canonical marital-status values for Tab14 <select> options. */
+export const MARITAL_STATUS_OPTIONS = [
+  'Single',
+  'Married',
+  'Never Married',
+  'Divorced',
+  'Widowed',
+  'Separated',
+  'Domestic Partnership',
+  'Other',
+] as const;
+
+export type MaritalStatusOption = (typeof MARITAL_STATUS_OPTIONS)[number];
+
+/**
+ * Map free-text / PDF marital values onto Tab14 select options.
+ * Keeps Epic "Never Married" and Athena "Never married" from falling out of the select.
+ */
+export function normalizeMaritalStatus(raw: string): string | undefined {
+  const v = collapseWs(raw);
+  if (!v) return undefined;
+  const lower = v.toLowerCase();
+
+  if (/^never\s*married$/.test(lower)) return 'Never Married';
+  if (/^(single|soltero|soltera|unmarried)$/.test(lower)) return 'Single';
+  if (/^(married|casado|casada)$/.test(lower)) return 'Married';
+  if (/^(divorced|divorciado|divorciada)$/.test(lower)) return 'Divorced';
+  if (/^(widowed|viudo|viuda)$/.test(lower)) return 'Widowed';
+  if (/^separat(?:ed|o|a)?$/.test(lower)) return 'Separated';
+  if (/domestic\s*partner|uni[oó]n\s*libre|pareja\s*de\s*hecho/i.test(lower)) {
+    return 'Domestic Partnership';
+  }
+
+  for (const opt of MARITAL_STATUS_OPTIONS) {
+    if (opt.toLowerCase() === lower) return opt;
+  }
+
+  // Keep short free-text as Other rather than a value the <select> cannot show
+  if (v.length <= 40) return 'Other';
+  return undefined;
+}
+
 export function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -50,6 +92,7 @@ export const INTAKE_SECTION_HEADERS = [
   'IMMUNIZATIONS',
   'SOCIAL HISTORY',
   'CARE TEAM',
+  'PAYERS',
   'NOTES',
   'Packet includes',
   'Table of Contents',
@@ -193,10 +236,11 @@ export function validateDemographicValue(
     case 'race':
     case 'ethnicity':
     case 'preferredLanguage':
-    case 'maritalStatus':
       if (v.length < 2 || v.length > 80) return undefined;
       if (CLINICAL_NAME_NOISE.test(v)) return undefined;
       return v;
+    case 'maritalStatus':
+      return normalizeMaritalStatus(v);
     case 'heightInches': {
       const ftIn = v.match(/(\d+)\s*['′]?\s*(\d+)\s*(?:in|"|'')?/);
       if (ftIn) {

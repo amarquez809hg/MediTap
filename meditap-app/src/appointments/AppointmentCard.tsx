@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Appointment } from './appointmentStorage';
+import PortalNavLink from '../components/PortalNavLink';
 import './appointmentCards.css';
 
 export type AppointmentCardProps = {
@@ -29,9 +30,9 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {manageLabel}
       </button>
     ) : manageHref ? (
-      <a href={manageHref} className="manage-btn">
+      <PortalNavLink to={manageHref} className="manage-btn">
         {manageLabel}
-      </a>
+      </PortalNavLink>
     ) : null;
 
   return (

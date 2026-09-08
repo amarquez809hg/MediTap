@@ -33,8 +33,24 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { useTranslation } from 'react-i18next';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminPortalRoute from './components/AdminPortalRoute';
 import SessionExpiredModal from './components/SessionExpiredModal';
 import CookieConsentBanner from './components/CookieConsentBanner';
+import UserPortalLayout from './portals/UserPortalLayout';
+import AdminPortalLayout from './portals/AdminPortalLayout';
+import AdminPortalHome from './portals/AdminPortalHome';
+import AdminLoginPage from './portals/AdminLoginPage';
+import AdminPatientsPage from './portals/AdminPatientsPage';
+import AdminPatientHubPage from './portals/AdminPatientHubPage';
+import AdminDocumentReviewQueuePage from './portals/AdminDocumentReviewQueuePage';
+import AdminHospitalsPage from './portals/AdminHospitalsPage';
+import AdminActivityPage from './portals/AdminActivityPage';
+import AdminClinicalChartsPage from './portals/AdminClinicalChartsPage';
+import AdminPatientViewEmbed from './portals/AdminPatientViewEmbed';
+import { AdminPatientProvider } from './portals/AdminPatientContext';
+import { ADMIN_PATIENT_VIEW_PATHS } from './portals/adminPatientViewPaths';
+import { LEGACY_TAB_REDIRECTS, LOGIN_PATH, resolvePostLoginPath } from './portals/portalPaths';
+import { PortalHistoryProvider } from './navigation/PortalHistoryContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -63,6 +79,7 @@ setupIonicReact();
 
 const RootRoute: React.FC = () => {
   const location = useLocation();
+  const { isAuthenticated, portalHome } = useAuth();
   const params = new URLSearchParams(location.search);
   const isEpicOAuthReturn = Boolean(params.get('code') && params.get('state'));
 
@@ -74,7 +91,18 @@ const RootRoute: React.FC = () => {
     );
   }
 
-  return <Redirect to="/tab3" />;
+  if (isAuthenticated) {
+    return <Redirect to={resolvePostLoginPath(portalHome)} />;
+  }
+
+  return <Redirect to={LOGIN_PATH} />;
+};
+
+const LegacyTabRedirect: React.FC<{ from: string }> = ({ from }) => {
+  const location = useLocation();
+  const to = LEGACY_TAB_REDIRECTS[from];
+  if (!to) return <Redirect to={LOGIN_PATH} />;
+  return <Redirect to={{ pathname: to, search: location.search, hash: location.hash }} />;
 };
 
 const AppRoutes: React.FC = () => {
@@ -113,6 +141,7 @@ const AppRoutes: React.FC = () => {
   return (
     <IonApp className={ionAppClass}>
       <IonReactRouter>
+        <PortalHistoryProvider>
         <>
           <SessionExpiredModal />
           <CookieConsentBanner />
@@ -147,56 +176,220 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             </Route>
 
-            <Route exact path="/tab1">
+            {/* User portal */}
+            <Route exact path="/app/dashboard">
               <ProtectedRoute>
-                <Tab1 />
+                <UserPortalLayout>
+                  <Tab1 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab2">
+            <Route exact path="/app/status">
               <ProtectedRoute>
-                <Tab2 />
+                <UserPortalLayout>
+                  <Tab2 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab4">
+            <Route exact path="/app/appointments">
               <ProtectedRoute>
-                <Tab4 />
+                <UserPortalLayout>
+                  <Tab4 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab5">
+            <Route exact path="/app/conditions">
               <ProtectedRoute>
-                <Tab5 />
+                <UserPortalLayout>
+                  <Tab5 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab6">
+            <Route exact path="/app/incidents">
               <ProtectedRoute>
-                <Tab6 />
+                <UserPortalLayout>
+                  <Tab6 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab7">
+            <Route exact path="/app/labs">
               <ProtectedRoute>
-                <Tab7 />
+                <UserPortalLayout>
+                  <Tab7 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab11">
+            <Route exact path="/app/settings">
               <ProtectedRoute>
-                <Tab11 />
+                <UserPortalLayout>
+                  <Tab11 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab12">
+            <Route exact path="/app/insurance">
               <ProtectedRoute>
-                <Tab12 />
+                <UserPortalLayout>
+                  <Tab12 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab13">
+            <Route exact path="/app/intake">
               <ProtectedRoute>
-                <Tab13 />
+                <UserPortalLayout>
+                  <Tab14 />
+                </UserPortalLayout>
               </ProtectedRoute>
             </Route>
-            <Route exact path="/tab14">
-              <ProtectedRoute>
-                <Tab14 />
-              </ProtectedRoute>
+
+            {/* Admin portal */}
+            <Route exact path="/admin-portal/login">
+              <AdminLoginPage />
             </Route>
+            <Route exact path="/admin-portal/home">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPortalHome />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/patients">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/patients/:patientId">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientHubPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/documents">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminDocumentReviewQueuePage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/charts">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminClinicalChartsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.dashboard}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab1 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.status}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab2 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.appointments}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab4 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.conditions}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab5 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.incidents}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab6 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.labs}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab7 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.insurance}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab12 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.intake}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab14 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.settings}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab11 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/hospitals">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminHospitalsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/activity">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminActivityPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/panel">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <Tab13 />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+
+            {/* Legacy /tabN → clean portal paths */}
+            {Object.keys(LEGACY_TAB_REDIRECTS).map((from) => (
+              <Route exact path={from} key={from}>
+                <LegacyTabRedirect from={from} />
+              </Route>
+            ))}
+
             <Route exact path="/epic-callback">
               <ProtectedRoute>
                 <EpicCallback />
@@ -208,6 +401,7 @@ const AppRoutes: React.FC = () => {
             </Route>
           </IonRouterOutlet>
         </>
+        </PortalHistoryProvider>
       </IonReactRouter>
     </IonApp>
   );
@@ -215,13 +409,15 @@ const AppRoutes: React.FC = () => {
 
 const App: React.FC = () => (
   <AuthProvider>
-    <UserPreferencesProvider>
-      <LanguageProvider>
-        <DarkModeProvider>
-          <AppRoutes />
-        </DarkModeProvider>
-      </LanguageProvider>
-    </UserPreferencesProvider>
+    <AdminPatientProvider>
+      <UserPreferencesProvider>
+        <LanguageProvider>
+          <DarkModeProvider>
+            <AppRoutes />
+          </DarkModeProvider>
+        </LanguageProvider>
+      </UserPreferencesProvider>
+    </AdminPatientProvider>
   </AuthProvider>
 );
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import PortalNavLink from './PortalNavLink';
 import './DashboardHomeHero.css';
 
 type DashboardHomeHeroProps = {
@@ -9,9 +9,9 @@ type DashboardHomeHeroProps = {
 };
 
 const QUICK_ACTIONS = [
-  { href: '/tab14', icon: 'fas fa-user-edit', labelKey: 'dashboard.updateIntake' },
-  { href: '/tab14', icon: 'fas fa-file-upload', labelKey: 'dashboard.uploadDocument' },
-  { href: '/tab2', icon: 'fas fa-chart-line', labelKey: 'dashboard.quickStatusLink' },
+  { href: '/app/intake', icon: 'fas fa-user-edit', labelKey: 'dashboard.updateIntake' },
+  { href: '/app/intake', icon: 'fas fa-file-upload', labelKey: 'dashboard.uploadDocument' },
+  { href: '/app/status', icon: 'fas fa-chart-line', labelKey: 'dashboard.quickStatusLink' },
 ] as const;
 
 const DashboardHomeHero: React.FC<DashboardHomeHeroProps> = ({ greeting, contextLine }) => {
@@ -25,14 +25,14 @@ const DashboardHomeHero: React.FC<DashboardHomeHeroProps> = ({ greeting, context
       </div>
       <nav className="dashboard-hero__actions" aria-label={t('dashboard.quickActionsAria')}>
         {QUICK_ACTIONS.map((action) => (
-          <Link
+          <PortalNavLink
             key={action.labelKey}
             to={action.href}
             className="dashboard-hero__action meditap-glass-btn meditap-glass-btn--compact"
           >
             <i className={action.icon} aria-hidden />
             <span>{t(action.labelKey)}</span>
-          </Link>
+          </PortalNavLink>
         ))}
       </nav>
     </section>

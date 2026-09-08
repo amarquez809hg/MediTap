@@ -4,6 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <title>MediTap</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     
     <base href="/" />
     
@@ -26,6 +27,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- cache-bust query: forces reload of Care Team Members / Care Team sidebar split -->
+    <script type="module" src="/src/main.tsx?v=care-team-split-20260817c"></script>
   </body>
 </html>

@@ -326,8 +326,9 @@
     border-radius: 10px;
     box-sizing: border-box;
     min-width: 0;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
+    overflow: hidden;
     background: linear-gradient(
         180deg,
         rgba(23, 162, 184, 0.08) 0%,
@@ -346,12 +347,13 @@
 
 .patient-mini-profile__grid {
     display: grid;
-    grid-template-columns: auto max-content;
+    grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr);
     gap: 6px 8px;
     align-items: baseline;
     justify-items: start;
-    width: max-content;
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
 }
 
 .patient-mini-profile__label {
@@ -359,6 +361,7 @@
     color: #6f7f7a;
     font-weight: 700;
     text-transform: uppercase;
+    flex-shrink: 0;
 }
 
 .patient-mini-profile__value {
@@ -366,29 +369,33 @@
     color: var(--meditap-text);
     font-weight: 600;
     min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
-/* Label on one line; email on the next, intrinsic width so sidebar can grow with it */
+/* Label on one line; email wraps within the card */
 .patient-mini-profile__email-row {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 4px;
     min-width: 0;
-    width: max-content;
+    width: 100%;
     max-width: 100%;
 }
 
 .patient-mini-profile__value--email {
     display: block;
-    width: max-content;
+    width: 100%;
     max-width: 100%;
     min-width: 0;
-    white-space: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     text-align: left;
+    line-height: 1.35;
 }
 
 /* Sidebar Navigation */

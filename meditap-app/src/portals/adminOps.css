@@ -1,0 +1,450 @@
+/* Admin ops surfaces — MediTap glass language on dark portal shell */
+
+.admin-ops {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.admin-ops__header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.55rem;
+  color: #f3f7fb;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.25);
+}
+
+.admin-ops__header p {
+  margin: 0 0 0.75rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.45;
+}
+
+.admin-ops__crumb {
+  font-size: 0.85rem;
+}
+
+.admin-ops__crumb a {
+  color: var(--admin-portal-accent, #6ec4d4);
+}
+
+.admin-ops__active {
+  margin-top: 0.35rem !important;
+}
+
+.admin-ops__active a {
+  color: var(--admin-portal-accent, #6ec4d4);
+  margin-left: 0.35rem;
+}
+
+.admin-ops__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.admin-ops__search input {
+  flex: 1 1 220px;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 45%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    rgba(14, 28, 42, 0.45);
+  color: inherit;
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.admin-ops__search button,
+.admin-ops__actions button,
+.admin-ops__table button {
+  min-height: 42px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #f8fffd;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.06) 38%,
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(135deg, rgba(46, 140, 158, 0.85) 0%, rgba(26, 99, 86, 0.9) 100%);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    filter 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.admin-ops__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.admin-ops__search button:hover,
+.admin-ops__actions button:hover,
+.admin-ops__table button:hover {
+  filter: brightness(1.06);
+}
+
+.admin-ops__search button:disabled,
+.admin-ops__actions button:disabled,
+.admin-ops__table button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.admin-ops__error {
+  color: #f0a4a4;
+}
+
+.admin-ops__ok {
+  color: #7bc96f;
+}
+
+.admin-ops__table-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 42%,
+      rgba(255, 255, 255, 0) 72%
+    ),
+    rgba(14, 28, 42, 0.48);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.admin-ops__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-ops__table th,
+.admin-ops__table td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-ops__table th {
+  color: var(--admin-portal-muted, #9aabbc);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-ops__detail {
+  font-size: 0.75rem;
+  word-break: break-word;
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.admin-ops__card-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  margin-top: 1rem;
+}
+
+.admin-ops__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.05rem 1.1rem;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    rgba(16, 32, 48, 0.45);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-ops__card strong {
+  color: #f3f7fb;
+}
+
+.admin-ops__card span {
+  font-size: 0.82rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.4;
+}
+
+.admin-ops__card:hover {
+  border-color: rgba(110, 196, 212, 0.45);
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.admin-home-console {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 2.5rem;
+  color: var(--admin-portal-text, #e8eef5);
+}
+
+.admin-home-console h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.7rem;
+  color: #f3f7fb;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.28);
+}
+
+.admin-home-console__lead {
+  margin: 0 0 1.25rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.5;
+}
+
+.admin-home-console__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0) 75%
+    ),
+    rgba(110, 196, 212, 0.12);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  font-size: 0.88rem;
+}
+
+.admin-home-console__chip a,
+.admin-home-console__chip button {
+  color: var(--admin-portal-accent, #6ec4d4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.admin-home-console__grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.admin-home-console__grid a {
+  display: block;
+  padding: 1.05rem 1.1rem;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    rgba(16, 32, 48, 0.42);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-home-console__grid a:hover {
+  border-color: rgba(110, 196, 212, 0.45);
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.admin-home-console__grid a strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: #f3f7fb;
+}
+
+.admin-home-console__grid a span {
+  font-size: 0.82rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.4;
+}
+
+.admin-home-console__queue {
+  margin-top: 1.5rem;
+  padding: 1rem 1.1rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0) 75%
+    ),
+    rgba(12, 24, 38, 0.35);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.admin-home-console__queue h2 {
+  margin: 0 0 0.65rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.portal-shell__patient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: 0.5rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 55%,
+      rgba(255, 255, 255, 0) 80%
+    ),
+    rgba(110, 196, 212, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  font-size: 0.78rem;
+  max-width: 240px;
+}
+
+.portal-shell__patient-chip a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-shell__patient-chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 0;
+  font: inherit;
+}
+
+.admin-ops__docs {
+  margin-top: 1.75rem;
+}
+
+.admin-ops__docs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-ops__docs-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #f3f7fb;
+}
+
+.admin-ops__docs-hint {
+  margin: 0 0 0.85rem;
+  color: var(--admin-portal-muted, #9aabbc);
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.admin-ops__docs-meta {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--admin-portal-muted, #9aabbc);
+}
+
+.admin-ops__docs select {
+  min-height: 36px;
+  max-width: 180px;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(14, 28, 42, 0.65);
+  color: inherit;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .admin-home-console__grid a,
+  .admin-ops__card,
+  .admin-ops__table-wrap,
+  .admin-home-console__queue,
+  .admin-ops__search input {
+    background: rgba(18, 34, 50, 0.92);
+  }
+}

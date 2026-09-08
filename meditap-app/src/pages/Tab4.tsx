@@ -18,6 +18,8 @@ import {
 } from '../api';
 import AppointmentCard from '../appointments/AppointmentCard';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import AppointmentPresetField from '../appointments/AppointmentPresetField';
 import {
   APPOINTMENT_CLINICAL_NOTES_OPTIONS,
@@ -48,7 +50,7 @@ import { usePatientAppointments } from '../appointments/usePatientAppointments';
 
 const Tab4: React.FC = () => {
   const { t } = useTranslation();
-  const { username, hasRealmRole } = useAuth();
+  const { username, hasRealmRole, isStaff, isSuperuser } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
@@ -71,7 +73,10 @@ const Tab4: React.FC = () => {
     typeof kcParsedTab4?.sub === 'string' ? kcParsedTab4.sub : undefined;
 
   const canEditAppointments =
-    hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
+    isStaff ||
+    isSuperuser ||
+    hasEditorRealmRole ||
+    isMeditapIntakeElevationValidForPatient(patientSub);
 
   const {
     appointments,
@@ -212,13 +217,10 @@ const Tab4: React.FC = () => {
             {t('appointments.bookNew')}
           </button>
           <HeaderLanguagePicker className="schedule-header__action-btn" />
-          <a
-            href="/tab1"
-            className="book-btn schedule-header__action-btn"
-          >
-            <i className="fas fa-arrow-left" aria-hidden />
-            {t('common.goBackToDashboard')}
-          </a>
+          <GoBackButton
+            fallback={chartPageGoBackFallback()}
+            className="schedule-header__action-btn"
+          />
         </div>
       </header>
 

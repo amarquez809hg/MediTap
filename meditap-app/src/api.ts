@@ -5,6 +5,7 @@ import { parseRealmRoles } from './auth/realmRoles';
 import { getAuthHeaders } from './auth/getAuthHeaders';
 import { emitSessionExpired } from './auth/sessionEvents';
 import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage';
+import { getAdminPatientRequestHeaders, getAdminSelectedPatientId } from './portals/adminPatientStorage';
 import type { IncidentRecord } from './incidents/incidentModel';
 import {
   bmiCategoryLabel,
@@ -426,7 +427,16 @@ export async function deleteTab5ChronicDisease(apiId: number): Promise<void> {
   });
 }
 
-export type HospitalApi = { hospital_id: string; name: string };
+export type HospitalApi = {
+  hospital_id: string;
+  name: string;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+};
 export type IncidentApi = {
   incident_id: string;
   patient: string;
@@ -638,11 +648,13 @@ async function apiRequest<T>(
   }
   const headers = await getAuthHeaders();
   const elevation = getMeditapElevationRequestHeaders();
+  const adminPatient = getAdminPatientRequestHeaders();
   const response = await fetch(`${API_BASE}${normalizeApiPath(path)}`, {
     ...init,
     headers: {
       ...headers,
       ...elevation,
+      ...adminPatient,
       ...(init?.headers || {}),
     },
   });
@@ -712,6 +724,14 @@ function pickCurrentPatient(
   username: string | null
 ): PatientApi | null {
   if (!patients.length) return null;
+
+  // Admin on-behalf: preferred selected chart for staff/editor sessions.
+  const adminId = getAdminSelectedPatientId();
+  if (adminId && currentUserMayBrowseAllPatientsFromToken()) {
+    const byAdmin = patients.find((pt) => pt.patient_id === adminId);
+    if (byAdmin) return byAdmin;
+  }
+
   if (patients.length === 1) return patients[0];
   if (username) {
     const normalized = username.toLowerCase();
@@ -951,29 +971,65 @@ function parseAllergyNotes(notes: string | null | undefined): {
   typeLabel: string;
   reaction: string;
   lastObserved: string;
+  allergenId: string;
+  category: string;
+  criticality: string;
+  code: string;
+  codeSystem: string;
+  recordedBy: string;
+  organization: string;
+  recordedTime: string;
 } {
   const text = notes || '';
+  const pick = (re: RegExp) => text.match(re)?.[1]?.trim() || '';
   const typeM = text.match(/Type:\s*([^/\n]+)/i);
   const reactM = text.match(/Reaction:\s*([^/\n]+)/i);
   const lastM = text.match(/LastObserved:\s*([0-9-]+)/i);
   return {
     typeLabel: typeM?.[1]?.trim() || '—',
-    reaction: reactM?.[1]?.trim() || text || '—',
+    reaction: reactM?.[1]?.trim() || (text.includes('Type:') ? '' : text) || '—',
     lastObserved: lastM?.[1]?.trim() || '—',
+    allergenId: pick(/AllergenId:\s*([^/\n]+)/i),
+    category: pick(/Category:\s*([^/\n]+)/i),
+    criticality: pick(/Criticality:\s*([^/\n]+)/i),
+    code: pick(/Code:\s*([^/\n]+)/i),
+    codeSystem: pick(/CodeSystem:\s*([^/\n]+)/i),
+    recordedBy: pick(/RecordedBy:\s*([^/\n]+)/i),
+    organization: pick(/Organization:\s*([^/\n]+)/i),
+    recordedTime: pick(/RecordedTime:\s*([^/\n]+)/i),
   };
 }
 
 function parseMedicationNotes(
   dosing: string | null | undefined,
   notes: string | null | undefined
-): { purpose: string; prescriber: string } {
+): {
+  purpose: string;
+  prescriber: string;
+  sig: string;
+  status: string;
+  authoredOn: string;
+  fillQuantity: string;
+  recordedBy: string;
+  organization: string;
+  recordedTime: string;
+} {
   const d = dosing || '';
   const n = notes || '';
+  const combined = `${d}\n${n}`;
+  const pick = (re: RegExp) => combined.match(re)?.[1]?.trim() || '';
   const purposeM = d.match(/Purpose:\s*([^\n]+)/i) || n.match(/Purpose:\s*([^\n]+)/i);
   const prescM = n.match(/Prescriber:\s*([^\n]+)/i);
   return {
     purpose: purposeM?.[1]?.trim() || '—',
     prescriber: prescM?.[1]?.trim() || '—',
+    sig: pick(/Sig:\s*([^\n]+)/i),
+    status: pick(/Status:\s*([^\n]+)/i),
+    authoredOn: pick(/AuthoredOn:\s*([^\n]+)/i),
+    fillQuantity: pick(/FillQuantity:\s*([^\n]+)/i),
+    recordedBy: pick(/RecordedBy:\s*([^\n]+)/i),
+    organization: pick(/Organization:\s*([^\n]+)/i),
+    recordedTime: pick(/RecordedTime:\s*([^\n]+)/i),
   };
 }
 
@@ -1449,6 +1505,14 @@ export type Tab14SaveAllergy = {
   severity: string;
   reactionNotes: string;
   lastObserved: string;
+  allergenId?: string;
+  category?: string;
+  criticality?: string;
+  code?: string;
+  codeSystem?: string;
+  recordedBy?: string;
+  organization?: string;
+  recordedTime?: string;
 };
 
 export type Tab14SaveMedication = {
@@ -1462,6 +1526,13 @@ export type Tab14SaveMedication = {
   purpose: string;
   prescribingPhysician: string;
   notesMedication: string;
+  sig?: string;
+  status?: string;
+  authoredOn?: string;
+  fillQuantity?: string;
+  recordedBy?: string;
+  organization?: string;
+  recordedTime?: string;
 };
 
 export type Tab14SaveChronic = {
@@ -1763,6 +1834,14 @@ export async function loadTab14FromBackend(
         severity: dashToEmpty(row.severity),
         reactionNotes: dashToEmpty(parsed.reaction),
         lastObserved: dashToEmpty(parsed.lastObserved),
+        allergenId: dashToEmpty(parsed.allergenId),
+        category: dashToEmpty(parsed.category),
+        criticality: dashToEmpty(parsed.criticality),
+        code: dashToEmpty(parsed.code),
+        codeSystem: dashToEmpty(parsed.codeSystem),
+        recordedBy: dashToEmpty(parsed.recordedBy),
+        organization: dashToEmpty(parsed.organization),
+        recordedTime: dashToEmpty(parsed.recordedTime),
       };
     })
     .filter((a) => a.allergyName);
@@ -1774,6 +1853,13 @@ export async function loadTab14FromBackend(
       const extra = parseMedicationNotes(row.dosing_instructions, row.notes);
       const notesOnly = (row.notes || '')
         .replace(/Prescriber:\s*[^\n]+/gi, '')
+        .replace(/Sig:\s*[^\n]+/gi, '')
+        .replace(/Status:\s*[^\n]+/gi, '')
+        .replace(/AuthoredOn:\s*[^\n]+/gi, '')
+        .replace(/FillQuantity:\s*[^\n]+/gi, '')
+        .replace(/RecordedBy:\s*[^\n]+/gi, '')
+        .replace(/Organization:\s*[^\n]+/gi, '')
+        .replace(/RecordedTime:\s*[^\n]+/gi, '')
         .trim();
       return {
         genericName: dashToEmpty(cat?.generic_name),
@@ -1786,6 +1872,13 @@ export async function loadTab14FromBackend(
         purpose: dashToEmpty(extra.purpose),
         prescribingPhysician: dashToEmpty(extra.prescriber),
         notesMedication: notesOnly,
+        sig: dashToEmpty(extra.sig),
+        status: dashToEmpty(extra.status),
+        authoredOn: dashToEmpty(extra.authoredOn),
+        fillQuantity: dashToEmpty(extra.fillQuantity),
+        recordedBy: dashToEmpty(extra.recordedBy),
+        organization: dashToEmpty(extra.organization),
+        recordedTime: dashToEmpty(extra.recordedTime),
       };
     })
     .filter((m) => m.genericName);
@@ -2336,6 +2429,14 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
         (a.lastObserved || '').trim()
           ? `LastObserved: ${(a.lastObserved || '').trim()}`
           : '',
+        (a.allergenId || '').trim() ? `AllergenId: ${(a.allergenId || '').trim()}` : '',
+        (a.category || '').trim() ? `Category: ${(a.category || '').trim()}` : '',
+        (a.criticality || '').trim() ? `Criticality: ${(a.criticality || '').trim()}` : '',
+        (a.code || '').trim() ? `Code: ${(a.code || '').trim()}` : '',
+        (a.codeSystem || '').trim() ? `CodeSystem: ${(a.codeSystem || '').trim()}` : '',
+        (a.recordedBy || '').trim() ? `RecordedBy: ${(a.recordedBy || '').trim()}` : '',
+        (a.organization || '').trim() ? `Organization: ${(a.organization || '').trim()}` : '',
+        (a.recordedTime || '').trim() ? `RecordedTime: ${(a.recordedTime || '').trim()}` : '',
       ]
         .filter(Boolean)
         .join(' / ');
@@ -2356,9 +2457,20 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     const mid = await ensureMedicationCatalog(m.genericName, m.brandName);
     const purpose = (m.purpose || '').trim();
     const prescriber = (m.prescribingPhysician || '').trim();
-    const dosing = [purpose ? `Purpose: ${purpose}` : ''].filter(Boolean).join('\n');
+    const dosing = [
+      purpose ? `Purpose: ${purpose}` : '',
+      (m.sig || '').trim() ? `Sig: ${(m.sig || '').trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
     const notes = [
       prescriber ? `Prescriber: ${prescriber}` : '',
+      (m.status || '').trim() ? `Status: ${(m.status || '').trim()}` : '',
+      (m.authoredOn || '').trim() ? `AuthoredOn: ${(m.authoredOn || '').trim()}` : '',
+      (m.fillQuantity || '').trim() ? `FillQuantity: ${(m.fillQuantity || '').trim()}` : '',
+      (m.recordedBy || '').trim() ? `RecordedBy: ${(m.recordedBy || '').trim()}` : '',
+      (m.organization || '').trim() ? `Organization: ${(m.organization || '').trim()}` : '',
+      (m.recordedTime || '').trim() ? `RecordedTime: ${(m.recordedTime || '').trim()}` : '',
       (m.notesMedication || '').trim(),
     ]
       .filter(Boolean)
@@ -2482,4 +2594,215 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       });
     }
   }
+}
+
+/** Admin portal: search/list patients (staff/editor). */
+export async function searchPatientsForAdmin(q: string): Promise<PatientApi[]> {
+  const query = q.trim();
+  const path = query
+    ? `/api/patients/?q=${encodeURIComponent(query)}`
+    : '/api/patients/';
+  return fetchAllPages<PatientApi>(path);
+}
+
+export async function listHospitalsForAdmin(): Promise<HospitalApi[]> {
+  return fetchAllPages<HospitalApi>('/api/hospitals/');
+}
+
+export async function createHospitalForAdmin(payload: {
+  name: string;
+  address_line1?: string;
+  city?: string;
+  region?: string;
+  postal_code?: string;
+  country?: string;
+}): Promise<HospitalApi> {
+  return requestJson<HospitalApi>('/api/hospitals/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateHospitalForAdmin(
+  hospitalId: string,
+  payload: Partial<HospitalApi>
+): Promise<HospitalApi> {
+  return requestJson<HospitalApi>(`/api/hospitals/${hospitalId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export type AdminActivityApi = {
+  event_id: string;
+  action: string;
+  actor: number | null;
+  actor_username: string | null;
+  patient: string | null;
+  patient_label: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+};
+
+export async function listAdminActivity(): Promise<AdminActivityApi[]> {
+  return fetchAllPages<AdminActivityApi>('/api/admin-activity/');
+}
+
+export async function logAdminActivityEvent(
+  action: string,
+  patientId: string | null,
+  detail: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    await requestJson<AdminActivityApi>('/api/admin-activity/', {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        patient: patientId,
+        detail,
+      }),
+    });
+  } catch {
+    /* non-blocking */
+  }
+}
+
+export type PatientDocumentApi = {
+  document_id: string;
+  patient: string;
+  original_filename: string;
+  content_type: string;
+  size_bytes: number;
+  status: 'pending_review' | 'reviewed' | 'applied' | 'rejected' | string;
+  notes: string | null;
+  parse_snapshot?: Record<string, unknown> | null;
+  parsed_given_name?: string;
+  parsed_family_name?: string;
+  uploaded_by: number | null;
+  uploaded_by_username: string | null;
+  download_url: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listPatientDocuments(
+  patientId?: string
+): Promise<PatientDocumentApi[]> {
+  const qs = patientId
+    ? `?patient=${encodeURIComponent(patientId)}`
+    : '';
+  return fetchAllPages<PatientDocumentApi>(`/api/patient-documents/${qs}`);
+}
+
+/** Multipart upload — do not set Content-Type (browser sets boundary). */
+export async function uploadPatientDocument(
+  patientId: string,
+  file: File
+): Promise<PatientDocumentApi> {
+  if (!API_BASE) {
+    throw new Error('API base URL is not configured.');
+  }
+  const auth = await getAuthHeaders();
+  const { 'Content-Type': _omit, ...authRest } = auth;
+  const elevation = getMeditapElevationRequestHeaders();
+  const adminPatient = getAdminPatientRequestHeaders();
+  const body = new FormData();
+  body.append('patient', patientId);
+  body.append('file', file, file.name);
+
+  const response = await fetch(`${API_BASE}/api/patient-documents/`, {
+    method: 'POST',
+    headers: {
+      ...authRest,
+      ...elevation,
+      ...adminPatient,
+    },
+    body,
+  });
+  if (!response.ok) {
+    if (response.status === 401) {
+      emitSessionExpired();
+    }
+    const errorText = await response.text().catch(() => '');
+    const detail = summarizeApiErrorBody(
+      response.status,
+      errorText,
+      response.statusText
+    );
+    throw new Error(`API ${response.status}: ${detail}`);
+  }
+  return (await response.json()) as PatientDocumentApi;
+}
+
+export async function updatePatientDocumentStatus(
+  documentId: string,
+  payload: {
+    status?: string;
+    notes?: string | null;
+    parse_snapshot?: Record<string, unknown>;
+    parsed_given_name?: string;
+    parsed_family_name?: string;
+  }
+): Promise<PatientDocumentApi> {
+  return requestJson<PatientDocumentApi>(
+    `/api/patient-documents/${documentId}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export type ApplyDocumentDemographicsResult = {
+  document: PatientDocumentApi;
+  updated_fields: string[];
+  identity_match: boolean;
+  detail?: string;
+  parsed_name?: string;
+  chart_name?: string;
+};
+
+/** Staff: apply stored PDF parse demographics to the patient chart. */
+export async function applyPatientDocumentDemographics(
+  documentId: string,
+  opts?: { force?: boolean }
+): Promise<ApplyDocumentDemographicsResult> {
+  return requestJson<ApplyDocumentDemographicsResult>(
+    `/api/patient-documents/${documentId}/apply-demographics/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ force: Boolean(opts?.force) }),
+    }
+  );
+}
+
+/** Authenticated download as a blob URL (caller should revoke). */
+export async function fetchPatientDocumentBlobUrl(
+  documentId: string
+): Promise<string> {
+  if (!API_BASE) {
+    throw new Error('API base URL is not configured.');
+  }
+  const auth = await getAuthHeaders();
+  const { 'Content-Type': _omit, ...authRest } = auth;
+  const elevation = getMeditapElevationRequestHeaders();
+  const adminPatient = getAdminPatientRequestHeaders();
+  const response = await fetch(
+    `${API_BASE}/api/patient-documents/${documentId}/download/`,
+    {
+      headers: {
+        ...authRest,
+        ...elevation,
+        ...adminPatient,
+      },
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 401) {
+      emitSessionExpired();
+    }
+    throw new Error(`Download failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
 }

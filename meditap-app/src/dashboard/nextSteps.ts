@@ -63,7 +63,7 @@ export function buildNextSteps(
       id: 'profile',
       title: t('nextSteps.completeProfile'),
       subtitle: t('nextSteps.completeProfileSub'),
-      href: '/tab14',
+      href: '/app/intake',
       tone: 'primary',
       priority: 10,
     });
@@ -72,7 +72,7 @@ export function buildNextSteps(
       id: 'profile-fields',
       title: t('nextSteps.finishProfile'),
       subtitle: t('nextSteps.finishProfileSub'),
-      href: '/tab14',
+      href: '/app/intake',
       tone: 'primary',
       priority: 15,
     });
@@ -88,7 +88,7 @@ export function buildNextSteps(
         id: 'upload-doc',
         title: t('nextSteps.uploadRecords'),
         subtitle: t('nextSteps.uploadRecordsSub'),
-        href: '/tab14',
+        href: '/app/intake',
         tone: 'primary',
         priority: 20,
       });
@@ -103,7 +103,7 @@ export function buildNextSteps(
         newLabPanels > 0
           ? t('nextSteps.labsPendingSubNew', { count: newLabPanels })
           : t('nextSteps.labsPendingSub'),
-      href: '/tab7',
+      href: '/app/labs',
       tone: 'warning',
       priority: 30,
     });
@@ -112,7 +112,7 @@ export function buildNextSteps(
       id: 'labs-new',
       title: t('nextSteps.labsNew'),
       subtitle: t('nextSteps.labsNewSub'),
-      href: '/tab7',
+      href: '/app/labs',
       tone: 'primary',
       priority: 35,
     });
@@ -124,7 +124,7 @@ export function buildNextSteps(
       id: 'appts-pending',
       title: t('nextSteps.apptsPending', { count: pendingAppts }),
       subtitle: t('nextSteps.apptsPendingSub'),
-      href: '/tab4',
+      href: '/app/appointments',
       tone: 'warning',
       priority: 40,
     });
@@ -136,7 +136,7 @@ export function buildNextSteps(
       id: 'meds',
       title: t('nextSteps.addMeds'),
       subtitle: t('nextSteps.addMedsSub'),
-      href: '/tab14',
+      href: '/app/intake',
       tone: 'neutral',
       priority: 50,
     });
@@ -148,7 +148,7 @@ export function buildNextSteps(
       id: 'insurance',
       title: t('nextSteps.addInsurance'),
       subtitle: t('nextSteps.addInsuranceSub'),
-      href: '/tab12',
+      href: '/app/insurance',
       tone: 'neutral',
       priority: 55,
     });
@@ -160,7 +160,7 @@ export function buildNextSteps(
       id: 'chronic',
       title: t('nextSteps.reviewChronic'),
       subtitle: t('nextSteps.reviewChronicSub', { count: chronicCount }),
-      href: '/tab5',
+      href: '/app/conditions',
       tone: 'primary',
       priority: 60,
     });
@@ -176,7 +176,7 @@ export function buildNextSteps(
         id: 'allergies',
         title: t('nextSteps.reviewAllergies'),
         subtitle: t('nextSteps.reviewAllergiesSub'),
-        href: '/tab14',
+        href: '/app/intake',
         tone: 'danger',
         priority: 25,
       });
@@ -188,7 +188,7 @@ export function buildNextSteps(
       id: 'book',
       title: t('nextSteps.scheduleVisit'),
       subtitle: t('nextSteps.scheduleVisitSub'),
-      href: '/tab4',
+      href: '/app/appointments',
       tone: 'primary',
       priority: 45,
     });
@@ -199,7 +199,7 @@ export function buildNextSteps(
       id: 'meds-review',
       title: t('nextSteps.medsReview'),
       subtitle: t('nextSteps.medsReviewSub', { count: medCount }),
-      href: '/tab14',
+      href: '/app/intake',
       tone: 'primary',
       priority: 70,
     });
@@ -210,7 +210,7 @@ export function buildNextSteps(
       id: 'dashboard',
       title: t('nextSteps.fullOverview'),
       subtitle: t('nextSteps.fullOverviewSub'),
-      href: '/tab1',
+      href: '/app/dashboard',
       tone: 'neutral',
       priority: 90,
     });

@@ -4,6 +4,7 @@ import type {
   Tab5ChronicCondition,
   Tab5ChronicHospitalization,
 } from '../api';
+import PortalNavLink from '../components/PortalNavLink';
 import './conditionCards.css';
 
 const HospitalizationRecord: React.FC<{
@@ -53,9 +54,9 @@ const ConditionCard: React.FC<ConditionCardProps> = ({
         {label}
       </button>
     ) : manageHref ? (
-      <a href={manageHref} className="condition-card__manage">
+      <PortalNavLink to={manageHref} className="condition-card__manage">
         {label}
-      </a>
+      </PortalNavLink>
     ) : null;
 
   return (

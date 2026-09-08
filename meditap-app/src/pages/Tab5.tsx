@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import './Tab5.css';
 import { GlassDateInput } from '../components/GlassDatePicker';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { getAccessTokenPayload } from '../auth/accessTokenClaims';
@@ -56,7 +58,7 @@ const emptyConditionDraft = (): Tab5ChronicCondition => ({
 
 const Tab5: React.FC = () => {
   const { t } = useTranslation();
-  const { username, hasRealmRole } = useAuth();
+  const { username, hasRealmRole, isStaff, isSuperuser } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
@@ -83,7 +85,10 @@ const Tab5: React.FC = () => {
     typeof kcParsedTab5?.sub === 'string' ? kcParsedTab5.sub : undefined;
 
   const canEdit =
-    hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
+    isStaff ||
+    isSuperuser ||
+    hasEditorRealmRole ||
+    isMeditapIntakeElevationValidForPatient(patientSub);
 
   const loadConditions = useCallback(async () => {
     setListError(null);
@@ -270,10 +275,10 @@ const Tab5: React.FC = () => {
             {t('chronic.addNew')}
           </button>
           <HeaderLanguagePicker className="chronic-conditions-header__action-btn" />
-          <a href="/tab1" className="book-btn chronic-conditions-header__action-btn">
-            <i className="fas fa-arrow-left" aria-hidden />
-            {t('common.goBackToDashboard')}
-          </a>
+          <GoBackButton
+            fallback={chartPageGoBackFallback()}
+            className="chronic-conditions-header__action-btn"
+          />
         </div>
       </header>
 

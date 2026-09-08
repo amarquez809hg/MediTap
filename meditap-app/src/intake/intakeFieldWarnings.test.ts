@@ -127,6 +127,7 @@ describe('sanitizePatientFieldsWithWarnings', () => {
     const wrapped = withSanitizedPatientFieldWarnings({
       patientFields: { givenName: 'name MARIA', familyName: 'GARCIA' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],

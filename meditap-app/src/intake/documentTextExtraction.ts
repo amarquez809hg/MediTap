@@ -148,44 +148,124 @@ export async function ocrImageDataUrl(
 }
 
 /**
- * If extracted PDF text is very short, render page 1 to a canvas and OCR it
- * (common for scanned intake PDFs).
- * Returns whether OCR text was merged in.
+ * If extracted PDF text is very short, render pages to canvas and OCR them
+ * (common for scanned intake PDFs). Caps pages for latency.
+ *
+ * Also OCRs leading pages that individually lack a text layer even when the
+ * rest of the PDF is text-rich (Epic Mayo cover sheets are often image-only
+ * while later pages have full text — demographics live on that cover).
  */
+export const MAX_PDF_OCR_PAGES = 8;
+
+/** Pages among the first `maxPages` whose text layer is sparse/empty. */
+export async function listSparseLeadingPdfPages(
+  pdf: PDFDocumentProxy,
+  maxPages: number
+): Promise<number[]> {
+  const limit = Math.min(maxPages, pdf.numPages, MAX_PDF_OCR_PAGES);
+  const sparse: number[] = [];
+  for (let pageNum = 1; pageNum <= limit; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    const pageText = extractTextFromPdfContentItems(content.items);
+    if (isSparseExtractedText(pageText)) sparse.push(pageNum);
+  }
+  return sparse;
+}
+
+export async function augmentPdfTextWithOcr(
+  extractedText: string,
+  pdf: PDFDocumentProxy,
+  options?: { maxPages?: number }
+): Promise<{
+  text: string;
+  usedOcr: boolean;
+  wasSparse: boolean;
+  ocrFailed: boolean;
+  ocrPageCount: number;
+}> {
+  const wasSparse = isSparseExtractedText(extractedText);
+  const maxPages = Math.min(
+    options?.maxPages ?? MAX_PDF_OCR_PAGES,
+    pdf.numPages,
+    MAX_PDF_OCR_PAGES
+  );
+
+  // Whole-doc sparse → OCR first N pages. Otherwise only OCR sparse leading pages.
+  const pagesToOcr = wasSparse
+    ? Array.from({ length: maxPages }, (_, i) => i + 1)
+    : await listSparseLeadingPdfPages(pdf, maxPages);
+
+  if (pagesToOcr.length === 0) {
+    return {
+      text: extractedText,
+      usedOcr: false,
+      wasSparse: false,
+      ocrFailed: false,
+      ocrPageCount: 0,
+    };
+  }
+
+  const languages = detectOcrLanguages(extractedText);
+  const ocrChunks: string[] = [];
+  let ocrFailed = false;
+
+  try {
+    for (const pageNum of pagesToOcr) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 2.75 });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        ocrFailed = true;
+        break;
+      }
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const renderTask = page.render({ canvasContext: ctx, viewport });
+      await renderTask.promise;
+      const dataUrl = canvas.toDataURL('image/png');
+      const ocrText = await ocrImageDataUrl(dataUrl, languages);
+      if (ocrText) {
+        ocrChunks.push(`--- page ${pageNum} ---\n${ocrText}`);
+      }
+    }
+  } catch {
+    ocrFailed = true;
+  }
+
+  if (ocrChunks.length === 0) {
+    return {
+      text: extractedText,
+      usedOcr: false,
+      wasSparse,
+      ocrFailed: true,
+      ocrPageCount: 0,
+    };
+  }
+
+  // Prefer OCR cover text first so demographics parsers see Patient Name / Address.
+  return {
+    text: `${ocrChunks.join('\n\n')}\n\n${extractedText}`.trim(),
+    usedOcr: true,
+    wasSparse,
+    ocrFailed,
+    ocrPageCount: ocrChunks.length,
+  };
+}
+
+/** @deprecated Prefer augmentPdfTextWithOcr (multi-page). */
 export async function augmentPdfTextWithFirstPageOcr(
   extractedText: string,
   pdf: PDFDocumentProxy
 ): Promise<{ text: string; usedOcr: boolean; wasSparse: boolean; ocrFailed: boolean }> {
-  const wasSparse = isSparseExtractedText(extractedText);
-  if (!wasSparse) {
-    return { text: extractedText, usedOcr: false, wasSparse: false, ocrFailed: false };
-  }
-  try {
-    const page = await pdf.getPage(1);
-    const viewport = page.getViewport({ scale: 2 });
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
-    }
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const renderTask = page.render({ canvasContext: ctx, viewport });
-    await renderTask.promise;
-    const dataUrl = canvas.toDataURL('image/png');
-    const ocrText = await ocrImageDataUrl(dataUrl, detectOcrLanguages(extractedText));
-    if (!ocrText) {
-      return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
-    }
-    return {
-      text: `${extractedText}\n\n${ocrText}`.trim(),
-      usedOcr: true,
-      wasSparse: true,
-      ocrFailed: false,
-    };
-  } catch {
-    return { text: extractedText, usedOcr: false, wasSparse: true, ocrFailed: true };
-  }
+  const result = await augmentPdfTextWithOcr(extractedText, pdf, { maxPages: 1 });
+  return {
+    text: result.text,
+    usedOcr: result.usedOcr,
+    wasSparse: result.wasSparse,
+    ocrFailed: result.ocrFailed,
+  };
 }
 
 export async function fileToDataUrl(file: File): Promise<string> {
@@ -239,7 +319,7 @@ export async function extractTab14UploadFileText(file: File): Promise<Tab14Uploa
       const content = await page.getTextContent();
       fullText += `${extractTextFromPdfContentItems(content.items)}\n`;
     }
-    const augmented = await augmentPdfTextWithFirstPageOcr(fullText, pdf);
+    const augmented = await augmentPdfTextWithOcr(fullText, pdf);
     const hardToRead =
       augmented.wasSparse ||
       augmented.usedOcr ||

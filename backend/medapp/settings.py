@@ -105,8 +105,12 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$",
 ]
 
-# SPA sends this on API calls when staff elevation is active (Tab14).
-CORS_ALLOW_HEADERS = (*default_headers, "x-meditap-elevation")
+# SPA sends these on API calls for staff elevation / admin on-behalf chart context.
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "x-meditap-elevation",
+    "x-meditap-patient-id",
+)
 
 # Django REST Framework global settings
 REST_FRAMEWORK = {
@@ -264,6 +268,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Uploaded patient documents (local vault v1; swap to object storage later).
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
