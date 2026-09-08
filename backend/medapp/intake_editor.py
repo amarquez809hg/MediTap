@@ -1,8 +1,9 @@
 """
-Who may create/update/delete patient intake–style records (e.g. lab panels):
-Django superuser, Django group MEDITAP_RECORD_EDITOR_ROLE (default meditap-record-editor),
-or a valid X-Meditap-Elevation JWT from staff-elevate (patient_sub matches bearer sub).
-Read-only access does not require this.
+Who may create/update/delete patient chart records (labs, appointments, allergies, …):
+Django staff / superuser, meditap-record-editor group, or a valid X-Meditap-Elevation JWT.
+
+Patients may read their own chart (queryset scoping) and upload documents in the SPA,
+but chart field edits happen only from the admin portal (staff session).
 """
 
 from __future__ import annotations
@@ -67,10 +68,10 @@ def intake_elevation_valid(request) -> bool:
 
 
 def can_edit_intake_records(request) -> bool:
+    """Staff / editor / elevation only — not patient self-service chart edits."""
     user = getattr(request, "user", None)
     if user is not None and user.is_authenticated and getattr(user, "is_superuser", False):
         return True
-    # Staff portal on-behalf edits (admin JWT) — no elevation required.
     if user is not None and user.is_authenticated and getattr(user, "is_staff", False):
         return True
     if patient_has_intake_editor_role(request):

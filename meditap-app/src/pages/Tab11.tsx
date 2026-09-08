@@ -27,6 +27,8 @@ import { getApiBase } from '../config/api';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import type { MediTapLocale } from '../i18n/localeSync';
 import { SUPPORTED_LOCALES } from '../i18n/localeSync';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
@@ -102,13 +104,10 @@ const Tab11: React.FC = () => {
             </h1>
             <div className="settings-header__actions">
               <HeaderLanguagePicker className="patient-insurance-header__action-btn" />
-              <a
-                href={fullAppUrl('/tab1')}
-                className="book-btn patient-insurance-header__action-btn"
-              >
-                <i className="fas fa-arrow-left" aria-hidden />
-                {t('common.goBackToDashboard')}
-              </a>
+              <GoBackButton
+                fallback={chartPageGoBackFallback()}
+                className="patient-insurance-header__action-btn"
+              />
             </div>
           </header>
 

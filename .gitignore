@@ -11,6 +11,9 @@ backend/db.sqlite3-journal
 backend/db.sqlite3-wal
 backend/db.sqlite3-shm
 
+# Uploaded patient documents (local vault)
+backend/media/
+
 # Env secrets
 .env
 backend/.env
@@ -24,3 +27,7 @@ meditap-app/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Large Epic training PDF (28MB / 540 pages) — keep local; CI uses .snapshot.txt
+meditap-app/test-fixtures/dummyPDFs/epic_jane_doe_my_health_summary.pdf
+meditap-app/test-fixtures/probes/

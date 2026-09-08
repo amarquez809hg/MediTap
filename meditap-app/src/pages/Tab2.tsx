@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Tab2.css';
 import './Tab5.css';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback, navigatePortal } from '../navigation/portalGoBack';
 import {
   IonContent,
   IonHeader,
@@ -108,7 +109,6 @@ function toTab2Steps(
 
 const Tab2: React.FC = () => {
   const { t } = useTranslation();
-  const history = useHistory();
   const { username } = useAuth();
   const [detail, setDetail] = useState<DashboardDetail | null>(null);
   const [labPanels, setLabPanels] = useState<PatientLabPanelApi[]>([]);
@@ -211,12 +211,9 @@ const Tab2: React.FC = () => {
     [allNextSteps]
   );
 
-  const go = useCallback(
-    (href: string) => {
-      history.push(href);
-    },
-    [history]
-  );
+  const go = useCallback((href: string) => {
+    navigatePortal(href);
+  }, []);
 
   const appointmentsSubtitle =
     appointmentStats.total === 0
@@ -294,9 +291,10 @@ const Tab2: React.FC = () => {
             </h1>
             <div className="chronic-conditions-header__actions">
               <HeaderLanguagePicker className="chronic-conditions-header__action-btn" />
-              <a href="/tab1" className="book-btn meditap-glass-btn meditap-glass-btn--compact">
-                <i className="fas fa-arrow-left"></i> {t('common.goBackToDashboard')}
-              </a>
+              <GoBackButton
+                fallback={chartPageGoBackFallback()}
+                className="meditap-glass-btn meditap-glass-btn--compact"
+              />
             </div>
           </header>
 
@@ -316,7 +314,7 @@ const Tab2: React.FC = () => {
                     ? `${detail?.healthSummary.bmiCategory ?? '—'} · ${detail?.healthSummary.heightDisplay ?? '—'} · ${detail?.healthSummary.weightDisplay ?? '—'}`
                     : t('quickStatus.openVitals')
                 }
-                href="/tab14?section=vitals"
+                href="/app/intake?section=vitals"
                 highlightClass="highlight-1"
                 onNavigate={go}
                 loading={loading}
@@ -327,7 +325,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.profileComplete')}
                 value={`${profileCompleteness.percent}%`}
                 subtitle={profileCompleteness.subtitle}
-                href="/tab14"
+                href="/app/intake"
                 highlightClass="highlight-1"
                 onNavigate={go}
                 loading={loading}
@@ -338,7 +336,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.appointments')}
                 value={appointmentStats.total}
                 subtitle={appointmentsSubtitle}
-                href="/tab4"
+                href="/app/appointments"
                 highlightClass="highlight-2"
                 onNavigate={go}
               />
@@ -348,7 +346,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.labsAttention')}
                 value={labsPrimary}
                 subtitle={labsSubtitle}
-                href="/tab7"
+                href="/app/labs"
                 highlightClass="highlight-3"
                 onNavigate={go}
                 loading={loading && labPanels.length === 0 && !loadError}
@@ -359,7 +357,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.medications')}
                 value={medCount === null ? '—' : medCount}
                 subtitle={medsSubtitle}
-                href="/tab14"
+                href="/app/intake"
                 highlightClass="highlight-4"
                 onNavigate={go}
                 loading={loading}
@@ -370,7 +368,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.chronicConditions')}
                 value={chronicCount === null ? '—' : chronicCount}
                 subtitle={chronicSubtitle}
-                href="/tab5"
+                href="/app/conditions"
                 highlightClass="highlight-5"
                 onNavigate={go}
                 loading={loading}
@@ -381,7 +379,7 @@ const Tab2: React.FC = () => {
                 title={t('quickStatus.incidents')}
                 value={incidentCount === null ? '—' : incidentCount}
                 subtitle={incidentSubtitle}
-                href="/tab6"
+                href="/app/incidents"
                 highlightClass="highlight-6"
                 onNavigate={go}
                 loading={loading && incidentCount === null}

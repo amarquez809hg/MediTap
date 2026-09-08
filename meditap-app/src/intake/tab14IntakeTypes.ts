@@ -1,14 +1,29 @@
+import type {
+  Tab14ExtendedSections,
+} from './tab14PortabilitySections';
+
 /** Tab14 intake shapes shared by document parsers (no runtime imports). */
 
 export type Tab14PatientFields = Partial<{
   givenName: string;
   familyName: string;
+  /** Epic Patient Demographics “Patient Name” (honorific stripped). */
+  patientFullName: string;
+  /** Epic “Former / Aliases” list (semicolon-separated). */
+  formerAliases: string;
   dateOfBirth: string;
   bloodType: string;
   email: string;
   /** Extra emails beyond the primary `email` field. */
   additionalEmails: string[];
   phoneNumber: string;
+  /** Epic Communication home phone when distinct from mobile. */
+  homePhone: string;
+  /**
+   * Epic Patient Demographics “Communication” column
+   * (mobile / home / email as shown on the Lucy cover grid).
+   */
+  communication: string;
   address: string;
   race: string;
   ethnicity: string;
@@ -37,6 +52,27 @@ export type Tab14PatientFields = Partial<{
   emergencyContactEmail: string;
 }>;
 
+/** One dated vitals observation (Athena may have several rows). */
+export type Tab14VitalReading = {
+  /** ISO date when recorded (YYYY-MM-DD) when parseable. */
+  recordedDate: string;
+  heightInches: string;
+  weightLbs: string;
+  systolicBp: string;
+  diastolicBp: string;
+  heartRate: string;
+  bodyMassIndex: string;
+  /** Optional BMI percentile (age/sex) when present in the document. */
+  bmiPercentile?: string;
+  temperatureF?: string;
+  temperatureC?: string;
+  respiratoryRate?: string;
+  oxygenSaturation?: string;
+  recordedBy?: string;
+  organization?: string;
+  recordedTime?: string;
+};
+
 export type Tab14InsuranceRow = {
   providerName: string;
   policyNumber: string;
@@ -62,6 +98,18 @@ export type Tab14AllergyRow = {
   severity: string;
   reactionNotes: string;
   lastObserved: string;
+  /** Athena Allergen ID (e.g. 1469239). */
+  allergenId?: string;
+  /** Raw category string from PDF (e.g. "environment, medication"). */
+  category?: string;
+  criticality?: string;
+  /** Terminology code (e.g. 235616). */
+  code?: string;
+  /** Code system (e.g. RxNorm). */
+  codeSystem?: string;
+  recordedBy?: string;
+  organization?: string;
+  recordedTime?: string;
 };
 
 export type Tab14MedicationRow = {
@@ -75,6 +123,14 @@ export type Tab14MedicationRow = {
   purpose: string;
   prescribingPhysician: string;
   notesMedication: string;
+  /** Directions / Sig from Athena (e.g. TAKE ONE CAPSULE BY MOUTH…). */
+  sig?: string;
+  status?: string;
+  authoredOn?: string;
+  fillQuantity?: string;
+  recordedBy?: string;
+  organization?: string;
+  recordedTime?: string;
 };
 
 export type Tab14ChronicRow = {
@@ -84,6 +140,8 @@ export type Tab14ChronicRow = {
   severity: string;
   prexisting: string;
   notesChronicConditions: string;
+  /** Athena Problems status column (Active, Resolved…). */
+  status?: string;
 };
 
 export type Tab14HospitalFields = Partial<{
@@ -94,6 +152,15 @@ export type Tab14HospitalFields = Partial<{
   dischargeDate: string;
   attendingPhysician: string;
   reportId: string;
+  /** Athena Past Encounters columns. */
+  encounterId: string;
+  startDateTime: string;
+  closedDateTime: string;
+  location: string;
+  snomed: string;
+  icd10: string;
+  imo: string;
+  diagnosisNote: string;
 }>;
 
 /** Lab / imaging / related result panel imported from PDF (maps to PatientLabPanel). */
@@ -130,6 +197,10 @@ export type Tab14LabPanel = {
   accessionNumber?: string;
   modality?: string;
   signedBy?: string;
+  /** Athena result-table provenance columns. */
+  performingOrg?: string;
+  recordedBy?: string;
+  recordedTime?: string;
   components: Tab14LabComponent[];
 };
 
@@ -141,12 +212,16 @@ export type Tab14FieldWarningReason =
   | 'contains_other_label'
   | 'suspicious_name'
   | 'ocr_sparse'
+  | 'terminology'
   | 'other';
 
 export type Tab14FieldWarning = {
   /** Staff-facing copy: needs verification, not "wrong". */
   message: string;
   reason: Tab14FieldWarningReason;
+  /** Optional provenance for review UI. */
+  sourcePage?: number;
+  sourceLabel?: string;
 };
 
 /** Optional per-field warnings from PDF/OCR extraction (session UI only). */
@@ -176,18 +251,64 @@ export interface Tab14IntakeParseResult {
   patientFields: Tab14PatientFields;
   /** When true, caller should set allergies UI to NKDA / empty list. */
   noKnownDrugAllergies: boolean;
+  /**
+   * When true, caller should set Problems / chronic UI to
+   * “no known problems” (empty list + none checkbox).
+   */
+  noKnownProblems: boolean;
   insurances: Tab14InsuranceRow[];
   allergies: Tab14AllergyRow[];
   medications: Tab14MedicationRow[];
   chronicConditions: Tab14ChronicRow[];
   hospitalVisit: Tab14HospitalFields;
+  /**
+   * Every encounter found in the document (Athena Past Encounters).
+   * `hospitalVisit` stays populated with the first row for older callers.
+   */
+  hospitalVisits?: Tab14HospitalFields[];
   /** Lab / imaging / related panels from the document. */
   labPanels: Tab14LabPanel[];
+  /**
+   * Dated vitals observations from the document (newest first).
+   * `patientFields` vitals still mirror the latest reading for chart Save.
+   */
+  vitalsHistory?: Tab14VitalReading[];
+  /**
+   * Extra Athena / portability sections (care team, social history, etc.)
+   * shown as dedicated Add Patient Information sidebar panels.
+   */
+  extendedSections?: Tab14ExtendedSections;
   /**
    * Fields that may have been misread from the document.
    * Not persisted with the patient chart — used for UI verify icons only.
    */
   fieldWarnings?: Tab14PatientFieldWarnings;
+  /**
+   * Epic (and similar) multi-hit section occurrence counts for recognition chips.
+   * Keys are canonical TOC titles (e.g. `Patient Demographics`).
+   * Counts may use a sparse proxy when yellow headers are image-only.
+   */
+  epicSectionOccurrenceCounts?: Partial<Record<string, number>>;
+  /**
+   * Every Patient Demographics occurrence registered for Epic intake
+   * (one row per PDF-Find-style hit; inferred reprints reuse cover fields).
+   */
+  epicDemographicsOccurrences?: import('./epicPatientDemographics').EpicDemographicsOccurrence[];
+  /**
+   * Every “Note from Mayo Clinic” (clinic name varies) occurrence for Epic intake.
+   */
+  epicNoteFromClinicOccurrences?: import('./epicNoteFromClinic').EpicNoteFromClinicOccurrence[];
+  /**
+   * Epic sidebar multi-hit inventories (Allergies, Medications, …) — one row per
+   * PDF-Find-style hit, batched in the UI like Demographics / Note from Clinic.
+   * Keys are Tab14 section keys (`allergies`, `medications`, …).
+   */
+  epicSectionOccurrencesByKey?: Partial<
+    Record<
+      import('./tab14PortabilitySections').Tab14SectionKey,
+      import('./epicSectionOccurrences').EpicSectionOccurrence[]
+    >
+  >;
 }
 
 export function emptyInsuranceRow(): Tab14InsuranceRow {

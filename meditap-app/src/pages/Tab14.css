@@ -89,8 +89,161 @@ ion-page.ct-page.ct-tab14 ion-content {
   max-width: 260px;
   background: var(--meditap-surface-muted, #f5f7f6);
   border-right: 1px solid var(--meditap-border);
-  padding: 16px 0;
+  padding: 12px 0 16px;
   box-sizing: border-box;
+}
+
+.tab14-intake-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  gap: 14px;
+  align-items: stretch;
+  margin: 0 0 14px;
+}
+
+.tab14-ehr-type-panel--top {
+  max-width: none;
+  margin: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.tab14-ehr-type-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tab14-ehr-type-panel__intro {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.tab14-ehr-type-panel__header .tab14-ehr-type-panel__sub {
+  margin-bottom: 0;
+}
+
+.tab14-active-format-badge {
+  flex: 0 1 220px;
+  padding: 10px 12px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  border: 1px solid rgba(15, 60, 90, 0.14);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.tab14-active-format-badge--active {
+  border-color: rgba(14, 124, 134, 0.35);
+  background: rgba(14, 124, 134, 0.08);
+}
+
+.tab14-active-format-badge__eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--meditap-text-secondary, #5b6b76);
+  margin-bottom: 4px;
+}
+
+.tab14-active-format-badge__title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--meditap-primary-shade, #0f3c5a);
+}
+
+.tab14-pdf-upload-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(15, 60, 90, 0.12);
+  border-radius: var(--meditap-radius-sm, 10px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 250, 252, 0.98));
+  text-align: left;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.tab14-pdf-upload-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f3c5a;
+}
+
+.tab14-pdf-upload-panel__sub {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #4a6575;
+}
+
+.tab14-pdf-upload-panel .file-upload-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.tab14-pdf-upload-panel .tab14-upload-parse {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.file-preview-list--compact {
+  margin-top: 4px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.file-preview-list--compact .file-preview-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr) auto;
+}
+
+.file-preview-list--compact .file-preview-cell--size,
+.file-preview-list--compact .file-preview-cell--uploaded {
+  display: none;
+}
+
+.ion-palette-dark .tab14-active-format-badge {
+  background: var(--meditap-surface);
+  border-color: var(--meditap-border);
+}
+
+.ion-palette-dark .tab14-active-format-badge--active {
+  background: rgba(61, 196, 217, 0.12);
+  border-color: rgba(61, 196, 217, 0.35);
+}
+
+.ion-palette-dark .tab14-active-format-badge__title {
+  color: var(--meditap-accent);
+}
+
+.ion-palette-dark .tab14-pdf-upload-panel {
+  background: var(--meditap-surface);
+  border-color: var(--meditap-border);
+}
+
+.ion-palette-dark .tab14-pdf-upload-panel__title {
+  color: var(--meditap-text);
+}
+
+@media (max-width: 960px) {
+  .tab14-intake-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 
 .tab14-nav {
@@ -366,7 +519,7 @@ ion-page.ct-page.ct-tab14 ion-content {
   color: #fff;
 }
 
-/* Reset native fieldset chrome; disabled state grays descendants via UA */
+/* Reset native fieldset chrome; locked mode blocks typing but keeps PDF Accept/Reject clickable */
 .tab14-record-fieldset {
   border: none;
   margin: 0;
@@ -376,6 +529,23 @@ ion-page.ct-page.ct-tab14 ion-content {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.tab14-record-fieldset--locked input:not([type='hidden']),
+.tab14-record-fieldset--locked select,
+.tab14-record-fieldset--locked textarea {
+  pointer-events: none;
+  caret-color: transparent;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tab14-record-fieldset--locked .add-section-button,
+.tab14-record-fieldset--locked .remove-button,
+.tab14-record-fieldset--locked .remove-btn,
+.tab14-record-fieldset--locked .add-btn {
+  pointer-events: none;
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .tab14-sample-data-btn:disabled {
@@ -420,6 +590,58 @@ ion-page.ct-page.ct-tab14 ion-content {
   flex-direction: column;
   align-items: stretch;
   box-sizing: border-box;
+}
+
+/* Extended portability entries (Plan of Treatment, Care Team, Social History, …) */
+.tab14-extended-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 4px 0 8px;
+}
+
+.tab14-extended-entry {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--meditap-border);
+  border-radius: var(--meditap-radius);
+  background: var(--meditap-surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.tab14-extended-entry__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--meditap-border);
+  border-left: 4px solid var(--meditap-accent, #17a2b8);
+  background: rgba(23, 162, 184, 0.06);
+}
+
+.tab14-extended-entry__index {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--meditap-accent, #17a2b8);
+  background: rgba(23, 162, 184, 0.12);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.tab14-extended-entry__body {
+  padding: 14px 14px 12px;
+}
+
+.tab14-extended-entry__body .form-field:last-of-type {
+  margin-bottom: 8px;
+}
+
+.tab14-extended-entry .remove-btn {
+  margin-top: 4px;
 }
 
 .tab14-emergency-contact-section {
@@ -798,6 +1020,143 @@ ion-page.ct-page.ct-tab14 ion-content {
   width: 100%;
 }
 
+.tab14-ehr-type-panel {
+  max-width: 920px;
+  margin: 0 auto 18px;
+  text-align: left;
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(15, 60, 90, 0.12);
+  border-radius: var(--meditap-radius-sm, 10px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 250, 252, 0.95));
+}
+
+.tab14-ehr-type-panel__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f3c5a;
+}
+
+.tab14-ehr-type-panel__sub {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: #4a6575;
+  line-height: 1.35;
+}
+
+.tab14-ehr-type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 720px) {
+  .tab14-ehr-type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .tab14-ehr-type-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .tab14-intake-toolbar .tab14-ehr-type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1400px) {
+  .tab14-intake-toolbar .tab14-ehr-type-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.tab14-ehr-type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 12px 12px 10px;
+  border: 1.5px solid rgba(15, 60, 90, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.tab14-ehr-type-card:hover:not(:disabled) {
+  border-color: rgba(15, 110, 140, 0.45);
+  box-shadow: 0 2px 8px rgba(15, 60, 90, 0.08);
+}
+
+.tab14-ehr-type-card--selected {
+  border-color: var(--meditap-accent, #0e7c86);
+  background: rgba(14, 124, 134, 0.06);
+  box-shadow: 0 0 0 1px rgba(14, 124, 134, 0.25);
+}
+
+.tab14-ehr-type-card--planned {
+  opacity: 0.92;
+}
+
+.tab14-ehr-type-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.tab14-ehr-type-card__label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f3c5a;
+}
+
+.tab14-ehr-type-card__badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.tab14-ehr-type-card__badge--ready {
+  background: rgba(22, 140, 90, 0.14);
+  color: #0f6b42;
+}
+
+.tab14-ehr-type-card__badge--partial {
+  background: rgba(200, 140, 20, 0.16);
+  color: #8a5a00;
+}
+
+.tab14-ehr-type-card__badge--planned {
+  background: rgba(90, 110, 130, 0.14);
+  color: #445566;
+}
+
+.tab14-ehr-type-card__hint {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: #5a7383;
+}
+
+.tab14-ehr-type-auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: #355066;
+  cursor: pointer;
+}
+
+.tab14-ehr-type-auto input {
+  accent-color: var(--meditap-accent, #0e7c86);
+}
+
 .file-upload-label {
   display: inline-block;
   padding: 10px 20px;
@@ -806,6 +1165,11 @@ ion-page.ct-page.ct-tab14 ion-content {
   border-radius: var(--meditap-radius-sm);
   cursor: pointer;
   font-weight: 600;
+}
+
+.file-upload-label--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .file-upload-label input[type='file'] {
@@ -994,6 +1358,96 @@ ion-page.ct-page.ct-tab14 ion-content {
   font-size: 0.85em;
 }
 
+.tab14-pdf-field-warning-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.tab14-pdf-review-btn {
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  background: #fff;
+  color: var(--meditap-text, #1a2b2e);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 650;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.tab14-pdf-review-btn--accept {
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.tab14-pdf-review-btn--reject {
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.tab14-intake-completeness {
+  margin-top: 8px;
+  margin-bottom: 10px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(23, 162, 184, 0.28);
+  background: rgba(23, 162, 184, 0.08);
+  color: var(--meditap-text, #1a2b2e);
+  font-size: 0.86rem;
+}
+
+.tab14-intake-completeness p {
+  margin: 0 0 0.45rem;
+}
+
+.tab14-athena-gap-list {
+  list-style: none;
+  margin: 0.35rem 0 0.55rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tab14-athena-gap-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+.tab14-athena-gap-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tab14-athena-gap-badge--missing {
+  background: rgba(185, 28, 28, 0.12);
+  color: #b91c1c;
+}
+
+.tab14-athena-gap-badge--thin {
+  background: rgba(180, 120, 20, 0.14);
+  color: #a16207;
+}
+
+.tab14-athena-gap-detail {
+  color: var(--meditap-muted, #5a6f73);
+}
+
 .ion-palette-dark .tab14-pdf-field-warning {
   color: #fbbf24;
 }
@@ -1088,6 +1542,35 @@ ion-page.ct-page.ct-tab14 ion-content {
   margin-right: 16px;
 }
 
+.tab14-vitals-history-picker select {
+  width: 100%;
+  max-width: 420px;
+}
+
+.tab14-vitals-history-meta {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--meditap-muted, #52606d);
+}
+
+.tab14-vitals-bmi-preview {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.tab14-extended-date-filter {
+  margin-bottom: 12px;
+}
+
+.tab14-extended-date-filter select {
+  width: 100%;
+  max-width: 420px;
+}
+
+.tab14-extended-entry-accordion {
+  margin-bottom: 10px;
+}
+
 @media (max-width: 768px) {
   .file-preview-list {
     max-width: 100%;
@@ -1112,6 +1595,284 @@ ion-page.ct-page.ct-tab14 ion-content {
   .file-preview-cell--actions {
     grid-column: 1 / -1;
     align-items: flex-start;
+  }
+}
+
+
+.tab14-demo-occurrence-summary {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+/* Epic Patient Demographics — batched intakes + Lucy-style grid */
+.epic-demo-intakes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.epic-demo-batch {
+  border: 1px solid var(--meditap-border, #d0d7de);
+  border-radius: 10px;
+  background: #f7fafc;
+  overflow: hidden;
+}
+
+.epic-demo-batch--open {
+  background: #f3f7f8;
+}
+
+.epic-demo-batch__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  margin: 0;
+  border: 0;
+  background: linear-gradient(180deg, #e8f4f3 0%, #edf2f7 100%);
+  cursor: pointer;
+  text-align: left;
+}
+
+.epic-demo-batch__header:focus-visible {
+  outline: 2px solid var(--meditap-accent, #0d9488);
+  outline-offset: -2px;
+}
+
+.epic-demo-batch__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.epic-demo-batch__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--meditap-text, #1a202c);
+}
+
+.epic-demo-batch__meta {
+  font-size: 0.82rem;
+  color: #4a5568;
+}
+
+.epic-demo-batch__chevron {
+  flex-shrink: 0;
+  color: #0f766e;
+  font-size: 1rem;
+}
+
+.epic-demo-batch__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+
+.epic-demo-card {
+  border: 1px solid #c5d4d8;
+  border-left: 4px solid #0d9488;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.epic-demo-card--open {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.epic-demo-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin: 0;
+  border: 0;
+  background: #fafbfc;
+  cursor: pointer;
+  text-align: left;
+}
+
+.epic-demo-card__header:focus-visible {
+  outline: 2px solid var(--meditap-accent, #0d9488);
+  outline-offset: -2px;
+}
+
+.epic-demo-card__header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.epic-demo-card__ordinal {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.epic-demo-card__date {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.epic-demo-card__sex-born {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.epic-demo-card__kind {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.epic-demo-card__header-aside {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.epic-demo-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  background: #e2e8f0;
+  white-space: nowrap;
+}
+
+.epic-demo-card__chevron {
+  color: #0f766e;
+}
+
+.epic-demo-card__body {
+  border-top: 1px solid #cce3e0;
+  padding: 10px 12px 14px;
+}
+
+.epic-demo-card__sex-born-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #d5e5e2;
+}
+
+.epic-demo-card__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.epic-demo-card__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.epic-demo-card__cell--inline {
+  gap: 4px;
+}
+
+.epic-demo-card__cell--comm {
+  gap: 4px;
+}
+
+.epic-demo-card__comm-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.epic-demo-card__sublabel {
+  margin-top: 8px !important;
+  font-style: italic;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+}
+
+.epic-demo-card__aliases {
+  font-size: 0.88rem !important;
+  line-height: 1.35;
+}
+
+.epic-demo-card__cell label,
+.epic-demo-card__comm-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.epic-demo-card__cell--comm label {
+  margin-top: 4px;
+}
+
+.epic-demo-card__cell input,
+.epic-demo-card__cell textarea,
+.epic-demo-card__cell select {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 0.92rem;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.epic-demo-card__cell input:focus,
+.epic-demo-card__cell textarea:focus,
+.epic-demo-card__cell select:focus {
+  outline: 2px solid rgba(13, 148, 136, 0.35);
+  border-color: #0d9488;
+}
+
+.epic-section-preview-list {
+  margin: 0 0 12px;
+  padding-left: 1.2rem;
+  color: #0f172a;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.epic-section-preview-list li {
+  margin-bottom: 4px;
+}
+
+.epic-note-card__body-cell {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .epic-note-card__grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -6,6 +6,10 @@
 
 import { tryParseDateToIso } from './intakeDateParse';
 import {
+  detectNoKnownProblems,
+  noKnownProblemsChronicRow,
+} from './detectNoKnownProblems';
+import {
   collapseWs,
   DEMOGRAPHIC_LABELS,
   DEMOGRAPHICS_END,
@@ -36,6 +40,7 @@ import {
   type Tab14PatientFieldWarnings,
   type Tab14PatientFields,
 } from './tab14IntakeTypes';
+import { mergeExtendedSections } from './tab14PortabilitySections';
 
 type LabelHit = {
   field: DemographicFieldKey | '_boundary';
@@ -92,6 +97,16 @@ export function preprocessIntakeDocumentText(text: string): string {
     const re = new RegExp(`\\s+(${escapeRe(token)})(?=\\s|:|$)`, 'gi');
     t = t.replace(re, `\n$1`);
   }
+
+  // pdf.js often glues EHR section headers after commas/periods (e.g. "null,Medications Name…").
+  t = t.replace(
+    /([,;.])\s*(Allergies|Medications|Vitals|Social History|Functional Status|Problems|Procedures|Immunizations|Payers|Notes)\b/gi,
+    '$1\n$2'
+  );
+  t = t.replace(
+    /\b(None Reported\.?|None recorded\.?)\s+(Allergies|Medications|Vitals|Payers)\b/gi,
+    '$1\n$2'
+  );
 
   t = t.replace(/(ENCOUNTER NOTE \d+)(Date:)/gi, '$1\n$2');
   return t.replace(/\n{3,}/g, '\n\n');
@@ -366,6 +381,16 @@ function sliceSection(text: string, header: RegExp, until: RegExp): string {
 const SECTION_END =
   /^(insurance|allergies|medications?|medication\s*list|chronic|conditions?|problem\s*list|hospital|admission|visit\s*history|demographics|patient\s*information|vitals|results|procedures|immunizations|social\s*history|care\s*team|missing\s*fields|encounter\s*note|diagnosis|pathology|urgent\s*care|dental|imaging)\b/i;
 
+/** True when a line introduces a different clinical section (including mid-line headers). */
+function isOtherSectionBoundary(line: string, headerRe: RegExp): boolean {
+  if (SECTION_END.test(line) && !headerRe.test(line)) return true;
+  const mid = line.match(
+    /(?:^|[\s,;.])(allergies|medications?|medication\s*list|vitals|social\s*history|problems|procedures|immunizations|insurance|chronic|hospital)\b/i
+  );
+  if (!mid) return false;
+  return !headerRe.test(mid[1]) && !headerRe.test(line);
+}
+
 function sliceAfterHeader(lines: string[], headerRe: RegExp): string[] {
   let idx = -1;
   for (let i = 0; i < lines.length; i++) {
@@ -376,12 +401,24 @@ function sliceAfterHeader(lines: string[], headerRe: RegExp): string[] {
   for (let i = idx + 1; i < lines.length; i++) {
     const l = lines[i];
     if (!l) continue;
-    if (SECTION_END.test(l) && !headerRe.test(l)) break;
+    if (isOtherSectionBoundary(l, headerRe)) break;
     if (l.length > 220) break;
     out.push(l);
     if (out.length > 80) break;
   }
   return out;
+}
+
+/** Medication-looking rows must not become allergies when section boundaries are messy. */
+function looksLikeMedicationNotAllergy(name: string): boolean {
+  return (
+    /\d+\s*(?:mg|mcg|g|mL|unit)s?\b/i.test(name) ||
+    /\b(?:capsule|tablet|ointment|drops?|suspension|cream|patch|injection|solution)\b/i.test(
+      name
+    ) ||
+    /\b(?:TAKE\s+\d|BY\s+MOUTH|completed0|Instill\s+\d)\b/i.test(name) ||
+    /\bMOUTH\s+Service\b/i.test(name)
+  );
 }
 
 function guessAllergyType(name: string): string {
@@ -411,6 +448,7 @@ function parseAllergyRows(sectionLines: string[], fullText: string): Tab14Allerg
     const name = parts[0].replace(/^(allergy|allergic to)\s*:?\s*/i, '').trim();
     if (name.length < 2 || name.length > 120) continue;
     if (/^(none|n\/a|see below)\b/i.test(name)) continue;
+    if (looksLikeMedicationNotAllergy(name)) continue;
     rows.push({
       allergyName: name,
       allergyType: guessAllergyType(name),
@@ -827,6 +865,16 @@ function parseInsuranceFromText(text: string): Tab14InsuranceRow[] {
   }
 
   if (one.providerName || one.memberID || one.groupNumber || one.policyNumber || one.planName) {
+    const junk =
+      /^(organization|details|holder|subscriber|sequence|identifier|policy|group|guarantor|name)\b/i;
+    if (
+      junk.test(one.providerName) ||
+      junk.test(one.memberID) ||
+      junk.test(one.groupNumber) ||
+      junk.test(one.policyNumber)
+    ) {
+      return [];
+    }
     return [one];
   }
   return [];
@@ -912,9 +960,15 @@ export function parseGeneralIntakeDocument(raw: string): Tab14IntakeParseResult 
   }
   if (!chronicConditions.length) chronicConditions = parseAthenaChronicConditions(text);
 
+  const noKnownProblems = detectNoKnownProblems(text);
+  if (noKnownProblems) {
+    chronicConditions = [noKnownProblemsChronicRow()];
+  }
+
   return {
     patientFields,
     noKnownDrugAllergies,
+    noKnownProblems,
     insurances: parseInsuranceFromText(text),
     allergies,
     medications,
@@ -981,8 +1035,14 @@ export function mergeIntakeParseResults(
     // Prefer the last non-empty insurance list (specialized parsers run after general).
     let chosen: Tab14InsuranceRow[] = [];
     for (const r of results) {
-      if (r.insurances.length > 0) {
-        chosen = r.insurances.map((row) => ({ ...emptyInsuranceRow(), ...row }));
+      const cleaned = r.insurances.filter(
+        (row) =>
+          Boolean(row.providerName?.trim()) &&
+          row.providerName.trim().length <= 120 &&
+          !/text\/html|Notes Date Type|Organization 0\d/i.test(row.providerName)
+      );
+      if (cleaned.length > 0) {
+        chosen = cleaned.map((row) => ({ ...emptyInsuranceRow(), ...row }));
       }
     }
     return chosen;
@@ -1016,20 +1076,54 @@ export function mergeIntakeParseResults(
 
   const allergies = pickBestList((r) => r.allergies);
   const medications = pickBestList((r) => r.medications);
+  const hospitalVisits = pickBestList((r) => r.hospitalVisits ?? []);
+  const vitalsHistory = pickBestList((r) => r.vitalsHistory ?? []);
   const chronicConditions = pickBestChronic();
   const insurances = mergeInsurance();
   const labPanels = mergeLabPanels(...results.map((r) => r.labPanels));
 
+  let extendedSections = results[0]?.extendedSections;
+  for (const r of results.slice(1)) {
+    if (r.extendedSections) {
+      extendedSections = extendedSections
+        ? mergeExtendedSections(extendedSections, r.extendedSections)
+        : r.extendedSections;
+    }
+  }
+
+  let epicSectionOccurrenceCounts: Partial<Record<string, number>> | undefined;
+  for (const r of results) {
+    if (!r.epicSectionOccurrenceCounts) continue;
+    epicSectionOccurrenceCounts = epicSectionOccurrenceCounts ?? {};
+    for (const [title, count] of Object.entries(r.epicSectionOccurrenceCounts)) {
+      const n = Number(count) || 0;
+      epicSectionOccurrenceCounts[title] = Math.max(
+        epicSectionOccurrenceCounts[title] ?? 0,
+        n
+      );
+    }
+  }
+
   return {
     patientFields,
     noKnownDrugAllergies: allergies.length === 0 && results.some((r) => r.noKnownDrugAllergies),
+    noKnownProblems:
+      (chronicConditions.length === 0 ||
+        chronicConditions.every((c) => /no\s+known\s+problems/i.test(c.conditionName))) &&
+      results.some((r) => r.noKnownProblems),
     insurances,
     allergies,
     medications,
     chronicConditions,
     hospitalVisit,
     labPanels,
+    ...(hospitalVisits.length ? { hospitalVisits } : {}),
+    ...(vitalsHistory.length ? { vitalsHistory } : {}),
+    ...(extendedSections ? { extendedSections } : {}),
     ...(fieldWarnings ? { fieldWarnings } : {}),
+    ...(epicSectionOccurrenceCounts && Object.keys(epicSectionOccurrenceCounts).length
+      ? { epicSectionOccurrenceCounts }
+      : {}),
   };
 }
 

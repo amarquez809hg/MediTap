@@ -1,11 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   NEXT_STEP_FA_ICON,
   type NextStepItem,
   type NextStepTone,
 } from '../dashboard/nextSteps';
+import PortalNavLink from './PortalNavLink';
 import './DashboardNextSteps.css';
 
 type DashboardNextStepsProps = {
@@ -36,7 +36,7 @@ const DashboardNextSteps: React.FC<DashboardNextStepsProps> = ({ steps, loading 
         <ul className="dashboard-next-steps__grid">
           {steps.map((step) => (
             <li key={step.id}>
-              <Link
+              <PortalNavLink
                 to={step.href}
                 className={`dashboard-next-step dashboard-next-step--${step.tone as NextStepTone}`}
               >
@@ -48,7 +48,7 @@ const DashboardNextSteps: React.FC<DashboardNextStepsProps> = ({ steps, loading 
                   <span className="dashboard-next-step__subtitle">{step.subtitle}</span>
                 </span>
                 <i className="fas fa-chevron-right dashboard-next-step__chevron" aria-hidden />
-              </Link>
+              </PortalNavLink>
             </li>
           ))}
         </ul>

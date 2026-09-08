@@ -8,6 +8,11 @@ import {
   DEMOGRAPHIC_LABELS,
   type DemographicFieldKey,
 } from './intakeFieldLabels';
+import {
+  assessTerminologyHint,
+  findSourcePageForValue,
+  withProvenance,
+} from './intakeTerminologyHints';
 import type {
   Tab14AllergyRow,
   Tab14ChronicConditionWarnings,
@@ -514,7 +519,8 @@ export function annotateOcrSparseWarnings(
 function annotateRowObjectWarnings<T extends Record<string, string>>(
   row: T,
   hardToRead: boolean,
-  primaryKey?: keyof T & string
+  primaryKey?: keyof T & string,
+  documentText?: string
 ): Partial<Record<keyof T & string, Tab14FieldWarning>> | undefined {
   const out: Partial<Record<keyof T & string, Tab14FieldWarning>> = {};
   const primary = primaryKey ? String(row[primaryKey] ?? '') : '';
@@ -525,16 +531,30 @@ function annotateRowObjectWarnings<T extends Record<string, string>>(
   for (const key of Object.keys(row) as (keyof T & string)[]) {
     const raw = String(row[key] ?? '');
     if (!raw.trim()) continue;
+    const page = documentText
+      ? findSourcePageForValue(documentText, raw)
+      : undefined;
     if (hardToRead) {
-      out[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+      out[key] = withProvenance(
+        { message: VERIFY_OCR, reason: 'ocr_sparse' },
+        { page, label: 'Imported from document' }
+      );
       continue;
     }
     if (primaryKey && key === primaryKey && primaryAssessed.warning) {
-      out[key] = primaryAssessed.warning;
+      out[key] = withProvenance(primaryAssessed.warning, {
+        page,
+        label: 'Imported from document',
+      });
       continue;
     }
     const assessed = assessFreeTextValue(raw);
-    if (assessed.warning) out[key] = assessed.warning;
+    if (assessed.warning) {
+      out[key] = withProvenance(assessed.warning, {
+        page,
+        label: 'Imported from document',
+      });
+    }
   }
 
   return Object.keys(out).length ? out : undefined;
@@ -542,31 +562,74 @@ function annotateRowObjectWarnings<T extends Record<string, string>>(
 
 export function buildAllergyRowWarnings(
   rows: Tab14AllergyRow[],
-  hardToRead = false
+  hardToRead = false,
+  documentText?: string
 ): Tab14IndexedRowWarnings<'allergyName' | 'allergyType' | 'allergyTypeOther' | 'severity' | 'reactionNotes' | 'lastObserved'> | undefined {
   const out: Tab14IndexedRowWarnings<'allergyName' | 'allergyType' | 'allergyTypeOther' | 'severity' | 'reactionNotes' | 'lastObserved'> = {};
   rows.forEach((row, index) => {
-    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'allergyName');
-    if (rowWarnings) out[index] = rowWarnings;
+    const rowWarnings = annotateRowObjectWarnings(
+      row,
+      hardToRead,
+      'allergyName',
+      documentText
+    );
+    const term = assessTerminologyHint(row.allergyName || '', 'allergen');
+    if (term) {
+      const page = documentText
+        ? findSourcePageForValue(documentText, row.allergyName || '')
+        : undefined;
+      const withPage = withProvenance(term, { page, label: 'Allergy from document' });
+      if (!rowWarnings) {
+        out[index] = { allergyName: withPage };
+      } else if (!rowWarnings.allergyName) {
+        rowWarnings.allergyName = withPage;
+        out[index] = rowWarnings;
+      } else {
+        out[index] = rowWarnings;
+      }
+    } else if (rowWarnings) {
+      out[index] = rowWarnings;
+    }
   });
   return Object.keys(out).length ? out : undefined;
 }
 
 export function buildMedicationRowWarnings(
   rows: Tab14MedicationRow[],
-  hardToRead = false
+  hardToRead = false,
+  documentText?: string
 ): Tab14IndexedRowWarnings<keyof Tab14MedicationRow> | undefined {
   const out: Tab14IndexedRowWarnings<keyof Tab14MedicationRow> = {};
   rows.forEach((row, index) => {
-    const rowWarnings = annotateRowObjectWarnings(row, hardToRead, 'genericName');
-    if (rowWarnings) out[index] = rowWarnings;
+    const rowWarnings = annotateRowObjectWarnings(
+      row,
+      hardToRead,
+      'genericName',
+      documentText
+    );
+    const drug = row.genericName || row.brandName || '';
+    const term = assessTerminologyHint(drug, 'medication');
+    if (term) {
+      const page = documentText
+        ? findSourcePageForValue(documentText, drug)
+        : undefined;
+      const withPage = withProvenance(term, { page, label: 'Medication from document' });
+      const base = rowWarnings || {};
+      if (!base.genericName && row.genericName) base.genericName = withPage;
+      else if (!base.brandName && row.brandName) base.brandName = withPage;
+      else if (!base.genericName) base.genericName = withPage;
+      out[index] = base;
+    } else if (rowWarnings) {
+      out[index] = rowWarnings;
+    }
   });
   return Object.keys(out).length ? out : undefined;
 }
 
 export function buildInsuranceRowWarnings(
   rows: Tab14InsuranceRow[],
-  hardToRead = false
+  hardToRead = false,
+  documentText?: string
 ): Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> | undefined {
   const out: Tab14IndexedRowWarnings<keyof Tab14InsuranceRow> = {};
   rows.forEach((row, index) => {
@@ -574,14 +637,25 @@ export function buildInsuranceRowWarnings(
     for (const key of Object.keys(row) as (keyof Tab14InsuranceRow)[]) {
       const raw = String(row[key] ?? '');
       if (!raw.trim()) continue;
+      const page = documentText
+        ? findSourcePageForValue(documentText, raw)
+        : undefined;
       if (hardToRead) {
-        rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+        rowWarnings[key] = withProvenance(
+          { message: VERIFY_OCR, reason: 'ocr_sparse' },
+          { page, label: 'Insurance from document' }
+        );
         continue;
       }
       const assessed = assessFreeTextValue(raw, {
         treatAsName: key === 'providerName' || key === 'planName',
       });
-      if (assessed.warning) rowWarnings[key] = assessed.warning;
+      if (assessed.warning) {
+        rowWarnings[key] = withProvenance(assessed.warning, {
+          page,
+          label: 'Insurance from document',
+        });
+      }
     }
     if (Object.keys(rowWarnings).length) out[index] = rowWarnings;
   });
@@ -616,7 +690,8 @@ export function buildHospitalFieldWarnings(
  */
 export function buildChronicConditionWarnings(
   rows: Tab14ChronicRow[],
-  hardToRead = false
+  hardToRead = false,
+  documentText?: string
 ): Tab14ChronicConditionWarnings | undefined {
   const out: Tab14ChronicConditionWarnings = {};
   rows.forEach((row, index) => {
@@ -624,18 +699,42 @@ export function buildChronicConditionWarnings(
     const suspicious = looksLikeVisitNoteConditionName(row.conditionName);
     for (const key of Object.keys(row) as Tab14ChronicFieldKey[]) {
       if (!row[key]?.trim()) continue;
-      // severity has no UI control on Tab14 � skip invisible warnings
+      // severity has no UI control on Tab14 — skip invisible warnings
       if (key === 'severity') continue;
+      const page = documentText
+        ? findSourcePageForValue(documentText, row[key])
+        : undefined;
       if (hardToRead) {
-        rowWarnings[key] = { message: VERIFY_OCR, reason: 'ocr_sparse' };
+        rowWarnings[key] = withProvenance(
+          { message: VERIFY_OCR, reason: 'ocr_sparse' },
+          { page, label: 'Condition from document' }
+        );
       } else if (suspicious || key === 'conditionName') {
-        const assessed = assessFreeTextValue(row[key], { treatAsName: key === 'conditionName' });
+        const assessed = assessFreeTextValue(row[key], {
+          treatAsName: key === 'conditionName',
+        });
         if (suspicious) {
-          rowWarnings[key] = { message: VERIFY_VISIT_NOTE, reason: 'other' };
+          rowWarnings[key] = withProvenance(
+            { message: VERIFY_VISIT_NOTE, reason: 'other' },
+            { page, label: 'Condition from document' }
+          );
         } else if (assessed.warning) {
-          rowWarnings[key] = assessed.warning;
+          rowWarnings[key] = withProvenance(assessed.warning, {
+            page,
+            label: 'Condition from document',
+          });
         }
       }
+    }
+    const term = assessTerminologyHint(row.conditionName || '', 'condition');
+    if (term && !rowWarnings.conditionName) {
+      const page = documentText
+        ? findSourcePageForValue(documentText, row.conditionName || '')
+        : undefined;
+      rowWarnings.conditionName = withProvenance(term, {
+        page,
+        label: 'Condition from document',
+      });
     }
     if (Object.keys(rowWarnings).length) out[index] = rowWarnings;
   });

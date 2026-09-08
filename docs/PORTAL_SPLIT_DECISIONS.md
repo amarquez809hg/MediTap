@@ -33,8 +33,8 @@ Separate **User (patient) portal** and **Admin (staff) portal** experiences whil
 
 | Door | Path | Rule |
 |------|------|------|
-| Patient | `/tab3` | Patients land in `/app/...`; staff who use this door are sent to admin home |
-| Admin | `/admin-portal/login` | Staff / org_admin only; **patient accounts are rejected** (no session kept) |
+| Patient | `/tab3` | Patients land in `/app/...`. Active **staff** sessions see Admin home / Patient view / Log out (no silent bounce). Staff who sign in on this door still go to admin home. |
+| Admin | `/admin-portal/login` | Staff / org_admin only; **patient accounts are rejected** (no session kept). Active staff sessions see the same chooser instead of an auto-redirect. |
 
 Cross-links: “Staff sign in” on the patient door; “Patient sign in” on the admin door.
 

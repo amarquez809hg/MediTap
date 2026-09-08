@@ -6,7 +6,7 @@ from medapp.intake_editor import can_edit_intake_records
 class IntakeEditorWritePermission(permissions.BasePermission):
     """
     Safe methods (GET, HEAD, OPTIONS): allowed when combined with IsAuthenticated.
-    POST/PATCH/DELETE: require Django superuser, group meditap-record-editor (JWT), or staff elevation.
+    POST/PATCH/DELETE: staff / record-editor / elevation only (admin portal chart edits).
     """
 
     def has_permission(self, request, view):

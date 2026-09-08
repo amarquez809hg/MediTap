@@ -3,8 +3,27 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
-import { collapseWs, splitPersonName } from './intakeFieldLabels';
+import { detectNoKnownProblems } from './detectNoKnownProblems';
+import { collapseWs, normalizeMaritalStatus, splitPersonName } from './intakeFieldLabels';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
+import {
+  buildEpicMayoExtendedOverlays,
+  inventoryEpicPatientDemographics,
+  isEpicMayoMyHealthSummaryDocument,
+  parseEpicMayoActiveProblems,
+  parseEpicMayoAgeHint,
+  parseEpicMayoAllergies,
+  parseEpicMayoEncounters,
+  parseEpicMayoMedications,
+  parseEpicMayoPatientIdentityGuard,
+  parseEpicMayoResults,
+  parseEpicMayoSexGender,
+  parseEpicMayoVitals,
+  preprocessEpicMayoMyHealthSummaryText,
+  scrubImplausibleEpicPatientNames,
+} from './epicMayoMyHealthSummaryParse';
+import { inventoryEpicNoteFromClinic } from './epicNoteFromClinic';
+import { inventoryEpicSidebarSectionOccurrences } from './epicSectionOccurrences';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -17,6 +36,7 @@ import type {
   Tab14PatientFields,
 } from './tab14IntakeTypes';
 import { emptyInsuranceRow } from './tab14IntakeTypes';
+import { emptyExtendedSections } from './tab14PortabilitySections';
 
 function firstMatch(text: string, re: RegExp): string | undefined {
   return text.match(re)?.[1]?.trim();
@@ -30,6 +50,7 @@ function isRedactedId(value: string | undefined): boolean {
 
 export function isEpicHealthSummaryDocument(text: string): boolean {
   const flat = collapseWs(text);
+  if (isEpicMayoMyHealthSummaryDocument(text)) return true;
   return (
     (/Patient Health Summary|Summary of Care, generated on/i.test(flat) &&
       (/Copyright ©\d{4} Epic|Note from Centralus|Epic Systems Corporation/i.test(flat) ||
@@ -75,7 +96,10 @@ function parseEpicDemographicsBanner(flat: string): Tab14PatientFields {
     out.race = parts[2];
     out.ethnicity = parts[3];
   }
-  if (marital) out.maritalStatus = marital;
+  if (marital) {
+    const normalized = normalizeMaritalStatus(marital);
+    if (normalized) out.maritalStatus = normalized;
+  }
   return out;
 }
 
@@ -765,18 +789,65 @@ function parseEpicLabPanels(flat: string, raw: string): Tab14LabPanel[] {
   return panels;
 }
 
-export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseResult {
+function parseEpicMayoDialect(raw: string): Tab14IntakeParseResult {
+  const text = preprocessEpicMayoMyHealthSummaryText(raw.replace(/\r\n/g, '\n'));
+  const flat = collapseWs(text);
+  const vitals = parseEpicMayoVitals(flat);
+  const allergies = parseEpicMayoAllergies(text);
+  const medications = parseEpicMayoMedications(text);
+  const chronicConditions = parseEpicMayoActiveProblems(text);
+  const { visits } = parseEpicMayoEncounters(text);
+  const { labs } = parseEpicMayoResults(text);
+  const overlays = buildEpicMayoExtendedOverlays(text);
+  const demographics = inventoryEpicPatientDemographics(text);
+  const noteFromClinic = inventoryEpicNoteFromClinic(text);
+  const sidebarSections = inventoryEpicSidebarSectionOccurrences(text);
+
+  const patientFields = scrubImplausibleEpicPatientNames({
+    ...parseEpicMayoPatientIdentityGuard(),
+    ...demographics.fields,
+    ...parseEpicMayoSexGender(flat),
+    ...vitals.fields,
+    ...parseEpicMayoAgeHint(flat),
+  });
+
+  return withSanitizedPatientFieldWarnings({
+    patientFields,
+    noKnownDrugAllergies: allergies.length === 0 && /No known active allergies/i.test(flat),
+    noKnownProblems: detectNoKnownProblems(text),
+    insurances: [],
+    allergies,
+    medications,
+    chronicConditions,
+    hospitalVisit: visits[0] ?? {},
+    hospitalVisits: visits.length ? visits : undefined,
+    labPanels: labs,
+    vitalsHistory: vitals.history.length ? vitals.history : undefined,
+    extendedSections: { ...emptyExtendedSections(), ...overlays },
+    epicSectionOccurrenceCounts: {
+      'Patient Demographics': demographics.occurrenceCount,
+      'Note from Mayo Clinic': noteFromClinic.occurrenceCount,
+      ...sidebarSections.countsByTitle,
+    },
+    epicDemographicsOccurrences: demographics.occurrences,
+    epicNoteFromClinicOccurrences: noteFromClinic.occurrences,
+    epicSectionOccurrencesByKey: sidebarSections.byKey,
+  });
+}
+
+/** Centralus / short Summary of Care dialect (Joanna Smith fixture). */
+function parseEpicCentralusDialect(raw: string): Tab14IntakeParseResult {
   const text = raw.replace(/\r\n/g, '\n');
   const flat = collapseWs(text);
 
-  const patientFields: Tab14PatientFields = {
+  const patientFields: Tab14PatientFields = scrubImplausibleEpicPatientNames({
     ...parseEpicDemographicsBanner(flat),
     ...parseEpicPatientName(flat),
     ...parseEpicContact(flat),
     ...parseEpicSexGender(flat),
     ...parseEpicVitals(flat),
     ...parseEpicEmergencyContact(flat),
-  };
+  });
 
   const { nkda, rows: allergies } = parseEpicAllergies(flat, text);
   const outpatientMeds = parseEpicMedications(text);
@@ -796,6 +867,7 @@ export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseRes
   return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: nkda,
+    noKnownProblems: detectNoKnownProblems(text),
     insurances: parseEpicInsurance(flat),
     allergies,
     medications,
@@ -804,3 +876,17 @@ export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseRes
     labPanels,
   });
 }
+
+export function parseEpicHealthSummaryDocument(raw: string): Tab14IntakeParseResult {
+  if (isEpicMayoMyHealthSummaryDocument(raw)) {
+    return parseEpicMayoDialect(raw);
+  }
+  return parseEpicCentralusDialect(raw);
+}
+
+export {
+  isEpicMayoMyHealthSummaryDocument,
+  preprocessEpicMayoMyHealthSummaryText,
+  scrubImplausibleEpicPatientNames,
+} from './epicMayoMyHealthSummaryParse';
+

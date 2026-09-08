@@ -237,3 +237,56 @@ class AdminActivityEventSerializer(serializers.ModelSerializer):
             return None
         p = obj.patient
         return f"{p.family_name}, {p.given_name}".strip(", ")
+
+
+class PatientDocumentSerializer(serializers.ModelSerializer):
+    uploaded_by_username = serializers.SerializerMethodField()
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.PatientDocument
+        fields = (
+            "document_id",
+            "patient",
+            "file",
+            "original_filename",
+            "content_type",
+            "size_bytes",
+            "status",
+            "notes",
+            "parse_snapshot",
+            "parsed_given_name",
+            "parsed_family_name",
+            "uploaded_by",
+            "uploaded_by_username",
+            "download_url",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "document_id",
+            "original_filename",
+            "content_type",
+            "size_bytes",
+            "uploaded_by",
+            "uploaded_by_username",
+            "download_url",
+            "created_at",
+            "updated_at",
+        )
+        extra_kwargs = {
+            "file": {"write_only": True, "required": False},
+            "status": {"required": False},
+            "notes": {"required": False},
+            "parse_snapshot": {"required": False},
+            "parsed_given_name": {"required": False},
+            "parsed_family_name": {"required": False},
+        }
+
+    def get_uploaded_by_username(self, obj):
+        if obj.uploaded_by_id and obj.uploaded_by:
+            return obj.uploaded_by.get_username()
+        return None
+
+    def get_download_url(self, obj):
+        return f"/api/patient-documents/{obj.document_id}/download/"

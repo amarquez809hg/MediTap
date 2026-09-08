@@ -136,7 +136,11 @@ class RegisterSerializer(serializers.Serializer):
         try:
             _username_validator(v)
         except DjangoValidationError as e:
-            raise serializers.ValidationError(list(e.messages)) from e
+            # Prefer a clear, actionable message (Django's default omits "no spaces").
+            raise serializers.ValidationError(
+                "Please choose a username without spaces. Use one continuous name. "
+                "You may use letters, numbers, and the characters @ . + - _ only."
+            ) from e
         if User.objects.filter(username__iexact=v).exists():
             raise serializers.ValidationError("A user with that username already exists.")
         return v

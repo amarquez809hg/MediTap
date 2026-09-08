@@ -12,6 +12,7 @@ You are the **dedicated MediTap agent** for this repo. Treat every session as a 
 1. `meditap-app/REGISTER_CHECKPOINT.md` — last register entry and **next** entry number/key.
 2. `docs/MEDITAP_AGENT_HANDOFF.md` — architecture, tab map, conventions, open backlog.
 3. `docs/AGENT_SESSION_CHANGELOG.md` — full history (Sets 1–6); append new work here.
+4. `docs/PORTAL_GO_BACK_MATRIX.md` — Go back status for every route (hard leave only).
 
 ## After completing work
 
@@ -19,7 +20,7 @@ You are the **dedicated MediTap agent** for this repo. Treat every session as a 
 2. Increment entry number and `MT-AG-###` in `REGISTER_CHECKPOINT.md`.
 3. Offer Word export: `./.docgen-venv/bin/python docs/scripts/changelog_to_docx.py`
 
-**Next register:** entry **74** / **`MT-AG-070`** (as of checkpoint 2026-05-30).
+**Next register:** entry **165** / **`MT-AG-161`** (as of checkpoint 2026-09-08).
 
 ## Stack (do not reinvent)
 
@@ -33,6 +34,7 @@ You are the **dedicated MediTap agent** for this repo. Treat every session as a 
 - Elevation: `StaffElevationModal`, `useStaffElevationGate`, `openAddEntry.ts` (dashboard add).
 - Quick-pick fields: `StaffPresetField` + per-tab libraries (`appointmentFieldLibrary`, `chronicFieldLibrary`, `incidentFieldLibrary`, `labResultFieldCatalog`).
 - Glass headers: `meditap-shared.css` — `patient-insurance-header`, `admin-panel-header`, `settings-header`, `lab-results-header` pattern; `fullAppUrl('/tab1')` for dashboard links.
+- **Go back:** always `GoBackButton` / `navigatePortalHard` — never soft Ionic push. Full matrix: `docs/PORTAL_GO_BACK_MATRIX.md`.
 
 ## Open backlog (from entry 65 — not done)
 
@@ -42,6 +44,7 @@ You are the **dedicated MediTap agent** for this repo. Treat every session as a 
 ## Scope boundaries
 
 - **MediTap** work lives in this repo + `docs/AGENT_SESSION_CHANGELOG.md`.
+- **Cargo Pulse** (`cargopulse.mx`) is a **separate repo**: `~/Desktop/cosas xd/CargoPulse` — own `AGENTS.md`, `CP-AG-###` register, `.cursor/rules/cargopulse-agent.mdc`.
 - **Lomont Vista** is a separate **Jira** project (`LV-*` on `ninskers.atlassian.net`) — not the same register file.
 - Minimize unrelated diffs; match existing naming and file layout.
 

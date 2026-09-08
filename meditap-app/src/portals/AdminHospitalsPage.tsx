@@ -5,6 +5,8 @@ import {
   updateHospitalForAdmin,
   type HospitalApi,
 } from '../api';
+import GoBackButton from '../components/GoBackButton';
+import { ADMIN_PORTAL_HOME } from './portalPaths';
 import './adminOps.css';
 
 const AdminHospitalsPage: React.FC = () => {
@@ -72,6 +74,9 @@ const AdminHospitalsPage: React.FC = () => {
       <header className="admin-ops__header">
         <h1>Hospitals</h1>
         <p>List, create, and rename facilities used by intake and incidents.</p>
+        <div className="admin-ops__actions">
+          <GoBackButton fallback={ADMIN_PORTAL_HOME} variant="plain" />
+        </div>
       </header>
 
       <form className="admin-ops__search" onSubmit={onCreate}>

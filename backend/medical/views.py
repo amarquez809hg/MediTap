@@ -1,10 +1,16 @@
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from django.db.models import Q
+from django.http import FileResponse
+from django.core.exceptions import PermissionDenied
 import uuid
 
 from . import models, serializers
 from .patient_api_scoping import (
+    allowed_patient_ids,
     filter_by_allowed_patients,
     scoped_patient_queryset,
 )
@@ -19,6 +25,15 @@ class BaseViewSet(viewsets.ModelViewSet):
 class PatientViewSet(BaseViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = serializers.PatientSerializer
+
+    def get_permissions(self):
+        # Patients may create their bootstrap chart once and always read it.
+        # Updates/deletes are staff-only (admin portal on-behalf edits).
+        if self.request.method in permissions.SAFE_METHODS:
+            return [IsAuthenticated()]
+        if self.request.method == "POST":
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IntakeEditorWritePermission()]
 
     def get_queryset(self):
         qs = scoped_patient_queryset(self.request)
@@ -244,3 +259,227 @@ class AdminActivityEventViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
         serializer.save(actor=user)
+
+
+class PatientDocumentViewSet(viewsets.ModelViewSet):
+    """
+    Document vault v1: patients upload for clinic review; staff list/review/update status.
+    Chart field edits remain staff-only elsewhere.
+    """
+
+    queryset = models.PatientDocument.objects.select_related("patient", "uploaded_by").all()
+    serializer_class = serializers.PatientDocumentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    lookup_field = "document_id"
+    http_method_names = ["get", "post", "patch", "head", "options", "delete"]
+
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [IsAuthenticated()]
+        if self.request.method == "POST":
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IntakeEditorWritePermission()]
+
+    def get_queryset(self):
+        qs = filter_by_allowed_patients(
+            self.request, super().get_queryset(), "patient_id"
+        )
+        if self.action == "list":
+            patient_id = self.request.query_params.get("patient")
+            if patient_id:
+                return qs.filter(patient_id=patient_id)
+            # Patients: scoped qs is already their own charts. Staff may list all.
+            return qs
+        document_id = self.kwargs.get("document_id")
+        if document_id:
+            return qs.filter(document_id=document_id)
+        return qs.none()
+
+    def perform_create(self, serializer):
+        patient = serializer.validated_data["patient"]
+        allowed = allowed_patient_ids(self.request)
+        if allowed is not None and str(patient.patient_id) not in allowed:
+            raise PermissionDenied("You may only upload documents for your own chart.")
+
+        upload = serializer.validated_data.get("file")
+        filename = getattr(upload, "name", None) or "upload.bin"
+        content_type = getattr(upload, "content_type", None) or ""
+        size = int(getattr(upload, "size", 0) or 0)
+        user = self.request.user if self.request.user.is_authenticated else None
+        doc = serializer.save(
+            uploaded_by=user,
+            original_filename=filename[:255],
+            content_type=(content_type or "")[:128],
+            size_bytes=max(size, 0),
+            status=models.PatientDocument.STATUS_PENDING,
+        )
+        log_admin_activity(
+            actor=user,
+            action="document.upload",
+            patient_id=str(doc.patient_id),
+            detail={
+                "document_id": str(doc.document_id),
+                "filename": doc.original_filename,
+                "size_bytes": doc.size_bytes,
+            },
+        )
+
+    def perform_update(self, serializer):
+        doc = serializer.save()
+        log_admin_activity(
+            actor=self.request.user if self.request.user.is_authenticated else None,
+            action="document.update",
+            patient_id=str(doc.patient_id),
+            detail={
+                "document_id": str(doc.document_id),
+                "status": doc.status,
+            },
+        )
+
+    def perform_destroy(self, instance):
+        patient_id = str(instance.patient_id)
+        document_id = str(instance.document_id)
+        filename = instance.original_filename
+        instance.file.delete(save=False)
+        instance.delete()
+        log_admin_activity(
+            actor=self.request.user if self.request.user.is_authenticated else None,
+            action="document.delete",
+            patient_id=patient_id,
+            detail={"document_id": document_id, "filename": filename},
+        )
+
+    @action(detail=True, methods=["get"], url_path="download")
+    def download(self, request, document_id=None):
+        doc = self.get_object()
+        if not doc.file:
+            return Response({"detail": "File missing."}, status=status.HTTP_404_NOT_FOUND)
+        return FileResponse(
+            doc.file.open("rb"),
+            as_attachment=True,
+            filename=doc.original_filename or "document",
+            content_type=doc.content_type or "application/octet-stream",
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="apply-demographics",
+        permission_classes=[IsAuthenticated, IntakeEditorWritePermission],
+    )
+    def apply_demographics(self, request, document_id=None):
+        """
+        Apply parse_snapshot.patientFields onto the linked Patient chart.
+        Blocks on identity mismatch unless force=true.
+        """
+        from datetime import datetime
+
+        doc = self.get_object()
+        patient = doc.patient
+        snapshot = doc.parse_snapshot or {}
+        fields = snapshot.get("patientFields") or {}
+        if not isinstance(fields, dict) or not fields:
+            return Response(
+                {"detail": "No parse snapshot demographics to apply."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        def norm(s):
+            return " ".join(str(s or "").casefold().split())
+
+        parsed_given = (doc.parsed_given_name or fields.get("givenName") or "").strip()
+        parsed_family = (doc.parsed_family_name or fields.get("familyName") or "").strip()
+        force = bool(request.data.get("force"))
+
+        identity_ok = (
+            norm(parsed_given) == norm(patient.given_name)
+            and norm(parsed_family) == norm(patient.family_name)
+        )
+        if not identity_ok and not force:
+            return Response(
+                {
+                    "detail": "Parsed name does not match chart patient.",
+                    "identity_match": False,
+                    "parsed_name": f"{parsed_given} {parsed_family}".strip(),
+                    "chart_name": f"{patient.given_name} {patient.family_name}".strip(),
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        updated = []
+        mapping = [
+            ("givenName", "given_name"),
+            ("familyName", "family_name"),
+            ("email", "email"),
+            ("phone", "phone"),
+            ("address", "address"),
+            ("bloodType", "blood_type"),
+            ("sex", "sex_at_birth"),
+            ("preferredLanguage", "preferred_language"),
+            ("race", "race"),
+            ("ethnicity", "ethnicity"),
+            ("maritalStatus", "marital_status"),
+        ]
+        for src, dest in mapping:
+            val = fields.get(src)
+            if val is None:
+                continue
+            text = str(val).strip()
+            if not text:
+                continue
+            if dest == "blood_type":
+                text = text[:3]
+            setattr(patient, dest, text)
+            updated.append(dest)
+
+        dob_raw = fields.get("dateOfBirth")
+        if dob_raw:
+            dob_text = str(dob_raw).strip()
+            parsed_dob = None
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%d/%m/%Y"):
+                try:
+                    parsed_dob = datetime.strptime(dob_text[:10], fmt).date()
+                    break
+                except ValueError:
+                    continue
+            if parsed_dob:
+                patient.date_of_birth = parsed_dob
+                updated.append("date_of_birth")
+
+        if not updated:
+            return Response(
+                {"detail": "Snapshot had no applicable demographic fields."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        patient.save(update_fields=list(dict.fromkeys(updated + ["updated_at"])))
+        doc.status = models.PatientDocument.STATUS_APPLIED
+        doc.parsed_given_name = parsed_given[:100]
+        doc.parsed_family_name = parsed_family[:100]
+        doc.save(
+            update_fields=[
+                "status",
+                "parsed_given_name",
+                "parsed_family_name",
+                "updated_at",
+            ]
+        )
+        log_admin_activity(
+            actor=request.user if request.user.is_authenticated else None,
+            action="document.apply_demographics",
+            patient_id=str(patient.patient_id),
+            detail={
+                "document_id": str(doc.document_id),
+                "fields": updated,
+                "forced": force and not identity_ok,
+                "identity_match": identity_ok,
+            },
+        )
+        return Response(
+            {
+                "document": serializers.PatientDocumentSerializer(doc).data,
+                "updated_fields": updated,
+                "identity_match": identity_ok,
+            }
+        )

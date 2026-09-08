@@ -1,8 +1,8 @@
 # Admin portal capabilities matrix
 
 **Branch:** `feature/portal-split`  
-**Updated:** 2026-07-27  
-**Register:** MT-AG-078+
+**Updated:** 2026-07-28  
+**Register:** MT-AG-078+ / MT-AG-086 (admin dashboard UI)
 
 Status legend: `done` | `partial` | `missing` | `deferred`
 
@@ -12,7 +12,7 @@ Status legend: `done` | `partial` | `missing` | `deferred`
 |----------|--------|-------|
 | Staff / admin login door (`/admin-portal/login`) | done | Rejects patient-only accounts |
 | Patient login door (`/tab3`) | done | Cross-link to staff sign-in |
-| Admin shell chrome + dark theme | done | `.portal-shell--admin` |
+| Admin shell chrome + dark theme | done | Sidebar + top bar dashboard shell (`adminDashboard.css`) |
 | Route guards (`AdminPortalRoute`) | done | Patients blocked from admin routes |
 | Return to admin from patient view (staff) | done | Nav pill on user shell |
 | Staff elevation (kiosk on patient session) | done | Kept for shared-device workflow |
@@ -24,6 +24,8 @@ Status legend: `done` | `partial` | `missing` | `deferred`
 | Patient search / list | done | `/admin-portal/patients` + `GET /api/patients/?q=` |
 | Selected patient context | done | `AdminPatientContext` + `X-Meditap-Patient-Id` |
 | Patient chart hub | done | `/admin-portal/patients/:id` |
+| Clinical charts profile entry | done | `/admin-portal/charts` — profile first, then open sections |
+| Embedded patient view (in admin shell) | done | `/admin-portal/patient-view/*` — compact fit in content zone |
 | Intake / demographics on behalf | done | Uses selected patient in `api.ts` |
 | Labs on behalf | done | Same patient resolution |
 | Appointments on behalf | done | Same |
@@ -46,7 +48,7 @@ Status legend: `done` | `partial` | `missing` | `deferred`
 |----------|--------|-------|
 | Admin activity log | done | `AdminActivityEvent` + `/admin-portal/activity` |
 | Immutable HIPAA audit product | deferred | Phase 4 full audit |
-| Document vault | deferred | Phase 4 |
+| Document vault | done (v1) | Patient upload → admin hub review/status; `/api/patient-documents/` |
 | Messaging / support inbox | deferred | Phase 5 |
 | View Logs stub in Tab13 | done | Routes to activity page |
 

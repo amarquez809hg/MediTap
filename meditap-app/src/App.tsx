@@ -42,10 +42,15 @@ import AdminPortalHome from './portals/AdminPortalHome';
 import AdminLoginPage from './portals/AdminLoginPage';
 import AdminPatientsPage from './portals/AdminPatientsPage';
 import AdminPatientHubPage from './portals/AdminPatientHubPage';
+import AdminDocumentReviewQueuePage from './portals/AdminDocumentReviewQueuePage';
 import AdminHospitalsPage from './portals/AdminHospitalsPage';
 import AdminActivityPage from './portals/AdminActivityPage';
+import AdminClinicalChartsPage from './portals/AdminClinicalChartsPage';
+import AdminPatientViewEmbed from './portals/AdminPatientViewEmbed';
 import { AdminPatientProvider } from './portals/AdminPatientContext';
+import { ADMIN_PATIENT_VIEW_PATHS } from './portals/adminPatientViewPaths';
 import { LEGACY_TAB_REDIRECTS, LOGIN_PATH, resolvePostLoginPath } from './portals/portalPaths';
+import { PortalHistoryProvider } from './navigation/PortalHistoryContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -94,8 +99,10 @@ const RootRoute: React.FC = () => {
 };
 
 const LegacyTabRedirect: React.FC<{ from: string }> = ({ from }) => {
+  const location = useLocation();
   const to = LEGACY_TAB_REDIRECTS[from];
-  return <Redirect to={to || LOGIN_PATH} />;
+  if (!to) return <Redirect to={LOGIN_PATH} />;
+  return <Redirect to={{ pathname: to, search: location.search, hash: location.hash }} />;
 };
 
 const AppRoutes: React.FC = () => {
@@ -134,6 +141,7 @@ const AppRoutes: React.FC = () => {
   return (
     <IonApp className={ionAppClass}>
       <IonReactRouter>
+        <PortalHistoryProvider>
         <>
           <SessionExpiredModal />
           <CookieConsentBanner />
@@ -258,6 +266,101 @@ const AppRoutes: React.FC = () => {
                 </AdminPortalLayout>
               </AdminPortalRoute>
             </Route>
+            <Route exact path="/admin-portal/documents">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminDocumentReviewQueuePage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/charts">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminClinicalChartsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.dashboard}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab1 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.status}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab2 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.appointments}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab4 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.conditions}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab5 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.incidents}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab6 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.labs}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab7 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.insurance}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab12 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.intake}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab14 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path={ADMIN_PATIENT_VIEW_PATHS.settings}>
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminPatientViewEmbed>
+                    <Tab11 />
+                  </AdminPatientViewEmbed>
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
             <Route exact path="/admin-portal/hospitals">
               <AdminPortalRoute>
                 <AdminPortalLayout>
@@ -298,6 +401,7 @@ const AppRoutes: React.FC = () => {
             </Route>
           </IonRouterOutlet>
         </>
+        </PortalHistoryProvider>
       </IonReactRouter>
     </IonApp>
   );

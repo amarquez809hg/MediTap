@@ -1,0 +1,755 @@
+Mrs. Jane A. Smith-Doe
+Patient Health Summary, generated on Aug. 07, 2026
+Patient Demographics Female; born Mar. 15, 1976
+Patient Address 4821 Maple Grove Ln, Fort Worth, TX 76102-3345
+Patient Name Mrs. Jane A. Smith-Doe
+Former / Aliases: Jane Smith Jane A. Doe Jane A. Smithdoe Jane Smith
+Communication 555-014-7788(Mobile) 555-014-7788(Home) jane.smithdoe@example.com
+Language English - Spoken (Preferred) English - Written (Preferred)
+Race / Ethnicity White / Hispanic or Latino
+Marital Status Married
+Note from Mayo Clinic This document contains information that was shared with Jane A. Smith-Doe. It may not contain the entire record from Mayo Clinic.
+Allergies Penicillamine (Rash) - Medium Criticality Penicillins (Rash (Reselect Reaction))
+
+Immunizations HZV (ZOSTAVAX) (Given 7/25/2013) Influenza TIV (IM) (Given 10/1/2025) Influenza, Unspecified (Given 9/1/2025) PCV13 (Given 7/25/2013) PPSV23 (Given 9/1/2025) SARS-COV-2 (COVID-19) - PFIZER Fall Seasonal (5-11 YEARS) (Given 10/1/2025) Tdap (Given 5/15/2026, 7/25/2013) Social History Tobacco Use Types Packs/Day Years Used Date Smoking Tobacco: Never Passive Smoke Exposure: Never Smokeless Tobacco: Never Tobacco Cessation: Counseling Given: Not Answered Alcohol Use Standard Drinks/Week Date Recorded Yes 1 (1 standard drink = 0.6 oz pure alcohol) 05/13/2026 Hunger Vital Sign Answer Date RecordedWithin the past 12 months, you worried that your food would
+run out before you got the money to buy more. Never true 05/14/2026Within the past 12 months, the food you bought just didn't last
+and you didn't have money to get more. Never true 05/14/2026 PRAPARE - Transportation Answer Date RecordedIn the past 12 months, has lack of transportation kept you from
+medical appointments or from getting medications? No 05/14/2026In the past 12 months, has lack of transportation kept you from
+meetings, work, or from getting things needed for daily living? No 05/14/2026 AHC Utilities Answer Date RecordedIn the past 12 months has the electric, gas, oil, or water company
+threatened to shut off services in your home? No 05/14/2026 Housing Stability Answer Date Recorded What is your living situation today? I have a steady place to live 05/14/2026 Pregnant Comments No Sex and Gender Information Value Date Recorded Sex Assigned at Birth Female 05/10/2026 10:11 PM CDT Legal Sex Female 02/02/2017 11:53 PM CST Gender Identity Female 05/10/2026 10:11 PM CDT Sexual Orientation Straight 05/10/2026 10:11 PM CDT Last Filed Vital Signs Vital Sign Reading Time Taken Comments Blood Pressure 126 / 82 08/06/2026 7:48 AM CDT Pulse 73 08/06/2026 7:48 AM CDT Temperature 36.6 °C (97.9 °F) 08/06/2026 7:48 AM CDT Respiratory Rate 15 06/19/2026 10:40 AM CDT Oxygen Saturation 97% 06/03/2026 1:10 PM CDT Inhaled Oxygen Concentration - -Weight 75.6 kg (166 lb 10.7 oz) 08/06/2026 7:48 AM CDT Height 161 cm (5' 3.39") 08/06/2026 7:48 AM CDT Body Mass Index 29.17 08/06/2026 7:48 AM CDT
+Encounters - as of 08/07/2026 Date Type Department Care Team Description08/06/2026
+8:31 AM
+CDT -
+08/06/2026
+11:59 PM
+CDTHospital
+EncounterDepartment of Laboratory
+Medicine and Pathology, Hilton
+Building, in Rochester,Minnesota 210 2ND ST SW ROCHESTER, MN 55902-4436 507-284-2474 Derek Rupp, APRN, C.N.P.,D.N.P.Discharge Disposition: Home or
+Self Care08/06/2026
+8:00 AM
+CDTComprehensive
+Visit Division of Rheumatology in Rochester, Minnesota 200 1ST ST SW ROCHESTER, MN 55905-0001 507-284-4550 Delamo Bekele, M.B.B.S.08/05/2026
+4:00 PM
+CDT Office Visit Department of Neurology in Rochester, Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-1588 Orhun Kantarci, M.D.08/04/2026
+8:00 AM
+CDTComprehensive
+Visit Department of Ophthalmology in Rochester, Minnesota 200 1ST ST SW ROCHESTER, MN 55905-0001 507-284-2744 Kevin Chodnicki, M.D.08/03/2026
+6:36 PM
+CDT -
+08/03/2026
+11:59 PM
+CDTHospital
+EncounterDepartment of Radiology,
+Charlton North, in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-0000 Orhun Kantarci, M.D. Discharge Disposition: Home or
+Self Care07/23/2026
+3:00 PM
+CDT Telemedicine Department of Neurology in Rochester, Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-1588 Derek Rupp, APRN, C.N.P.,D.N.P.06/19/2026
+12:00 PM
+CDT Office Visit Department of Neurology in Rochester, Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-1588 Derek Rupp, APRN, C.N.P.,D.N.P.06/19/2026
+7:15 AM
+CDT Infusion Department of Infusion
+Therapy in Rochester,Minnesota 201 W CENTER ST ROCHESTER, MN 55902-3003 507-284-4319 Orhun Kantarci, M.D.06/10/2026
+10:00 AM
+CDT Telemedicine Department of Neurology in Rochester, Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-1588 Derek Rupp, APRN, C.N.P.,D.N.P.06/05/2026
+7:00 AM
+CDT Infusion Department of Infusion
+Therapy in Rochester,Minnesota 201 W CENTER ST ROCHESTER, MN 55902-3003 507-284-4319 Orhun Kantarci, M.D.06/04/2026
+8:21 AM
+CDT -
+06/04/2026
+9:10 AM
+CDTHospital
+EncounterDepartment of Radiology,
+Gonda Building, in Rochester,Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-255-5659 Tanish Modi, M.B.B.S. Discharge Disposition: Home or
+Self Care06/03/2026
+9:00 AM
+CDT Office Visit Department of Neurology in Rochester, Minnesota 100 3RD AVE SW Federico Montini, M.D., Ph.D. Susan Horsman, Pharm.D.,R.Ph.
+Date Type Department Care Team Description ROCHESTER, MN 55902-3198 507-284-158806/03/2026
+11:29 AM
+CDT -
+06/03/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care06/01/2026
+8:52 AM
+CDT -
+06/01/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care06/01/2026
+2:00 PM
+CDTComprehensive
+Visit Department of Neurology in Rochester, Minnesota 1216 2ND ST SW ROCHESTER, MN 55902-1906 507-284-1588 Rafid Mustafa, M.D.05/28/2026
+12:41 PM
+CDT -
+05/28/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care05/26/2026
+12:50 PM
+CDT -
+05/26/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care05/22/2026
+12:44 PM
+CDT -
+05/22/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care05/20/2026
+12:55 PM
+CDT -
+05/20/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care05/18/2026
+2:17 PM
+CDT -
+05/18/2026
+11:59 PM
+CDTHospital
+EncounterDivision of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Discharge Disposition: Home or
+Self Care05/18/2026
+11:31 AM
+CDT -
+05/18/2026
+2:19 PM
+CDTHospital
+EncounterDepartment of Radiology,
+Gonda Building, in Rochester,Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-255-5659 Tanish Modi, M.B.B.S. Edwin Takahashi, M.D.Discharge Disposition: Home or
+Self Care 05/15/2026 Documentation Division of Transfusion
+Medicine in Rochester,Minnesota 10 3RD AVE NW ROCHESTER, MN 55901-2890 507-538-6020 Olivia Iverson, M.D. Olivia Iverson, M.D.
+Date Type Department Care Team Description05/13/2026
+8:54 AM
+CDT -
+05/15/2026
+6:03 PM
+CDTHospital
+EncounterMayo Clinic Hospital, Saint
+Marys Campus, Domitilla Building, Second floor 1216 2ND ST SW ROCHESTER, MN 55902-1906 507-255-5516 John Schupbach, M.D., M.B.A. Jeahan Colletti, M.D. M. Paz Soldan, M.D., Ph.D. Rafid Mustafa, M.D.Discharge Disposition: Home or
+Self Care05/13/2026
+7:33 AM
+CDT -
+05/13/2026
+8:53 AM
+CDTHospital
+EncounterDepartment of Laboratory
+Medicine and Pathology, Hilton
+Building, in Rochester,Minnesota 210 2ND ST SW ROCHESTER, MN 55902-4436 507-284-2474 Orhun Kantarci, M.D. Discharge Disposition: Home or
+Self Care 05/12/2026 Clinical
+Communication Department of Ophthalmology in Albert Lea, Minnesota 404 W FOUNTAIN ST ALBERT LEA, MN 56007-2437 507-373-8214 Kevin Chodnicki, M.D. Kevin Chodnicki, M.D.05/12/2026
+12:36 PM
+CDT -
+05/12/2026
+11:59 PM
+CDTHospital
+EncounterDepartment of Radiology,
+Gonda Building, in Rochester,Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-4773 Orhun Kantarci, M.D. Discharge Disposition: Home or
+Self Care05/12/2026
+8:00 AM
+CDTComprehensive
+Visit Department of Neurology in Rochester, Minnesota 100 3RD AVE SW ROCHESTER, MN 55902-3198 507-284-1588 Orhun Kantarci, M.D. 07/26/2013 RST Conversion
+Encounter HX RST NO MAPPING Kathleen McEvoy, M.D., Ph.D. Kathleen McEvoy, M.D., Ph.D. 07/25/2013 RST Conversion
+Encounter HX RST NO MAPPING Nurse Brook Nurse Brook 07/24/2013 RST Conversion
+Encounter HX RST NO MAPPING Kathleen McEvoy, M.D., Ph.D. Kathleen McEvoy, M.D., Ph.D. 07/23/2013 RST Conversion
+Encounter HX RST NO MAPPING Kathleen McEvoy, M.D., Ph.D. Kathleen McEvoy, M.D., Ph.D. Allergies - as of 08/07/2026 Active Allergy Reactions Criticality Noted Date Comments Penicillamine Rash Medium 05/08/2026 Penicillins Rash (Reselect Reaction) 07/23/2013
+Medications - as of 08/07/2026 Medication SigDispense
+Quantity Last Filled Start Date End Date Status alendronate (Fosamax) 70 mg tabletTake 70 mg by mouth
+once a week. Active rosuvastatin (Crestor) 10 mg tabletTake 10 mg by mouth
+daily. Active MULTIVITAMIN ORAL Take 1 tablet by mouth
+daily. 07/23/2013 Active LORazepam (Ativan) 0.5 mg tabletTake 0.5 mg by mouth at
+bedtime. Active IBU 600 mg tablet Take 600 mg by mouth
+every 6 (six) hours as
+needed. TAKE with food
+OR MILK (DO NOT MIX
+WITH CELECOXIB OR
+OTHER NSAIDS) 04/10/2026 Active carBAMazepine (Carbatrol) 100 mg 12 hr capsuleTake 1 cap twice daily for
+1 week then take 2 cap
+twice daily for 1 week
+then switch to 300 mg
+cap Rx. 42 capsule 06/10/2026 07/23/2026 Discontinued(Therapy
+completed) carBAMazepine (Carbatrol) 300 mg 12 hr capsuleAfter completing 100 mg
+cap Rx as per med sched,
+switch to 300 mg cap and
+take 1 cap twice daily. 60 capsule 06/10/2026
+12:17 PM CDT 06/10/2026 07/23/2026 Discontinued(Therapy
+completed)Hospital, Clinic, or Other Facility
+Administered Medication Ordered Dose Route Frequency Start Date End Date Status fluorescein 100 mg/mL (10 %) injection 500 mg 500 mg IV Once in imaging 08/07/2026 Active indocyanine green injection 12.5 mg (IC Green) 12.5 mg IV Once in imaging 08/07/2026 Active sodium chloride 0.9 % injection 3 mL 3 mL IV As needed 08/07/2026 Active Active Problems - as of 08/07/2026 Problem Noted Date Diagnosed Date Arthritis Rheumatoid 08/06/2026 Osteopenia 08/06/2026 Neuromyelitis Optica 06/04/2026 Relapsing-Remitting Multiple Sclerosis 05/14/2026 Myelopathy 05/13/2026 Immunizations - as of 08/07/2026 Immunization Administration Dates Next Due HZV (ZOSTAVAX) 07/25/2013 Influenza TIV (IM) 10/01/2025 Influenza, Unspecified 09/01/2025 PCV13 07/25/2013 PPSV23 09/01/2025SARS-COV-2 (COVID-19) -
+PFIZER Fall Seasonal (5-11
+YEARS) 10/01/2025 Tdap 05/15/2026, 07/25/2013
+Social History - as of 08/07/2026 Smoking Status as of 06/04/2026 Tobacco Use Types Packs/Day Years Used Date Smoking Tobacco: Never Passive Smoke Exposure: Never Smokeless Tobacco: Never Smoking Status as of 03/16/2018 Tobacco Use Types Packs/Day Years Used Date Smoking Tobacco: Never Alcohol Use as of 05/13/2026 Alcohol Use Standard Drinks/Week Yes 1 (1 standard drink = 0.6 oz pure alcohol) Hunger Vital Sign Answer Date RecordedWithin the past 12 months, you worried that your food would
+run out before you got the money to buy more. Never true 05/14/2026Within the past 12 months, the food you bought just didn't last
+and you didn't have money to get more. Never true 05/14/2026 PRAPARE - Transportation Answer Date RecordedIn the past 12 months, has lack of transportation kept you from
+medical appointments or from getting medications? No 05/14/2026In the past 12 months, has lack of transportation kept you from
+meetings, work, or from getting things needed for daily living? No 05/14/2026 AHC Utilities Answer Date RecordedIn the past 12 months has the electric, gas, oil, or water company
+threatened to shut off services in your home? No 05/14/2026 Housing Stability Answer Date Recorded What is your living situation today? I have a steady place to live 05/14/2026 Sex and Gender Information Value Date Recorded Sex Assigned at Birth Female 05/10/2026 10:11 PM CDT Legal Sex Female 02/02/2017 11:53 PM CST Gender Identity Female 05/10/2026 10:11 PM CDT Sexual Orientation Straight 05/10/2026 10:11 PM CDT Last Filed Vital Signs - as of 08/07/2026 Vital Sign Reading Time Taken Comments Blood Pressure 126 / 82 08/06/2026 7:48 AM CDT Pulse 73 08/06/2026 7:48 AM CDT Temperature 36.6 °C (97.9 °F) 08/06/2026 7:48 AM CDT Respiratory Rate 15 06/19/2026 10:40 AM CDT Oxygen Saturation 97% 06/03/2026 1:10 PM CDT Inhaled Oxygen Concentration - -Weight 75.6 kg (166 lb 10.7 oz) 08/06/2026 7:48 AM CDT Height 161 cm (5' 3.39") 08/06/2026 7:48 AM CDT Body Mass Index 29.17 08/06/2026 7:48 AM CDT Plan of Treatment - as of 08/07/2026 Not on file
+Procedures - as of 08/07/2026 Procedure Name Priority Date/Time Associated Diagnosis CommentsOPTICAL COHERENCE
+TOMOGRAPHY (OCT) - OPTIC
+NERVE - OU - BOTH EYE Routine 08/03/2026 12:06
+PM CDT Visual Pathway Disorder Demyelinating Disease Central Nervous System Other Subjective Visual Disturbances Neuromyelitis OpticaAUTOMATED VF - EXTENDED -
+OU - BOTH EYES Routine 08/03/2026 10:53
+AM CDT Visual Pathway Disorder Demyelinating Disease Central Nervous System Other Subjective Visual Disturbances Neuromyelitis Optica LUMBAR PUNCTURE Routine 05/13/2026 6:04
+PM CDT MyelopathyOPTICAL COHERENCE
+TOMOGRAPHY (OCT) - OPTIC
+NERVE - OU - BOTH EYE Routine 05/12/2026 12:15
+PM CDT Multiple Sclerosis, Unspecified Visual Pathway Disorder Demyelinating Disease Central Nervous System
+Results - as of 08/07/2026 DSDNA AB, IGG, S - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature dsDNA Ab, IgG, S <10 0 - 99
+IU/mL08/06/2026
+5:31 PM
+CDT SDSC Comment:Interpretation: Negative (<100) Negative for anti-dsDNA IgG antibodies. Results do not rule out a diagnosis of systemic lupus erythematosus (SLE). Consider testing for anti-dsDNA IgG using Crithidia luciliae by indirect immunofluorescence, if clinically indicated. Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 11:33 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC SUPERIOR
+DRIVE SUPPORT CENTER 3050 Superior Dr NW Rochester, MN 55905 SDSC Mayo Clinic Laboratories
+- Rochester Superior Drive 3050 Superior Dr. NW Rochester, MN 55905 Sedimentation Rate (SEDIMENTATION RATE, B) - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Sedimentation Rate, B 2 2 - 22
+mm/h08/06/2026
+11:01 AM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:12 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905
+(ABNORMAL) Complete Blood Count (CBC) with Differential, Blood (CBC WITH DIFFERENTIAL, B) - Final result
+(08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hemoglobin 12.6 11.6 -
+15.0 g/
+dL08/06/2026
+9:42 AM
+CDT DTL Hematocrit 39.3 35.5 -
+44.9 %08/06/2026
+9:42 AM
+CDT DTL Erythrocytes 4.15 3.92 -
+5.13
+x10(12)/L08/06/2026
+9:42 AM
+CDT DTL MCV 94.7 78.2 -
+97.9 fL08/06/2026
+9:42 AM
+CDT DTL RBC Distrib Width 12.5 12.2 -
+16.1 %08/06/2026
+9:42 AM
+CDT DTL Platelet Count 176 157 -
+371
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Leukocytes 12.2 (H) 3.4 - 9.6
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Neutrophils 7.62 (H) 1.56 -
+6.45
+x10(9)/L08/06/2026
+9:42 AM
+CDT DHPM Lymphocytes 3.43 (H) 0.95 -
+3.07
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Monocytes 0.89 (H) 0.26 -
+0.81
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Eosinophils 0.18 0.03 -
+0.48
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Basophils 0.07 0.01 -
+0.08
+x10(9)/L08/06/2026
+9:42 AM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:12 AM
+CDT Narrative This result has an attachment that is not available. Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905
+Performing Organization Address City/State/ZIP Code Phone Number DHPM Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905(ABNORMAL) Immunoglobulins (IgG, IgA, and IgM) (IMMUNOGLOBULINS (IGG, IGA, AND IGM), S) - Final
+result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist SignatureImmunoglobulin A (IgA),
+S 27 (L) 61 - 356
+mg/dL08/06/2026
+2:18 PM
+CDT SDSCImmunoglobulin M
+(IgM), S 25 (L) 37 - 286
+mg/dL08/06/2026
+2:17 PM
+CDT SDSCImmunoglobulin G (IgG),
+S 419 (L) 767 -
+1590
+mg/dL08/06/2026
+2:18 PM
+CDT SDSC Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 11:51 AM
+CDT Narrative Authorizing Provider Result Type Result StatusDerek Rupp APRN,
+C.N.P., D.N.P. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC SUPERIOR
+DRIVE SUPPORT CENTER 3050 Superior Dr NW Rochester, MN 55905 SDSC Mayo Clinic Laboratories
+- Rochester Superior Drive 3050 Superior Dr. NW Rochester, MN 55905 Complement C3 (COMPL C3, S) - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Complement C3, S 115 75 - 175
+mg/dL08/06/2026
+2:13 PM
+CDT SDSC Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 11:25 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result
+Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC SUPERIOR
+DRIVE SUPPORT CENTER 3050 Superior Dr NW Rochester, MN 55905 SDSC Mayo Clinic Laboratories
+- Rochester Superior Drive 3050 Superior Dr. NW Rochester, MN 55905 Complement C4 (COMPLEMENT C4, S) - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Complement C4, S 28 14 - 40
+mg/dL08/06/2026
+2:14 PM
+CDT SDSC Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 11:25 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC SUPERIOR
+DRIVE SUPPORT CENTER 3050 Superior Dr NW Rochester, MN 55905 SDSC Mayo Clinic Laboratories
+- Rochester Superior Drive 3050 Superior Dr. NW Rochester, MN 55905 CRP (C-Reactive Protein) (C-REACTIVE PROTEIN (CRP), S/P) - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist SignatureC-Reactive Protein (CRP),
+S <3.0 <5.0 mg/
+L08/06/2026
+9:46 AM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:07 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905
+ALT (Alanine Aminotransferase) (ALANINE AMINOTRANSFERASE (ALT), S/P) - Final result (08/06/2026 8:41 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist SignatureAlanine
+Aminotransferase (ALT),
+S 27 7 - 45 U/
+L08/06/2026
+9:46 AM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:07 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905AST (Aspartate Aminotransferase) (ASPARTATE AMINOTRANSFERASE (AST), S/P) - Final result (08/06/2026 8:41 AM
+CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist SignatureAspartate
+Aminotransferase (AST),
+S 11 8 - 43 U/
+L08/06/2026
+9:46 AM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:07 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 Creatinine with Estimated GFR (CREATININE WITH EGFR, S/P) - Final result (08/06/2026 8:41 AM CDT)
+Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Creatinine 0.79 0.59 -
+1.04 mg/
+dL08/06/2026
+9:46 AM
+CDT DTL Estimated GFR (eGFR) 89 >=60
+mL/min/
+BSA08/06/2026
+9:46 AM
+CDT DTL Comment:Estimated GFR calculated using the 2021 CKD_EPI creatinine equation. Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 08/06/2026 8:41 AM
+CDT08/06/2026 9:07 AM
+CDT Narrative Authorizing Provider Result Type Result Status Delamo Bekele M.B.B.S. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST - Final result (08/03/2026 8:55 PM CDT) Anatomical Region Laterality ModalityHead, Brain, Neuroradiology
+RST LOS, Neuroradiology ARZ
+LOS, Neuroradiology FLA LOS N/A Magnetic Resonance Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Impressions 08/04/2026 2:19 AM CDT 1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an
+evolving demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in
+the left frontal and parietal lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic
+in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the
+spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5. Narrative 08/04/2026 2:19 AM CDT This result has an attachment that is not available.
+Narrative EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH
+IV CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the
+genu of the corpus callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1
+hypointensity (se7/im79). Similar appearance of previously noted tiny T2 hyperintense foci in the
+juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150). No new white matter
+lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement
+elsewhere. Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated
+than expected for age (2nd percentile) with slightly disproportionate involvement of the cerebral white
+matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or
+infarct. Intracranial flow voids are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic spondylosis with more focally moderate changes at C4-C5 where there is a enlarged
+dorsal disc extrusion that contacts and deforms the ventral spinal cord. Smaller dorsal disc bulges at
+C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral spurring in the cervical spine. No
+significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord
+including the left lateral funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central
+and posterior cord at T3, and posterior cord at T8. Some of the smaller lesions are better visualized on
+prior imaging due to pulsation artifact on the current study. The larger T3 lesion no longer demonstrates
+intramedullary enhancement and mild cord expansion has resolved. Procedure Note Robert McDonald, M.D., Ph.D. - 08/04/2026 Formatting of this note might be different from the original. EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH IV
+CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the genu of the corpus
+callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1 hypointensity (se7/im79). Similar appearance of
+previously noted tiny T2 hyperintense foci in the juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150).
+No new white matter lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement elsewhere.
+Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated than expected for age
+(2nd percentile) with slightly disproportionate involvement of the cerebral white matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or infarct. Intracranial flow voids
+are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic
+spondylosis with more focally moderate changes at C4-C5 where there is a enlarged dorsal disc extrusion that contacts and
+deforms the ventral spinal cord. Smaller dorsal disc bulges at C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral
+spurring in the cervical spine. No significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord including the left lateral
+funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central and posterior cord at T3, and posterior cord at T8. Some
+of the smaller lesions are better visualized on prior imaging due to pulsation artifact on the current study. The larger T3 lesion no
+longer demonstrates intramedullary enhancement and mild cord expansion has resolved. IMPRESSION:1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an evolving
+demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in the left frontal and parietal
+lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5.
+Authorizing Provider Result Type Result Status Orhun Kantarci M.D. IMG MRI PROCEDURES Final Result MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST - Final result (08/03/2026 8:55 PM CDT) Anatomical Region Laterality ModalityThoracic Spine, Neuroradiology
+RST LOS, Neuroradiology ARZ
+LOS, Neuroradiology FLA LOS N/A Magnetic Resonance Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Impressions 08/04/2026 2:19 AM CDT 1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an
+evolving demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in
+the left frontal and parietal lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic
+in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the
+spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5. Narrative 08/04/2026 2:19 AM CDT This result has an attachment that is not available. EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH
+IV CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the
+genu of the corpus callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1
+hypointensity (se7/im79). Similar appearance of previously noted tiny T2 hyperintense foci in the
+juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150). No new white matter
+lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement
+elsewhere. Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated
+than expected for age (2nd percentile) with slightly disproportionate involvement of the cerebral white
+matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or
+infarct. Intracranial flow voids are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic spondylosis with more focally moderate changes at C4-C5 where there is a enlarged
+dorsal disc extrusion that contacts and deforms the ventral spinal cord. Smaller dorsal disc bulges at
+C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral spurring in the cervical spine. No
+significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord
+including the left lateral funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central
+and posterior cord at T3, and posterior cord at T8. Some of the smaller lesions are better visualized on
+prior imaging due to pulsation artifact on the current study. The larger T3 lesion no longer demonstrates
+intramedullary enhancement and mild cord expansion has resolved. Procedure Note Robert McDonald, M.D., Ph.D. - 08/04/2026
+Procedure Note Formatting of this note might be different from the original. EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH IV
+CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the genu of the corpus
+callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1 hypointensity (se7/im79). Similar appearance of
+previously noted tiny T2 hyperintense foci in the juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150).
+No new white matter lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement elsewhere.
+Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated than expected for age
+(2nd percentile) with slightly disproportionate involvement of the cerebral white matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or infarct. Intracranial flow voids
+are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic
+spondylosis with more focally moderate changes at C4-C5 where there is a enlarged dorsal disc extrusion that contacts and
+deforms the ventral spinal cord. Smaller dorsal disc bulges at C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral
+spurring in the cervical spine. No significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord including the left lateral
+funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central and posterior cord at T3, and posterior cord at T8. Some
+of the smaller lesions are better visualized on prior imaging due to pulsation artifact on the current study. The larger T3 lesion no
+longer demonstrates intramedullary enhancement and mild cord expansion has resolved. IMPRESSION:1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an evolving
+demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in the left frontal and parietal
+lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5. Authorizing Provider Result Type Result Status Orhun Kantarci M.D. IMG MRI PROCEDURES Final Result MR CERVICAL SPINE WITHOUT AND WITH IV CONTRAST - Final result (08/03/2026 8:55 PM CDT) Anatomical Region Laterality ModalitySpine, Cervical Spine,
+Neuroradiology RST LOS,
+Neuroradiology ARZ LOS,
+Neuroradiology FLA LOS N/A Magnetic Resonance Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Impressions 08/04/2026 2:19 AM CDT 1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an
+evolving demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in
+the left frontal and parietal lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic
+in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the
+spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5. Narrative 08/04/2026 2:19 AM CDT This result has an attachment that is not available.
+Narrative EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH
+IV CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the
+genu of the corpus callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1
+hypointensity (se7/im79). Similar appearance of previously noted tiny T2 hyperintense foci in the
+juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150). No new white matter
+lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement
+elsewhere. Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated
+than expected for age (2nd percentile) with slightly disproportionate involvement of the cerebral white
+matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or
+infarct. Intracranial flow voids are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic spondylosis with more focally moderate changes at C4-C5 where there is a enlarged
+dorsal disc extrusion that contacts and deforms the ventral spinal cord. Smaller dorsal disc bulges at
+C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral spurring in the cervical spine. No
+significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord
+including the left lateral funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central
+and posterior cord at T3, and posterior cord at T8. Some of the smaller lesions are better visualized on
+prior imaging due to pulsation artifact on the current study. The larger T3 lesion no longer demonstrates
+intramedullary enhancement and mild cord expansion has resolved. Procedure Note Robert McDonald, M.D., Ph.D. - 08/04/2026 Formatting of this note might be different from the original. EXAM: MR BRAIN MULTIPLE SCLEROSIS W/QUANT ANALYSIS WO/W IV CONTRAST, MR CERVICAL SPINE WITHOUT AND WITH IV
+CONTRAST, MR THORACIC SPINE WITHOUT AND WITH IV CONTRAST COMPARISON: 5/13/2026 brain, cervical spine, and thoracic spine MRI, 5/6/2026 outside brain MRI FINDINGS:BRAIN: Continued enlargement of 9 x 12 x 9 mm (AP x LR x SI) nonenhancing T2 hyperintense focus in the genu of the corpus
+callosum (se800/im143), previously 6 x 8 x 9 mm. Increased colocalizing T1 hypointensity (se7/im79). Similar appearance of
+previously noted tiny T2 hyperintense foci in the juxtacortical white matter of the left frontal and parietal lobes (se800/im169,150).
+No new white matter lesions are identified nor new regions of abnormal signal, restricted diffusion, or enhancement elsewhere.
+Stable benign capillary telangiectasia in the left basal ganglia. Generalized parenchymal volume loss with ex vacuo prominence of the ventricular system that is aerated than expected for age
+(2nd percentile) with slightly disproportionate involvement of the cerebral white matter (7th percentile). No interval intracranial hemorrhage, mass, mass effect, extra-axial fluid collection, hydrocephalus, or infarct. Intracranial flow voids
+are intact. Paranasal sinuses are well-aerated. CERVICAL and THORACIC SPINE: Conventional cervicothoracic enumeration. Overall mild to moderate cervical and milder thoracic
+spondylosis with more focally moderate changes at C4-C5 where there is a enlarged dorsal disc extrusion that contacts and
+deforms the ventral spinal cord. Smaller dorsal disc bulges at C5-C6 and C6-C7. Multilevel facet arthropathy and uncovertebral
+spurring in the cervical spine. No significant spinal canal or foraminal stenosis. Redemonstrated multifocal regions of abnormal intramedullary T2 hyperintensity within the spinal cord including the left lateral
+funiculus at C2-C3, right lateral cord at C6, right hemicord at C7, central and posterior cord at T3, and posterior cord at T8. Some
+of the smaller lesions are better visualized on prior imaging due to pulsation artifact on the current study. The larger T3 lesion no
+longer demonstrates intramedullary enhancement and mild cord expansion has resolved. IMPRESSION:1. Continued enlargement of T2 hyperintense focus in the genu of the corpus callosum, compatible with an evolving
+demyelinating lesion; no features to suggest ongoing active intracranial demyelination. 2. Otherwise stable appearance of smaller foci of more nonspecific white matter T2 hyperintensities in the left frontal and parietal
+lobes. 3. Temporal evolution of demyelinating lesion at the level of T3 in the thoracic spinal cord, now chronic in appearance. 4. Otherwise stable appearance of mild-moderate burden of chronic demyelinating lesions elsewhere in the spinal cord. 5. Slight interval enlargement of dorsal central disc extrusion at C4-C5.
+Authorizing Provider Result Type Result Status Orhun Kantarci M.D. IMG MRI PROCEDURES Final ResultOPTICAL COHERENCE TOMOGRAPHY (OCT) - OPTIC NERVE - OU - BOTH EYE (OPTICAL COHERENCE TOMOGRAPHY
+(OCT) - OPTIC NERVE - OU - BOTH EYES) - Final result (08/03/2026 12:06 PM CDT) Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Narrative MC OPHTHALMOLOGY IMAGING EXAM - 08/03/2026 5:33 PM CDT This result has an attachment that is not available. OCT device used was Cirrus . Notes The interpretation report for this test can be found in the "Testing" section of the chart note dated 8/4/2026 Authorizing Provider Result Type Result Status Kevin Chodnicki M.D. OPHTH TOMOGRAPHY Final Result Performing Organization Address City/State/ZIP Code Phone Number MC OPHTHALMOLOGY IMAGING EXAM AUTOMATED VF - EXTENDED - OU - BOTH EYES - Final result (08/03/2026 10:53 AM CDT) Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Narrative MC OPHTHALMOLOGY IMAGING EXAM - 08/03/2026 5:32 PM CDT This result has an attachment that is not available. Right Eye Automated visual field device used was Zeiss. Strategy was SITA. Threshold was 24-2. Eyelid was taped. Left Eye Automated visual field device used was Zeiss. Strategy was SITA. Threshold was 24-2. Eyelid was taped. Notes Both lids taped The interpretation report for this test can be found in the "Testing" section of the chart note dated 8/4/2026 Authorizing Provider Result Type Result Status Kevin Chodnicki M.D. OPHTH VISUAL FIELD Final Result Performing Organization Address City/State/ZIP Code Phone Number MC OPHTHALMOLOGY IMAGING EXAM IR DIALYSIS / HIGH FLOW CATHETER REMOVAL - Final result (06/04/2026 8:55 AM CDT) Anatomical Region Laterality ModalityBody, Vascular Interventional
+RST LOS, Vascular
+Interventional ARZ LOS,
+Vascular Interventional FLA LOS N/A X-Ray Angiography Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time
+Impressions 06/04/2026 1:35 PM CDT Removal of a right chest tunneled high flow catheter. NR Narrative 06/04/2026 1:35 PM CDT EXAM: IR DIALYSIS / HIGH FLOW CATHETER REMOVAL CLINICAL HISTORY: 53-year-old female presenting with a right IJ tunneled dialysis line previously placed
+in VIR on 05/18/2026. This is no longer needed, patient presents for removal. TECHNIQUE:The patient was placed supine. Sterile catheter dressing removed. Chest and neck prepared and draped in
+sterile fashion. Lidocaine 1% used for local anesthetic. The retention suture was cut and the catheter entirely removed following blunt cuff dissection. Hemostasis obtained with manual pressure at the venotomy and skin exit site. Sterile dressing applied. The patient tolerated the procedure well. No
+immediate complication. Patient instructed to keep the dressing in place for 48 hours, after which they may shower. Avoid
+submerging the wound until fully healed, approximately 7-10 days. PREPROCEDURE: Patient seen and evaluated and determined appropriate for procedure. Proper patient
+identification and verification performed. Consent is up-to-date. Procedure Note Sherry Ge, APRN, C.N.P., M.S.N. - 06/04/2026 Formatting of this note might be different from the original. EXAM: IR DIALYSIS / HIGH FLOW CATHETER REMOVAL CLINICAL HISTORY: 53-year-old female presenting with a right IJ tunneled dialysis line previously placed in VIR on 05/18/2026.
+This is no longer needed, patient presents for removal. TECHNIQUE:The patient was placed supine. Sterile catheter dressing removed. Chest and neck prepared and draped in sterile fashion.
+Lidocaine 1% used for local anesthetic. The retention suture was cut and the catheter entirely removed following blunt cuff
+dissection. Hemostasis obtained with manual pressure at the venotomy and skin exit site. Sterile dressing applied. The patient
+tolerated the procedure well. No immediate complication. Patient instructed to keep the dressing in place for 48 hours, after which they may shower. Avoid submerging the wound until fully
+healed, approximately 7-10 days. PREPROCEDURE: Patient seen and evaluated and determined appropriate for procedure. Proper patient identification and
+verification performed. Consent is up-to-date. IMPRESSION:Removal of a right chest tunneled high flow catheter. NR Authorizing Provider Result Type Result Status Tanish Modi M.B.B.S. IMG IR PROCEDURES Final Result (ABNORMAL) Hematocrit (HEMATOCRIT, B) - Final result (06/03/2026 12:07 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hematocrit 32.3 (L) 35.5 -
+44.9 %06/03/2026
+12:13 PM
+CDT METH Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 06/03/2026 12:07 PM
+CDT06/03/2026 12:11 PM
+CDT Narrative
+Authorizing Provider Result Type Result Status Olivia Iverson M.D. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA METH Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 (ABNORMAL) Hematocrit (HEMATOCRIT, B) - Final result (06/01/2026 9:06 AM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hematocrit 31.2 (L) 35.5 -
+44.9 %06/01/2026
+9:34 AM
+CDT METH Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 06/01/2026 9:06 AM
+CDT06/01/2026 9:32 AM
+CDT Narrative Authorizing Provider Result Type Result Status Olivia Iverson M.D. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA METH Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 (ABNORMAL) CBC W DIFF NO ALERT (CBC NO CALL BACK, REFLEX T/S) - Final result (05/26/2026 1:24 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hemoglobin 9.6 (L) 11.6 -
+15.0 g/
+dL05/26/2026
+2:29 PM
+CDT DTL Hematocrit 29.4 (L) 35.5 -
+44.9 %05/26/2026
+2:29 PM
+CDT DTL Erythrocytes 3.07 (L) 3.92 -
+5.13
+x10(12)/L05/26/2026
+2:29 PM
+CDT DTL MCV 95.8 78.2 -
+97.9 fL05/26/2026
+2:29 PM
+CDT DTL RBC Distrib Width 13.6 12.2 -
+16.1 %05/26/2026
+2:29 PM
+CDT DTL Platelet Count 84 (L) 157 -
+371
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL
+Component Value
+Ref
+Range Test Method
+Analysis
+Time
+Performed
+At Pathologist Signature Leukocytes 6.0 3.4 - 9.6
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL Neutrophils 4.41 1.56 -
+6.45
+x10(9)/L05/26/2026
+2:29 PM
+CDT DHPM Lymphocytes 0.95 0.95 -
+3.07
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL Monocytes 0.50 0.26 -
+0.81
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL Eosinophils 0.15 0.03 -
+0.48
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL Basophils 0.03 0.01 -
+0.08
+x10(9)/L05/26/2026
+2:29 PM
+CDT DTL Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 05/26/2026 1:24 PM CDT 05/26/2026 1:48 PM CDT Narrative Authorizing Provider Result Type Result Status Luz Sullivan M.D. LAB BLOOD NON ADD-
+ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA DTL Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 DHPM Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 PH BLOOD GAS - Final result (05/22/2026 1:27 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature pH 7.40 7.35 -
+7.45 pH05/22/2026
+1:34 PM
+CDT METH Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood 05/22/2026 1:27 PM CDT 05/22/2026 1:32 PM CDT Narrative Authorizing Provider Result Type Result Status Olivia Iverson M.D. LAB HISTORICAL
+ORDERS Final Result
+Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA METH Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 Calcium, Ionized (CALCIUM, IONIZED, S/B) - Final result (05/22/2026 1:27 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Calcium, Ionized, B 4.86 4.65 -
+5.30 mg/
+dL05/22/2026
+1:35 PM
+CDT METH Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 05/22/2026 1:27 PM CDT 05/22/2026 1:32 PM CDT Narrative Authorizing Provider Result Type Result Status Olivia Iverson M.D. LAB BLOOD NON ADD-
+ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA METH Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 (ABNORMAL) Hematocrit (HEMATOCRIT, B) - Final result (05/22/2026 12:54 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hematocrit 34.4 (L) 35.5 -
+44.9 %05/22/2026
+1:32 PM
+CDT METH Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 05/22/2026 12:54 PM
+CDT 05/22/2026 1:30 PM CDT Narrative Authorizing Provider Result Type Result Status Olivia Iverson M.D. LAB BLOOD ADD-ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA
+Performing Organization Address City/State/ZIP Code Phone Number METH Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 (ABNORMAL) CBC W DIFF NO ALERT (CBC NO CALL BACK, REFLEX T/S) - Final result (05/18/2026 2:21 PM CDT) Component ValueRef
+Range Test MethodAnalysis
+TimePerformed
+At Pathologist Signature Hemoglobin 11.2 (L) 11.6 -
+15.0 g/
+dL05/18/2026
+3:02 PM
+CDT DHPM Hematocrit 33.5 (L) 35.5 -
+44.9 %05/18/2026
+3:02 PM
+CDT DHPM Erythrocytes 3.61 (L) 3.92 -
+5.13
+x10(12)/L05/18/2026
+3:02 PM
+CDT DHPM MCV 92.8 78.2 -
+97.9 fL05/18/2026
+3:02 PM
+CDT DHPM RBC Distrib Width 12.9 12.2 -
+16.1 %05/18/2026
+3:02 PM
+CDT DHPM Platelet Count 149 (L) 157 -
+371
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Leukocytes 11.6 (H) 3.4 - 9.6
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Neutrophils 9.54 (H) 1.56 -
+6.45
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Lymphocytes 1.01 0.95 -
+3.07
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Monocytes 1.00 (H) 0.26 -
+0.81
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Eosinophils <0.03 0.03 -
+0.48
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Basophils <0.03 0.01 -
+0.08
+x10(9)/L05/18/2026
+3:02 PM
+CDT DHPM Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Blood (Blood, Venous) 05/18/2026 2:21 PM CDT 05/18/2026 2:43 PM CDT Narrative Authorizing Provider Result Type Result Status Luz Sullivan M.D. LAB BLOOD NON ADD-
+ON Final Result Performing Organization Address City/State/ZIP Code Phone NumberMAYO CLINIC
+LABORATORIES -
+ROCHESTER MAIN CAMPUS 200 First Street SW Rochester, MN 55905,USA
+Performing Organization Address City/State/ZIP Code Phone Number DHPM Mayo Clinic
+Laboratories-Rochester Main Campus 200 First Street SW Rochester, MN 55905 IR DIALYSIS / HIGH FLOW CATHETER PLACEMENT - Edited Result - FINAL (05/18/2026 1:50 PM CDT) Anatomical Region Laterality ModalityBody, Vascular Interventional
+RST LOS, Vascular
+Interventional ARZ LOS,
+Vascular Interventional FLA LOS N/A X-Ray Angiography Specimen (Source)Anatomical Location /
+LateralityCollection Method /
+Volume Collection Time Received Time Impressions 05/18/2026 3:39 PM CDT Placement of a tunneled right IJV palindrome dialysis catheter. Ready for immediate use. NR Narrative 05/18/2026 3:39 PM CDT This result has an attachment that is not available. REVISED REPORT:EXAM: IR DIALYSIS / HIGH FLOW CATHETER PLACEMENT CLINICAL HISTORY: 53-year-old female with multiple myeloma who presents for tunneled high flow catheter
+placement for PLEX. TECHNIQUE: The right neck and chest were prepped and draped in sterile fashion. Using ultrasound guidance to access vessel, patency was shown and after anesthetizing the skin with lidocaine, the right
+internal jugular vein was punctured successfully. A permanent image was created and stored. Wire advanced
+centrally and used for measurement purposes. Next, after anesthetizing the skin with lidocaine, a small
+incision was made over the right anterior chest wall. A 14.5F x 19cm Palindrome catheter was tunneled
+from the chest incision to the venotomy. The venotomy was dilated and a peel-away sheath was placed.
+Catheter advanced through the sheath. Final radiograph demonstrated the catheter tip in the upper right
+atrium. Catheter flushed and aspirated well and was locked with 4% sodium citrate. Catheter secured to
+the skin with 2-0 Prolene stitch. Neck puncture closed with 4-0 Vicryl stitch. No immediate complication. For placement of this central venous access, we followed catheter checklist and a standardized protocol.
+The position of the catheter tip was confirmed under fluoroscopic guidance and a final image of the
+catheter position was obtained. Ready for use. PREPROCEDURE: Patient seen and evaluated. Allergies, pertinent medications, and history reviewed. Discussed risks, benefits, alternatives for procedure, and obtained informed consent. Patient understands
+information and questions answered. Immediately prior to starting the procedure, in the presence of the
+assisting personnel, procedural pause was conducted to verify correct patient identity and verification
+of procedure to be performed, and as applicable, correct side and site, correct patient position,
+availability of implants, special equipment, or special requirements, and all image and specimen
+identification data. The roles and responsibilities of care team members, residents, and fellows were
+discussed. Procedure Note Edwin Takahashi, M.D. - 05/21/2026

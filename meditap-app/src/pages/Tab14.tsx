@@ -4,29 +4,61 @@ import './Tab14.css';
 import './Tab5.css';
 import { useLocation } from 'react-router-dom';
 import { GlassDateInput } from '../components/GlassDatePicker';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
+import { usePortalHistory } from '../navigation/PortalHistoryContext';
 import { useAuth } from '../contexts/AuthContext';
 import { markOnboardingStep } from '../onboarding/onboardingStorage';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { clearTab14DraftKeysOnly } from '../auth/clearWorkflowLocalState';
-import { getAccessTokenPayload } from '../auth/accessTokenClaims';
-import {
-    clearMeditapIntakeElevation,
-    isMeditapIntakeElevationValidForPatient,
-    setMeditapIntakeElevationToken,
-} from '../auth/staffElevationStorage';
-import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
 import {
     loadTab14FromBackend,
-    requestPatientIntakeStaffElevation,
     saveTab14ToBackend,
     createPatientLabPanel,
     updatePatientLabPanel,
     deletePatientLabPanel,
     fetchPatientLabPanels,
+    ensurePatientForCurrentSession,
+    listPatientDocuments,
+    uploadPatientDocument,
+    updatePatientDocumentStatus,
+    fetchPatientDocumentBlobUrl,
     type PatientLabPanelWriteBody,
     type Tab14LoadResult,
 } from '../api';
 import { parseTab14IntakeDocument } from '../intake/tab14DocumentParse';
+import {
+    EHR_VENDOR_PANEL_OPTIONS,
+    ehrDocumentTypeStatusLabel,
+    ehrIntakePanelTitle,
+    type EhrDocumentTypeId,
+} from '../intake/ehrDocumentTypes';
+import { EpicDemographicsOccurrencesPanel } from './EpicDemographicsOccurrencesPanel';
+import { EpicNoteFromClinicOccurrencesPanel } from './EpicNoteFromClinicOccurrencesPanel';
+import { EpicSectionOccurrencesPanel } from './EpicSectionOccurrencesPanel';
+import {
+    computeIntakeCompleteness,
+    formatIntakeCompletenessSummary,
+} from '../intake/intakeCompleteness';
+import type {
+  AthenaPortabilityCompletenessResult,
+} from '../intake/athenaPortabilityCompleteness';
+import {
+    computeAthenaPortabilityCompleteness,
+    formatAthenaPortabilityCompletenessSummary,
+    shouldScoreAthenaPortability,
+} from '../intake/athenaPortabilityCompleteness';
+import {
+    acceptAllPatientFieldWarnings,
+    acceptHospitalFieldWarning,
+    acceptIndexedFieldWarning,
+    acceptPatientFieldWarning,
+    evaluatePatientFieldReviewGate,
+    rejectHospitalFieldWarning,
+    rejectIndexedFieldWarning,
+    rejectPatientFieldWarning,
+    type FieldReviewState,
+    type IndexedFieldReviewState,
+} from '../intake/intakeFieldReview';
 import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
 import {
     mergeChronicConditionsFromPdf,
@@ -60,8 +92,18 @@ import type {
     Tab14PatientFieldKey,
     Tab14PatientFieldWarnings,
     Tab14PatientFields,
+    Tab14VitalReading,
 } from '../intake/tab14IntakeTypes';
 import { emptyInsuranceRow } from '../intake/tab14IntakeTypes';
+import { vitalReadingToPatientFields } from '../intake/tab14DocumentParse';
+import {
+    emptyExtendedSections,
+    mergeExtendedSections,
+    type Tab14ExtendedSectionKey,
+    type Tab14ExtendedSections,
+} from '../intake/tab14PortabilitySections';
+import { buildTab14SidebarNavForEhr, ehrSidebarNavLabel } from '../intake/ehrSidebarNav';
+import Tab14ExtendedSectionPanel from './Tab14ExtendedSectionPanel';
 import {
     loadTab14LegacyFromLocalStorage,
     tab14LegacyToSaveInput,
@@ -106,11 +148,18 @@ import { warningOutline } from 'ionicons/icons';
 interface PatientInfo {
     givenName: string;
     familyName: string;
+    /** Epic Patient Demographics full name (optional display aid). */
+    patientFullName: string;
+    /** Epic Former / Aliases (semicolon-separated). */
+    formerAliases: string;
     dateOfBirth: string;
     bloodType: string;
     email: string;
     additionalEmails: string[];
     phoneNumber: string;
+    homePhone: string;
+    /** Epic Communication column (phones + email). */
+    communication: string;
     address: string;
     race: string;
     ethnicity: string;
@@ -163,6 +212,14 @@ interface Allergy {
     severity: string;
     reactionNotes: string;
     lastObserved: string;
+    allergenId: string;
+    category: string;
+    criticality: string;
+    code: string;
+    codeSystem: string;
+    recordedBy: string;
+    organization: string;
+    recordedTime: string;
 };
 interface Medication {
     genericName: string;
@@ -175,6 +232,13 @@ interface Medication {
     purpose: string;
     prescribingPhysician: string;
     notesMedication: string;
+    sig: string;
+    status: string;
+    authoredOn: string;
+    fillQuantity: string;
+    recordedBy: string;
+    organization: string;
+    recordedTime: string;
 };
 interface HospitalVisit {
     facilityName: string;
@@ -184,6 +248,15 @@ interface HospitalVisit {
     dischargeDate: string;
     attendingPhysician: string;
     reportId: string;
+    /** Athena Past Encounters columns (optional — older saved rows lack them). */
+    encounterId?: string;
+    startDateTime?: string;
+    closedDateTime?: string;
+    location?: string;
+    snomed?: string;
+    icd10?: string;
+    imo?: string;
+    diagnosisNote?: string;
 };
 interface ChronicCondition {
     conditionName: string;
@@ -192,17 +265,22 @@ interface ChronicCondition {
     severity: string;
     prexisting: string;
     notesChronicConditions: string;
+    status?: string;
 };
 
 // initializing 
 const defaultPatientInfo: PatientInfo = { 
     givenName: '',
     familyName: '',
+    patientFullName: '',
+    formerAliases: '',
     dateOfBirth: '',
     bloodType: '', 
     email: '',
     additionalEmails: [],
     phoneNumber: '',
+    homePhone: '',
+    communication: '',
     address: '',
     race: '',
     ethnicity: '',
@@ -232,12 +310,20 @@ const defaultPatientInfo: PatientInfo = {
 };
 const defaultInsurance: Insurance = emptyInsuranceRow();
 const defaultAllergy: Allergy = {
-    allergyName: '', 
+    allergyName: '',
     allergyType: '',
     allergyTypeOther: '',
-    severity: '', 
-    reactionNotes:'', 
+    severity: '',
+    reactionNotes: '',
     lastObserved: '',
+    allergenId: '',
+    category: '',
+    criticality: '',
+    code: '',
+    codeSystem: '',
+    recordedBy: '',
+    organization: '',
+    recordedTime: '',
 };
 
 function mapStoredAllergies(raw: unknown): Allergy[] {
@@ -255,16 +341,23 @@ function mapStoredAllergies(raw: unknown): Allergy[] {
     });
 }
 const defaultMedication: Medication = {
-    genericName: '', 
-    brandName: '', 
-    dosage: '', 
-    route: '', 
-    frequency: '', 
-    startDate: '', 
-    endDate: '', 
+    genericName: '',
+    brandName: '',
+    dosage: '',
+    route: '',
+    frequency: '',
+    startDate: '',
+    endDate: '',
     purpose: '',
     prescribingPhysician: '',
     notesMedication: '',
+    sig: '',
+    status: '',
+    authoredOn: '',
+    fillQuantity: '',
+    recordedBy: '',
+    organization: '',
+    recordedTime: '',
 };
 const defaultHospitalVisit: HospitalVisit = {
     facilityName: '',
@@ -274,6 +367,14 @@ const defaultHospitalVisit: HospitalVisit = {
     dischargeDate: '',
     attendingPhysician: '',
     reportId: '',
+    encounterId: '',
+    startDateTime: '',
+    closedDateTime: '',
+    location: '',
+    snomed: '',
+    icd10: '',
+    imo: '',
+    diagnosisNote: '',
 };
 
 function mapStoredHospitalVisits(raw: unknown): HospitalVisit[] {
@@ -300,17 +401,22 @@ const defaultChronicCondition: ChronicCondition = {
     severity: '', 
     prexisting: '',
     notesChronicConditions: '', 
+    status: '',
 };
 
 /** Demo / QA: fills every Tab14 field without overwriting empty defaults used by Clear. */
 const samplePatientInfo: PatientInfo = {
     givenName: 'Jordan',
     familyName: 'Rivera',
+    patientFullName: 'Jordan Rivera',
+    formerAliases: '',
     dateOfBirth: '1990-03-15',
     bloodType: 'O+',
     email: 'jordan.rivera@example.com',
     additionalEmails: ['jordan.alt@example.com'],
     phoneNumber: '555-201-8844',
+    homePhone: '',
+    communication: '555-201-8844 (Mobile)\njordan.rivera@example.com',
     address: '1200 Market St, San Francisco, CA 94103',
     race: 'Asian',
     ethnicity: 'Not Hispanic or Latino',
@@ -356,6 +462,7 @@ const sampleInsurance: Insurance = {
 };
 
 const sampleAllergy: Allergy = {
+    ...defaultAllergy,
     allergyName: 'Penicillin',
     allergyType: 'Drug',
     allergyTypeOther: '',
@@ -365,6 +472,7 @@ const sampleAllergy: Allergy = {
 };
 
 const sampleMedication: Medication = {
+    ...defaultMedication,
     genericName: 'Metformin',
     brandName: 'Glucophage',
     dosage: '500 mg',
@@ -396,16 +504,7 @@ const sampleHospitalVisit: HospitalVisit = {
     reportId: 'HPT-49202',
 };
 
-const TAB14_SECTIONS: { id: number; labelKey: string; icon: string }[] = [
-    { id: 0, labelKey: 'patientIntake.sections.patientInfo', icon: 'fa-id-card' },
-    { id: 6, labelKey: 'patientIntake.sections.vitals', icon: 'fa-heartbeat' },
-    { id: 1, labelKey: 'patientIntake.sections.hospitalVisit', icon: 'fa-hospital' },
-    { id: 2, labelKey: 'patientIntake.sections.allergies', icon: 'fa-exclamation-triangle' },
-    { id: 3, labelKey: 'patientIntake.sections.medications', icon: 'fa-pills' },
-    { id: 4, labelKey: 'patientIntake.sections.insurance', icon: 'fa-file-medical' },
-    { id: 5, labelKey: 'patientIntake.sections.chronicConditions', icon: 'fa-notes-medical' },
-    { id: 7, labelKey: 'patientIntake.sections.labResults', icon: 'fa-flask' },
-];
+const TAB14_SECTIONS_DEFAULT = buildTab14SidebarNavForEhr(null);
 
 function labResultRowToTab14Panel(row: LabResultRow): Tab14LabPanel {
     return {
@@ -509,13 +608,20 @@ function isInsuranceAccordionOpen(
 
 function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument>): string {
     const chips: string[] = [];
-    if (Object.keys(b.patientFields).length) chips.push('Patient info');
+    const demoHits = b.epicSectionOccurrenceCounts?.['Patient Demographics'];
+    if (demoHits && demoHits > 0) {
+        chips.push(`Patient Demographics × ${demoHits}`);
+    } else if (Object.keys(b.patientFields).length) {
+        chips.push('Patient info');
+    }
     if (b.noKnownDrugAllergies) chips.push('NKDA (no known drug allergies)');
     else if (b.allergies.length) chips.push(`Allergies (${b.allergies.length})`);
     if (b.medications.length) chips.push(`Medications (${b.medications.length})`);
     if (b.insurances.length) chips.push('Insurance');
-    if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
-    if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
+    if (b.noKnownProblems) chips.push('No Known Problems');
+    else if (b.chronicConditions.length) chips.push(`Chronic (${b.chronicConditions.length})`);
+    if (b.hospitalVisits?.length) chips.push(`Encounters (${b.hospitalVisits.length})`);
+    else if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
     if (b.labPanels.length) chips.push(`Lab Results (${b.labPanels.length})`);
     if (!chips.length) {
         return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
@@ -536,13 +642,6 @@ const ALLERGY_SEVERITY_OPTIONS = [
     { value: 'Anaphylaxis', label: 'Anaphylaxis (life-threatening)' },
     { value: 'Unknown', label: 'Unknown / not documented' },
 ] as const;
-
-
-function splitUploadedAtStamp(stamp: string): { date: string; time: string } {
-    const comma = stamp.indexOf(", ");
-    if (comma < 0) return { date: stamp, time: "" };
-    return { date: stamp.slice(0, comma), time: stamp.slice(comma + 2) };
-}
 
 
 type Tab14RepeaterSection =
@@ -567,18 +666,29 @@ function isRepeaterAccordionOpen(
 }
 
 const REPEATER_SECTION_LABELS: Record<Tab14RepeaterSection, string> = {
-    allergy: 'Allergy',
-    medication: 'Medication',
-    chronic: 'Chronic Condition',
-    hospitalVisit: 'Hospital Visit',
-    labResult: 'Lab Result',
+    allergy: 'Allergies',
+    medication: 'Medications',
+    chronic: 'Problems',
+    hospitalVisit: 'Past Encounters',
+    labResult: 'Results',
 };
 
 function repeaterRowTitle(section: Tab14RepeaterSection, index: number, detail?: string) {
-    const base = REPEATER_SECTION_LABELS[section];
-    const trimmed = detail?.trim();
-    if (trimmed) return `${base} - ${trimmed}`;
-    return `${base} ${index + 1}`;
+    const label = detail?.trim() || REPEATER_SECTION_LABELS[section];
+    return `${index + 1}# ${label}`;
+}
+
+/** Collapsed Results rows should show panel name, date, and component count — not generic "Results". */
+function labResultAccordionTitle(panel: LabResultRow, index: number): string {
+    const name = panel.testName.trim() || panel.displayCode?.trim() || 'Results';
+    const parts = [name];
+    if (panel.date.trim()) parts.push(panel.date.trim());
+    if (panel.results.length > 0) {
+        parts.push(
+            `${panel.results.length} component${panel.results.length === 1 ? '' : 's'}`
+        );
+    }
+    return repeaterRowTitle('labResult', index, parts.join(' · '));
 }
 
 function repeaterToggleKeyDown(onActivate: () => void) {
@@ -679,62 +789,72 @@ function Tab14RepeaterAccordion({
     );
 }
 
+type UploadedFileMeta = {
+    name: string;
+    size: number;
+    type: string;
+};
+
 type UploadedFileEntry = {
     id: string;
-    file: File;
+    file: File | UploadedFileMeta;
     previewUrl: string;
     uploadedAt: string;
     parseStatus?: string;
+    documentId?: string;
 };
 
 const Tab14: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-    const { username, hasRealmRole, authReady } = useAuth();
-    const recordEditorRole = getMeditapRecordEditorRole();
-    const hasEditorRealmRole = hasRealmRole(recordEditorRole);
+    const { username, authReady, isStaff, isSuperuser, hasRealmRole } = useAuth();
+    const { goBack } = usePortalHistory();
+    const hasEditorRealmRole = hasRealmRole(getMeditapRecordEditorRole());
+    // Chart edits are admin/staff only; patients may upload documents for clinic review.
+    const canEditPatientRecords = isStaff || isSuperuser || hasEditorRealmRole;
 
-    const [staffModalOpen, setStaffModalOpen] = useState(false);
-    const [staffUsername, setStaffUsername] = useState('');
-    const [staffPassword, setStaffPassword] = useState('');
-    const [staffSubmitting, setStaffSubmitting] = useState(false);
-    const [staffModalError, setStaffModalError] = useState<string | null>(null);
-    const [elevationNonce, setElevationNonce] = useState(0);
-
-    const kcParsedTab14 = getAccessTokenPayload() ?? undefined;
-    const patientSub =
-        typeof kcParsedTab14?.sub === 'string' ? kcParsedTab14.sub : undefined;
-
-    const canEditPatientRecords =
-        hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
-
-    const staffElevationActive =
-        !hasEditorRealmRole && isMeditapIntakeElevationValidForPatient(patientSub);
-
-    const submitStaffModal = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setStaffModalError(null);
-        setStaffSubmitting(true);
-        try {
-            const res = await requestPatientIntakeStaffElevation(
-                staffUsername.trim(),
-                staffPassword
-            );
-            setMeditapIntakeElevationToken(res.elevation_token);
-            setStaffPassword('');
-            setStaffModalOpen(false);
-            setElevationNonce((n) => n + 1);
-        } catch (err) {
-            setStaffModalError(staffElevateErrorMessage(err));
-        } finally {
-            setStaffSubmitting(false);
-        }
-    };
+    const goBackFallback = chartPageGoBackFallback();
 
     // useStates // 
 
     //file handling 
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFileEntry[]>([]); 
+    /** EHR export family selected before upload — guides specialized parsers. */
+    const [ehrDocumentType, setEhrDocumentType] = useState<EhrDocumentTypeId | null>(null);
+    /** Epic multi-hit section counts from the last upload (e.g. Patient Demographics × 33). */
+    const [epicSectionOccurrenceCounts, setEpicSectionOccurrenceCounts] = useState<
+        Partial<Record<string, number>>
+    >({});
+    /** Every Patient Demographics hit (Epic) — one accordion row per PDF-Find result. */
+    const [epicDemographicsOccurrences, setEpicDemographicsOccurrences] = useState<
+        import('../intake/epicPatientDemographics').EpicDemographicsOccurrence[]
+    >([]);
+    const [epicDemographicsOpen, setEpicDemographicsOpen] = useState<Record<number, boolean>>({
+        0: true,
+    });
+    const [epicNoteFromClinicOccurrences, setEpicNoteFromClinicOccurrences] = useState<
+        import('../intake/epicNoteFromClinic').EpicNoteFromClinicOccurrence[]
+    >([]);
+    const [epicNoteFromClinicOpen, setEpicNoteFromClinicOpen] = useState<Record<number, boolean>>({
+        0: true,
+    });
+    /** Shared multi-hit inventories for remaining Epic sidebar sections. */
+    const [epicSectionOccurrencesByKey, setEpicSectionOccurrencesByKey] = useState<
+        Partial<
+            Record<
+                import('../intake/tab14PortabilitySections').Tab14SectionKey,
+                import('../intake/epicSectionOccurrences').EpicSectionOccurrence[]
+            >
+        >
+    >({});
+    const [epicSectionOpenMaps, setEpicSectionOpenMaps] = useState<
+        Record<string, Record<number, boolean>>
+    >({});
+    /** Left menu follows the selected document source (per-vendor lists come later). */
+    const tab14Sections = useMemo(
+        () => buildTab14SidebarNavForEhr(ehrDocumentType),
+        [ehrDocumentType]
+    );
     // error handling 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [activeSection, setActiveSection] = useState(0);
@@ -742,9 +862,16 @@ const Tab14: React.FC = () => {
     useEffect(() => {
         const section = new URLSearchParams(location.search).get('section');
         if (section === 'vitals') {
-            setActiveSection(6);
+            const vitals = tab14Sections.find((s) => s.key === 'vitals');
+            setActiveSection(vitals?.id ?? TAB14_SECTIONS_DEFAULT.find((s) => s.key === 'vitals')?.id ?? 6);
         }
-    }, [location.search]);
+    }, [location.search, tab14Sections]);
+
+    useEffect(() => {
+        if (!tab14Sections.some((s) => s.id === activeSection)) {
+            setActiveSection(tab14Sections[0]?.id ?? 0);
+        }
+    }, [tab14Sections, activeSection]);
 
     // message handling 
     const [saveMessage, setSaveMessage] = useState(false); 
@@ -762,6 +889,15 @@ const Tab14: React.FC = () => {
     const [pdfFieldWarnings, setPdfFieldWarnings] = useState<Tab14PatientFieldWarnings | undefined>(
         undefined
     );
+    const [pdfFieldReview, setPdfFieldReview] = useState<FieldReviewState>({});
+    const [pdfIndexedReview, setPdfIndexedReview] = useState<IndexedFieldReviewState>(
+        {}
+    );
+    const [intakeCompletenessNotice, setIntakeCompletenessNotice] = useState<string | null>(
+        null
+    );
+    const [athenaPortabilityScore, setAthenaPortabilityScore] =
+        useState<AthenaPortabilityCompletenessResult | null>(null);
     const [pdfChronicWarnings, setPdfChronicWarnings] =
         useState<Tab14ChronicConditionWarnings | undefined>(undefined);
     const [pdfInsuranceWarnings, setPdfInsuranceWarnings] =
@@ -791,6 +927,12 @@ const Tab14: React.FC = () => {
     ]);
     const [hospitalVisits, setHospitalVisits] = useState<HospitalVisit[]>([defaultHospitalVisit]);
     const [labPanels, setLabPanels] = useState<LabResultRow[]>([]);
+    const [extendedSections, setExtendedSections] = useState<Tab14ExtendedSections>(() =>
+        emptyExtendedSections()
+    );
+    /** Dated vitals from PDF (newest first); dropdown switches the displayed reading. */
+    const [vitalsHistory, setVitalsHistory] = useState<Tab14VitalReading[]>([]);
+    const [selectedVitalsIndex, setSelectedVitalsIndex] = useState(0);
     const [removedLabPanelServerIds, setRemovedLabPanelServerIds] = useState<string[]>([]);
     const [labSaveNotice, setLabSaveNotice] = useState<string | null>(null);
 
@@ -816,7 +958,18 @@ const Tab14: React.FC = () => {
 
     const navigateAwayFromTab14 = (url: string) => {
         suppressUnsavedPromptRef.current = true;
+        // Hard leave — same as shared portal Go back (Ionic soft push sticks).
         window.location.assign(url);
+    };
+
+    const leaveIntake = () => {
+        if (hasUnsavedChanges && !suppressUnsavedPromptRef.current) {
+            setPendingLeaveUrl('__portal_go_back__');
+            setShowUnsavedLeavePrompt(true);
+            return;
+        }
+        // Prefer previous page from portal stack; fallback to hub/dashboard.
+        goBack(goBackFallback);
     };
 
     useEffect(() => {
@@ -880,7 +1033,9 @@ const Tab14: React.FC = () => {
                 : [defaultAllergy]
         );
         setMedications(
-            bundle.medications.length > 0 ? bundle.medications : [defaultMedication]
+            bundle.medications.length > 0
+                ? bundle.medications.map((row) => ({ ...defaultMedication, ...row }))
+                : [defaultMedication]
         );
         setChronicConditions(
             bundle.chronicConditions.length > 0
@@ -890,7 +1045,12 @@ const Tab14: React.FC = () => {
         setHospitalVisits(mapStoredHospitalVisits(bundle.hospitalVisits));
         setNoAllergies(bundle.noAllergies);
         setNoMedications(bundle.medications.length === 0);
-        setNoChronicConditions(bundle.chronicConditions.length === 0);
+        const onlyNoKnownProblems =
+            bundle.chronicConditions.length === 1 &&
+            /no\s+known\s+problems/i.test(bundle.chronicConditions[0]?.conditionName ?? '');
+        setNoChronicConditions(
+            bundle.chronicConditions.length === 0 || onlyNoKnownProblems
+        );
     };
 
     useEffect(() => {
@@ -936,7 +1096,15 @@ const Tab14: React.FC = () => {
                       ...defaultChronicCondition,
                       ...row,
                   }))
-                : [defaultChronicCondition]
+                : snapshot.noChronicConditions
+                  ? [
+                        {
+                            ...defaultChronicCondition,
+                            conditionName: 'No Known Problems',
+                            notesChronicConditions: 'No Known Problems',
+                        },
+                      ]
+                  : [defaultChronicCondition]
         );
         setHospitalVisits(
             snapshot.hospitalVisits.length > 0
@@ -972,13 +1140,17 @@ const Tab14: React.FC = () => {
     const removeUploadedFile = (id: string) => {
         setUploadedFiles((prev) => {
             const entry = prev.find((row) => row.id === id);
-            if (entry) URL.revokeObjectURL(entry.previewUrl);
+            if (entry?.previewUrl) URL.revokeObjectURL(entry.previewUrl);
             return prev.filter((row) => row.id !== id);
         });
     };
 
     const clearAllPdfWarnings = () => {
         setPdfFieldWarnings(undefined);
+        setPdfFieldReview({});
+        setPdfIndexedReview({});
+        setIntakeCompletenessNotice(null);
+        setAthenaPortabilityScore(null);
         setPdfChronicWarnings(undefined);
         setPdfInsuranceWarnings(undefined);
         setPdfAllergyWarnings(undefined);
@@ -988,11 +1160,33 @@ const Tab14: React.FC = () => {
 
     const clearUploadedFiles = () => {
         setUploadedFiles((prev) => {
-            prev.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
+            prev.forEach((entry) => {
+                if (entry.previewUrl) URL.revokeObjectURL(entry.previewUrl);
+            });
             return [];
         });
         setUploadParseMessage(null);
         clearAllPdfWarnings();
+    };
+
+    const openUploadedPreview = async (entry: UploadedFileEntry) => {
+        try {
+            if (entry.previewUrl) {
+                window.open(entry.previewUrl, '_blank');
+                return;
+            }
+            if (entry.documentId) {
+                const url = await fetchPatientDocumentBlobUrl(entry.documentId);
+                setUploadedFiles((prev) =>
+                    prev.map((row) =>
+                        row.id === entry.id ? { ...row, previewUrl: url } : row
+                    )
+                );
+                window.open(url, '_blank');
+            }
+        } catch {
+            setUploadParseMessage('Could not open document preview.');
+        }
     };
 
     const uploadedFilesRef = useRef<UploadedFileEntry[]>([]);
@@ -1009,12 +1203,20 @@ const Tab14: React.FC = () => {
         const selected = Array.from(e.target.files ?? []);
         if (!selected.length) return;
 
+        if (!ehrDocumentType) {
+            setUploadParseMessage(t('patientIntake.selectDocumentTypeFirst'));
+            e.target.value = '';
+            return;
+        }
+
         if (selected.some((file) => !isTab14UploadFileType(file))) {
             setUploadParseMessage(t('patientIntake.uploadFileTypeError'));
             e.target.value = '';
             return;
         }
 
+        // Patients and staff both parse uploads into the form. Manual typing stays staff-only
+        // (locked fieldsets); patients Accept/Reject PDF warnings, then Save.
         setUploadParsing(true);
         setUploadParseMessage(null);
 
@@ -1024,10 +1226,27 @@ const Tab14: React.FC = () => {
         let anyHardToRead = false;
         const hardToReadByBundle: boolean[] = [];
         const parsedBundles: Tab14IntakeParseResult[] = [];
+        const occurrenceCountsFromUpload: Partial<Record<string, number>> = {};
+        let demographicsOccurrencesFromUpload: import('../intake/epicPatientDemographics').EpicDemographicsOccurrence[] =
+            [];
+        let noteFromClinicOccurrencesFromUpload: import('../intake/epicNoteFromClinic').EpicNoteFromClinicOccurrence[] =
+            [];
+        let sectionOccurrencesFromUpload: Partial<
+            Record<
+                import('../intake/tab14PortabilitySections').Tab14SectionKey,
+                import('../intake/epicSectionOccurrences').EpicSectionOccurrence[]
+            >
+        > = {};
         const fileMessages: string[] = [];
         const newEntries: UploadedFileEntry[] = [];
+        const extractedTexts: string[] = [];
+        let vaultPatientId: string | null = null;
+        const preferredVendor = ehrDocumentType;
 
         try {
+            const chartPatient = await ensurePatientForCurrentSession(username);
+            vaultPatientId = chartPatient?.patient_id ?? null;
+
             for (let index = 0; index < selected.length; index += 1) {
                 const file = selected[index];
                 setUploadParseMessage(
@@ -1039,10 +1258,13 @@ const Tab14: React.FC = () => {
                 );
 
                 const extracted = await extractTab14UploadFileText(file);
+                extractedTexts.push(extracted.text);
                 const hardToRead = extracted.hardToRead;
                 if (hardToRead) anyHardToRead = true;
                 hardToReadByBundle.push(hardToRead);
-                const parsedBundle = parseTab14IntakeDocument(extracted.text);
+                const parsedBundle = parseTab14IntakeDocument(extracted.text, {
+                    preferredVendor,
+                });
                 const bundle: Tab14IntakeParseResult = hardToRead
                     ? {
                           ...parsedBundle,
@@ -1053,6 +1275,36 @@ const Tab14: React.FC = () => {
                       }
                     : parsedBundle;
                 parsedBundles.push(bundle);
+                for (const [title, count] of Object.entries(
+                    bundle.epicSectionOccurrenceCounts ?? {}
+                )) {
+                    occurrenceCountsFromUpload[title] = Math.max(
+                        occurrenceCountsFromUpload[title] ?? 0,
+                        Number(count) || 0
+                    );
+                }
+                if (
+                    (bundle.epicDemographicsOccurrences?.length ?? 0) >
+                    demographicsOccurrencesFromUpload.length
+                ) {
+                    demographicsOccurrencesFromUpload = bundle.epicDemographicsOccurrences ?? [];
+                }
+                if (
+                    (bundle.epicNoteFromClinicOccurrences?.length ?? 0) >
+                    noteFromClinicOccurrencesFromUpload.length
+                ) {
+                    noteFromClinicOccurrencesFromUpload =
+                        bundle.epicNoteFromClinicOccurrences ?? [];
+                }
+                if (bundle.epicSectionOccurrencesByKey) {
+                    for (const [key, list] of Object.entries(bundle.epicSectionOccurrencesByKey)) {
+                        const k =
+                            key as import('../intake/tab14PortabilitySections').Tab14SectionKey;
+                        if ((list?.length ?? 0) > (sectionOccurrencesFromUpload[k]?.length ?? 0)) {
+                            sectionOccurrencesFromUpload[k] = list;
+                        }
+                    }
+                }
                 const fieldsBefore = patientFromUpload;
                 patientFromUpload = mergePdfPatientFields(
                     patientFromUpload,
@@ -1065,14 +1317,53 @@ const Tab14: React.FC = () => {
                 );
 
                 let uploadMsg = summarizeTab14ParseResult(bundle);
+                if (preferredVendor === 'nextgen') {
+                    uploadMsg +=
+                        ' · NextGen parser is not ready yet — used general extract. Add a fixture when you have a sample PDF.';
+                } else if (preferredVendor === 'generic') {
+                    uploadMsg += ' · Parser: generic / other (general extract)';
+                } else if (preferredVendor && preferredVendor !== 'auto') {
+                    uploadMsg += ` · Parser: ${preferredVendor}`;
+                }
                 if (hardToRead) {
                     uploadMsg +=
                         ' Document text looked sparse or hard to read — verify imported fields.';
                 }
                 fileMessages.push(uploadMsg);
 
+                let documentId: string | undefined;
+                if (vaultPatientId) {
+                    try {
+                        const doc = await uploadPatientDocument(vaultPatientId, file);
+                        documentId = doc.document_id;
+                        await updatePatientDocumentStatus(doc.document_id, {
+                            parse_snapshot: {
+                                patientFields: bundle.patientFields,
+                                allergies: bundle.allergies,
+                                medications: bundle.medications,
+                                chronicConditions: bundle.chronicConditions,
+                                insurances: bundle.insurances,
+                                hospitalVisit: bundle.hospitalVisit,
+                                labPanels: bundle.labPanels,
+                                extendedSections: bundle.extendedSections,
+                                vitalsHistory: bundle.vitalsHistory,
+                                noKnownDrugAllergies: Boolean(bundle.noKnownDrugAllergies),
+                                noKnownProblems: Boolean(bundle.noKnownProblems),
+                                source: canEditPatientRecords
+                                    ? 'tab14_staff_parse'
+                                    : 'tab14_patient_parse',
+                            },
+                            parsed_given_name: bundle.patientFields.givenName || '',
+                            parsed_family_name: bundle.patientFields.familyName || '',
+                        });
+                    } catch {
+                        /* vault attach is best-effort */
+                    }
+                }
+
                 newEntries.push({
-                    id: `${Date.now()}-${index}-${file.name}`,
+                    id: documentId || `${Date.now()}-${index}-${file.name}`,
+                    documentId,
                     file,
                     previewUrl: URL.createObjectURL(file),
                     uploadedAt: new Date().toLocaleString(),
@@ -1099,39 +1390,183 @@ const Tab14: React.FC = () => {
             }
 
             applySnapshotToForm(snapshot);
+            let nextExtended = replaceChartFromPdf
+                ? emptyExtendedSections()
+                : extendedSections;
+            for (const bundle of parsedBundles) {
+                if (bundle.extendedSections) {
+                    nextExtended = mergeExtendedSections(nextExtended, bundle.extendedSections);
+                }
+            }
+            setExtendedSections(nextExtended);
+            const nextVitalsHistory = parsedBundles
+                .map((b) => b.vitalsHistory ?? [])
+                .reduce<Tab14VitalReading[]>(
+                    (best, rows) => (rows.length > best.length ? rows : best),
+                    []
+                );
+            if (nextVitalsHistory.length) {
+                setVitalsHistory(nextVitalsHistory);
+                setSelectedVitalsIndex(0);
+            } else if (replaceChartFromPdf) {
+                setVitalsHistory([]);
+                setSelectedVitalsIndex(0);
+            }
             if (Object.keys(patientFromUpload).length > 0) {
                 setPatientInfo({
                     ...defaultPatientInfo,
                     ...patientFromUpload,
                     additionalEmails: patientFromUpload.additionalEmails ?? [],
+                    patientFullName:
+                        patientFromUpload.patientFullName ||
+                        [patientFromUpload.givenName, patientFromUpload.familyName]
+                            .filter(Boolean)
+                            .join(' '),
+                    formerAliases: patientFromUpload.formerAliases || '',
+                    homePhone: patientFromUpload.homePhone || '',
+                    communication:
+                        patientFromUpload.communication ||
+                        [
+                            patientFromUpload.phoneNumber
+                                ? `${patientFromUpload.phoneNumber} (Mobile)`
+                                : '',
+                            patientFromUpload.homePhone
+                                ? `${patientFromUpload.homePhone} (Home)`
+                                : '',
+                            patientFromUpload.email || '',
+                        ]
+                            .filter(Boolean)
+                            .join('\n'),
                 });
                 if ((patientFromUpload.additionalEmails ?? []).length > 0) {
                     setAddAnotherEmail(true);
                 }
                 setActiveSection(0);
             }
+            if (demographicsOccurrencesFromUpload.length === 0) {
+                const n = occurrenceCountsFromUpload['Patient Demographics'] ?? 0;
+                if (n > 0 && Object.keys(patientFromUpload).length > 0) {
+                    demographicsOccurrencesFromUpload = Array.from({ length: n }, (_, i) => ({
+                        index: i,
+                        ordinal: i + 1,
+                        total: n,
+                        label: `Patient Demographics · Date not on file`,
+                        source: (i === 0 ? 'coverWindow' : 'inferredReprint') as
+                            | 'coverWindow'
+                            | 'inferredReprint',
+                        intakeDateIso: '',
+                        intakeDateLabel: 'Date not on file',
+                        intakeDateKind: 'unknown' as const,
+                        visitType: i === 0 ? 'Cover / summary of care' : 'Visit reprint',
+                        fields: { ...patientFromUpload },
+                    }));
+                }
+            }
+            if (Object.keys(occurrenceCountsFromUpload).length > 0) {
+                setEpicSectionOccurrenceCounts(occurrenceCountsFromUpload);
+            }
+            if (demographicsOccurrencesFromUpload.length > 0) {
+                setEpicDemographicsOccurrences(demographicsOccurrencesFromUpload);
+                setEpicDemographicsOpen({ 0: true });
+                const primary = demographicsOccurrencesFromUpload[0]?.fields;
+                if (primary) {
+                    setPatientInfo((prev) => ({
+                        ...prev,
+                        address: prev.address || primary.address || '',
+                        patientFullName:
+                            prev.patientFullName ||
+                            primary.patientFullName ||
+                            [primary.givenName, primary.familyName].filter(Boolean).join(' '),
+                        givenName: prev.givenName || primary.givenName || '',
+                        familyName: prev.familyName || primary.familyName || '',
+                        communication:
+                            prev.communication ||
+                            primary.communication ||
+                            [
+                                primary.phoneNumber ? `${primary.phoneNumber} (Mobile)` : '',
+                                primary.homePhone ? `${primary.homePhone} (Home)` : '',
+                                primary.email || '',
+                            ]
+                                .filter(Boolean)
+                                .join('\n'),
+                        phoneNumber: prev.phoneNumber || primary.phoneNumber || '',
+                        homePhone: prev.homePhone || primary.homePhone || '',
+                        email: prev.email || primary.email || '',
+                        preferredLanguage:
+                            prev.preferredLanguage || primary.preferredLanguage || '',
+                        race: prev.race || primary.race || '',
+                        ethnicity: prev.ethnicity || primary.ethnicity || '',
+                        maritalStatus: prev.maritalStatus || primary.maritalStatus || '',
+                    }));
+                }
+            }
+            if (noteFromClinicOccurrencesFromUpload.length > 0) {
+                setEpicNoteFromClinicOccurrences(noteFromClinicOccurrencesFromUpload);
+                setEpicNoteFromClinicOpen({ 0: true });
+                setExtendedSections((prev) => ({
+                    ...prev,
+                    patientInstructions: noteFromClinicOccurrencesFromUpload.map((occ) => ({
+                        title: `Note from ${occ.fields.clinicName || 'Clinic'}`,
+                        detail: occ.fields.body || '',
+                        date: occ.intakeDateIso || '',
+                        recordedBy: occ.fields.sharedWith
+                            ? `Shared with ${occ.fields.sharedWith}`
+                            : '',
+                        place: occ.fields.clinicName || '',
+                        time: '',
+                        notes: occ.visitType || '',
+                        noteType:
+                            occ.intakeDateKind === 'generated'
+                                ? 'Cover disclaimer'
+                                : 'Visit reprint',
+                        status: occ.source === 'inferredReprint' ? 'inferred' : 'parsed',
+                    })),
+                }));
+            }
+            if (Object.keys(sectionOccurrencesFromUpload).length > 0) {
+                setEpicSectionOccurrencesByKey(sectionOccurrencesFromUpload);
+                const openMaps: Record<string, Record<number, boolean>> = {};
+                for (const key of Object.keys(sectionOccurrencesFromUpload)) {
+                    openMaps[key] = { 0: true };
+                }
+                setEpicSectionOpenMaps(openMaps);
+            }
+
+            const combinedText = extractedTexts.join('\n\n');
             setPdfFieldWarnings(warningsFromUpload);
-            // Prefer hard-to-read from the last identity-bearing upload; otherwise any hard-to-read file.
+            setPdfFieldReview({});
+            setPdfIndexedReview({});
             const identityHardToRead = parsedBundles.some(
                 (bundle, i) => bundleHasPatientIdentity(bundle) && hardToReadByBundle[i]
             );
             const sectionHardToRead = identityHardToRead || anyHardToRead;
-            setPdfChronicWarnings(
-                buildChronicConditionWarnings(snapshot.chronicConditions, sectionHardToRead)
+            const nextChronic = buildChronicConditionWarnings(
+                snapshot.chronicConditions,
+                sectionHardToRead,
+                combinedText
             );
-            setPdfInsuranceWarnings(
-                buildInsuranceRowWarnings(snapshot.insurances, sectionHardToRead)
+            const nextInsurance = buildInsuranceRowWarnings(
+                snapshot.insurances,
+                sectionHardToRead,
+                combinedText
             );
-            setPdfAllergyWarnings(
-                buildAllergyRowWarnings(snapshot.allergies, sectionHardToRead)
+            const nextAllergy = buildAllergyRowWarnings(
+                snapshot.allergies,
+                sectionHardToRead,
+                combinedText
             );
-            setPdfMedicationWarnings(
-                buildMedicationRowWarnings(snapshot.medications, sectionHardToRead)
+            const nextMedication = buildMedicationRowWarnings(
+                snapshot.medications,
+                sectionHardToRead,
+                combinedText
             );
             const lastHospital = snapshot.hospitalVisits[snapshot.hospitalVisits.length - 1] ?? {};
-            setPdfHospitalWarnings(
-                buildHospitalFieldWarnings(lastHospital, sectionHardToRead)
-            );
+            const nextHospital = buildHospitalFieldWarnings(lastHospital, sectionHardToRead);
+            setPdfChronicWarnings(nextChronic);
+            setPdfInsuranceWarnings(nextInsurance);
+            setPdfAllergyWarnings(nextAllergy);
+            setPdfMedicationWarnings(nextMedication);
+            setPdfHospitalWarnings(nextHospital);
             if (replaceChartFromPdf) {
                 setNoAllergies(snapshot.noAllergies);
                 setNoMedications(snapshot.noMedications);
@@ -1142,7 +1577,76 @@ const Tab14: React.FC = () => {
                 parseStatus: fileMessages[i] ?? '',
             }));
             setUploadedFiles((prev) => [...prev, ...entriesWithStatus]);
+
+            const completenessPatient = {
+                ...defaultPatientInfo,
+                ...patientFromUpload,
+                additionalEmails: patientFromUpload.additionalEmails ?? [],
+            };
+            const completeness = computeIntakeCompleteness({
+                patient: completenessPatient,
+                insurances: snapshot.insurances,
+                allergies: snapshot.allergies,
+                noAllergies: snapshot.noAllergies,
+                medications: snapshot.medications,
+                noMedications: snapshot.noMedications,
+                chronicConditions: snapshot.chronicConditions,
+                noChronicConditions: snapshot.noChronicConditions,
+                hospitalVisits: snapshot.hospitalVisits,
+            });
+            const reviewGate = evaluatePatientFieldReviewGate(warningsFromUpload, {}, {
+                allergies: nextAllergy,
+                medications: nextMedication,
+                chronic: nextChronic,
+                insurances: nextInsurance,
+                hospital: nextHospital,
+                decisions: {},
+            });
+            const reviewNote =
+                reviewGate.unresolvedCount > 0
+                    ? ` Review ${reviewGate.unresolvedCount} flagged field(s) (Accept / Reject) before Save.`
+                    : '';
+            let notice = `${formatIntakeCompletenessSummary(completeness)}${reviewNote}`;
+            // Athena / portability training signal — surfaces sidebar gaps core score hides
+            const mergedForAthena: Tab14IntakeParseResult = {
+                patientFields: completenessPatient,
+                allergies: snapshot.allergies,
+                medications: snapshot.medications,
+                chronicConditions: snapshot.chronicConditions,
+                insurances: snapshot.insurances,
+                hospitalVisit: snapshot.hospitalVisits[0] ?? {},
+                hospitalVisits: snapshot.hospitalVisits,
+                labPanels: snapshot.labPanels,
+                vitalsHistory: nextVitalsHistory.length ? nextVitalsHistory : undefined,
+                extendedSections: nextExtended,
+                noKnownDrugAllergies: snapshot.noAllergies,
+                noKnownProblems: snapshot.noChronicConditions,
+            };
+            if (
+                shouldScoreAthenaPortability(mergedForAthena) ||
+                parsedBundles.some((b) => shouldScoreAthenaPortability(b))
+            ) {
+                const athenaScore = computeAthenaPortabilityCompleteness({
+                    patientFields: completenessPatient,
+                    allergies: snapshot.allergies,
+                    noKnownDrugAllergies: snapshot.noAllergies,
+                    medications: snapshot.medications,
+                    chronicConditions: snapshot.chronicConditions,
+                    noKnownProblems: snapshot.noChronicConditions,
+                    insurances: snapshot.insurances,
+                    labPanels: snapshot.labPanels,
+                    vitalsHistory: nextVitalsHistory,
+                    hospitalVisits: snapshot.hospitalVisits,
+                    extendedSections: nextExtended,
+                });
+                setAthenaPortabilityScore(athenaScore);
+                notice = `${notice} ${formatAthenaPortabilityCompletenessSummary(athenaScore)}`;
+            } else {
+                setAthenaPortabilityScore(null);
+            }
+            setIntakeCompletenessNotice(notice);
             setUploadParseMessage(null);
+
             markOnboardingStep(username, 'upload', true);
         } catch (err) {
             newEntries.forEach((entry) => URL.revokeObjectURL(entry.previewUrl));
@@ -1162,7 +1666,62 @@ const Tab14: React.FC = () => {
             setPdfFieldWarnings((prev) =>
                 clearPatientFieldWarning(prev, field as Tab14PatientFieldKey)
             );
+            // Keep the selected vitals-history row in sync when staff edit vitals fields
+            const vitalsKeys = new Set([
+                'heightInches',
+                'weightLbs',
+                'systolicBp',
+                'diastolicBp',
+                'heartRate',
+                'temperatureF',
+                'temperatureC',
+                'respiratoryRate',
+                'oxygenSaturation',
+                'bodyMassIndex',
+            ]);
+            if (vitalsKeys.has(String(field)) && vitalsHistory.length > 0) {
+                setVitalsHistory((prev) => {
+                    if (!prev.length) return prev;
+                    const idx = Math.min(selectedVitalsIndex, prev.length - 1);
+                    const next = [...prev];
+                    next[idx] = { ...next[idx], [field as string]: value };
+                    return next;
+                });
+            }
         }
+    };
+
+    const formatVitalsHistoryLabel = (reading: Tab14VitalReading, index: number): string => {
+        const raw = reading.recordedDate || '';
+        let label = raw;
+        if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+            const [y, m, d] = raw.slice(0, 10).split('-');
+            label = `${m}/${d}/${y}`;
+        }
+        if (index === 0) label = `${label} (latest)`;
+        if (reading.recordedBy) label = `${label} — ${reading.recordedBy}`;
+        return label;
+    };
+
+    const selectVitalsReading = (index: number) => {
+        if (!vitalsHistory.length) return;
+        const idx = Math.max(0, Math.min(index, vitalsHistory.length - 1));
+        const reading = vitalsHistory[idx];
+        setSelectedVitalsIndex(idx);
+        const fields = vitalReadingToPatientFields(reading);
+        setPatientInfo((prev) => ({
+            ...prev,
+            heightInches: fields.heightInches ?? '',
+            weightLbs: fields.weightLbs ?? '',
+            systolicBp: fields.systolicBp ?? '',
+            diastolicBp: fields.diastolicBp ?? '',
+            heartRate: fields.heartRate ?? '',
+            bodyMassIndex: fields.bodyMassIndex ?? '',
+            temperatureF: fields.temperatureF ?? '',
+            temperatureC: fields.temperatureC ?? '',
+            respiratoryRate: fields.respiratoryRate ?? '',
+            oxygenSaturation: fields.oxygenSaturation ?? '',
+        }));
     };
 
     const handleChange = 
@@ -1251,6 +1810,7 @@ const Tab14: React.FC = () => {
         setArray: React.Dispatch<React.SetStateAction<T[]>>,
         defaultObj: T
     ) => {
+        if (!canEditPatientRecords) return;
         const newIndex = array.length;
         setArray([...array, defaultObj]);
         setRepeaterAccordionOpen((prev) => ({
@@ -1265,6 +1825,7 @@ const Tab14: React.FC = () => {
         array: T[],
         setArray: React.Dispatch<React.SetStateAction<T[]>>
     ) => {
+        if (!canEditPatientRecords) return;
         handleRemoveSection(index, array, setArray);
         setRepeaterAccordionOpen((prev) => {
             const next: Record<string, boolean> = {};
@@ -1351,7 +1912,10 @@ const Tab14: React.FC = () => {
         // required fields 
         if (!patientInfo.givenName.trim()) newErrors.givenName = "Given Name is required.";
         if (!patientInfo.familyName.trim()) newErrors.familyName = "Family Name is required.";
-        if (!patientInfo.dateOfBirth) newErrors.dateOfBirth = "Date of Birth is required.";
+        // Epic Patient Demographics columns omit DOB (banner-only on the PDF); still require it for other EHRs.
+        if (ehrDocumentType !== 'epic' && !patientInfo.dateOfBirth) {
+            newErrors.dateOfBirth = "Date of Birth is required.";
+        }
 
         // (not required) checks if email format is correct 
         if (patientInfo.email && !/\S+@\S+\.\S+/.test(patientInfo.email)) {
@@ -1400,7 +1964,7 @@ const Tab14: React.FC = () => {
             if (
                 !patientInfo.givenName.trim() ||
                 !patientInfo.familyName.trim() ||
-                !patientInfo.dateOfBirth
+                (ehrDocumentType !== 'epic' && !patientInfo.dateOfBirth)
             ) {
                 setActiveSection(0);
             }
@@ -1410,6 +1974,27 @@ const Tab14: React.FC = () => {
         setSaveErrorMessage(false);
         setBackendError(null);
         setLabSaveNotice(null);
+
+        const reviewGate = evaluatePatientFieldReviewGate(
+            pdfFieldWarnings,
+            pdfFieldReview,
+            {
+                allergies: pdfAllergyWarnings,
+                medications: pdfMedicationWarnings,
+                chronic: pdfChronicWarnings,
+                insurances: pdfInsuranceWarnings,
+                hospital: pdfHospitalWarnings,
+                decisions: pdfIndexedReview,
+            }
+        );
+        if (!reviewGate.canSave) {
+            setBackendError(
+                `Resolve ${reviewGate.unresolvedCount} PDF-imported field warning(s) before Save (Accept to keep, Reject to clear).`
+            );
+            setActiveSection(0);
+            return false;
+        }
+
         setSaving(true);
         try {
             await saveTab14ToBackend({
@@ -1418,7 +2003,20 @@ const Tab14: React.FC = () => {
                 insurances,
                 allergies: noAllergies ? [] : allergies,
                 medications: noMedications ? [] : medications,
-                chronicConditions: noChronicConditions ? [] : chronicConditions,
+                chronicConditions: noChronicConditions
+                    ? [
+                          {
+                              ...defaultChronicCondition,
+                              ...(chronicConditions[0] || {}),
+                              conditionName:
+                                  chronicConditions[0]?.conditionName?.trim() ||
+                                  'No Known Problems',
+                              notesChronicConditions:
+                                  chronicConditions[0]?.notesChronicConditions?.trim() ||
+                                  'No Known Problems',
+                          },
+                      ]
+                    : chronicConditions,
                 hospitalVisits,
                 noAllergies,
                 allowStaffOnlySections: canEditPatientRecords,
@@ -1462,7 +2060,7 @@ const Tab14: React.FC = () => {
                         labErr instanceof Error ? labErr.message : 'Lab save failed.';
                     if (msg.includes('403')) {
                         setLabSaveNotice(
-                            'Chart saved. Lab results need staff sign-in to persist — use Staff sign-in and Save again.'
+                            'Chart saved. Lab panel changes need a staff session in the admin portal to persist.'
                         );
                     } else {
                         setLabSaveNotice(
@@ -1518,7 +2116,11 @@ const Tab14: React.FC = () => {
                         ? refreshed.medications.length === 0
                         : noMedications,
                     noChronicConditions: refreshed.hasPatient
-                        ? refreshed.chronicConditions.length === 0
+                        ? refreshed.chronicConditions.length === 0 ||
+                          (refreshed.chronicConditions.length === 1 &&
+                              /no\s+known\s+problems/i.test(
+                                  refreshed.chronicConditions[0]?.conditionName ?? ''
+                              ))
                         : noChronicConditions,
                 })
             );
@@ -1545,7 +2147,11 @@ const Tab14: React.FC = () => {
         }
         setShowUnsavedLeavePrompt(false);
         setPendingLeaveUrl(null);
-        navigateAwayFromTab14(destination);
+        if (destination === '__portal_go_back__') {
+            goBack(goBackFallback);
+        } else {
+            navigateAwayFromTab14(destination);
+        }
     };
 
     const leaveWithoutSaving = () => {
@@ -1554,7 +2160,11 @@ const Tab14: React.FC = () => {
         setSavedFormSnapshot(formSnapshot);
         setShowUnsavedLeavePrompt(false);
         setPendingLeaveUrl(null);
-        navigateAwayFromTab14(destination);
+        if (destination === '__portal_go_back__') {
+            goBack(goBackFallback);
+        } else {
+            navigateAwayFromTab14(destination);
+        }
     };
 
     // clear form 
@@ -1571,17 +2181,31 @@ const Tab14: React.FC = () => {
         setChronicConditions([defaultChronicCondition]);
         setHospitalVisits([defaultHospitalVisit]);
         setLabPanels([]);
+        setExtendedSections(emptyExtendedSections());
+        setVitalsHistory([]);
+        setSelectedVitalsIndex(0);
         setRemovedLabPanelServerIds([]);
         setLabSaveNotice(null);
         setNoAllergies(false);
         setNoMedications(false);
         setNoChronicConditions(false);
         setPdfFieldWarnings(undefined);
+        setPdfFieldReview({});
+        setPdfIndexedReview({});
+        setIntakeCompletenessNotice(null);
+        setAthenaPortabilityScore(null);
         setPdfChronicWarnings(undefined);
         setPdfInsuranceWarnings(undefined);
         setPdfAllergyWarnings(undefined);
         setPdfMedicationWarnings(undefined);
         setPdfHospitalWarnings(undefined);
+        setEpicDemographicsOccurrences([]);
+        setEpicDemographicsOpen({ 0: true });
+        setEpicNoteFromClinicOccurrences([]);
+        setEpicNoteFromClinicOpen({ 0: true });
+        setEpicSectionOccurrencesByKey({});
+        setEpicSectionOpenMaps({});
+        setEpicSectionOccurrenceCounts({});
     };
 
     const loadSampleData = () => {
@@ -1601,6 +2225,10 @@ const Tab14: React.FC = () => {
         setSaveErrorMessage(false);
         setBackendError(null);
         setPdfFieldWarnings(undefined);
+        setPdfFieldReview({});
+        setPdfIndexedReview({});
+        setIntakeCompletenessNotice(null);
+        setAthenaPortabilityScore(null);
         setPdfChronicWarnings(undefined);
         setPdfInsuranceWarnings(undefined);
         setPdfAllergyWarnings(undefined);
@@ -1611,32 +2239,103 @@ const Tab14: React.FC = () => {
     const renderPdfFieldWarningIcon = (field: Tab14PatientFieldKey) => {
         const warning = pdfFieldWarnings?.[field];
         if (!warning) return null;
-        const message = warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC;
+        const provenance = [
+            warning.sourceLabel,
+            warning.sourcePage != null ? `page ${warning.sourcePage}` : null,
+        ]
+            .filter(Boolean)
+            .join(' · ');
+        const message =
+            (warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC) +
+            (provenance ? ` (${provenance})` : '');
         return (
-            <span
-                className="tab14-pdf-field-warning"
-                title={message}
-                aria-label={message}
-                role="img"
-            >
-                <IonIcon icon={warningOutline} aria-hidden />
+            <span className="tab14-pdf-field-warning-wrap">
+                <span
+                    className="tab14-pdf-field-warning"
+                    title={message}
+                    aria-label={message}
+                    role="img"
+                >
+                    <IonIcon icon={warningOutline} aria-hidden />
+                </span>
+                <button
+                    type="button"
+                    className="tab14-pdf-review-btn tab14-pdf-review-btn--accept"
+                    onClick={() => {
+                        const next = acceptPatientFieldWarning(
+                            pdfFieldWarnings,
+                            pdfFieldReview,
+                            field
+                        );
+                        setPdfFieldWarnings(next.warnings);
+                        setPdfFieldReview(next.decisions);
+                    }}
+                >
+                    Accept
+                </button>
+                <button
+                    type="button"
+                    className="tab14-pdf-review-btn tab14-pdf-review-btn--reject"
+                    onClick={() => {
+                        const next = rejectPatientFieldWarning(
+                            pdfFieldWarnings,
+                            pdfFieldReview,
+                            field
+                        );
+                        setPdfFieldWarnings(next.warnings);
+                        setPdfFieldReview(next.decisions);
+                        setPatientInfo((prev) => ({ ...prev, [field]: '' }));
+                    }}
+                >
+                    Reject
+                </button>
             </span>
         );
     };
 
     const renderIndexedWarningIcon = (
-        warning: { message: string } | undefined
+        warning: { message: string; sourcePage?: number; sourceLabel?: string } | undefined,
+        onAccept?: () => void,
+        onReject?: () => void
     ) => {
         if (!warning) return null;
-        const message = warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC;
+        const provenance = [
+            warning.sourceLabel,
+            warning.sourcePage != null ? `page ${warning.sourcePage}` : null,
+        ]
+            .filter(Boolean)
+            .join(' · ');
+        const message =
+            (warning.message || FIELD_WARNING_MESSAGES.VERIFY_GENERIC) +
+            (provenance ? ` (${provenance})` : '');
         return (
-            <span
-                className="tab14-pdf-field-warning"
-                title={message}
-                aria-label={message}
-                role="img"
-            >
-                <IonIcon icon={warningOutline} aria-hidden />
+            <span className="tab14-pdf-field-warning-wrap">
+                <span
+                    className="tab14-pdf-field-warning"
+                    title={message}
+                    aria-label={message}
+                    role="img"
+                >
+                    <IonIcon icon={warningOutline} aria-hidden />
+                </span>
+                {onAccept ? (
+                    <button
+                        type="button"
+                        className="tab14-pdf-review-btn tab14-pdf-review-btn--accept"
+                        onClick={onAccept}
+                    >
+                        Accept
+                    </button>
+                ) : null}
+                {onReject ? (
+                    <button
+                        type="button"
+                        className="tab14-pdf-review-btn tab14-pdf-review-btn--reject"
+                        onClick={onReject}
+                    >
+                        Reject
+                    </button>
+                ) : null}
             </span>
         );
     };
@@ -1644,25 +2343,148 @@ const Tab14: React.FC = () => {
     const renderPdfChronicWarningIcon = (
         index: number,
         field: Tab14ChronicFieldKey
-    ) => renderIndexedWarningIcon(pdfChronicWarnings?.[index]?.[field]);
+    ) =>
+        renderIndexedWarningIcon(pdfChronicWarnings?.[index]?.[field], () => {
+            const next = acceptIndexedFieldWarning(
+                pdfChronicWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfChronicWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }, () => {
+            const next = rejectIndexedFieldWarning(
+                pdfChronicWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfChronicWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setChronicConditions((prev) => {
+                const rows = [...prev];
+                if (!rows[index]) return prev;
+                rows[index] = { ...rows[index], [field]: '' };
+                return rows;
+            });
+        });
 
     const renderPdfInsuranceWarningIcon = (
         index: number,
         field: Tab14InsuranceFieldKey
-    ) => renderIndexedWarningIcon(pdfInsuranceWarnings?.[index]?.[field]);
+    ) =>
+        renderIndexedWarningIcon(pdfInsuranceWarnings?.[index]?.[field], () => {
+            const next = acceptIndexedFieldWarning(
+                pdfInsuranceWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfInsuranceWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }, () => {
+            const next = rejectIndexedFieldWarning(
+                pdfInsuranceWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfInsuranceWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setInsurances((prev) => {
+                const rows = [...prev];
+                if (!rows[index]) return prev;
+                rows[index] = { ...rows[index], [field]: '' };
+                return rows;
+            });
+        });
 
     const renderPdfAllergyWarningIcon = (
         index: number,
         field: Tab14AllergyFieldKey
-    ) => renderIndexedWarningIcon(pdfAllergyWarnings?.[index]?.[field]);
+    ) =>
+        renderIndexedWarningIcon(pdfAllergyWarnings?.[index]?.[field], () => {
+            const next = acceptIndexedFieldWarning(
+                pdfAllergyWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfAllergyWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }, () => {
+            const next = rejectIndexedFieldWarning(
+                pdfAllergyWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfAllergyWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setAllergies((prev) => {
+                const rows = [...prev];
+                if (!rows[index]) return prev;
+                rows[index] = { ...rows[index], [field]: '' };
+                return rows;
+            });
+        });
 
     const renderPdfMedicationWarningIcon = (
         index: number,
         field: Tab14MedicationFieldKey
-    ) => renderIndexedWarningIcon(pdfMedicationWarnings?.[index]?.[field]);
+    ) =>
+        renderIndexedWarningIcon(pdfMedicationWarnings?.[index]?.[field], () => {
+            const next = acceptIndexedFieldWarning(
+                pdfMedicationWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfMedicationWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }, () => {
+            const next = rejectIndexedFieldWarning(
+                pdfMedicationWarnings,
+                pdfIndexedReview,
+                index,
+                field
+            );
+            setPdfMedicationWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setMedications((prev) => {
+                const rows = [...prev];
+                if (!rows[index]) return prev;
+                rows[index] = { ...rows[index], [field]: '' };
+                return rows;
+            });
+        });
 
     const renderPdfHospitalWarningIcon = (field: Tab14HospitalFieldKey) =>
-        renderIndexedWarningIcon(pdfHospitalWarnings?.[field]);
+        renderIndexedWarningIcon(pdfHospitalWarnings?.[field], () => {
+            const next = acceptHospitalFieldWarning(
+                pdfHospitalWarnings,
+                pdfIndexedReview,
+                field
+            );
+            setPdfHospitalWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }, () => {
+            const next = rejectHospitalFieldWarning(
+                pdfHospitalWarnings,
+                pdfIndexedReview,
+                field
+            );
+            setPdfHospitalWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setHospitalVisits((prev) => {
+                if (!prev.length) return prev;
+                const rows = [...prev];
+                const last = rows.length - 1;
+                rows[last] = { ...rows[last], [field]: '' };
+                return rows;
+            });
+        });
 
     useEffect(() => {
         if (!authReady) return;
@@ -1706,6 +2528,39 @@ const Tab14: React.FC = () => {
                     } catch {
                         /* lab panels optional on load */
                     }
+                    try {
+                        const patient = await ensurePatientForCurrentSession(username);
+                        if (patient && !cancelled) {
+                            const docs = await listPatientDocuments(patient.patient_id);
+                            if (!cancelled) {
+                                setUploadedFiles(
+                                    docs.map((doc) => ({
+                                        id: doc.document_id,
+                                        documentId: doc.document_id,
+                                        file: {
+                                            name: doc.original_filename,
+                                            size: doc.size_bytes,
+                                            type:
+                                                doc.content_type ||
+                                                'application/octet-stream',
+                                        },
+                                        previewUrl: '',
+                                        uploadedAt: new Date(
+                                            doc.created_at
+                                        ).toLocaleString(),
+                                        parseStatus:
+                                            doc.status === 'pending_review'
+                                                ? t(
+                                                      'patientIntake.uploadReceivedPendingReview'
+                                                  )
+                                                : doc.status.replace(/_/g, ' '),
+                                    }))
+                                );
+                            }
+                        }
+                    } catch {
+                        /* vault list optional on load */
+                    }
                 }
             } catch (e) {
                 if (!cancelled) {
@@ -1724,10 +2579,49 @@ const Tab14: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [authReady, username, elevationNonce, canEditPatientRecords]);
+    }, [authReady, username, canEditPatientRecords]);
 
     const renderPatientVitalsFields = () => (
         <>
+            {vitalsHistory.length > 0 && (
+                <div className="form-field tab14-vitals-history-picker">
+                    <label htmlFor="tab14-vitals-history-select">
+                        {t('patientIntake.vitalsHistoryLabel')}
+                    </label>
+                    <select
+                        id="tab14-vitals-history-select"
+                        value={Math.min(selectedVitalsIndex, vitalsHistory.length - 1)}
+                        onChange={(e) => selectVitalsReading(Number(e.target.value))}
+                    >
+                        {vitalsHistory.map((reading, index) => (
+                            <option key={`${reading.recordedDate}-${index}`} value={index}>
+                                {formatVitalsHistoryLabel(reading, index)}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="tab14-panel-sub" style={{ marginTop: 6 }}>
+                        {t('patientIntake.vitalsHistoryHint')}
+                    </p>
+                    {(vitalsHistory[selectedVitalsIndex]?.organization ||
+                        vitalsHistory[selectedVitalsIndex]?.recordedTime ||
+                        vitalsHistory[selectedVitalsIndex]?.bmiPercentile) && (
+                        <p className="tab14-vitals-history-meta" role="status">
+                            {[
+                                vitalsHistory[selectedVitalsIndex]?.organization,
+                                vitalsHistory[selectedVitalsIndex]?.recordedTime
+                                    ? `Time ${vitalsHistory[selectedVitalsIndex]?.recordedTime}`
+                                    : '',
+                                vitalsHistory[selectedVitalsIndex]?.bmiPercentile
+                                    ? `BMI percentile ${vitalsHistory[selectedVitalsIndex]?.bmiPercentile}%`
+                                    : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                        </p>
+                    )}
+                </div>
+            )}
+
             <div className="form-field">
                 <label>Height (inches)</label>
                 <input
@@ -1951,6 +2845,36 @@ const Tab14: React.FC = () => {
         </>
     );
 
+    const epicOpenMapFor = (sectionKey: string): Record<number, boolean> =>
+        epicSectionOpenMaps[sectionKey] ?? { 0: true };
+
+    const setEpicOpenMapFor =
+        (sectionKey: string): React.Dispatch<React.SetStateAction<Record<number, boolean>>> =>
+        (action) => {
+            setEpicSectionOpenMaps((prev) => {
+                const cur = prev[sectionKey] ?? { 0: true };
+                const next = typeof action === 'function' ? action(cur) : action;
+                return { ...prev, [sectionKey]: next };
+            });
+        };
+
+    const renderEpicSectionMultiHit = (
+        sectionKey: import('../intake/tab14PortabilitySections').Tab14SectionKey,
+        sectionTitle: string
+    ) => {
+        if (ehrDocumentType !== 'epic') return null;
+        const occs = epicSectionOccurrencesByKey[sectionKey];
+        if (!occs?.length) return null;
+        return (
+            <EpicSectionOccurrencesPanel
+                sectionTitle={sectionTitle}
+                occurrences={occs}
+                openMap={epicOpenMapFor(sectionKey)}
+                setOpenMap={setEpicOpenMapFor(sectionKey)}
+            />
+        );
+    };
+
     return (
         <IonPage className="ct-page ct-tab14">
             <IonContent>
@@ -1960,47 +2884,213 @@ const Tab14: React.FC = () => {
                             <i className="fas fa-user-plus" aria-hidden /> {t('patientIntake.title')}
                         </h1>
                         <div className="tab14-header-actions">
+                            {canEditPatientRecords ? (
+                                <button
+                                    type="button"
+                                    className="tab14-sample-data-btn"
+                                    onClick={loadSampleData}
+                                >
+                                    <i className="fas fa-flask" aria-hidden />
+                                    {t('patientIntake.loadSample')}
+                                </button>
+                            ) : null}
                             <button
                                 type="button"
-                                className="tab14-sample-data-btn"
-                                onClick={loadSampleData}
-                                disabled={!canEditPatientRecords}
+                                className="book-btn"
+                                onClick={leaveIntake}
                             >
-                                <i className="fas fa-flask" aria-hidden />
-                                {t('patientIntake.loadSample')}
-                            </button>
-                            <button type="button" className="book-btn">
-                                <a
-                                    href="/tab1"
-                                    onClick={() => {
-                                        if (staffElevationActive) {
-                                            clearMeditapIntakeElevation();
-                                            setElevationNonce((n) => n + 1);
-                                        }
-                                    }}
-                                >
-                                    <i className="fas fa-arrow-left" aria-hidden />
-                                    {t('common.goBackToDashboard')}
-                                </a>
+                                <i className="fas fa-arrow-left" aria-hidden />
+                                <span>{t('common.goBackToPrevious')}</span>
                             </button>
                         </div>
                     </header>
 
                     <main className="chronic-conditions-main tab14-master">
+                        <div className="tab14-intake-toolbar">
+                            <div className="tab14-ehr-type-panel tab14-ehr-type-panel--top" role="group" aria-labelledby="tab14-ehr-type-heading">
+                                <div className="tab14-ehr-type-panel__header">
+                                    <div className="tab14-ehr-type-panel__intro">
+                                        <h3 id="tab14-ehr-type-heading" className="tab14-ehr-type-panel__title">
+                                            {t('patientIntake.documentTypeTitle')}
+                                        </h3>
+                                        <p className="tab14-ehr-type-panel__sub">
+                                            {t('patientIntake.documentTypeSub')}
+                                        </p>
+                                    </div>
+                                    <div
+                                        className={`tab14-active-format-badge${ehrDocumentType ? ' tab14-active-format-badge--active' : ''}`}
+                                        role="status"
+                                        aria-live="polite"
+                                    >
+                                        <span className="tab14-active-format-badge__eyebrow">
+                                            {t('patientIntake.intakePanelEyebrow')}
+                                        </span>
+                                        <strong className="tab14-active-format-badge__title">
+                                            {t(`patientIntake.intakePanelTitles.${ehrDocumentType ?? 'none'}`, {
+                                                defaultValue: ehrIntakePanelTitle(ehrDocumentType),
+                                            })}
+                                        </strong>
+                                    </div>
+                                </div>
+                                <div className="tab14-ehr-type-grid">
+                                    {EHR_VENDOR_PANEL_OPTIONS.map((opt) => {
+                                        const selected = ehrDocumentType === opt.id;
+                                        return (
+                                            <button
+                                                key={opt.id}
+                                                type="button"
+                                                className={`tab14-ehr-type-card${selected ? ' tab14-ehr-type-card--selected' : ''}${
+                                                    opt.status === 'planned' ? ' tab14-ehr-type-card--planned' : ''
+                                                }`}
+                                                aria-pressed={selected}
+                                                disabled={uploadParsing}
+                                                onClick={() => setEhrDocumentType(opt.id)}
+                                            >
+                                                <span className="tab14-ehr-type-card__label">{opt.label}</span>
+                                                <span
+                                                    className={`tab14-ehr-type-card__badge tab14-ehr-type-card__badge--${opt.status}`}
+                                                >
+                                                    {t(`patientIntake.documentTypeStatus.${opt.status}`, {
+                                                        defaultValue: ehrDocumentTypeStatusLabel(opt.status),
+                                                    })}
+                                                </span>
+                                                <span className="tab14-ehr-type-card__hint">{opt.hint}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <label className="tab14-ehr-type-auto">
+                                    <input
+                                        type="radio"
+                                        name="tab14-ehr-type"
+                                        checked={ehrDocumentType === 'auto'}
+                                        disabled={uploadParsing}
+                                        onChange={() => setEhrDocumentType('auto')}
+                                    />
+                                    <span>{t('patientIntake.documentTypeAuto')}</span>
+                                </label>
+                            </div>
+
+                            <aside
+                                className="tab14-pdf-upload-panel"
+                                aria-labelledby="tab14-pdf-upload-heading"
+                            >
+                                <h3 id="tab14-pdf-upload-heading" className="tab14-pdf-upload-panel__title">
+                                    {t('patientIntake.pdfUploadPanelTitle')}
+                                </h3>
+                                <p className="tab14-pdf-upload-panel__sub">
+                                    {t('patientIntake.pdfUploadPanelSub')}
+                                </p>
+                                <label
+                                    className={`file-upload-label${!ehrDocumentType ? ' file-upload-label--disabled' : ''}`}
+                                >
+                                    {t('patientIntake.uploadFile')}
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept=".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png"
+                                        onChange={handleFileUpload}
+                                        disabled={uploadParsing || !ehrDocumentType}
+                                    />
+                                </label>
+                                {!ehrDocumentType && !uploadParsing && (
+                                    <p className="tab14-upload-parse tab14-upload-parse--muted">
+                                        {t('patientIntake.selectDocumentTypeFirst')}
+                                    </p>
+                                )}
+                                {uploadParsing && (
+                                    <p className="tab14-upload-parse tab14-upload-parse--muted">
+                                        {t('patientIntake.readingDocument')}
+                                    </p>
+                                )}
+                                {!uploadParsing && uploadParseMessage && uploadedFiles.length === 0 && (
+                                    <p className="tab14-upload-parse">{uploadParseMessage}</p>
+                                )}
+                                {uploadedFiles.length > 0 && (
+                                    <div className="file-preview-list file-preview-list--compact">
+                                        <div className="file-preview-row file-preview-row--head" aria-hidden="true">
+                                            <span className="file-preview-cell file-preview-cell--name">Name</span>
+                                            <span className="file-preview-cell file-preview-cell--status">Status</span>
+                                            <span className="file-preview-cell file-preview-cell--actions">Actions</span>
+                                        </div>
+                                        {uploadedFiles.map((entry) => (
+                                            <div className="file-preview-row" key={entry.id}>
+                                                <span
+                                                    className="file-preview-cell file-preview-cell--name"
+                                                    title={entry.file.name}
+                                                >
+                                                    {entry.file.name}
+                                                </span>
+                                                <span className="file-preview-cell file-preview-cell--status">
+                                                    {entry.parseStatus?.trim() || '-'}
+                                                </span>
+                                                <span className="file-preview-cell file-preview-cell--actions">
+                                                    {entry.file.type === 'application/pdf' ||
+                                                    entry.file.name.toLowerCase().endsWith('.pdf') ? (
+                                                        <button
+                                                            className="preview-button"
+                                                            type="button"
+                                                            onClick={() => void openUploadedPreview(entry)}
+                                                        >
+                                                            Preview
+                                                        </button>
+                                                    ) : (entry.file.type || '').startsWith('image/') ||
+                                                      /\.(jpe?g|png)$/i.test(entry.file.name) ? (
+                                                        <button
+                                                            className="preview-button preview-button--image"
+                                                            type="button"
+                                                            onClick={() => void openUploadedPreview(entry)}
+                                                        >
+                                                            View
+                                                        </button>
+                                                    ) : entry.documentId ? (
+                                                        <button
+                                                            className="preview-button"
+                                                            type="button"
+                                                            onClick={() => void openUploadedPreview(entry)}
+                                                        >
+                                                            Open
+                                                        </button>
+                                                    ) : null}
+                                                    <button
+                                                        className="remove-file-button"
+                                                        type="button"
+                                                        onClick={() => removeUploadedFile(entry.id)}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        ))}
+                                        <button
+                                            className="remove-file-button remove-file-button--clear-all"
+                                            type="button"
+                                            onClick={clearUploadedFiles}
+                                        >
+                                            {t('patientIntake.clearUploadedFiles')}
+                                        </button>
+                                    </div>
+                                )}
+                            </aside>
+                        </div>
+
                         <div className="tab14-layout">
                             <aside className="tab14-sidebar" aria-label={t('patientIntake.sectionsAria')}>
                                 <nav className="tab14-nav">
-                                    {TAB14_SECTIONS.map((s) => (
+                                    {tab14Sections.map((s) => {
+                                        const label = ehrSidebarNavLabel(s, ehrDocumentType);
+                                        return (
                                         <button
-                                            key={s.id}
+                                            key={s.key}
                                             type="button"
                                             className={`tab14-nav-item${activeSection === s.id ? ' active' : ''}`}
                                             onClick={() => setActiveSection(s.id)}
                                         >
                                             <i className={`fas ${s.icon}`} aria-hidden />
-                                            <span>{t(s.labelKey)}</span>
+                                            <span>{label}</span>
                                         </button>
-                                    ))}
+                                        );
+                                    })}
                                 </nav>
                             </aside>
                             <div className="tab14-main-panel">
@@ -2009,64 +3099,138 @@ const Tab14: React.FC = () => {
                                         {t('patientIntake.loadingRecord')}
                                     </p>
                                 )}
-                                {staffElevationActive && (
-                                    <div className="tab14-staff-elevation-banner" role="status">
-                                        <p>
-                                            {t('patientIntake.staffActiveBanner')}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            className="tab14-end-staff-btn"
-                                            onClick={() => {
-                                                clearMeditapIntakeElevation();
-                                                setElevationNonce((n) => n + 1);
-                                            }}
-                                        >
-                                            {t('common.endStaffMode')}
-                                        </button>
-                                    </div>
-                                )}
                                 {!canEditPatientRecords && (
                                     <div className="tab14-view-only-banner" role="status">
-                                        <p>
-                                            {t('patientIntake.viewOnlyBanner')}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            className="tab14-staff-signin-btn"
-                                            onClick={() => {
-                                                setStaffModalError(null);
-                                                setStaffModalOpen(true);
-                                            }}
-                                        >
-                                            {t('common.staffSignIn')}
-                                        </button>
+                                        <p>{t('patientIntake.patientViewOnlyBanner')}</p>
                                     </div>
                                 )}
                                 <div className="tab14-panel-header">
                                     <h2>
-                                        {t(
-                                            TAB14_SECTIONS.find((s) => s.id === activeSection)?.labelKey ??
-                                                'patientIntake.sections.patientInfo'
-                                        )}
+                                        {(() => {
+                                            const nav = tab14Sections.find((s) => s.id === activeSection);
+                                            return nav
+                                              ? ehrSidebarNavLabel(nav, ehrDocumentType)
+                                              : t('patientIntake.sections.demographics');
+                                        })()}
                                     </h2>
                                     <p className="tab14-panel-sub">
                                         {activeSection === 6
                                             ? t('patientIntake.vitalsPanelSub')
                                             : activeSection === 0
-                                              ? t('patientIntake.demographicsSub')
-                                              : t('patientIntake.defaultPanelSub')}
+                                              ? ehrDocumentType === 'epic'
+                                                ? (() => {
+                                                      const n =
+                                                          epicSectionOccurrenceCounts[
+                                                              'Patient Demographics'
+                                                          ];
+                                                          return n && n > 0
+                                                          ? `Epic columns only · registered × ${n}`
+                                                          : 'Epic columns: Patient Address, Patient Name, Communication, Language, Race, Ethnicity, Marital Status';
+                                                  })()
+                                                : t('patientIntake.demographicsSub')
+                                              : (() => {
+                                                    const nav = tab14Sections.find(
+                                                        (s) => s.id === activeSection
+                                                    );
+                                                    if (ehrDocumentType !== 'epic' || !nav) {
+                                                        return t('patientIntake.defaultPanelSub');
+                                                    }
+                                                    if (nav.key === 'patientInstructions') {
+                                                        const n =
+                                                            epicSectionOccurrenceCounts[
+                                                                'Note from Mayo Clinic'
+                                                            ] ??
+                                                            epicNoteFromClinicOccurrences.length;
+                                                        return n && n > 0
+                                                            ? `Epic cover disclaimer · registered × ${n}`
+                                                            : t('patientIntake.defaultPanelSub');
+                                                    }
+                                                    const label = ehrSidebarNavLabel(
+                                                        nav,
+                                                        ehrDocumentType
+                                                    );
+                                                    const n =
+                                                        epicSectionOccurrenceCounts[label] ??
+                                                        epicSectionOccurrencesByKey[
+                                                            nav.key as import('../intake/tab14PortabilitySections').Tab14SectionKey
+                                                        ]?.length;
+                                                    return n && n > 0
+                                                        ? `Epic multi-hit · registered × ${n}`
+                                                        : t('patientIntake.defaultPanelSub');
+                                                })()}
                                     </p>
                                 </div>
                                 <div className="tab14-panel-body">
                         {activeSection === 0 && (
                             <>
                                 <fieldset
-                                    className="tab14-record-fieldset"
-                                    disabled={!canEditPatientRecords}
+                                    className={`tab14-record-fieldset${!canEditPatientRecords ? ' tab14-record-fieldset--locked' : ''}`}
                                 >
                             <div className="tab14-section-card">
 
+                                {ehrDocumentType === 'epic' ? (
+                                  <EpicDemographicsOccurrencesPanel
+                                    occurrences={epicDemographicsOccurrences}
+                                    openMap={epicDemographicsOpen}
+                                    setOpenMap={setEpicDemographicsOpen}
+                                    setOccurrences={setEpicDemographicsOccurrences}
+                                    fallback={{
+                                      address: patientInfo.address,
+                                      patientFullName:
+                                        patientInfo.patientFullName ||
+                                        [patientInfo.givenName, patientInfo.familyName]
+                                          .filter(Boolean)
+                                          .join(' '),
+                                      givenName: patientInfo.givenName,
+                                      familyName: patientInfo.familyName,
+                                      formerAliases: patientInfo.formerAliases,
+                                      communication: patientInfo.communication,
+                                      phoneNumber: patientInfo.phoneNumber,
+                                      homePhone: patientInfo.homePhone,
+                                      email: patientInfo.email,
+                                      preferredLanguage: patientInfo.preferredLanguage,
+                                      race: patientInfo.race,
+                                      ethnicity: patientInfo.ethnicity,
+                                      maritalStatus: patientInfo.maritalStatus,
+                                      sexAtBirth: patientInfo.sexAtBirth,
+                                      dateOfBirth: patientInfo.dateOfBirth,
+                                    }}
+                                    onPrimaryChange={(fields) => {
+                                      const full =
+                                        fields.patientFullName ||
+                                        [fields.givenName, fields.familyName]
+                                          .filter(Boolean)
+                                          .join(' ');
+                                      const parts = full.trim().split(/\s+/);
+                                      setPatientInfo((prev) => ({
+                                        ...prev,
+                                        address: fields.address ?? prev.address,
+                                        patientFullName: full || prev.patientFullName,
+                                        givenName:
+                                          fields.givenName ||
+                                          (parts.length > 1 ? parts.slice(0, -1).join(' ') : full) ||
+                                          prev.givenName,
+                                        familyName:
+                                          fields.familyName ||
+                                          (parts.length > 1 ? parts[parts.length - 1]! : '') ||
+                                          prev.familyName,
+                                        formerAliases: fields.formerAliases ?? prev.formerAliases,
+                                        communication: fields.communication ?? prev.communication,
+                                        phoneNumber: fields.phoneNumber ?? prev.phoneNumber,
+                                        homePhone: fields.homePhone ?? prev.homePhone,
+                                        email: fields.email ?? prev.email,
+                                        preferredLanguage:
+                                          fields.preferredLanguage ?? prev.preferredLanguage,
+                                        race: fields.race ?? prev.race,
+                                        ethnicity: fields.ethnicity ?? prev.ethnicity,
+                                        maritalStatus: fields.maritalStatus ?? prev.maritalStatus,
+                                        sexAtBirth: fields.sexAtBirth ?? prev.sexAtBirth,
+                                        dateOfBirth: fields.dateOfBirth ?? prev.dateOfBirth,
+                                      }));
+                                    }}
+                                  />
+                                ) : (
+                                  <>
                                 <div className="form-field">
                                     <label>
                                         Given Name *{renderPdfFieldWarningIcon('givenName')}
@@ -2326,8 +3490,10 @@ const Tab14: React.FC = () => {
                                         <option value="">Select marital status</option>
                                         <option value="Single">Single</option>
                                         <option value="Married">Married</option>
+                                        <option value="Never Married">Never Married</option>
                                         <option value="Divorced">Divorced</option>
                                         <option value="Widowed">Widowed</option>
+                                        <option value="Separated">Separated</option>
                                         <option value="Domestic Partnership">Domestic Partnership</option>
                                         <option value="Other">Other</option>
                                     </select>
@@ -2462,9 +3628,12 @@ const Tab14: React.FC = () => {
                                         }
                                     />
                                 </div>
+                                  </>
+                                )}
 
                             </div>
 
+                            {ehrDocumentType !== 'epic' && (
                             <div className="tab14-section-card tab14-emergency-contact-section">
                                 <div className="tab14-subsection-heading">
                                     <h3>Emergency Contact</h3>
@@ -2568,12 +3737,21 @@ const Tab14: React.FC = () => {
                                     />
                                 </div>
                             </div>
+                            )}
                                 </fieldset>
                             </>
                         )}
 
                         {activeSection === 6 && (
+                            <fieldset
+                                className={`tab14-record-fieldset${!canEditPatientRecords ? ' tab14-record-fieldset--locked' : ''}`}
+                            >
                             <div className="tab14-section-card tab14-vitals-section">
+                                {ehrDocumentType === 'epic' &&
+                                (epicSectionOccurrencesByKey.vitals?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('vitals', 'Last Filed Vital Signs')
+                                ) : (
+                                    <>
                                 <div className="tab14-vitals-heading">
                                     <h3>{t('patientIntake.heightWeightHeading')}</h3>
                                     <p>
@@ -2581,18 +3759,25 @@ const Tab14: React.FC = () => {
                                     </p>
                                 </div>
                                 {renderPatientVitalsFields()}
+                                    </>
+                                )}
                             </div>
+                            </fieldset>
                         )}
 
                         {activeSection === 7 && (
                             <fieldset
-                                className="tab14-record-fieldset"
-                                disabled={!canEditPatientRecords}
+                                className={`tab14-record-fieldset${!canEditPatientRecords ? ' tab14-record-fieldset--locked' : ''}`}
                             >
                             <div className="tab14-section-card">
+                                {ehrDocumentType === 'epic' &&
+                                (epicSectionOccurrencesByKey.results?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('results', 'Results')
+                                ) : (
+                                    <>
                                 {!canEditPatientRecords && (
                                     <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
-                                        Staff sign-in is required to edit lab results.
+                                        {t('patientIntake.patientLabsReadOnly')}
                                     </p>
                                 )}
                                 {labPanels.length === 0 ? (
@@ -2614,11 +3799,7 @@ const Tab14: React.FC = () => {
                                                 key={panel.serverId ?? panel.id}
                                                 sectionKey="labResult"
                                                 index={index}
-                                                title={repeaterRowTitle(
-                                                    'labResult',
-                                                    index,
-                                                    panel.testName || panel.displayCode || undefined
-                                                )}
+                                                title={labResultAccordionTitle(panel, index)}
                                                 isOpen={isRepeaterAccordionOpen(
                                                     repeaterAccordionOpen,
                                                     'labResult',
@@ -2941,25 +4122,27 @@ const Tab14: React.FC = () => {
                                 >
                                     + Add lab result
                                 </button>
+                                    </>
+                                )}
                             </div>
                             </fieldset>
                         )}
 
                         {activeSection >= 1 && activeSection <= 5 && (
                                 <fieldset
-                                    className="tab14-record-fieldset"
-                                    disabled={!canEditPatientRecords}
+                                    className={`tab14-record-fieldset${!canEditPatientRecords ? ' tab14-record-fieldset--locked' : ''}`}
                                 >
 
                     {/* Insurance */}
                         {activeSection === 4 && (
                             <div className="tab14-section-card">
+                                {ehrDocumentType === 'epic' &&
+                                (epicSectionOccurrencesByKey.payers?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('payers', 'Insurance')
+                                ) : (
+                                    <>
                                 {insurances.map((insurance, index) => {
-                                    const insuranceTitle = `${t('patientIntake.fields.insuranceN', { n: index + 1 })}${
-                                        insurance.providerName.trim()
-                                            ? ` — ${insurance.providerName.trim()}`
-                                            : ''
-                                    }`;
+                                    const insuranceTitle = `${index + 1}# ${t('patientIntake.sections.payers')}`;
                                     const isOpen = isInsuranceAccordionOpen(expandedInsuranceIds, index);
                                     const panelId = `tab14-insurance-${index}`;
                                     return (
@@ -3205,6 +4388,8 @@ const Tab14: React.FC = () => {
                                     <span>Add another insurance</span>
                                 </label>
 
+                                    </>
+                                )}
                             </div>
                         )}
 
@@ -3233,6 +4418,11 @@ const Tab14: React.FC = () => {
                                     </span>
                                 </label>
 
+                                {ehrDocumentType === 'epic' &&
+                                (epicSectionOccurrencesByKey.allergies?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('allergies', 'Allergies')
+                                ) : (
+                                    <>
                                 {!noAllergies && allergies.length > 0 && (
                                     <Tab14RepeaterToolbar
                                         onExpandAll={() => setAllRepeaterAccordion('allergy', allergies.length, true)}
@@ -3260,6 +4450,17 @@ const Tab14: React.FC = () => {
                                         onChange={(e) =>
                                             handleChange(index, "allergyName", e.target.value, allergies, setAllergies)
                                         }/>
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Allergen ID</label>
+                                        <input
+                                            value={allergy.allergenId}
+                                            onChange={(e) =>
+                                                handleChange(index, 'allergenId', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="e.g. 1469239"
+                                        />
                                     </div>
 
                                     <div className="form-field">
@@ -3311,9 +4512,26 @@ const Tab14: React.FC = () => {
                                     )}
 
                                     <div className="form-field">
+                                        <label>Category (from document)</label>
+                                        <input
+                                            value={allergy.category}
+                                            onChange={(e) =>
+                                                handleChange(index, 'category', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="e.g. environment, medication"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
                                         <label>Severity</label>
                                         <select
-                                        value={allergy.severity}
+                                        value={
+                                            ALLERGY_SEVERITY_OPTIONS.some((o) => o.value === allergy.severity)
+                                                ? allergy.severity
+                                                : allergy.severity
+                                                    ? allergy.severity
+                                                    : ''
+                                        }
                                         onChange={(e) =>
                                             handleChange(index, "severity", e.target.value, allergies, setAllergies)
                                         }>
@@ -3322,7 +4540,22 @@ const Tab14: React.FC = () => {
                                                     {opt.label}
                                                 </option>
                                             ))}
+                                            {allergy.severity &&
+                                            !ALLERGY_SEVERITY_OPTIONS.some((o) => o.value === allergy.severity) ? (
+                                                <option value={allergy.severity}>{allergy.severity}</option>
+                                            ) : null}
                                         </select>
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Criticality</label>
+                                        <input
+                                            value={allergy.criticality}
+                                            onChange={(e) =>
+                                                handleChange(index, 'criticality', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="e.g. Not available"
+                                        />
                                     </div>
 
                                     <div className="form-field">
@@ -3335,6 +4568,28 @@ const Tab14: React.FC = () => {
                                     </div>
 
                                     <div className="form-field">
+                                        <label>Code</label>
+                                        <input
+                                            value={allergy.code}
+                                            onChange={(e) =>
+                                                handleChange(index, 'code', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="e.g. 235616"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Code system</label>
+                                        <input
+                                            value={allergy.codeSystem}
+                                            onChange={(e) =>
+                                                handleChange(index, 'codeSystem', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="e.g. RxNorm"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
                                         <label>Last observed</label>
                                         <GlassDateInput
                                             value={allergy.lastObserved}
@@ -3342,6 +4597,37 @@ const Tab14: React.FC = () => {
                                                 handleChange(index, 'lastObserved', iso, allergies, setAllergies)
                                             }
                                             max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Recorded by</label>
+                                        <input
+                                            value={allergy.recordedBy}
+                                            onChange={(e) =>
+                                                handleChange(index, 'recordedBy', e.target.value, allergies, setAllergies)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Organization</label>
+                                        <input
+                                            value={allergy.organization}
+                                            onChange={(e) =>
+                                                handleChange(index, 'organization', e.target.value, allergies, setAllergies)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Recorded time</label>
+                                        <input
+                                            value={allergy.recordedTime}
+                                            onChange={(e) =>
+                                                handleChange(index, 'recordedTime', e.target.value, allergies, setAllergies)
+                                            }
+                                            placeholder="HH:MM:SS"
                                         />
                                     </div>
 
@@ -3362,6 +4648,8 @@ const Tab14: React.FC = () => {
                                     onClick={() => handleAddRepeaterSection('allergy', allergies, setAllergies, defaultAllergy)}>
                                     + Add Another Allergy
                                 </button>
+                                    </>
+                                )}
 
                             </div>
                         )}
@@ -3382,6 +4670,11 @@ const Tab14: React.FC = () => {
                                     Click here if no known medications are present
                                 </label>
 
+                                {ehrDocumentType === 'epic' &&
+                                (epicSectionOccurrencesByKey.medications?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('medications', 'Medications')
+                                ) : (
+                                    <>
                                 {!noMedications && medications.length > 0 && (
                                     <Tab14RepeaterToolbar
                                         onExpandAll={() => setAllRepeaterAccordion('medication', medications.length, true)}
@@ -3464,12 +4757,86 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
+                                            <label>Directions / Sig</label>
+                                            <textarea
+                                                rows={2}
+                                                value={med.sig}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'sig', e.target.value, medications, setMedications)
+                                                }
+                                                placeholder="e.g. TAKE ONE CAPSULE BY MOUTH THREE TIMES DAILY"
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Status</label>
+                                            <input
+                                                value={med.status}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'status', e.target.value, medications, setMedications)
+                                                }
+                                                placeholder="e.g. Completed"
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Authored on</label>
+                                            <GlassDateInput
+                                                value={med.authoredOn}
+                                                onChange={(iso) =>
+                                                    handleChange(index, 'authoredOn', iso, medications, setMedications)
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Fill quantity</label>
+                                            <input
+                                                value={med.fillQuantity}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'fillQuantity', e.target.value, medications, setMedications)
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
                                             <label>Prescribing physician</label>
                                             <input
                                             value={med.prescribingPhysician}
                                             onChange={(e) =>
                                                 handleChange(index, "prescribingPhysician", e.target.value, medications, setMedications)
                                             }/>
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Recorded by</label>
+                                            <input
+                                                value={med.recordedBy}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'recordedBy', e.target.value, medications, setMedications)
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Organization</label>
+                                            <input
+                                                value={med.organization}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'organization', e.target.value, medications, setMedications)
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="form-field">
+                                            <label>Recorded time</label>
+                                            <input
+                                                value={med.recordedTime}
+                                                onChange={(e) =>
+                                                    handleChange(index, 'recordedTime', e.target.value, medications, setMedications)
+                                                }
+                                                placeholder="HH:MM:SS"
+                                            />
                                         </div>
 
                                         <div className="form-field">
@@ -3524,6 +4891,8 @@ const Tab14: React.FC = () => {
                                         + Add Another Medication
                                     </button>
                                 )}
+                                    </>
+                                )}
 
                             </div>
                         )}
@@ -3538,14 +4907,70 @@ const Tab14: React.FC = () => {
                                         onChange={(e) => {
                                             const checked = e.target.checked;
                                             setNoChronicConditions(checked);
-                                            setChronicConditions(checked ? [] : [defaultChronicCondition]);
+                                            setChronicConditions(
+                                                checked
+                                                    ? [
+                                                          {
+                                                              ...defaultChronicCondition,
+                                                              conditionName: 'No Known Problems',
+                                                              notesChronicConditions:
+                                                                  'No Known Problems',
+                                                          },
+                                                      ]
+                                                    : [defaultChronicCondition]
+                                            );
                                             if (checked) setPdfChronicWarnings(undefined);
                                         }}
                                     />
                                     Click here if no known chronic conditions are present
                                 </label>
 
-                                {!noChronicConditions && chronicConditions.length > 0 && (
+                                {noChronicConditions ? (
+                                    <div className="tab14-none-known-fields">
+                                        <div className="form-field">
+                                            <label>Condition Name</label>
+                                            <input
+                                                value={
+                                                    chronicConditions[0]?.conditionName ||
+                                                    'No Known Problems'
+                                                }
+                                                onChange={(e) =>
+                                                    setChronicConditions([
+                                                        {
+                                                            ...(chronicConditions[0] ||
+                                                                defaultChronicCondition),
+                                                            conditionName: e.target.value,
+                                                        },
+                                                    ])
+                                                }
+                                            />
+                                        </div>
+                                        <div className="form-field">
+                                            <label>Additional Notes</label>
+                                            <input
+                                                value={
+                                                    chronicConditions[0]
+                                                        ?.notesChronicConditions ||
+                                                    'No Known Problems'
+                                                }
+                                                onChange={(e) =>
+                                                    setChronicConditions([
+                                                        {
+                                                            ...(chronicConditions[0] ||
+                                                                defaultChronicCondition),
+                                                            notesChronicConditions: e.target.value,
+                                                        },
+                                                    ])
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                ) : ehrDocumentType === 'epic' &&
+                                  (epicSectionOccurrencesByKey.problems?.length ?? 0) > 0 ? (
+                                    renderEpicSectionMultiHit('problems', 'Active Problems')
+                                ) : (
+                                    <>
+                                {chronicConditions.length > 0 && (
                                     <Tab14RepeaterToolbar
                                         onExpandAll={() =>
                                             setAllRepeaterAccordion('chronic', chronicConditions.length, true)
@@ -3556,7 +4981,7 @@ const Tab14: React.FC = () => {
                                     />
                                 )}
 
-                                {!noChronicConditions && chronicConditions.map((condition, index) => (
+                                {chronicConditions.map((condition, index) => (
                                     <Tab14RepeaterAccordion
                                         key={index}
                                         sectionKey="chronic"
@@ -3629,6 +5054,16 @@ const Tab14: React.FC = () => {
                                         </div>
 
                                         <div className="form-field">
+                                            <label>Status</label>
+                                            <input
+                                            placeholder='e.g. Active, Resolved'
+                                            value={condition.status ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, "status", e.target.value, chronicConditions, setChronicConditions)
+                                            }/>
+                                        </div>
+
+                                        <div className="form-field">
                                             <label>
                                                 Additional Notes
                                                 {renderPdfChronicWarningIcon(
@@ -3663,12 +5098,19 @@ const Tab14: React.FC = () => {
                                     handleAddRepeaterSection('chronic', chronicConditions, setChronicConditions, defaultChronicCondition)}>
                                     + Add Another Chronic Condition
                                 </button>
+                                    </>
+                                )}
 
                             </div>
                         )}
 
                     {activeSection === 1 && (
                         <div className="tab14-section-card">
+                            {ehrDocumentType === 'epic' &&
+                            (epicSectionOccurrencesByKey.pastEncounters?.length ?? 0) > 0 ? (
+                                renderEpicSectionMultiHit('pastEncounters', 'Encounter Details')
+                            ) : (
+                                <>
                             <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
                                 Fill these fields to populate the Health Overview “Patient Hospital” card.
                             </p>
@@ -3781,6 +5223,82 @@ const Tab14: React.FC = () => {
                                             }
                                         />
                                     </div>
+                                    <div className="form-field">
+                                        <label>Encounter ID</label>
+                                        <input
+                                            value={visit.encounterId ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'encounterId', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Location</label>
+                                        <input
+                                            placeholder='e.g. ELP_ACWHP - Mesa'
+                                            value={visit.location ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'location', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Encounter start</label>
+                                        <input
+                                            placeholder='MM/DD/YYYY HH:MM:SS'
+                                            value={visit.startDateTime ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'startDateTime', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Encounter closed</label>
+                                        <input
+                                            placeholder='MM/DD/YYYY HH:MM:SS'
+                                            value={visit.closedDateTime ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'closedDateTime', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>SNOMED-CT</label>
+                                        <input
+                                            value={visit.snomed ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'snomed', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>ICD-10</label>
+                                        <input
+                                            value={visit.icd10 ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'icd10', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>IMO code</label>
+                                        <input
+                                            value={visit.imo ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'imo', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>Diagnosis note</label>
+                                        <textarea
+                                            rows={3}
+                                            value={visit.diagnosisNote ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'diagnosisNote', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
                                     {hospitalVisits.length > 1 && (
                                         <button
                                             className="remove-button"
@@ -3803,11 +5321,81 @@ const Tab14: React.FC = () => {
                             >
                                 + Add Another Hospital Visit
                             </button>
+                                </>
+                            )}
                         </div>
                     )}
 
                                 </fieldset>
                         )}
+
+                    {(() => {
+                        const activeNav = tab14Sections.find((s) => s.id === activeSection);
+                        if (!activeNav || activeNav.legacy) return null;
+                        const key = activeNav.key as Tab14ExtendedSectionKey;
+                        if (
+                            ehrDocumentType === 'epic' &&
+                            key === 'patientInstructions' &&
+                            epicNoteFromClinicOccurrences.length > 0
+                        ) {
+                            return (
+                                <div className="tab14-section-card">
+                                    <EpicNoteFromClinicOccurrencesPanel
+                                        occurrences={epicNoteFromClinicOccurrences}
+                                        openMap={epicNoteFromClinicOpen}
+                                        setOpenMap={setEpicNoteFromClinicOpen}
+                                        setOccurrences={setEpicNoteFromClinicOccurrences}
+                                        onOccurrencesChange={(next) => {
+                                            setExtendedSections((prev) => ({
+                                                ...prev,
+                                                patientInstructions: next.map((src) => ({
+                                                    title: `Note from ${src.fields.clinicName || 'Clinic'}`,
+                                                    detail: src.fields.body || '',
+                                                    date: src.intakeDateIso || '',
+                                                    recordedBy: src.fields.sharedWith
+                                                        ? `Shared with ${src.fields.sharedWith}`
+                                                        : '',
+                                                    place: src.fields.clinicName || '',
+                                                    time: '',
+                                                    notes: src.visitType || '',
+                                                    noteType:
+                                                        src.intakeDateKind === 'generated'
+                                                            ? 'Cover disclaimer'
+                                                            : 'Visit reprint',
+                                                    status:
+                                                        src.source === 'inferredReprint'
+                                                            ? 'inferred'
+                                                            : 'parsed',
+                                                })),
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                            );
+                        }
+                        const epicTitle = ehrSidebarNavLabel(activeNav, ehrDocumentType);
+                        if (
+                            ehrDocumentType === 'epic' &&
+                            (epicSectionOccurrencesByKey[key]?.length ?? 0) > 0
+                        ) {
+                            return (
+                                <div className="tab14-section-card">
+                                    {renderEpicSectionMultiHit(key, epicTitle)}
+                                </div>
+                            );
+                        }
+                        return (
+                            <Tab14ExtendedSectionPanel
+                                sectionKey={key}
+                                title={epicTitle}
+                                entries={extendedSections[key] ?? []}
+                                canEdit={canEditPatientRecords}
+                                onChange={(next) =>
+                                    setExtendedSections((prev) => ({ ...prev, [key]: next }))
+                                }
+                            />
+                        );
+                    })()}
 
                                 </div>
 
@@ -3874,6 +5462,76 @@ const Tab14: React.FC = () => {
                                 {backendError}
                             </span>
                         )}
+                        {intakeCompletenessNotice && (
+                            <div className="tab14-intake-completeness" role="status">
+                                <p>{intakeCompletenessNotice}</p>
+                                {athenaPortabilityScore &&
+                                    athenaPortabilityScore.gapLabels.length > 0 && (
+                                    <ul className="tab14-athena-gap-list">
+                                        {athenaPortabilityScore.sections
+                                            .filter(
+                                                (s) =>
+                                                    s.status === 'missing' ||
+                                                    s.status === 'thin'
+                                            )
+                                            .map((s) => (
+                                                <li key={s.id}>
+                                                    <span
+                                                        className={`tab14-athena-gap-badge tab14-athena-gap-badge--${s.status}`}
+                                                    >
+                                                        {s.status}
+                                                    </span>
+                                                    <strong>{s.label}</strong>
+                                                    <span className="tab14-athena-gap-detail">
+                                                        {s.detail}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                    </ul>
+                                )}
+                                {evaluatePatientFieldReviewGate(
+                                    pdfFieldWarnings,
+                                    pdfFieldReview,
+                                    {
+                                        allergies: pdfAllergyWarnings,
+                                        medications: pdfMedicationWarnings,
+                                        chronic: pdfChronicWarnings,
+                                        insurances: pdfInsuranceWarnings,
+                                        hospital: pdfHospitalWarnings,
+                                        decisions: pdfIndexedReview,
+                                    }
+                                ).unresolvedCount > 0 ? (
+                                    <button
+                                        type="button"
+                                        className="tab14-pdf-review-btn tab14-pdf-review-btn--accept"
+                                        onClick={() => {
+                                            const next = acceptAllPatientFieldWarnings(
+                                                pdfFieldWarnings,
+                                                pdfFieldReview,
+                                                {
+                                                    allergies: pdfAllergyWarnings,
+                                                    medications: pdfMedicationWarnings,
+                                                    chronic: pdfChronicWarnings,
+                                                    insurances: pdfInsuranceWarnings,
+                                                    hospital: pdfHospitalWarnings,
+                                                    decisions: pdfIndexedReview,
+                                                }
+                                            );
+                                            setPdfFieldWarnings(next.warnings);
+                                            setPdfFieldReview(next.decisions);
+                                            setPdfIndexedReview(next.indexedDecisions);
+                                            setPdfAllergyWarnings(next.allergies);
+                                            setPdfMedicationWarnings(next.medications);
+                                            setPdfChronicWarnings(next.chronic);
+                                            setPdfInsuranceWarnings(next.insurances);
+                                            setPdfHospitalWarnings(next.hospital);
+                                        }}
+                                    >
+                                        Accept all flagged fields
+                                    </button>
+                                ) : null}
+                            </div>
+                        )}
                         {labSaveNotice && (
                             <span
                                 className="tab14-upload-parse"
@@ -3888,95 +5546,6 @@ const Tab14: React.FC = () => {
                     <div className = "saved-message">
                         {t('patientIntake.dataSaved')}
                     </div>}
-
-                    </div>
-
-                    {/* Upload works for patients; Save is outside fieldset so it stays clickable */}
-                    <div className = "file-upload-section">
-                        <label className = "file-upload-label">
-                            {t('patientIntake.uploadFile')}
-                            <input type = "file" multiple accept = ".pdf,.jpeg,.jpg,.png,application/pdf,image/jpeg,image/png" onChange = {handleFileUpload} disabled={uploadParsing} /> 
-                        </label>
-                        {uploadParsing && (
-                            <p className="tab14-upload-parse tab14-upload-parse--muted">{t('patientIntake.readingDocument')}</p>
-                        )}
-                        {!uploadParsing && uploadParseMessage && uploadedFiles.length === 0 && (
-                            <p className="tab14-upload-parse">{uploadParseMessage}</p>
-                        )}
-
-                        {uploadedFiles.length > 0 && (
-                        <div className="file-preview-list">
-                            <div className="file-preview-row file-preview-row--head" aria-hidden="true">
-                                <span className="file-preview-cell file-preview-cell--name">Name</span>
-                                <span className="file-preview-cell file-preview-cell--size">Size</span>
-                                <span className="file-preview-cell file-preview-cell--uploaded">Uploaded</span>
-                                <span className="file-preview-cell file-preview-cell--status">Import status</span>
-                                <span className="file-preview-cell file-preview-cell--actions">Actions</span>
-                            </div>
-                            {uploadedFiles.map((entry) => (
-                                <div className="file-preview-row" key={entry.id}>
-                                    <span
-                                        className="file-preview-cell file-preview-cell--name"
-                                        title={entry.file.name}
-                                    >
-                                        {entry.file.name}
-                                    </span>
-                                    <span className="file-preview-cell file-preview-cell--size">
-                                        {(entry.file.size / 1024).toFixed(2)} KB
-                                    </span>
-                                    <span className="file-preview-cell file-preview-cell--uploaded">
-                                        {(() => {
-                                            const { date, time } = splitUploadedAtStamp(entry.uploadedAt);
-                                            return (
-                                                <>
-                                                    <span className="file-preview-uploaded-date">{date}</span>
-                                                    {time ? (
-                                                        <span className="file-preview-uploaded-time">{time}</span>
-                                                    ) : null}
-                                                </>
-                                            );
-                                        })()}
-                                    </span>
-                                    <span className="file-preview-cell file-preview-cell--status">
-                                        {entry.parseStatus?.trim() || '-'}
-                                    </span>
-                                    <span className="file-preview-cell file-preview-cell--actions">
-                                        {entry.file.type === 'application/pdf' ? (
-                                            <button
-                                                className="preview-button"
-                                                type="button"
-                                                onClick={() => window.open(entry.previewUrl, '_blank')}
-                                            >
-                                                Preview PDF
-                                            </button>
-                                        ) : entry.file.type.startsWith('image/') ? (
-                                            <button
-                                                className="preview-button preview-button--image"
-                                                type="button"
-                                                onClick={() => window.open(entry.previewUrl, '_blank')}
-                                            >
-                                                View Image
-                                            </button>
-                                        ) : null}
-                                        <button
-                                            className="remove-file-button"
-                                            type="button"
-                                            onClick={() => removeUploadedFile(entry.id)}
-                                        >
-                                            Remove
-                                        </button>
-                                    </span>
-                                </div>
-                            ))}
-                            <button
-                                className="remove-file-button remove-file-button--clear-all"
-                                type="button"
-                                onClick={clearUploadedFiles}
-                            >
-                                {t('patientIntake.clearUploadedFiles')}
-                            </button>
-                        </div>
-                    )}
 
                     </div>
 
@@ -4024,76 +5593,6 @@ const Tab14: React.FC = () => {
                                     Go back
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {staffModalOpen && (
-                    <div
-                        className="tab14-staff-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="tab14-staff-modal-title"
-                    >
-                        <button
-                            type="button"
-                            className="tab14-staff-modal__backdrop"
-                            aria-label={t('common.closeDialog')}
-                            disabled={staffSubmitting}
-                            onClick={() => {
-                                if (!staffSubmitting) setStaffModalOpen(false);
-                            }}
-                        />
-                        <div className="tab14-staff-modal__panel">
-                            <h2 id="tab14-staff-modal-title">{t('common.staffSignIn')}</h2>
-                            <p className="tab14-staff-modal__hint">
-                                {t('patientIntake.staffModalHint')}
-                            </p>
-                            <form onSubmit={(e) => void submitStaffModal(e)}>
-                                <div className="form-field">
-                                    <label htmlFor="tab14-staff-user">{t('common.staffUsername')}</label>
-                                    <input
-                                        id="tab14-staff-user"
-                                        name="username"
-                                        autoComplete="username"
-                                        value={staffUsername}
-                                        onChange={(e) => setStaffUsername(e.target.value)}
-                                        disabled={staffSubmitting}
-                                    />
-                                </div>
-                                <div className="form-field">
-                                    <label htmlFor="tab14-staff-pass">{t('common.password')}</label>
-                                    <input
-                                        id="tab14-staff-pass"
-                                        name="password"
-                                        type="password"
-                                        autoComplete="current-password"
-                                        value={staffPassword}
-                                        onChange={(e) => setStaffPassword(e.target.value)}
-                                        disabled={staffSubmitting}
-                                    />
-                                </div>
-                                {staffModalError && (
-                                    <p className="tab14-staff-modal__error">{staffModalError}</p>
-                                )}
-                                <div className="tab14-staff-modal__actions">
-                                    <button
-                                        type="button"
-                                        className="tab14-staff-modal__btn tab14-staff-modal__btn--secondary"
-                                        disabled={staffSubmitting}
-                                        onClick={() => setStaffModalOpen(false)}
-                                    >
-                                        {t('common.cancel')}
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="tab14-staff-modal__btn tab14-staff-modal__btn--primary"
-                                        disabled={staffSubmitting}
-                                    >
-                                        {staffSubmitting ? t('common.signingIn') : t('common.unlockAndContinue')}
-                                    </button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 )}

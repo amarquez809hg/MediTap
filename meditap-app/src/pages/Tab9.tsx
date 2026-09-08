@@ -8,14 +8,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { getApiBase } from '../config/api';
 import { startOnboardingForNewUser } from '../onboarding/onboardingStorage';
 import { resolvePostLoginPath } from '../portals/portalPaths';
+import SecurePasswordSuggestion from '../components/SecurePasswordSuggestion';
+import { MIN_SECURE_PASSWORD_LENGTH } from '../auth/securePassword';
 
 const EPIC_ON_FHIR_PORTAL =
   (import.meta.env.VITE_EPIC_DEVELOPER_PORTAL_URL as string | undefined)?.trim() ||
   'https://fhir.epic.com/';
 
 /** Flatten DRF / Django validation payloads so users see real reasons (password rules, etc.). */
-function formatRegisterApiErrors(body: Record<string, unknown>): string {
-  const parts: string[] = [];
+function formatRegisterApiErrors(
+  body: Record<string, unknown>,
+  friendlyUsernameRule: string
+): string {
   const flatten = (v: unknown): string[] => {
     if (v == null) return [];
     if (typeof v === 'string') return [v];
@@ -26,13 +30,39 @@ function formatRegisterApiErrors(body: Record<string, unknown>): string {
     }
     return [];
   };
+
+  const usernameMsgs = body.username != null ? flatten(body.username) : [];
+  const looksLikeUsernameFormat =
+    usernameMsgs.length > 0 &&
+    usernameMsgs.some(
+      (m) =>
+        /valid username|letters, numbers|@\/\.\/\+\/-\/_/i.test(m) ||
+        /no spaces|without spaces|only letters/i.test(m)
+    );
+  if (looksLikeUsernameFormat) {
+    return friendlyUsernameRule;
+  }
+
+  const parts: string[] = [];
   if (typeof body.detail === 'string') parts.push(body.detail);
   for (const [k, v] of Object.entries(body)) {
     if (k === 'detail') continue;
     const msgs = flatten(v);
-    if (msgs.length) parts.push(`${k}: ${msgs.join(' ')}`);
+    if (!msgs.length) continue;
+    if (k === 'username' && usernameMsgs.some((m) => /already exists/i.test(m))) {
+      parts.push(msgs.join(' '));
+      continue;
+    }
+    parts.push(`${k}: ${msgs.join(' ')}`);
   }
   return parts.join(' — ') || 'Registration failed.';
+}
+
+/** Django-compatible username: letters, digits, @ . + - _ — no spaces. */
+const USERNAME_PATTERN = /^[\w.@+-]+$/;
+
+function isValidMediTapUsername(username: string): boolean {
+  return USERNAME_PATTERN.test(username) && !/\s/.test(username);
 }
 
 const Tab9: React.FC = () => {
@@ -48,6 +78,7 @@ const Tab9: React.FC = () => {
   const [accError, setAccError] = useState<string | null>(null);
   const [accSubmitting, setAccSubmitting] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [passwordSuggestionHint, setPasswordSuggestionHint] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (authReady && isAuthenticated) {
@@ -64,8 +95,16 @@ const Tab9: React.FC = () => {
       setAccError(t('register.fieldsRequired'));
       return;
     }
+    if (!isValidMediTapUsername(u)) {
+      setAccError(t('register.usernameRules'));
+      return;
+    }
     if (accPassword !== accPasswordConfirm) {
       setAccError(t('register.passwordMismatch'));
+      return;
+    }
+    if (accPassword.length < MIN_SECURE_PASSWORD_LENGTH) {
+      setAccError(t('register.passwordTooShort', { min: MIN_SECURE_PASSWORD_LENGTH }));
       return;
     }
     if (!acceptedTerms) {
@@ -101,7 +140,7 @@ const Tab9: React.FC = () => {
         };
       }
       if (!r.ok) {
-        let msg = formatRegisterApiErrors(body);
+        let msg = formatRegisterApiErrors(body, t('register.usernameRules'));
         if (msg === 'Registration failed.') {
           msg = `Registration failed (HTTP ${r.status}). If you use www. on this site, the API host must allow it (ALLOWED_HOSTS). Open DevTools → Network → register and inspect the response.`;
         }
@@ -161,12 +200,7 @@ const Tab9: React.FC = () => {
               <h2 id="register-card-title" className="login-card__title">
                 {t('register.title')}
               </h2>
-              <p className="login-card__subtitle">
-                Choose your own username, email, and password. Username and email must each be
-                unique on MediTap (standard username characters; valid email address). Password must
-                match confirmation and meet the minimum length the server requires (default 8).
-                There is no limit on how many people can create an account.
-              </p>
+              <p className="login-card__subtitle">{t('register.subtitle')}</p>
             </div>
 
             {accError && (
@@ -197,8 +231,14 @@ const Tab9: React.FC = () => {
                   value={accUsername}
                   onChange={(e) => setAccUsername(e.target.value)}
                   autoComplete="username"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  aria-describedby="accUsername-hint"
                   disabled={!authReady || accSubmitting}
                 />
+                <span id="accUsername-hint" className="login-card__field-hint">
+                  {t('register.usernameHint')}
+                </span>
               </label>
               <label className="login-card__field">
                 <span className="login-card__field-label">{t('register.email')}</span>
@@ -220,9 +260,12 @@ const Tab9: React.FC = () => {
                     id="accPassword"
                     type={showAccPassword ? 'text' : 'password'}
                     value={accPassword}
-                    onChange={(e) => setAccPassword(e.target.value)}
+                    onChange={(e) => {
+                      setAccPassword(e.target.value);
+                      setPasswordSuggestionHint(null);
+                    }}
                     autoComplete="new-password"
-                    minLength={1}
+                    minLength={MIN_SECURE_PASSWORD_LENGTH}
                     disabled={!authReady || accSubmitting}
                   />
                   <button
@@ -230,7 +273,9 @@ const Tab9: React.FC = () => {
                     className="login-card__password-toggle"
                     onClick={() => setShowAccPassword((v) => !v)}
                     disabled={!authReady || accSubmitting}
-                    aria-label={showAccPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                      showAccPassword ? t('login.hidePassword') : t('login.showPassword')
+                    }
                     aria-pressed={showAccPassword}
                   >
                     {showAccPassword ? t('login.hide') : t('login.show')}
@@ -245,9 +290,12 @@ const Tab9: React.FC = () => {
                     id="accPasswordConfirm"
                     type={showAccPasswordConfirm ? 'text' : 'password'}
                     value={accPasswordConfirm}
-                    onChange={(e) => setAccPasswordConfirm(e.target.value)}
+                    onChange={(e) => {
+                      setAccPasswordConfirm(e.target.value);
+                      setPasswordSuggestionHint(null);
+                    }}
                     autoComplete="new-password"
-                    minLength={1}
+                    minLength={MIN_SECURE_PASSWORD_LENGTH}
                     disabled={!authReady || accSubmitting}
                   />
                   <button
@@ -255,13 +303,31 @@ const Tab9: React.FC = () => {
                     className="login-card__password-toggle"
                     onClick={() => setShowAccPasswordConfirm((v) => !v)}
                     disabled={!authReady || accSubmitting}
-                    aria-label={showAccPasswordConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                    aria-label={
+                      showAccPasswordConfirm
+                        ? t('login.hidePassword')
+                        : t('login.showPassword')
+                    }
                     aria-pressed={showAccPasswordConfirm}
                   >
                     {showAccPasswordConfirm ? t('login.hide') : t('login.show')}
                   </button>
                 </div>
               </label>
+
+              <SecurePasswordSuggestion
+                password={accPassword}
+                disabled={!authReady || accSubmitting}
+                suggestionHint={passwordSuggestionHint}
+                onSuggest={(next) => {
+                  setAccPassword(next);
+                  setAccPasswordConfirm(next);
+                  setShowAccPassword(true);
+                  setShowAccPasswordConfirm(true);
+                  setAccError(null);
+                  setPasswordSuggestionHint(t('passwordSecurity.filledHint'));
+                }}
+              />
 
               <label className="login-card__terms-check">
                 <input

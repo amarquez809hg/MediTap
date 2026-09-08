@@ -22,6 +22,8 @@ import {
 } from '../api';
 import LabResultCard from '../labResults/LabResultCard';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import GoBackButton from '../components/GoBackButton';
+import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import type { LabResultLineItem, LabResultRow } from '../labResults/labResultModel';
 import { mapPatientLabPanelToRow } from '../labResults/labResultModel';
 import {
@@ -99,7 +101,7 @@ function draftToRow(d: LabPanelDraft): LabResultRow {
 
 const Tab7: React.FC = () => {
   const { t } = useTranslation();
-  const { username, hasRealmRole } = useAuth();
+  const { username, hasRealmRole, isStaff, isSuperuser } = useAuth();
   const recordEditorRole = getMeditapRecordEditorRole();
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
@@ -133,7 +135,10 @@ const Tab7: React.FC = () => {
 
   // Re-check elevation every render — JWT expiry is time-based.
   const canEditLabs =
-    hasEditorRealmRole || isMeditapIntakeElevationValidForPatient(patientSub);
+    isStaff ||
+    isSuperuser ||
+    hasEditorRealmRole ||
+    isMeditapIntakeElevationValidForPatient(patientSub);
 
   const loadPanels = useCallback(async () => {
     setLoading(true);
@@ -420,10 +425,10 @@ const Tab7: React.FC = () => {
                 {t('labs.addNew')}
               </button>
               <HeaderLanguagePicker className="lab-results-header__action-btn" />
-              <a href="/tab1" className="book-btn lab-results-header__action-btn">
-                <i className="fas fa-arrow-left" aria-hidden />
-                {t('common.goBackToDashboard')}
-              </a>
+              <GoBackButton
+                fallback={chartPageGoBackFallback()}
+                className="lab-results-header__action-btn"
+              />
             </div>
           </header>
 

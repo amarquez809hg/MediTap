@@ -4,6 +4,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import './Tab3.css';
 import bgImage from './MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import AlreadySignedInCard from '../components/AlreadySignedInCard';
 import { useAuth } from '../contexts/AuthContext';
 import { ADMIN_LOGIN_PATH, resolvePostLoginPath } from '../portals/portalPaths';
 
@@ -19,9 +20,12 @@ const Tab3: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Patients already signed in → continue to their portal.
+  // Staff sessions stay on this door with a chooser (do not force Admin home).
   React.useEffect(() => {
-    if (authReady && isAuthenticated) {
-      history.replace(resolvePostLoginPath(portalHome));
+    if (!authReady || !isAuthenticated) return;
+    if (portalHome === 'user') {
+      history.replace(resolvePostLoginPath('user'));
     }
   }, [authReady, isAuthenticated, history, portalHome]);
 
@@ -114,6 +118,10 @@ const Tab3: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {authReady && isAuthenticated && portalHome === 'admin' ? (
+              <AlreadySignedInCard door="patient" />
+            ) : null}
 
             <form className="login-card__actions" onSubmit={onSubmit}>
               <label className="login-card__field">

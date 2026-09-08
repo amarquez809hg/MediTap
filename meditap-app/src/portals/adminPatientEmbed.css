@@ -1,0 +1,535 @@
+/* Patient views inside admin-dash__body — balanced with patient MediTap palette.
+ * Revert chrome: cp src/portals/.balance-revert/adminPatientEmbed.css src/portals/adminPatientEmbed.css
+ */
+
+.admin-patient-embed {
+  --embed-ink: var(--meditap-text, #1a2b2e);
+  --embed-muted: var(--meditap-text-muted, #5c6f72);
+  --embed-panel: var(--meditap-surface, #ffffff);
+  --embed-panel-2: var(--meditap-bg-alt, #eef2f5);
+  --embed-border: var(--meditap-border, #e0e6eb);
+  --embed-accent: var(--meditap-accent, #17a2b8);
+  --embed-accent-soft: rgba(23, 162, 184, 0.12);
+  --embed-surface: var(--meditap-bg, #f4f7f9);
+  --embed-surface-2: var(--meditap-bg-alt, #eef2f5);
+  --embed-primary: var(--meditap-primary, #004d40);
+
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  /* Same light clinical field as standalone patient portal */
+  background: var(--embed-surface);
+  color: var(--embed-ink);
+  border-left: 1px solid rgba(23, 162, 184, 0.22);
+}
+
+.admin-patient-embed--empty {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  overflow: auto;
+  background:
+    radial-gradient(700px 320px at 20% 0%, rgba(23, 162, 184, 0.1), transparent 55%),
+    var(--ad-bg, #071210);
+  color: #e8f2ef;
+}
+
+.admin-patient-embed__empty-card {
+  max-width: 440px;
+  text-align: center;
+  padding: 1.75rem 1.4rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 180, 172, 0.22);
+  background: var(--ad-panel, #10201c);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.admin-patient-embed__empty-card i {
+  font-size: 1.6rem;
+  color: var(--embed-accent);
+  margin-bottom: 0.75rem;
+}
+
+.admin-patient-embed__empty-card h1 {
+  margin: 0 0 0.45rem;
+  font-size: 1.35rem;
+}
+
+.admin-patient-embed__empty-card p {
+  margin: 0 0 1.1rem;
+  color: var(--ad-muted, #8aa399);
+  line-height: 1.45;
+}
+
+.admin-patient-embed__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-patient-embed__primary,
+.admin-patient-embed__secondary {
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-patient-embed__primary {
+  border: none;
+  background: linear-gradient(135deg, var(--embed-accent), #0e7490);
+  color: #fff;
+  font-weight: 600;
+}
+
+.admin-patient-embed__secondary {
+  border: 1px solid rgba(148, 180, 172, 0.28);
+  background: transparent;
+  color: #e8f2ef;
+}
+
+.admin-patient-embed__empty-actions a {
+  color: #7dd3e0;
+  font-size: 0.88rem;
+}
+
+.admin-patient-embed__banner {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.85rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--embed-border);
+  background:
+    linear-gradient(
+      105deg,
+      rgba(0, 77, 64, 0.08) 0%,
+      rgba(23, 162, 184, 0.1) 42%,
+      rgba(255, 255, 255, 0.9) 100%
+    ),
+    var(--embed-panel);
+  color: var(--embed-ink);
+}
+
+.admin-patient-embed__eyebrow {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--embed-primary);
+  margin-bottom: 0.1rem;
+}
+
+.admin-patient-embed__banner-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--embed-ink);
+}
+
+.admin-patient-embed__banner-text span:last-child {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--embed-muted);
+}
+
+.admin-patient-embed__banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-patient-embed__banner-actions a,
+.admin-patient-embed__banner-actions button {
+  min-height: 30px;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--embed-border);
+  background: var(--embed-panel);
+  color: var(--embed-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-patient-embed__banner-actions a:hover,
+.admin-patient-embed__banner-actions button:hover {
+  background: var(--embed-accent-soft);
+  border-color: rgba(23, 162, 184, 0.45);
+  color: var(--embed-primary);
+}
+
+.admin-patient-embed__subnav {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.4rem 0.85rem;
+  border-bottom: 1px solid var(--embed-border);
+  background: var(--embed-panel);
+}
+
+.admin-patient-embed__subnav a {
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--embed-muted);
+  font-size: 0.78rem;
+  border: 1px solid transparent;
+}
+
+.admin-patient-embed__subnav a:hover {
+  background: var(--embed-accent-soft);
+  color: var(--embed-primary);
+}
+
+.admin-patient-embed__subnav a.is-active {
+  background: rgba(23, 162, 184, 0.16);
+  border-color: rgba(23, 162, 184, 0.35);
+  color: var(--embed-primary);
+  font-weight: 600;
+}
+
+.admin-patient-embed__viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--embed-surface);
+  color: var(--embed-ink);
+  padding: 0;
+}
+
+/* Mild containment only — patient pages keep their native look */
+.admin-patient-embed__viewport > * {
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/*
+ * Ionic IonPage/IonContent assume full-outlet stacking. Force them to flow
+ * inside the admin content zone instead of covering the whole viewport.
+ *
+ * Critical: ion-content’s .inner-scroll lives in shadow DOM and is
+ * position:absolute. With height:auto on the host that collapses to 0 —
+ * Labs / Quick status / Intake / Insurance look like an empty grey panel.
+ * Mirror Ionic’s .content-sizing mode via ::part(scroll).
+ */
+.admin-patient-embed__viewport ion-page,
+.admin-patient-embed__viewport .ion-page {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  z-index: auto !important;
+  contain: none !important;
+  justify-content: flex-start !important;
+}
+
+.admin-patient-embed__viewport ion-content {
+  position: relative !important;
+  contain: none !important;
+  --background: transparent;
+  --overflow: visible;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  flex: none !important;
+  display: block !important;
+}
+
+/* Shadow DOM: make scroll host participate in normal document flow */
+.admin-patient-embed__viewport ion-content::part(scroll) {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  contain: none !important;
+}
+
+.admin-patient-embed__viewport ion-content::part(background) {
+  display: none;
+}
+
+/* Admin shell: pin main column height so embed scrolls inside the red zone */
+.admin-dash:has(.admin-patient-embed) {
+  height: 100dvh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.admin-dash:has(.admin-patient-embed) .admin-dash__main {
+  height: 100dvh;
+  height: 100vh;
+  max-height: 100dvh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.admin-dash__body:has(.admin-patient-embed) {
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* —— Fit full-page patient UIs into the embed viewport —— */
+
+.admin-patient-embed__viewport .profile-container,
+.admin-patient-embed__viewport .schedule-container,
+.admin-patient-embed__viewport .lab-results-container,
+.admin-patient-embed__viewport .incident-records-container,
+.admin-patient-embed__viewport .chronic-conditions-container,
+.admin-patient-embed__viewport .patient-insurance-container,
+.admin-patient-embed__viewport .settings-container,
+.admin-patient-embed__viewport .ct-page {
+  height: auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.admin-patient-embed__viewport .profile-container {
+  font-size: 0.88rem;
+}
+
+.admin-patient-embed__viewport .profile-container .profile-header {
+  padding: 0.45rem 0.9rem;
+  position: sticky;
+  top: 0;
+}
+
+.admin-patient-embed__viewport .profile-container .profile-header .logo {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.admin-patient-embed__viewport .profile-sidebar {
+  width: 240px;
+  max-width: 240px;
+  min-width: 0;
+  padding: 0.75rem 0.65rem 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.admin-patient-embed__viewport .dashboard-content {
+  padding: 0.75rem 0.9rem 1.25rem;
+  min-width: 0;
+}
+
+.admin-patient-embed__viewport .dashboard-hero {
+  padding: 0.85rem 1rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-setup-strip {
+  padding: 0.7rem 0.9rem;
+}
+
+/* Session controls live on the admin top bar — hide duplicate patient chrome */
+.admin-patient-embed__viewport .profile-header__username,
+.admin-patient-embed__viewport .logout-btn,
+.admin-patient-embed__viewport .profile-header .header-language-picker,
+.admin-patient-embed__viewport .lab-results-header__actions .header-language-picker,
+.admin-patient-embed__viewport .schedule-header__actions .header-language-picker {
+  display: none !important;
+}
+
+.admin-patient-embed__viewport .profile-main {
+  overflow: visible;
+  min-height: 0;
+}
+
+.admin-patient-embed__viewport .user-card {
+  padding: 0.75rem 0.65rem;
+}
+
+.admin-patient-embed__viewport .avatar {
+  width: 64px !important;
+  height: 64px !important;
+  font-size: 1.1rem !important;
+}
+
+.admin-patient-embed__viewport .user-card h2,
+.admin-patient-embed__viewport .user-name {
+  font-size: 1rem !important;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile {
+  font-size: 0.72rem;
+  width: 100%;
+  max-width: 100%;
+  padding: 0.55rem 0.6rem;
+  overflow: hidden;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile__title {
+  font-size: 0.68rem;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile__grid {
+  width: 100%;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  gap: 0.35rem 0.45rem;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile__label {
+  font-size: 0.62rem;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile__value {
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-patient-embed__viewport .patient-mini-profile__email-row,
+.admin-patient-embed__viewport .patient-mini-profile__value--email {
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-patient-embed__viewport .user-card {
+  padding: 0.75rem 0.65rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.admin-patient-embed__viewport .user-card__hint,
+.admin-patient-embed__viewport .user-card__profile-link {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.admin-patient-embed__viewport .profile-nav .nav-item {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.admin-patient-embed__viewport .dashboard-tab-section__title {
+  font-size: 1.15rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-tab-section__title--h2 {
+  font-size: 1.05rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-tab-section__subtitle {
+  font-size: 0.82rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-hero__greeting {
+  font-size: 1.25rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-hero__context {
+  font-size: 0.82rem !important;
+}
+
+.admin-patient-embed__viewport .dashboard-hero__action,
+.admin-patient-embed__viewport .meditap-glass-btn--compact,
+.admin-patient-embed__viewport .book-btn {
+  min-height: 34px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.admin-patient-embed__viewport .dashboard-next-step {
+  padding: 0.7rem 0.75rem;
+}
+
+.admin-patient-embed__viewport .dashboard-next-step__title {
+  font-size: 0.88rem;
+}
+
+.admin-patient-embed__viewport .dashboard-next-step__subtitle {
+  font-size: 0.75rem;
+}
+
+.admin-patient-embed__viewport .dashboard-setup-strip {
+  padding: 0.7rem 0.9rem;
+}
+
+.admin-patient-embed__viewport .metric-tile {
+  padding: 0.65rem 0.75rem;
+}
+
+.admin-patient-embed__viewport .metric-value {
+  font-size: 1.1rem;
+}
+
+/* Chart tab headers inside embed */
+.admin-patient-embed__viewport .schedule-header,
+.admin-patient-embed__viewport .lab-results-header,
+.admin-patient-embed__viewport .incident-records-header,
+.admin-patient-embed__viewport .chronic-conditions-header,
+.admin-patient-embed__viewport .patient-insurance-header,
+.admin-patient-embed__viewport .settings-header,
+.admin-patient-embed__viewport .ct-tab14 .patient-insurance-header,
+.admin-patient-embed__viewport .tab14-header {
+  padding: 0.55rem 0.9rem !important;
+}
+
+.admin-patient-embed__viewport .schedule-header h1,
+.admin-patient-embed__viewport .lab-results-header h1,
+.admin-patient-embed__viewport .incident-records-header h1,
+.admin-patient-embed__viewport .chronic-conditions-header h1,
+.admin-patient-embed__viewport .patient-insurance-header h1,
+.admin-patient-embed__viewport .settings-header h1 {
+  font-size: 1.2rem !important;
+}
+
+/* Compact page Go back in embed — admin top bar already has one */
+.admin-patient-embed__viewport .lab-results-header__actions .book-btn:has(.fa-arrow-left),
+.admin-patient-embed__viewport .schedule-header__actions .book-btn:has(.fa-arrow-left),
+.admin-patient-embed__viewport .incident-records-header__action-btn:has(.fa-arrow-left),
+.admin-patient-embed__viewport .chronic-conditions-header__action-btn:has(.fa-arrow-left),
+.admin-patient-embed__viewport .patient-insurance-header__action-btn:has(.fa-arrow-left) {
+  min-height: 32px;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+}
+
+@media (max-width: 1100px) {
+  .admin-patient-embed__viewport .profile-main {
+    flex-direction: column;
+  }
+
+  .admin-patient-embed__viewport .profile-sidebar {
+    max-width: none;
+    width: 100%;
+  }
+}

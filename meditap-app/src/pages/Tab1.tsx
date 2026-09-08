@@ -1,10 +1,11 @@
 import React from 'react';
 import { IonAlert } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './Tab1.css';
 import { useAuth } from '../contexts/AuthContext';
 import { queueOpenAddEntry, type OpenAddEntryPath } from '../auth/openAddEntry';
+import { navigatePortal } from '../navigation/portalGoBack';
+import PortalNavLink from '../components/PortalNavLink';
 import DashboardHomeHero from '../components/DashboardHomeHero';
 import DashboardNextSteps from '../components/DashboardNextSteps';
 import DashboardSectionActions from '../components/DashboardSectionActions';
@@ -153,7 +154,6 @@ function sidebarIdentityFromDashboard(
 
 const Tab1: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const history = useHistory();
   const { logout, username } = useAuth();
   const staffGate = useStaffElevationGate();
   const [user, setUser] = React.useState(defaultUserProfile);
@@ -361,7 +361,7 @@ const Tab1: React.FC = () => {
   const requestAddEntry = (path: OpenAddEntryPath, hint: string) => {
     staffGate.gateEdit(() => {
       queueOpenAddEntry(path);
-      history.push(path);
+      navigatePortal(path);
     }, hint);
   };
 
@@ -436,39 +436,39 @@ const Tab1: React.FC = () => {
               </div>
             </div>
             <p className="user-card__hint">{t('dashboard.careOverviewHint')}</p>
-            <a href="/tab14" className="user-card__profile-link">
+            <PortalNavLink to="/app/intake" className="user-card__profile-link">
               {t('dashboard.updatePatientInfo')}
-            </a>
+            </PortalNavLink>
           </div>
 
           <nav className="profile-nav">
-            <a href="/tab1" className="nav-item active" aria-current="page">
+            <PortalNavLink to="/app/dashboard" className="nav-item active" aria-current="page">
               <i className="fas fa-home"></i> {t('nav.dashboard')}
-            </a>
-            <a href="/tab2" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/status" className="nav-item">
               <i className="fas fa-chart-line"></i> {t('nav.quickStatus')}
-            </a>
-            <a href="/tab4" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/appointments" className="nav-item">
               <i className="fas fa-calendar-check"></i> {t('nav.appointments')}
-            </a>
-            <a href="/tab7" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/labs" className="nav-item">
               <i className="fas fa-vial"></i> {t('nav.labResults')}
-            </a>
-            <a href="/tab6" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/incidents" className="nav-item">
               <i className="fas fa-clipboard-list"></i> {t('nav.incidentRecords')}
-            </a>
-            <a href="/tab5" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/conditions" className="nav-item">
               <i className="fas fa-notes-medical"></i> {t('nav.patientHistory')}
-            </a>
-            <a href="/tab12" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/insurance" className="nav-item">
               <i className="fas fa-id-card"></i> {t('nav.patientInsurance')}
-            </a>
-            <a href="/tab13" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/admin-portal/panel" className="nav-item">
               <i className="fas fa-user-shield"></i> {t('nav.adminPanel')}
-            </a>
-            <a href="/tab11" className="nav-item">
+            </PortalNavLink>
+            <PortalNavLink to="/app/settings" className="nav-item">
               <i className="fas fa-cog"></i> {t('nav.settings')}
-            </a>
+            </PortalNavLink>
           </nav>
         </aside>
 
@@ -491,9 +491,9 @@ const Tab1: React.FC = () => {
           {!loadingSummary && healthSummaryNeedsSetup(hs) && (
             <div className="dashboard-setup-strip" role="region" aria-label={t('dashboard.getStartedAria')}>
               <p>{t('dashboard.setupStrip')}</p>
-              <a href="/tab14" className="book-btn dashboard-setup-strip__btn">
+              <PortalNavLink to="/app/intake" className="book-btn dashboard-setup-strip__btn">
                 {t('dashboard.completeIntake')}
-              </a>
+              </PortalNavLink>
             </div>
           )}
 
@@ -552,7 +552,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/tab4"
+              viewHref="/app/appointments"
               viewLabel={t('dashboard.appointmentsTab')}
               addLabel={t('dashboard.addAppointment')}
               onAddEntry={() =>
@@ -567,7 +567,7 @@ const Tab1: React.FC = () => {
                 <AppointmentCard
                   key={appt.id}
                   appt={appt}
-                  manageHref="/tab4"
+                  manageHref="/app/appointments"
                   manageLabel={t('common.manage')}
                 />
               ))}
@@ -588,7 +588,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/tab7"
+              viewHref="/app/labs"
               viewLabel={t('dashboard.labResultsTab')}
               addLabel={t('dashboard.addLabResult')}
               onAddEntry={() =>
@@ -633,7 +633,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/tab6"
+              viewHref="/app/incidents"
               viewLabel={t('dashboard.incidentsTab')}
               addLabel={t('dashboard.logIncident')}
               onAddEntry={() =>
@@ -678,7 +678,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/tab5"
+              viewHref="/app/conditions"
               viewLabel={t('dashboard.chronicTab')}
               addLabel={t('dashboard.addCondition')}
               onAddEntry={() =>
@@ -710,7 +710,7 @@ const Tab1: React.FC = () => {
                       : `chronic-draft-${idx}-${c.diseaseId}`
                   }
                   condition={c}
-                  manageHref="/tab5"
+                  manageHref="/app/conditions"
                   manageLabel={t('common.manage')}
                 />
               ))}

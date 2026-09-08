@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listAdminActivity, type AdminActivityApi } from '../api';
+import GoBackButton from '../components/GoBackButton';
+import { ADMIN_PORTAL_HOME } from './portalPaths';
 import './adminOps.css';
 
 const AdminActivityPage: React.FC = () => {
@@ -29,6 +31,7 @@ const AdminActivityPage: React.FC = () => {
         <h1>Activity</h1>
         <p>Staff actions on patients, hospitals, and chart updates (ops trail).</p>
         <div className="admin-ops__actions">
+          <GoBackButton fallback={ADMIN_PORTAL_HOME} variant="plain" />
           <button type="button" onClick={() => void load()} disabled={busy}>
             Refresh
           </button>

@@ -15,6 +15,7 @@ describe('bundleHasPatientIdentity', () => {
     const bundle: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Rafael', familyName: 'Santos' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],
@@ -44,6 +45,7 @@ describe('replace chart from PDF upload', () => {
     const pdfBundle: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Rafael', familyName: 'Santos' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [
         {
@@ -72,6 +74,7 @@ describe('PDF field warning merge', () => {
     const first: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Maria', familyName: 'Garcia' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],
@@ -88,6 +91,7 @@ describe('PDF field warning merge', () => {
     const second: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Maria', email: 'maria@example.com' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],
@@ -136,6 +140,7 @@ describe('PDF field warning merge', () => {
     const first: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Maria Garcia DOB 01/02/1990' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],
@@ -152,6 +157,7 @@ describe('PDF field warning merge', () => {
     const second: Tab14IntakeParseResult = {
       patientFields: { givenName: 'Maria' },
       noKnownDrugAllergies: false,
+      noKnownProblems: false,
       insurances: [],
       allergies: [],
       medications: [],

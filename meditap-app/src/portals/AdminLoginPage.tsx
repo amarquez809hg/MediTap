@@ -5,9 +5,9 @@ import '../pages/Tab3.css';
 import './adminLogin.css';
 import bgImage from '../pages/MediTapBG.jpg';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
+import AlreadySignedInCard from '../components/AlreadySignedInCard';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  ADMIN_PORTAL_HOME,
   PATIENT_LOGIN_PATH,
   resolvePostLoginPath,
   USER_PORTAL_HOME,
@@ -32,14 +32,13 @@ const AdminLoginPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Patient sessions on the admin door → their portal.
+  // Staff stay here with a chooser (so bookmarks are not a silent bounce).
   React.useEffect(() => {
     if (!authReady || !isAuthenticated) return;
-    if (portalHome === 'admin') {
-      history.replace(ADMIN_PORTAL_HOME);
-      return;
+    if (portalHome === 'user') {
+      history.replace(USER_PORTAL_HOME);
     }
-    // Patient session on admin door → send them to their portal
-    history.replace(USER_PORTAL_HOME);
   }, [authReady, isAuthenticated, history, portalHome]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -121,6 +120,10 @@ const AdminLoginPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {authReady && isAuthenticated && portalHome === 'admin' ? (
+              <AlreadySignedInCard door="admin" />
+            ) : null}
 
             <form className="login-card__actions" onSubmit={onSubmit}>
               <label className="login-card__field">

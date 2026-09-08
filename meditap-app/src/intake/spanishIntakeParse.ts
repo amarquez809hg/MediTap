@@ -3,6 +3,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { detectNoKnownProblems } from './detectNoKnownProblems';
 import { collapseWs, escapeRe, normalizeBloodType } from './intakeFieldLabels';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
@@ -294,6 +295,7 @@ export function parseSpanishMediTapRegistroDocument(raw: string): Tab14IntakePar
   return withSanitizedPatientFieldWarnings({
     patientFields: parsePatientFields(text),
     noKnownDrugAllergies: false,
+    noKnownProblems: detectNoKnownProblems(text),
     insurances: parseInsurance(text),
     allergies: parseAllergies(text),
     medications: parseMedications(text),

@@ -4,6 +4,20 @@
   flex-direction: column;
 }
 
+/*
+ * Admin (and plain user-shell) routes render without IonContent.
+ * Ionic pins ion-router-outlet to the viewport with overflow:hidden, which
+ * clips long tables (Activity, Patients, Hospitals). Scroll the outlet instead.
+ */
+ion-router-outlet:has(.portal-shell--admin),
+ion-router-outlet:has(.admin-dash),
+ion-router-outlet:has(.portal-shell--user):not(:has(ion-content)) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
 .portal-shell__chrome {
   display: flex;
   flex-wrap: wrap;
@@ -38,8 +52,9 @@
 
 .portal-shell__brand {
   display: flex;
-  align-items: baseline;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
 }
 
 .portal-shell__product {
@@ -50,6 +65,46 @@
 .portal-shell__label {
   font-size: 0.8rem;
   opacity: 0.72;
+}
+
+.portal-shell__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 28, 42, 0.18);
+  background: rgba(15, 28, 42, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+  opacity: 0.92;
+}
+
+.portal-shell__back:hover,
+.portal-shell__back:focus-visible {
+  opacity: 1;
+  background: rgba(15, 28, 42, 0.12);
+}
+
+.portal-shell--admin .portal-shell__back {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f7fb;
+}
+
+.portal-shell--admin .portal-shell__back:hover,
+.portal-shell--admin .portal-shell__back:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.ion-palette-dark .portal-shell--user .portal-shell__back {
+  border-color: rgba(110, 196, 212, 0.35);
+  background: rgba(110, 196, 212, 0.12);
+  color: #e8eef5;
 }
 
 .portal-shell__nav {
@@ -69,6 +124,27 @@
 .portal-shell__nav a:focus-visible {
   opacity: 1;
   text-decoration: underline;
+}
+
+.portal-shell__nav-link--logout {
+  margin: 0;
+  margin-left: 0.15rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 120, 120, 0.55);
+  background: rgba(200, 55, 55, 0.88);
+  color: #fff;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.portal-shell__nav-link--logout:hover,
+.portal-shell__nav-link--logout:focus-visible {
+  background: rgba(230, 70, 70, 0.95);
+  border-color: rgba(255, 160, 160, 0.7);
 }
 
 .portal-shell__nav-link--admin-return {
@@ -115,12 +191,16 @@ body.ion-palette-dark .portal-shell--user .portal-shell__nav-link--admin-return 
     radial-gradient(900px 480px at 88% 8%, rgba(26, 99, 86, 0.22), transparent 50%),
     linear-gradient(165deg, #0b1420 0%, #101e2e 48%, #0d1826 100%);
   color: var(--admin-portal-text);
+  min-height: 100dvh;
   min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .portal-shell--admin .portal-shell__body {
   background: transparent;
   color: var(--admin-portal-text);
+  overflow: visible;
 }
 
 .portal-home {

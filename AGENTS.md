@@ -7,6 +7,8 @@ This repository uses a **persistent MediTap modification agent**. New Cursor cha
 1. [docs/MEDITAP_AGENT_HANDOFF.md](docs/MEDITAP_AGENT_HANDOFF.md) — full context, tab map, backlog, recovery steps  
 2. [meditap-app/REGISTER_CHECKPOINT.md](meditap-app/REGISTER_CHECKPOINT.md) — last/next register entry  
 3. [docs/AGENT_SESSION_CHANGELOG.md](docs/AGENT_SESSION_CHANGELOG.md) — complete task register  
+4. [docs/PORTAL_GO_BACK_MATRIX.md](docs/PORTAL_GO_BACK_MATRIX.md) — Go back tracking for all tabs  
+5. [docs/ATHENA_INTAKE_TRAINING.md](docs/ATHENA_INTAKE_TRAINING.md) — Athena PDF fixture corpus / training loop  
 
 Cursor rule: `.cursor/rules/meditap-agent.mdc` (always applied in this workspace).
 
@@ -14,4 +16,6 @@ Cursor rule: `.cursor/rules/meditap-agent.mdc` (always applied in this workspace
 
 Append a register entry (Type / Summary / What was done / Outcome), then update `REGISTER_CHECKPOINT.md`.
 
-**Next entry:** 83 (`MT-AG-079`).
+**Next entry:** 165 (`MT-AG-161`).
+
+Go back matrix: [docs/PORTAL_GO_BACK_MATRIX.md](docs/PORTAL_GO_BACK_MATRIX.md).

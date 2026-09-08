@@ -3,6 +3,9 @@ import { Link, useHistory, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PublicPageLayout from '../components/PublicPageLayout';
 import { confirmPasswordReset } from '../api/publicContact';
+import SecurePasswordSuggestion from '../components/SecurePasswordSuggestion';
+import { MIN_SECURE_PASSWORD_LENGTH } from '../auth/securePassword';
+import './Tab3.css';
 import './AuthPublicPages.css';
 
 const ResetPasswordPage: React.FC = () => {
@@ -19,6 +22,7 @@ const ResetPasswordPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [suggestionHint, setSuggestionHint] = useState<string | null>(null);
 
   const linkInvalid = !uid || !token;
 
@@ -28,6 +32,10 @@ const ResetPasswordPage: React.FC = () => {
     setSuccess(null);
     if (password !== passwordConfirm) {
       setError(t('resetPassword.passwordMismatch'));
+      return;
+    }
+    if (password.length < MIN_SECURE_PASSWORD_LENGTH) {
+      setError(t('register.passwordTooShort', { min: MIN_SECURE_PASSWORD_LENGTH }));
       return;
     }
     setSubmitting(true);
@@ -79,8 +87,12 @@ const ResetPasswordPage: React.FC = () => {
                   name="password"
                   autoComplete="new-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setSuggestionHint(null);
+                  }}
                   required
+                  minLength={MIN_SECURE_PASSWORD_LENGTH}
                   disabled={submitting}
                 />
                 <button
@@ -100,11 +112,28 @@ const ResetPasswordPage: React.FC = () => {
                 name="password_confirm"
                 autoComplete="new-password"
                 value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
+                onChange={(e) => {
+                  setPasswordConfirm(e.target.value);
+                  setSuggestionHint(null);
+                }}
                 required
+                minLength={MIN_SECURE_PASSWORD_LENGTH}
                 disabled={submitting}
               />
             </label>
+            <SecurePasswordSuggestion
+              className="password-security--public"
+              password={password}
+              disabled={submitting}
+              suggestionHint={suggestionHint}
+              onSuggest={(next) => {
+                setPassword(next);
+                setPasswordConfirm(next);
+                setShowPassword(true);
+                setError(null);
+                setSuggestionHint(t('passwordSecurity.filledHint'));
+              }}
+            />
             <button type="submit" className="auth-public-submit" disabled={submitting}>
               {submitting ? t('resetPassword.updating') : t('resetPassword.updatePassword')}
             </button>

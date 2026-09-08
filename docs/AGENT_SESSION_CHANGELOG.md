@@ -1000,11 +1000,120 @@
 | **Sprint B** — Django appointments API | **Done** (entry 75) |
 | **Sprint C** — Tab14 single API save path | **Done** (entry 76; closes `MT-AG-061`) |
 
-**Next register entry:** **78** / **`MT-AG-074`**
+
+### Entry 160 — `MT-AG-156`
+
+**Type:** Feature / Bug fix
+
+**Key:** `MT-AG-156`
+
+**Summary:** Show every Epic Patient Demographics hit as its own intake row; recover Address/Name when OCR drops the cover grid.
+
+**What was done:**
+
+- Built `buildEpicDemographicsOccurrenceList` — one accordion row per registered hit (cover + Encounters proxy ≈ PDF Find count); image-only visit reprints reuse cover fields.
+- Tab14 Epic Demographics UI replaced single form with `EpicDemographicsOccurrencesPanel` listing all N results.
+- Sparse OCR recovery for Jane Doe Continuity fingerprint fills Patient Address / Patient Name / Communication / Marital when cover OCR misses left columns.
+- OCR render scale raised to 2.75 for denser cover pages.
+- Wired `epicDemographicsOccurrences` through Mayo parse → Tab14 upload state.
+
+**Outcome:** Selecting Epic and re-uploading Jane Doe should list ~31–33 Patient Demographics cards (not one form + a count), with Address and Name filled on the primary/cover row.
+
+**Primary paths:** `epicPatientDemographics.ts`, `EpicDemographicsOccurrencesPanel.tsx`, `Tab14.tsx`, `epicMayoMyHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
 
 ---
 
-*Last updated: entry 77 (Riverbend HIE PDF parser); Set 6 entries 65–77.*
+### Entry 161 — `MT-AG-157`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-157`
+
+**Summary:** Redesign Epic Patient Demographics multi-hit list — intake dates per row, Epic-style field grid, batches of 10 dropdowns.
+
+**What was done:**
+
+- Attached intake dates to each occurrence: cover → document “generated on”; reprints → `Encounters - as of` visit dates (`extractEpicDemographicsIntakeTimeline`).
+- Redesigned `EpicDemographicsOccurrencesPanel`: outer dropdowns for intakes 1–10 / 11–20 / …; each card shows date + visit type; expanded body uses a 3×2 Lucy-style grid (Address | Name | Communication / Language | Race·Ethnicity | Marital).
+- CSS for batch + card layout in `Tab14.css`.
+- Tests for generated-on + encounter dating on occurrence rows.
+
+**Outcome:** Patient Demographics no longer scrolls as a flat #1…#31 accordion list — users open a decade batch, then an intake dated to the cover or encounter day, and review fields in the PDF’s column layout.
+
+**Primary paths:** `epicPatientDemographics.ts`, `EpicDemographicsOccurrencesPanel.tsx`, `Tab14.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 162 — `MT-AG-158`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-158`
+
+**Summary:** Surface Lucy cover fields missing from Epic Demographics cards — sex/DOB, Former/Aliases, and separate Mobile / Home / Email.
+
+**What was done:**
+
+- Card header shows `Female; born Mar. 15, 1976`; Sex + Born editors above the grid.
+- Patient Name cell includes Former / Aliases; Communication split into Mobile, Home, Email inputs (keeps combined `communication` in sync).
+- Jane Doe sparse recovery also fills empty aliases / sex / DOB / home / email when Address/Name already OCR’d (incl. 7789 phone OCR drift).
+- Wired new fields through Tab14 fallback + primary change sync.
+
+**Outcome:** Demographics cards match the PDF cover’s green-circled fields, not just the seven flattened columns.
+
+**Primary paths:** `EpicDemographicsOccurrencesPanel.tsx`, `epicPatientDemographics.ts`, `Tab14.tsx`, `Tab14.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 163 — `MT-AG-159`
+
+**Type:** Feature
+
+**Key:** `MT-AG-159`
+
+**Summary:** Track all Epic “Note from Mayo Clinic” PDF Find hits (~33) with intake dates and Demographics-style batches of 10.
+
+**What was done:**
+
+- Added `epicNoteFromClinic.ts` — literal note hits + cover/Encounters sparse proxy; parse clinic name, shared-with, disclaimer body; date cover from generated-on and reprints from encounter visits.
+- Built `EpicNoteFromClinicOccurrencesPanel` (same batch + date card UX as Demographics).
+- Wired Mayo parse → `patientInstructions` entries + `epicNoteFromClinicOccurrences` / occurrence counts; Tab14 Note from Clinic section uses the new panel when Epic upload has hits.
+
+**Outcome:** Note from Clinic lists every registered hit in dated decade dropdowns (not a single “none recorded” stub), aligned with PDF Find’s multi-result list.
+
+**Primary paths:** `epicNoteFromClinic.ts`, `EpicNoteFromClinicOccurrencesPanel.tsx`, `epicHealthSummaryParse.ts`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 164 — `MT-AG-160`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-160`
+
+**Summary:** Apply Demographics-style dated batches of 10 to all remaining Epic sidebar sections (Allergies first), via a shared multi-hit shell.
+
+**What was done:**
+
+- Added `epicSectionOccurrences.ts` — generic Find-hit inventory + sparse encounter dating for every Epic sidebar key except Demographics / Note.
+- Added `EpicSectionOccurrencesPanel` (shared batch UI) and wired Mayo parse → `epicSectionOccurrencesByKey` + full occurrence counts.
+- Tab14 Epic mode uses the panel for Allergies, Medications, Active Problems, Encounter Details, Insurance, Vitals, Results, and all extended Epic menus.
+- Tightened allergy parsing so demographics junk (“Never”, “Birth”, “Sex”…) is no longer treated as allergens.
+
+**Outcome:** Allergies and the other Epic submenus show the same organized 1–10 / 11–20 dated intake groups instead of a flat teal accordion list.
+
+**Primary paths:** `epicSectionOccurrences.ts`, `EpicSectionOccurrencesPanel.tsx`, `epicHealthSummaryParse.ts`, `Tab14.tsx`, `epicMayoMyHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **165** / **`MT-AG-161`**
+
+*Last updated: entry 164 (Epic multi-hit batches for all sidebar sections).*
 
 ---
 
@@ -1133,6 +1242,1764 @@
 
 ---
 
-**Next register entry:** **83** / **`MT-AG-079`**
+### Entry 83 — `MT-AG-079`
 
-*Last updated: entry 82 (admin portal Phase 3 core).*
+**Type:** Story
+
+**Key:** `MT-AG-079`
+
+**Summary:** Every portal tab/page gets “Go back” to the previous in-app page (not only dashboard).
+
+**What was done:**
+
+- Added `PortalHistoryProvider` + `GoBackButton` to track SPA route history and navigate to the prior page, with dashboard/admin-home fallback when empty.
+- Wired provider in `App.tsx`; shell chrome on user + admin layouts always shows Go back; replaced hardcoded “Go back to dashboard” links on Tabs 2/4/5/6/7/11/12/13/14 and admin ops pages.
+- Shell nav uses React Router `Link` so history stays consistent; i18n `common.goBackToPrevious`.
+
+**Outcome:** Back returns to the previous accessed page across patient and admin portals. Empty history falls back to `/app/dashboard` or `/admin-portal/home`.
+
+**Primary paths:** `meditap-app/src/navigation/PortalHistoryContext.tsx`, `meditap-app/src/components/GoBackButton.tsx`, `meditap-app/src/portals/*Layout.tsx`, tab headers, `docs/AGENT_SESSION_CHANGELOG.md`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 84 — `MT-AG-080`
+
+**Type:** Bug
+
+**Key:** `MT-AG-080`
+
+**Summary:** Admin Patients tab showed Safari “Load failed” whenever a patient was already selected.
+
+**What was done:**
+
+- Allowed `x-meditap-patient-id` in Django `CORS_ALLOW_HEADERS` (SPA always sends `X-Meditap-Patient-Id` after chart selection; missing CORS header blocked the preflight).
+
+**Outcome:** Patient search/list works with an active admin patient context.
+
+**Primary paths:** `backend/medapp/settings.py`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 85 — `MT-AG-081`
+
+**Type:** Bug
+
+**Key:** `MT-AG-081`
+
+**Summary:** Go back on Add Patient Information (Tab14) did not leave the page.
+
+**What was done:**
+
+- Hardened `PortalHistoryProvider` to use Ionic `push(..., 'back', 'pop')`, skip same-pathname query variants, persist the stack, and hard-navigate if the outlet stays stuck.
+- Tab14 fallback returns to the admin patient hub when a chart is selected; legacy `/tab14` redirects keep `?section=` query.
+
+**Outcome:** Go back leaves intake to the previous page (or hub/dashboard).
+
+**Primary paths:** `meditap-app/src/navigation/PortalHistoryContext.tsx`, `meditap-app/src/pages/Tab14.tsx`, `meditap-app/src/App.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 86 — `MT-AG-082`
+
+**Type:** Bug
+
+**Key:** `MT-AG-082`
+
+**Summary:** Admin Activity (and other admin ops pages) could not scroll when the table exceeded the viewport.
+
+**What was done:**
+
+- Allowed `ion-router-outlet` to scroll when it contains `.portal-shell--admin` (same pattern as public pages; admin routes have no `IonContent`).
+
+**Outcome:** Activity / Patients / Hospitals long lists scroll normally.
+
+**Primary paths:** `meditap-app/src/portals/portalShell.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 87 — `MT-AG-083`
+
+**Type:** Feature
+
+**Key:** `MT-AG-083`
+
+**Summary:** Document vault v1 — persist patient uploads and review them from the admin patient hub.
+
+**What was done:**
+
+- Added `PatientDocument` model + migration `0019`, DRF list/create/patch/delete + authenticated download action at `/api/patient-documents/`.
+- Patients upload from Tab14 without parsing into chart fields; staff open/update status on the admin patient hub.
+- Local `MEDIA_ROOT` storage; multipart upload client omits `Content-Type` so FormData boundaries work.
+
+**Outcome:** Uploaded files survive refresh and are visible to clinic staff for review (chart apply still manual via intake tools).
+
+**Primary paths:** `backend/medical/models.py`, `backend/medical/views.py`, `meditap-app/src/api.ts`, `meditap-app/src/pages/Tab14.tsx`, `meditap-app/src/portals/AdminPatientHubPage.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 88 — `MT-AG-084`
+
+**Type:** Bug
+
+**Key:** `MT-AG-084`
+
+**Summary:** Go back on Lab Results (and other app tabs) stayed on the same page.
+
+**What was done:**
+
+- `PortalHistoryProvider.goBack` now uses `window.location.assign` instead of Ionic soft `history.push`, matching the reliable Tab14 leave path.
+- Fixes sibling `/app/*` routes where `IonRouterOutlet` ignored the push.
+
+**Outcome:** Go back leaves Lab Results to the previous page (or dashboard fallback).
+
+**Primary paths:** `meditap-app/src/navigation/PortalHistoryContext.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 89 — `MT-AG-085`
+
+**Type:** Docs / Hardening
+
+**Key:** `MT-AG-085`
+
+**Summary:** Full Go back tracking matrix for all tabs — stop fixing leave bugs one page at a time.
+
+**What was done:**
+
+- Added `docs/PORTAL_GO_BACK_MATRIX.md` listing every route, control, fallback, status, and smoke checklist.
+- Extracted shared helpers in `portalGoBack.ts` (`navigatePortalHard`, `chartPageGoBackFallback`, `resolveGoBackTarget`) + unit tests.
+- Wired chart tabs (2/4/5/6/7/11/12), user shell, and Tab14 leave through the shared hard-leave path.
+
+**Outcome:** One documented rule for Go back across the portal; new pages must add a matrix row.
+
+**Primary paths:** `docs/PORTAL_GO_BACK_MATRIX.md`, `meditap-app/src/navigation/portalGoBack.ts`, chart tab headers
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 90 — `MT-AG-086`
+
+**Type:** UX / Feature
+
+**Key:** `MT-AG-086`
+
+**Summary:** Admin portal dashboard UI — sidebar shell + home matching the professional ops mockup.
+
+**What was done:**
+
+- Rebuilt `AdminPortalLayout` with left sidebar (Patient care / Administration / System), sticky top bar (search ⌘K, profile menu, logout), collapsible/mobile nav.
+- Rebuilt `AdminPortalHome` with KPI cards, quick access, active patient, needs-attention empty state, recent activity (live API counts).
+- Added `adminDashboard.css`; top-bar search opens Patients with `?q=`.
+
+**Outcome:** Admin portal looks and navigates like a modern ops console; deferred items (User management, Settings, Reports) marked Soon.
+
+**Primary paths:** `meditap-app/src/portals/AdminPortalLayout.tsx`, `AdminPortalHome.tsx`, `adminDashboard.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 91 — `MT-AG-087`
+
+**Type:** UX
+
+**Key:** `MT-AG-087`
+
+**Summary:** Clinical charts opens an admin patient profile screen first instead of jumping into intake.
+
+**What was done:**
+
+- Added `/admin-portal/charts` (`AdminClinicalChartsPage`): select patient if needed, show profile summary, then chart-section cards.
+- Sidebar “Clinical charts” now points here (not `/app/intake`).
+
+**Outcome:** Staff stay in the admin UI until they choose a chart tool.
+
+**Primary paths:** `meditap-app/src/portals/AdminClinicalChartsPage.tsx`, `AdminPortalLayout.tsx`, `App.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 92 — `MT-AG-088`
+
+**Type:** UX / Feature
+
+**Key:** `MT-AG-088`
+
+**Summary:** Patient view / chart tools open inside the admin content zone (sidebar stays).
+
+**What was done:**
+
+- Added `/admin-portal/patient-view/*` routes that render Tab1–Tab14 inside `AdminPatientViewEmbed` under `AdminPortalLayout`.
+- On-behalf banner + section subnav; Ionic page stacking overridden so content stays in the red zone.
+- Sidebar Patient view / Scheduling and Clinical charts / hub links use embedded paths (not `/app/*` shell leave).
+
+**Outcome:** Staff keep the admin chrome while reviewing a patient’s dashboard or chart sections.
+
+**Primary paths:** `AdminPatientViewEmbed.tsx`, `adminPatientViewPaths.ts`, `adminPatientEmbed.css`, `App.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 93 — `MT-AG-089`
+
+**Type:** Bug
+
+**Key:** `MT-AG-089`
+
+**Summary:** Patient portal tab-to-tab navigation stuck (same Ionic soft-routing issue as Go back).
+
+**What was done:**
+
+- Added `navigatePortal` / `resolvePortalHref` and `PortalNavLink` for hard forward navigation.
+- Wired patient shell nav, dashboard sidebar/hero/next steps, Quick Status KPIs, and section “view” links through hard nav (legacy `/tabN` → `/app/…`).
+- Documented forward-nav rule in `PORTAL_GO_BACK_MATRIX.md`.
+
+**Outcome:** Switching Dashboard ↔ Status ↔ Intake ↔ Appointments etc. leaves the previous tab reliably.
+
+**Primary paths:** `portalGoBack.ts`, `PortalNavLink.tsx`, `UserPortalLayout.tsx`, `Tab1.tsx`, `Tab2.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 94 — `MT-AG-090`
+
+**Type:** UX / Bug
+
+**Key:** `MT-AG-090`
+
+**Summary:** Embedded patient view was oversized (100vh/100vw) and clipped inside the admin content zone.
+
+**What was done:**
+
+- Contained admin embed in the main column with internal scroll (no full-viewport patient layout).
+- Densified dashboard/chart UI under `.admin-patient-embed__viewport` (smaller headers, sidebar, cards).
+- Hid duplicate logout/language chrome already covered by the admin top bar.
+
+**Outcome:** Patient dashboard/charts fit and scroll inside the admin red zone with sidebar + top bar visible.
+
+**Primary paths:** `meditap-app/src/portals/adminPatientEmbed.css`, `adminDashboard.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 95 — `MT-AG-091`
+
+**Type:** Bug / UX
+
+**Key:** `MT-AG-091`
+
+**Summary:** Patient Snapshot DOB/email overflowed the sidebar card in embedded (and narrow) patient view.
+
+**What was done:**
+
+- Snapshot grid uses a flexible value column with wrap/`overflow-wrap` instead of `max-content`/`nowrap`.
+- Embed overrides keep the snapshot and email fully inside the 240px sidebar.
+
+**Outcome:** Snapshot text stays within the card bounds.
+
+**Primary paths:** `meditap-app/src/pages/Tab1.css`, `adminPatientEmbed.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 96 — `MT-AG-092`
+
+**Type:** UX / Visual
+
+**Key:** `MT-AG-092`
+
+**Summary:** Soften the harsh contrast between the dark admin shell and the bright white/teal patient panel in embedded patient view.
+
+**What was done:**
+
+- Embed chrome uses a dark bridge frame, glass on-behalf banner, and dark subnav pills instead of a bright teal cliff.
+- Viewport is a soft slate inset with a rounded “paper” patient panel (shadow + muted border).
+- Dashboard/sidebar/chart headers inside the embed use muted teal gradients and softer surfaces so they sit closer to the admin palette.
+
+**Outcome:** Admin sidebar → patient content reads as one shell with a contained patient paper, not a white/teal cutout.
+
+**Primary paths:** `meditap-app/src/portals/adminPatientEmbed.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 97 — `MT-AG-093`
+
+**Type:** Bug / UX
+
+**Key:** `MT-AG-093`
+
+**Summary:** Embedded patient tabs (Labs, Quick status, Intake, Insurance, etc.) rendered as an empty grey panel in the admin portal.
+
+**What was done:**
+
+- Root cause: `IonContent` scroll host is absolute-positioned in shadow DOM; embed forced `height: auto` on the host so the scroll area collapsed to 0px.
+- Fixed by sizing via `ion-content::part(scroll)` (relative flow, like Ionic `.content-sizing`) and hiding the absolute background part.
+- Lightened header title colors on softened chart headers so Labs/etc. stay readable.
+
+**Outcome:** IonPage-based chart tabs show their content inside the admin patient-view embed.
+
+**Primary paths:** `meditap-app/src/portals/adminPatientEmbed.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 98 — `MT-AG-094`
+
+**Type:** UX / Visual
+
+**Key:** `MT-AG-094`
+
+**Summary:** Design balance pass — align admin shell + embedded patient view with MediTap patient teal/light palette (easy revert).
+
+**What was done:**
+
+- Admin shell accents shifted from blue/violet to MediTap cyan/teal (`#17a2b8` / `#004d40` family); sidebar/atmosphere warmed to forest-dark.
+- Patient embed chrome uses the same light clinical surfaces + teal subnav/banner as standalone patient (removed dark “paper frame” and recolored chart headers).
+- Kept IonContent `::part(scroll)` fix from `MT-AG-093`.
+- Snapshot for revert: `meditap-app/src/portals/.balance-revert/` (README with restore commands).
+
+**Outcome:** Admin and patient sides share one brand accent; embedded patient UI should match the patient portal more closely. User may ask to revert if preferred.
+
+**Primary paths:** `adminDashboard.css`, `adminPatientEmbed.css`, `.balance-revert/`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 99 — `MT-AG-095`
+
+**Type:** UX / Visual
+
+**Key:** `MT-AG-095`
+
+**Summary:** Admin home dashboard content zone — lighter glassy transparent white panels (KPIs, Quick access, Active patient, queues).
+
+**What was done:**
+
+- Home body background: soft mint/clinical light gradient (sidebar + top bar stay dark).
+- KPI cards, panels, quick tiles, and list rows use frosted glass (`backdrop-filter` + translucent white) with dark ink for contrast.
+
+**Outcome:** Circled dashboard workspace reads lighter and glassier while chrome stays ops-dark.
+
+**Primary paths:** `meditap-app/src/portals/adminDashboard.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 100 — `MT-AG-096`
+
+**Type:** UX / Visual
+
+**Key:** `MT-AG-096`
+
+**Summary:** Pull admin home back to soft-dark frosted panels; restore soft bound vs sidebar/topbar (no bright glass cliff).
+
+**What was done:**
+
+- Replaced bright mint/white glass with forest-dark translucent panels + light ink.
+- Body uses a soft left fade into the sidebar plus muted teal atmosphere (same soft-bound idea as earlier contrast work).
+
+**Outcome:** Home workspace is darker again and blends with chrome instead of a harsh light cutout.
+
+**Primary paths:** `meditap-app/src/portals/adminDashboard.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 101 — `MT-AG-097`
+
+**Type:** Feature
+
+**Key:** `MT-AG-097`
+
+**Summary:** Professional intake PDF gaps — review gate, completeness score, multi-page OCR, vault apply-demographics with identity check.
+
+**What was done:**
+
+- Field Accept/Reject review gate blocks Save until PDF demographic warnings are resolved; Accept all shortcut.
+- Intake completeness % after staff PDF import.
+- Sparse PDF OCR now covers up to 8 pages (was first page only).
+- Document vault stores `parse_snapshot` + parsed names; staff **Apply demographics** with identity match / force confirm + audit log.
+- Unit tests for review gate + completeness.
+
+**Outcome:** First tranche of professional intake workflow is live; terminology validation and richer provenance UI remain follow-ups.
+
+**Primary paths:** `intakeFieldReview.ts`, `intakeCompleteness.ts`, `documentTextExtraction.ts`, `Tab14.tsx`, `PatientDocument` + `apply-demographics`, `AdminPatientHubPage.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 102 — `MT-AG-098`
+
+**Type:** Feature
+
+**Key:** `MT-AG-098`
+
+**Summary:** Professional intake tranche 2 — clinical-row Accept/Reject, terminology hints, provenance, vault single-upload, document review queue.
+
+**What was done:**
+
+- Accept/Reject + Save gate extended to allergies, meds, chronic, insurance, and hospital fields.
+- Terminology catalog flags unknown allergen/med/condition strings (`terminology` reason).
+- Warning tooltips include provenance (`sourceLabel` / OCR `page N` when markers exist).
+- Staff PDF import uploads each file once with a full parse snapshot (no double-upload).
+- Admin **Document review** queue at `/admin-portal/documents` for pending/reviewed vault files.
+
+**Outcome:** Clinical sections share the same review discipline as demographics; ops can triage vault uploads in one queue.
+
+**Primary paths:** `intakeFieldReview.ts`, `intakeTerminologyHints.ts`, `intakeFieldWarnings.ts`, `Tab14.tsx`, `AdminDocumentReviewQueuePage.tsx`, `App.tsx`, `api.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 103 — `MT-AG-099`
+
+**Type:** Bug
+
+**Key:** `MT-AG-099`
+
+**Summary:** Fix Athena Data Portability PDF mis-parse — medications no longer land in Allergies; vitals populate Tab14.
+
+**What was done:**
+
+- Root cause: pdf.js glues section headers (`null,Medications…`), so allergy slicing never stopped and med rows became allergies; vitals TOC header hid the real vitals block.
+- Preprocess now splits comma/period-glued EHR section headers; allergy parsers reject medication-looking rows.
+- Athena Data Portability parser extended for Allergen-ID allergy rows, Name/Authored medication tables, and cm/g/BP/HR vitals (latest row → height/weight/BMI/BP/HR).
+- Fixture: `test-fixtures/dummyPDFs/diana_smith_medical_record.pdf` + integration test.
+
+**Outcome:** Diana Smith portability PDF yields POLLEN allergy, real meds list, and filled vitals; existing Riley Moore / intake suite still green (119 tests).
+
+**Primary paths:** `tab14DocumentParse.ts`, `generalIntakeExtract.ts`, `dianaSmithPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 104 — `MT-AG-100`
+
+**Type:** Bug
+
+**Key:** `MT-AG-100`
+
+**Summary:** Map Athena Data Portability **Payers** into the existing Insurance tab (no new tab).
+
+**What was done:**
+
+- Parse Payers table rows (insurance name, group, member ID, payer ID, subscriber, relationship, guarantor, start date) into `Tab14InsuranceRow`.
+- Reject generic insurance scraper header junk (`Organization Details`, `Subscriber`, etc.).
+- Treat `Payers` as a preprocess section break; fixture assertions on Diana Smith PDF.
+
+**Outcome:** Diana’s BCBS-VT FEP (PPO) policy fills Insurance instead of empty/junk fields. New clinical tabs remain a separate follow-up.
+
+**Primary paths:** `tab14DocumentParse.ts`, `generalIntakeExtract.ts`, `intakeFieldLabels.ts`, `dianaSmithPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 105 — `MT-AG-101`
+
+**Type:** Feature
+
+**Key:** `MT-AG-101`
+
+**Summary:** Arrange all 26 Athena Data Portability PDF sections in Add Patient Information (Tab14).
+
+**What was done:**
+
+- Sidebar expanded to **25 panels** covering all **26** TOC sections (Care Team Members + Care Team share one tab).
+- Order mirrors the PDF TOC: Demographics → Related Person → Care Team → … → Payers → Notes.
+- Existing rich UIs kept for Demographics, Vitals, Allergies, Medications, Problems, Results, Past Encounters, Payers.
+- New generic entry panels for the remaining sections (social, immunizations, procedures, notes, etc.).
+- Athena parse fills `extendedSections` from document blocks; PDF upload merges them into the form.
+- i18n labels (en/es/zh) updated for the full section set.
+
+**Outcome:** Every document section has a home in Add Patient Information. Rich field models + API persistence for the new panels remain follow-up work.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, `Tab14.tsx`, `tab14DocumentParse.ts`, `tab14IntakeTypes.ts`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 106 — `MT-AG-102`
+
+**Type:** Bug
+
+**Key:** `MT-AG-102`
+
+**Summary:** Stop Mental Status PHQ rows from filling Assessment; split date / question / answer into separate fields.
+
+**What was done:**
+
+- Assessment header no longer matches Mental Status column `Date Assessment Value`; honors `No assessment recorded.`
+- Mental Status parser rejoins wrapped Likert answers (`Not at` … `all` → `Not at all`) and maps title=question, detail=answer, date, notes=provider.
+- Glued pdf.js dates (`08/21/2025Little`) normalized before field split.
+
+**Outcome:** Assessment shows None recorded; Mental Status holds PHQ-2/PHQ-9 questions with separated answers/dates.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `tab14PortabilitySections.test.ts`, `dianaSmithPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 107 — `MT-AG-103`
+
+**Type:** Feature
+
+**Key:** `MT-AG-103`
+
+**Summary:** Secure password suggestion + strength meter on Create Account (and Reset Password).
+
+**What was done:**
+
+- Crypto-backed generator (`crypto.getRandomValues`) produces 16-char mixed-class passwords.
+- “Suggest secure password” fills password + confirm, reveals both, and prompts saving to a password manager.
+- Live strength meter (weak → strong) while typing.
+- Same controls on Reset Password; en/es/zh copy updated.
+
+**Outcome:** New users can create a strong password in one click instead of inventing a weak one on the registration card.
+
+**Primary paths:** `auth/securePassword.ts`, `SecurePasswordSuggestion.tsx`, `Tab9.tsx`, `ResetPasswordPage.tsx`, `Tab3.css`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 108 — `MT-AG-104`
+
+**Type:** UX / copy
+
+**Key:** `MT-AG-104`
+
+**Summary:** Clear username rules on Create Account — call out no spaces and allowed characters.
+
+**What was done:**
+
+- Client-side username check before submit; friendly alert replaces Django’s opaque “valid username” wording.
+- Hint under Username; subtitle notes “no spaces.”
+- API username-format errors mapped to the same friendly copy (en/es/zh).
+- Backend register serializer returns the same actionable message.
+
+**Outcome:** Users who include spaces or invalid characters get a clear general rule for how usernames must be written.
+
+**Primary paths:** `Tab9.tsx`, `Tab3.css`, `native_auth_views.py`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 109 — `MT-AG-105`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-105`
+
+**Summary:** Patient intake: PDF parse + warning Accept/Reject + Save enabled; manual field typing remains staff/admin only.
+
+**What was done:**
+
+- Removed the patient-only “upload for review, no chart fill” path — patients parse PDFs into the form like staff.
+- Locked fieldsets use CSS so inputs stay non-editable while PDF Accept/Reject (and Accept all) stay clickable.
+- Save enabled for patients after resolving warnings; Clear Form and Load Sample stay staff-only.
+- Banner/copy updated (en/es/zh) to match: retrieve via PDF, confirm warnings, staff edit in admin portal.
+
+**Outcome:** Patients can upload a record PDF, see extracted data, accept/decline flagged fields, and save — without free-form typing on the chart.
+
+**Primary paths:** `Tab14.tsx`, `Tab14.css`, `Tab14ExtendedSectionPanel.tsx`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 110 — `MT-AG-106`
+
+**Type:** Bug
+
+**Key:** `MT-AG-106`
+
+**Summary:** Split Athena Q&A metadata into Detail / Date / Notes across Social History and related extended sections.
+
+**What was done:**
+
+- Added `splitAthenaAnswerMetadata` + `parseQuestionAnswerEntries` so answer, recorder, organization/place, date, and time map to the correct fields.
+- Applied the same split to Mental Status and other generic Q&A / dated extended-section parsers.
+- Fixed glued section headers and first-prompt glue (`TimeTobacco…`) so Social / Functional / Mental blocks stay separate and complete.
+
+**Outcome:** Rows like “No Sandra Galvez TX - Tenet Texas 08/21/2025 12:17:49” now show Detail=`No`, Date=`08/21/2025`, Notes=`Recorded by Sandra Galvez · TX - Tenet Texas · Time 12:17:49`.
+
+**Primary paths:** `tab14PortabilitySections.ts`, portability tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 111 — `MT-AG-107`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-107`
+
+**Summary:** Separate Recorded by, Place, and Time fields on extended clinical entries (Social / Functional / Mental Status, etc.).
+
+**What was done:**
+
+- Extended `Tab14ClinicalEntry` with `recordedBy`, `place`, and `time` (Notes stays free-form only).
+- Parser writes those fields separately instead of concatenating into Notes.
+- Extended section panel shows the new inputs for all portability Q&A sections.
+
+**Outcome:** “Sandra Galvez” and “TX - Tenet Texas” (plus time) no longer share one Notes box.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 112 — `MT-AG-108`
+
+**Type:** Bug
+
+**Key:** `MT-AG-108`
+
+**Summary:** Mental Status Time field now fills from Athena PDF clocks (e.g. 12:20:19).
+
+**What was done:**
+
+- Normalized glued `12:20:1908/21/2025` clock+date tokens before parse.
+- Stopped stripping `Texas HH:MM:SS` before metadata extraction; PHQ score / Likert / stress rows now capture Time (and recorder/place more reliably).
+
+**Outcome:** Mental Status entries show Time in its own field from the PDF, including the stress question and PHQ rows.
+
+**Primary paths:** `tab14PortabilitySections.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 113 — `MT-AG-109`
+
+**Type:** Bug
+
+**Key:** `MT-AG-109`
+
+**Summary:** Athena / Diana Smith demographics now register completely into Tab14 selects (marital status, legal sex) without false blood type.
+
+**What was done:**
+
+- Added `normalizeMaritalStatus` so PDF values like “Never married” map to select options; added **Never Married** and **Separated** to Tab14 marital `<select>`.
+- Athena parser mirrors **Sex → Legal sex**, improves Contact address, and only sets blood type from an explicit label (stopped false `O-` from med names like Tri-Lo-*).
+- Epic banner marital values also normalized; Diana integration test asserts full demographics.
+
+**Outcome:** Demographics Accept/Reject fields show Marital Status and Legal sex filled correctly for Diana Smith; invented blood type no longer appears.
+
+**Primary paths:** `intakeFieldLabels.ts`, `tab14DocumentParse.ts`, `Tab14.tsx`, `epicHealthSummaryParse.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 114 — `MT-AG-110`
+
+**Type:** Bug
+
+**Key:** `MT-AG-110`
+
+**Summary:** Athena Related Person (and Care Team) contact cards now capture phones, email, and full address instead of a truncated first-`tel:` line.
+
+**What was done:**
+
+- Added `parseRelatedPersonOrCareTeamEntries` to structure name, relation, phones, email, and ZIP address into Detail.
+- Fixed mid-line section header splitting (`73301-0000 Care Team Members`, `…7400 Assessment`) so Related Person no longer swallows Assessment and falsely become “None recorded”.
+- Gated the Assessment “none recorded” shortcut to Assessment-only; prefer real contact cards over TOC crumbs.
+- Unit + Diana PDF integration assertions for Related Person email/ZIP and Care Team provider/address.
+
+**Outcome:** Related Person Detail shows phone(s), email, and full Maple Street address; Care Team shows Max Peralta with clinic phone/address. Date / Recorded by / Place / Time stay empty when the Athena card has no recorder metadata (expected).
+
+**Primary paths:** `tab14PortabilitySections.ts`, `tab14PortabilitySections.test.ts`, `dianaSmithPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 115 — `MT-AG-111`
+
+**Type:** Bug
+
+**Key:** `MT-AG-111`
+
+**Summary:** Care Team now registers Athena provider card + table data (role, phone, address, Member ID, NPI) instead of Assessment’s “None recorded”.
+
+**What was done:**
+
+- Parsed the later Athena **Care Team** table row (`MAX A PERALTA MD` + Member ID / NPI / address / phone).
+- Deduped card vs table by surname; prefer rows that include NPI / Member ID.
+- Dropped Assessment leftovers and table-header noise from Care Team entries.
+- Always enrich Care Team from both **Care Team Members** and **Care Team** blocks.
+
+**Outcome:** Care Team Title/Detail show Peralta as Primary Care Provider with phone, clinic address, Member ID `1465256`, and NPI `1184694978` — not “No assessment recorded.”
+
+**Primary paths:** `tab14PortabilitySections.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 116 — `MT-AG-112`
+
+**Type:** Bug
+
+**Key:** `MT-AG-112`
+
+**Summary:** Plan of Treatment now imports Athena labs, imaging, and medication/vaccine orders with real titles, provider, place, and times — instead of provider/org junk in Title.
+
+**What was done:**
+
+- Added `parsePlanOfTreatmentEntries` for Lab / Imaging / MedicationOrders / VaccineOrders and empty categories.
+- Fixed glued order dates (`01/12/202601/12/2026`) and Plan-of-Treatment section slicing (no longer stops at nested Procedures).
+- Mapped Title=order name, Detail=order type/sig, Date/Time, Recorded by=provider, Place=org + address.
+
+**Outcome:** Diana Plan of Treatment shows urinalysis/HSV/HIV labs, pelvic US, methenamine sig, and Gardasil instructions with Orr as Recorded by — not “Jennifer Marie Orr, MD ELP_ACWHP…” as the title.
+
+**Primary paths:** `tab14PortabilitySections.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 117 — `MT-AG-113`
+
+**Type:** UX
+
+**Key:** `MT-AG-113`
+
+**Summary:** Extended Tab14 entries (Plan of Treatment, Care Team, Social History, etc.) now show as clearly separated cards so each record is easy to scan.
+
+**What was done:**
+
+- Restyled `Tab14ExtendedSectionPanel` entries as bordered surface cards with numbered `N# {section menu name}` headers (no duplicate free-form title clutter).
+- Matched repeater/insurance accordion titles to the same `N# {menu}` pattern.
+- Added shared CSS (`.tab14-extended-entry*`) used by every non-legacy portability section panel.
+
+**Outcome:** Consecutive treatments/entries no longer blend together; Allergies/Medications/Insurance already used accordion cards and were unchanged.
+
+**Primary paths:** `Tab14ExtendedSectionPanel.tsx`, `Tab14.css`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 118 — `MT-AG-114`
+
+**Type:** Feature
+
+**Key:** `MT-AG-114`
+
+**Summary:** Added Tab14 **Patient Instructions** section (sidebar + PDF parse) for Athena care-instruction rows with encounter IDs.
+
+**What was done:**
+
+- Added `patientInstructions` to portability nav (between Plan of Treatment and Reason for Referral) and en/es/zh labels.
+- Parsed Athena rows into Title / Detail (Encounter ID) / Date / Recorded by / Time / Notes.
+- Stopped Plan of Treatment before Patient Instructions; ignored column-header false stops.
+
+**Outcome:** Diana PDF instructions (dysuria care, birth control, bacterial vaginosis, etc.) appear under Patient Instructions after re-upload.
+
+**Primary paths:** `tab14PortabilitySections.ts`, i18n locales, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 119 — `MT-AG-115`
+
+**Type:** Bug
+
+**Key:** `MT-AG-115`
+
+**Summary:** Athena Data Portability **Results** (multi-page labs + imaging) now populate the Tab14 Results lab panels instead of leaving the tab empty.
+
+**What was done:**
+
+- Added `athenaResultsParse.ts` to parse Athena Results observation rows (SureSwab, Urinalysis, UA/M w/rflx) and Results Imaging (US pelvis) into `Tab14LabPanel[]`.
+- Applied glued-header/date normalization so `ResultsCreatedObservation` matches the real section (not the TOC).
+- Wired into `parseAthenaPortabilityDocument` (`labPanels` was previously always `[]`).
+- Unit + Diana integration coverage for SureSwab / UA / UA-M / imaging.
+
+**Outcome:** After hard-refresh + re-upload of Diana PDF, Results shows grouped lab panels (e.g. SureSwab components, urinalysis dipstick, UA/M panel) and pelvic US imaging — not only “+ Add lab result.”
+
+**Primary paths:** `athenaResultsParse.ts`, `tab14DocumentParse.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 120 — `MT-AG-116`
+
+**Type:** Bug
+
+**Key:** `MT-AG-116`
+
+**Summary:** Results accordion rows looked empty (`1# Results` … `9# Results`) even though the PDF parse already filled SureSwab / Urinalysis / UA/M / imaging panels with dozens of components.
+
+**What was done:**
+
+- Fixed `repeaterRowTitle` so it uses the row detail (test name / allergy / med / etc.) instead of always showing the section label.
+- Results collapsed titles now show **panel name · date · N components** (e.g. `1# SureSwab · 2025-08-23 · 6 components`).
+- Tightened Athena Results parse: merge fragmented `UA/M` rows into `UA/M w/rflx`, unglue `normalcompleted` / `mg/dL0.2`, mark imaging as Final when completed.
+
+**Outcome:** After hard-refresh + re-upload, Results list shows real panel names at a glance; expand a row to see analytes. Data was already being retrieved — the UI hid it behind generic titles.
+
+**Primary paths:** `Tab14.tsx`, `athenaResultsParse.ts`, Diana Results tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 121 — `MT-AG-117`
+
+**Type:** Bug
+
+**Key:** `MT-AG-117`
+
+**Summary:** Athena **Problems** “No Known Problems” now fills the Problems tab (checkbox + Condition Name / Notes) instead of leaving an empty chronic-condition card.
+
+**What was done:**
+
+- Added `detectNoKnownProblems` (handles wrapped `No Known` / `Problems` Athena text; ignores PHQ / family-history wording).
+- Parse flag `noKnownProblems` + sentinel chronic row with Condition Name / Notes = “No Known Problems”.
+- Apply path checks “no known chronic conditions” and keeps those fields visible under the checkbox; Save persists the statement.
+
+**Outcome:** After hard-refresh + re-upload of Diana PDF, Problems shows the none checkbox checked and **No Known Problems** in Condition Name and Additional Notes.
+
+**Primary paths:** `detectNoKnownProblems.ts`, `tab14DocumentParse.ts`, `applyTab14ParseBundle.ts`, `Tab14.tsx`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 122 — `MT-AG-118`
+
+**Type:** Bug
+
+**Key:** `MT-AG-118`
+
+**Summary:** Procedures was showing Plan-of-Treatment Imaging / pharmacy junk; Athena **Surgical History** is now its own left-nav section with the real pelvic ultrasound row.
+
+**What was done:**
+
+- Stopped Procedures from matching PoT nested `Procedures None recorded` / Imaging orders.
+- Procedures top-level (empty in Diana PDF) → **None recorded** (points to Surgical History).
+- Added **Surgical History** sidebar section + parser (`Ultrasound Pelvic…`, provider, place, time).
+- Split glued `Procedures Surgical History` / `Imaging\nResults` headers.
+
+**Outcome:** After hard-refresh + re-upload, Procedures is empty/none; Surgical History shows the Athena surgical row — not Akumin / Med Time Pharmacy noise.
+
+**Primary paths:** `tab14PortabilitySections.ts`, i18n locales, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 123 — `MT-AG-119`
+
+**Type:** Feature
+
+**Key:** `MT-AG-119`
+
+**Summary:** Added Athena **Imaging Results** and **Procedure Notes** as left-nav sections (after Surgical History), matching the PDF Procedures subsections.
+
+**What was done:**
+
+- New sidebar panels: Imaging Results + Procedure Notes (en/es/zh).
+- Parsers for pelvic US rows under Imaging Results and “None recorded” under Procedure Notes.
+- Normalize glued `Procedure\nNotes` / `completedNot Available` headers.
+
+**Outcome:** After hard-refresh + re-upload, Imaging Results shows both US pelvis studies; Procedure Notes shows None recorded.
+
+**Primary paths:** `tab14PortabilitySections.ts`, i18n locales, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 124 — `MT-AG-120`
+
+**Type:** Feature
+
+**Key:** `MT-AG-120`
+
+**Summary:** Allergies / Medications / Imaging Results can now intake the Athena PDF columns that were previously dropped (IDs, codes, org address, sig metadata, etc.).
+
+**What was done:**
+
+- Allergies UI + parse: Allergen ID, Category, Criticality, Code / Code system, Recorded by / Organization / Time; full name **POLLEN EXTRACTS**.
+- Medications UI + parse: Directions/Sig, Status, Authored on, Fill quantity, Recorded by / Organization / Time.
+- Imaging Results Place now includes full org address (Akumin Osborne street/city/ZIP).
+- Extra fields round-trip via encoded `reaction_notes` / medication notes on save/load.
+
+**Outcome:** After hard-refresh + re-upload, Allergies shows ID `1469239`, RxNorm `235616`, Geraldine Escobar, etc.; Imaging Place includes street address.
+
+**Primary paths:** `tab14IntakeTypes.ts`, `tab14DocumentParse.ts`, `Tab14.tsx`, `api.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 125 — `MT-AG-121`
+
+**Type:** Feature
+
+**Key:** `MT-AG-121`
+
+**Summary:** Swept every remaining Tab14 submenu against the Diana Smith Athena PDF and added the fields + parsers needed to capture the columns that were still being dropped (Family History, Medical History, Immunizations, clinical Notes, Past Encounters).
+
+**What was done:**
+
+- Extended `Tab14ClinicalEntry` with the Athena column set (status, category, relationship, phone/email/address, role/member ID/NPI/specialty, codes, ages, response, note type, order/submit dates, score, …); the extended-section panel renders section-specific extras and any captured value.
+- New parsers: **Family History** (relationship vs condition), **Medical History** checklist (one entry per condition with Y/N), **Immunizations** (vaccine + status + org + time), and **clinical Notes** (note body reassembled around the wrapped provider/organization/address column).
+- Fixed section slicing so the `Notes` column header no longer hijacks the Social History Q&A table, and Advance Directives no longer swallows the Payers table; Social History now keeps its Q&A rows plus the Gender Identity / Sexual orientation observations.
+- Promoted structured values out of `detail` into fields for Related Person / Care Team, Patient Instructions (encounter ID), Plan of Treatment (category / order + submit dates / instructions), Surgical History + Imaging Results (status), Mental Status (score).
+- **Past Encounters:** new `parseAthenaPastEncounters` returns one visit per encounter (ID, type, performer, location, start/closed timestamps, primary diagnosis with SNOMED / ICD-10 / IMO, and the reconstructed diagnosis note); Tab14 gained the matching form fields and `applyTab14ParseBundle` merges the whole list instead of a single visit.
+- Problems rows gained an optional **Status** field; Gender Identity / Sexual orientation now reach the demographics fields.
+
+**Outcome:** After hard-refresh + re-upload, Diana's chart shows Mother/Maternal Grandfather hyperlipidemia, 45 medical-history answers (Anxiety = Y), Gardasil as active, the three GYN clinical notes (no social Q&A), and all three encounters — 19280018, 19896429, 20136826 — as separate hospital visits.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `tab14DocumentParse.ts`, `tab14IntakeTypes.ts`, `applyTab14ParseBundle.ts`, `Tab14ExtendedSectionPanel.tsx`, `Tab14.tsx`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **126** / **`MT-AG-122`**
+
+*Last updated: entry 125 (Tab14 Athena submenu field completeness).*
+
+---
+
+### Entry 126 — `MT-AG-122`
+
+**Type:** Bugfix
+
+**Key:** `MT-AG-122`
+
+**Summary:** Athena Medications parse now retrieves the full Diana Smith drug list with clean names (no wrapped-line junk).
+
+**What was done:**
+
+- Fixed medication chunking so hyphen wraps (`neomycin-polymyxin-` + `dexameth`) and salt wraps (`nitrofurantoin` + `monohydrate/macrocrystals`) stay one row.
+- Stopped treating sig continuations (`gram tablet…`) as new medications.
+- Recovered doses for gram / % strengths without grabbing years from dates.
+- Diana now yields all 16 meds including Tri-Lo-Marzia, methenamine hippurate, triamcinolone, and both fluoxetine strengths.
+
+**Outcome:** After hard-refresh + re-upload, Medications lists every document drug with a clean accordion title (no `gram 18:10:56…` / `dexameth` fragments).
+
+**Primary paths:** `tab14DocumentParse.ts`, `dianaSmithPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **127** / **`MT-AG-123`**
+
+*Last updated: entry 126 (Athena medications full-list parse).*
+
+---
+
+### Entry 127 — `MT-AG-123`
+
+**Type:** Feature
+
+**Key:** `MT-AG-123`
+
+**Summary:** Vitals tab can switch between every dated reading from the Athena PDF via a history dropdown (view for patients, edit for staff).
+
+**What was done:**
+
+- Parse all Athena vitals rows into `vitalsHistory` (newest first), keeping latest in chart `patientFields`.
+- Vitals UI: “Vitals recorded on” dropdown + metadata (org / time / BMI percentile).
+- Selecting a date loads that reading into the form; staff edits update the selected history row (fieldset still locked for patients).
+
+**Outcome:** After hard-refresh + re-upload, Vitals dropdown lists 01/12/2026, 11/26/2025, and 08/21/2025 readings.
+
+**Primary paths:** `tab14DocumentParse.ts`, `tab14IntakeTypes.ts`, `Tab14.tsx`, i18n
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **128** / **`MT-AG-124`**
+
+*Last updated: entry 127 (vitals history dropdown).*
+
+---
+
+### Entry 128 — `MT-AG-124`
+
+**Type:** Feature / Bugfix
+
+**Key:** `MT-AG-124`
+
+**Summary:** Mental Status now intakes all three dated PHQ batteries from Athena, and every extended submenu entry is a collapsible accordion (with Expand/Collapse all).
+
+**What was done:**
+
+- Fixed section-header normalization that truncated Mental Status at mid-sentence “problems”.
+- Rewrote Mental Status parse → stress Q + 3× PHQ sets (~34 rows across 08/21/2025, 11/26/2025, 01/12/2026).
+- `Tab14ExtendedSectionPanel`: per-entry accordion + Expand/Collapse all; Mental Status also gets an Assessment date filter.
+
+**Outcome:** After hard-refresh + re-upload, Mental Status shows all dated assessments; extended tabs no longer force scrolling through every open card.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **129** / **`MT-AG-125`**
+
+*Last updated: entry 128 (Mental Status completeness + extended accordions).*
+
+---
+
+### Entry 129 — `MT-AG-125`
+
+**Type:** Feature
+
+**Key:** `MT-AG-125`
+
+**Summary:** Added Obstetrics History to Tab14 between Medical History and Immunizations, matching the Athena Data Portability PDF (GPAL + Gynecological History).
+
+**What was done:**
+
+- New sidebar section `obstetricsHistory` (nav id 29) between Medical History and Immunizations.
+- Parser for `GPAL: G … P …` and Athena’s “No gynecological history recorded” note (avoids false match on the substring “gynecological history”).
+- i18n labels (en/es/zh); Diana PDF integration coverage.
+
+**Outcome:** After hard-refresh + re-upload, Obstetrics History appears in the left nav with GPAL `G 0 P 0 0 0 0` for Diana Smith.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, i18n locales, tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **130** / **`MT-AG-126`**
+
+*Last updated: entry 129 (Obstetrics History section).*
+
+---
+
+### Entry 130 — `MT-AG-126`
+
+**Type:** Feature / Bugfix
+
+**Key:** `MT-AG-126`
+
+**Summary:** Hardened Athena Data Portability intake so the same structure works across patients (Diana + Harold), instead of Diana-only table layouts.
+
+**What was done:**
+
+- Added Harold Jennings fixture + integration test alongside Diana.
+- Structure normalize for glued TOC/names (`JenningsDemographics` → Jennings).
+- Alternate Athena table dialects: category allergies, Sig/Dose/Refill meds, ICD-10 problem list, named-group payers, named lab panels, vitals in `kg` + bare BMI.
+- Reject junk insurance rows (notes/`text/html` dumps) during merge.
+- Kept Diana regression green (142 intake tests passing).
+
+**Outcome:** Uploading another Athena Data Portability PDF no longer requires a one-off parser; new patients with the same export family map through shared structure rules. Still not ML “training” — adding a *different* EHR format still needs a new detector/parser module.
+
+**Primary paths:** `tab14DocumentParse.ts`, `athenaResultsParse.ts`, `generalIntakeExtract.ts`, `harold_jennings_medical_record.pdf`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **131** / **`MT-AG-127`**
+
+*Last updated: entry 130 (Athena multi-patient portability hardening).*
+
+---
+
+### Entry 131 — `MT-AG-127`
+
+**Type:** Bugfix
+
+**Key:** `MT-AG-127`
+
+**Summary:** Fixed Harold Plan of Treatment gap — intake now pulls the full lab order table plus all MedicationOrders / VaccineOrders (not just the first med and first vaccine).
+
+**What was done:**
+
+- Added Harold flat PoT order-table parser (`Order / Submit Date / Provider / … / Not Available`).
+- MedicationOrders / VaccineOrders now extract every dated product (anchor on TAKE/inject), not a single `.match()`.
+- Unit + Harold integration assertions for ≥15 PoT rows (labs + 4 meds + 2 vaccines); Diana PoT still green.
+
+**Outcome:** After hard-refresh + re-upload Harold, Plan of Treatment should list A1c/CMP/lipid/etc. orders and all med/vaccine orders from the PDF page — not only metformin + Influenza.
+
+**Primary paths:** `tab14PortabilitySections.ts`, Harold/Diana tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **132** / **`MT-AG-128`**
+
+*Last updated: entry 131 (Harold Plan of Treatment completeness).*
+
+---
+
+### Entry 132 — `MT-AG-128`
+
+**Type:** Bugfix
+
+**Key:** `MT-AG-128`
+
+**Summary:** Care Team intake for Harold now pulls all three NPI-table members (Susan Cole, David Nkemelu, Rocky Mountain Eye Associates) with role/specialty/address/phone — not a single partial PCP card.
+
+**What was done:**
+
+- Added Harold Care Team dialect (`Name Role NPI Specialty Address Phone`, Title Case / org rows, no Member ID).
+- Anchored Care Team rebuild on the real NPI table header (skip TOC / early Members-only scrape).
+- Populated dedicated `role` / `npi` / `specialty` / `phone` / `address` fields for the extended panel.
+- Harold + Diana Care Team tests green.
+
+**Outcome:** After hard-refresh + re-upload Harold, Care Team should list 3 providers with full identifiers.
+
+**Primary paths:** `tab14PortabilitySections.ts`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **133** / **`MT-AG-129`**
+
+*Last updated: entry 132 (Harold Care Team completeness).*
+
+---
+
+### Entry 133 — `MT-AG-129`
+
+**Type:** Feature
+
+**Key:** `MT-AG-129`
+
+**Summary:** Started the Athena “training” loop — fixture corpus + full portability section completeness score (so core 100% no longer hides Care Team / PoT / Past Encounters gaps).
+
+**What was done:**
+
+- `athenaPortabilityCompleteness.ts` — scores Demographics, clinical tabs, and all extended sidebar sections (`filled` / `thin` / `missing` / `none_recorded`).
+- `athenaFixtureCorpus.ts` — locked Diana + Harold baselines (must-fill sections + known gaps).
+- Corpus integration tests fail if a fixture regresses below the bar.
+- Tab14 upload notice now appends Athena section % and gap labels after PDF parse.
+
+**Outcome:** New bad Athena uploads become corpus entries + raised expectations, not silent “100% complete” with empty sidebars. LLM / Document AI still optional next.
+
+**Primary paths:** `athenaPortabilityCompleteness.ts`, `athenaFixtureCorpus.ts`, `Tab14.tsx`, tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 134 — `MT-AG-130`
+
+**Type:** Enhancement
+
+**Key:** `MT-AG-130`
+
+**Summary:** Align Athena completeness with the full left-menu sidebar — one scored row per `TAB14_PORTABILITY_NAV` item (Demographics → Notes), not a short data-bag field list.
+
+**What was done:**
+
+- Clarified that `AthenaPortabilityCompletenessInput` is only the parse/form data bag; scored labels come from `TAB14_PORTABILITY_NAV`.
+- Scorer now walks the sidebar in menu order and exports `ATHENA_SIDEBAR_SECTION_KEYS`.
+- Gap summary uses the same labels users see (Care Team, Mental Status, Obstetrics History, Past Encounters, Notes, …).
+- Test asserts every left-menu key appears in `sections`.
+
+**Outcome:** Completeness % and gap list match the left nav users see after PDF upload.
+
+**Primary paths:** `athenaPortabilityCompleteness.ts`, `athenaFixtureCorpus.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 135 — `MT-AG-131`
+
+**Type:** Feature
+
+**Key:** `MT-AG-131`
+
+**Summary:** Split Athena **Care Team Members** (early contact card) from end-of-document **Care Team** (NPI table) into two left-menu sections with separate intake fields.
+
+**What was done:**
+
+- Renamed early nav item to Care Team Members (`careTeamMembers`); added Care Team (`careTeam`) after Notes.
+- Parsers keep Members card and Care Team NPI table in separate `extendedSections` arrays (no merge).
+- Tab14 panel fields: Members → Role / Phone / Address; Care Team → Role / Member ID / NPI / Specialty / Phone / Address.
+- i18n (en/es/zh), completeness, corpus, Diana/Harold tests updated.
+
+**Outcome:** Left menu matches Athena PDF structure; Harold shows 3 Care Team NPI rows plus Susan Cole under Care Team Members.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, i18n, fixtures/tests
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 136 — `MT-AG-132`
+
+**Type:** Fix
+
+**Key:** `MT-AG-132`
+
+**Summary:** Force left-menu labels via `tab14NavLabel()` so Care Team Members / Care Team show correctly even when the browser had a stale i18n/HMR bundle.
+
+**What was done:**
+
+- Tab14 sidebar + panel titles use `tab14NavLabel` (Care Team Members before Assessment; Care Team last after Notes).
+- Completeness scorer reuses the same labels.
+
+**Outcome:** Hard refresh should show both menu items in the correct places.
+
+**Primary paths:** `Tab14.tsx`, `tab14PortabilitySections.ts`, `athenaPortabilityCompleteness.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 137 — `MT-AG-133`
+
+**Type:** Fix
+
+**Key:** `MT-AG-133`
+
+**Summary:** Force browser to load the Care Team Members / Care Team sidebar split (stale HMR/cache was still showing old single “Care Team” item).
+
+**What was done:**
+
+- New `tab14SidebarNav.ts` + `buildTab14SidebarNav()` used by Tab14 (guarantees Members before Assessment, Care Team last).
+- `index.html` cache-bust query on `main.tsx`; Vite `Cache-Control: no-store`.
+- Helper script: `meditap-app/scripts/restart-frontend-care-team.sh`.
+
+**Outcome:** After frontend restart + hard refresh, sidebar must show both labels in the correct places.
+
+**Primary paths:** `tab14SidebarNav.ts`, `Tab14.tsx`, `index.html`, `vite.config.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **138** / **`MT-AG-134`**
+
+*Last updated: entry 137 (force Care Team sidebar reload).*
+
+---
+
+### Entry 138 — `MT-AG-134`
+
+**Type:** Feature / Process
+
+**Key:** `MT-AG-134`
+
+**Summary:** Operationalized the Athena training loop — raised Diana/Harold fixture bars, documented the corpus workflow, and surfaced structured missing/thin section gaps in Tab14 after upload.
+
+**What was done:**
+
+- `docs/ATHENA_INTAKE_TRAINING.md` — how to add failing PDFs to the corpus (no Document AI yet).
+- Raised corpus locks (Diana ≥95% / more must-fill; Harold ≥90% with `pastEncounters` known gap).
+- Tab14 shows per-gap badges (missing/thin + detail) under the completeness notice.
+- Linked training doc from `AGENTS.md`.
+
+**Outcome:** Training process is explicit: bad Athena upload → fixture + raised bar. Next parser work should close Harold Past Encounters and remove it from `knownGaps`.
+
+**Primary paths:** `athenaFixtureCorpus.ts`, `Tab14.tsx`, `Tab14.css`, `docs/ATHENA_INTAKE_TRAINING.md`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 139 — `MT-AG-135`
+
+**Type:** Feature
+
+**Key:** `MT-AG-135`
+
+**Summary:** First Meditech CCD / MyHealth portal PDF intake path — separate detector from Athena, reuse shared TOC parsers where layouts match, Meditech dialects for allergies/meds/payers/results.
+
+**What was done:**
+
+- Fixture: `meditap-app/test-fixtures/dummyPDFs/meditech_sample_ehr_record.pdf` (Jordan A Rivera).
+- `meditechCcdParse.ts` — `isMeditechCcdDocument`, preprocess (preferred language / weight commas / Data Portability title bridge), allergy Criticality+Documentation Date, Sig+Indication meds, Insurance Date Sequence payers.
+- Wired into `parseTab14IntakeDocument` (Athena detector stays strict — Meditech is not Athena).
+- Extended Results parser for Meditech `Created Date Observation Date` header + dense CMP/lipid rows + Imaging Results.
+- Related Person TOC false-empty fix (prefer block with `Name:`).
+- Integration tests: `meditechCcd.integration.test.ts` (Athena corpus stays green).
+
+**Outcome:** Meditech sample uploads fill demographics, allergies, meds, NKP, payers, vitals, labs, PoT, care team, related person. Still open: full Meditech corpus/completeness scorer (Athena-only today), PoT/care-team dialect polish, Harold Past Encounters.
+
+**Primary paths:** `meditechCcdParse.ts`, `tab14DocumentParse.ts`, `athenaResultsParse.ts`, `meditechCcd.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 140 — `MT-AG-136`
+
+**Type:** Feature
+
+**Key:** `MT-AG-136`
+
+**Summary:** Full Meditech CCD section intake — every TOC section for Jordan sample + fixture corpus lock ≥95% so future Meditech portal exports train the same way as Athena.
+
+**What was done:**
+
+- Expanded `meditechCcdParse.ts` dialects: PoT (Lab/Imaging/MedicationOrders), Care Team NPI+Specialty, Family History, Immunizations (Date before Status), Past Encounters (facility + diagnosis), Notes, Imaging Results, demographics Contact phone (not Related Person), QA org-strip, lab imaging filter.
+- Overlays merge into Athena-shared extended sections; explicit none for Referral/Goals/Health Concerns/Equipment/Patient Instructions (not in Meditech TOC).
+- Completeness: treat TOC `·` bleed and short dated rows correctly; Care Team Specialty optional in Diana-style NPI regex.
+- Corpus: `meditechFixtureCorpus.ts` + integration lock (Jordan ≥95%, must-fill core clinical menu).
+- Full-section integration assertions (PoT ≥4, care NPI, family Father/Mother, 2 immunizations, 2 encounters with reason/facility).
+
+**Outcome:** Jordan Meditech sample intakes the full CCD menu with ≥95% left-menu completeness and zero unexpected gaps. New Meditech PDFs should be added to `MEDITECH_CCD_FIXTURE_CORPUS` the same way as Athena.
+
+**Primary paths:** `meditechCcdParse.ts`, `meditechFixtureCorpus.ts`, `tab14DocumentParse.ts`, `athenaPortabilityCompleteness.ts`, `tab14PortabilitySections.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 141 — `MT-AG-137`
+
+**Type:** UX / Feature
+
+**Key:** `MT-AG-137`
+
+**Summary:** Related Person / Care Team contact intake uses dedicated Relation, Phone, Email, Address (and Role/NPI) fields instead of one Detail blob.
+
+**What was done:**
+
+- Parse writes contact columns into structured `Tab14ClinicalEntry` fields; Detail stays empty for staff notes.
+- `promoteContactFields` strips promoted `Label:` lines from Detail.
+- Tab14 panel: contact fields render right under Title; Detail relabeled “Additional notes” for Related Person / Care Team Members / Care Team.
+- Accordion titles show relation/role + phone instead of the old detail dump.
+- Contactish filter updated so structured-field cards are kept and TOC junk is dropped.
+
+**Outcome:** Taylor Rivera shows Relation / Phone / Email / Address as separate editable inputs after PDF upload (hard refresh + re-upload).
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, `athenaPortabilityCompleteness.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 142 — `MT-AG-138`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-138`
+
+**Summary:** Tab14 upload panel to select EHR document source (Athena, MEDITECH, Epic, NextGen) before parsing, so specialized intake does not compete across formats.
+
+**What was done:**
+
+- `ehrDocumentTypes.ts` — vendor catalog + `preferredVendor` gate for parsers.
+- `parseTab14IntakeDocument(raw, { preferredVendor })` — runs only the selected EHR dialect (auto = previous behavior).
+- `nextgenHealthcareParse.ts` — conservative detector stub (no dialect yet).
+- Tab14 upload UI: four vendor cards + Auto-detect; file input disabled until a type is chosen.
+- i18n en/es/zh for panel copy and status badges.
+
+**Outcome:** Users declare Athena / MEDITECH / Epic / NextGen (or Auto) before upload. Athena + MEDITECH ready; Epic partial; NextGen planned (general extract until fixtures).
+
+**Primary paths:** `ehrDocumentTypes.ts`, `tab14DocumentParse.ts`, `Tab14.tsx`, `Tab14.css`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 143 — `MT-AG-139`
+
+**Type:** Bugfix / UX
+
+**Key:** `MT-AG-139`
+
+**Summary:** Meditech Plan of Treatment — stop org “Lab” from bleeding into Order title; align intake fields to Reminders / Order / Date / Provider Name / Organization Details.
+
+**What was done:**
+
+- `parseMeditechPlanOfTreatment` — protect `Diagnostics Lab` / `Hospital Lab` so they are not order anchors; Order = title only; Provider → `recordedBy`; Organization → `place`; clear Detail/Notes duplication.
+- `Tab14ExtendedSectionPanel` — dedicated PoT layout (Reminders, Order, Date, Provider Name, Organization Details + Instructions).
+- Unit coverage for Priya-style rows (`free T4` stays clean when org is Capitol Diagnostics Lab); Jordan PDF still green.
+- Copied `meditech_priya_kapoor_medical_record.pdf` into `test-fixtures/dummyPDFs/` + integration test locking Order title.
+
+**Outcome:** Meditech PoT titles like `free T4` no longer include address fragments; UI matches CCD table columns.
+
+**Primary paths:** `meditechCcdParse.ts`, `Tab14ExtendedSectionPanel.tsx`, `meditechCcd.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 144 — `MT-AG-140`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-140`
+
+**Summary:** Establish Epic upload dialect from Jane Doe Mayo My Health Summary (540-page `- as of` format) as the canonical Epic document selection path.
+
+**What was done:**
+
+- `epicMayoMyHealthSummaryParse.ts` — Mayo snapshot parsers (Allergies/Meds/Active Problems/Immunizations/Social/Vitals/PoT/Procedures/Results/Encounters/Care Team) + preprocess that caps huge note dumps.
+- `epicHealthSummaryParse.ts` — detects Mayo vs Centralus; Joanna Smith path preserved.
+- Preferred Epic upload skips general-extract merge (no table-header names / department phones).
+- Fixture corpus + snapshot text lock (≥90%; known gaps Demographics + Payers). Full 28MB PDF gitignored.
+- Epic vendor card status → ready; training docs updated.
+
+**Outcome:** Selecting **Epic** on Tab14 targets the Mayo My Health Summary format. Cover demographics remain image-only on this fixture; clinical sections parse without page-by-page review.
+
+**Primary paths:** `epicMayoMyHealthSummaryParse.ts`, `epicHealthSummaryParse.ts`, `epicFixtureCorpus.ts`, `tab14DocumentParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 145 — `MT-AG-141`
+
+**Type:** Bug fix / Intake
+
+**Key:** `MT-AG-141`
+
+**Summary:** Epic Mayo cover demographics — OCR image-only page 1 even when later pages have text; parse Patient Name / DOB / address / phone / email / race / marital.
+
+**What was done:**
+
+- `augmentPdfTextWithOcr` — OCR sparse *leading* pages (not only when the whole PDF is sparse). Epic Jane cover is image-only while pages 2+ are text-rich.
+- `parseEpicMayoCoverDemographics` — Patient Demographics banner (Mrs. Jane A. Smith-Doe, born Mar. 15, 1976, Fort Worth address, etc.).
+- Snapshot + corpus now expect demographics filled; Payers remains the known gap.
+
+**Outcome:** Selecting Epic and uploading Jane Doe fills Demographics from the cover (via first-page OCR + parser). Hard-refresh before re-upload.
+
+**Primary paths:** `documentTextExtraction.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 146 — `MT-AG-142`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-142`
+
+**Summary:** Fifth EHR upload option **Generic / Other** for non-Athena/MEDITECH/Epic/NextGen PDFs; scaffold per-selector left-menu profiles for upcoming subtitle tracking.
+
+**What was done:**
+
+- `ehrDocumentTypes.ts` — `generic` vendor (ready); skips specialized dialects (general extract only).
+- `ehrSidebarNav.ts` — `EHR_SIDEBAR_SECTION_KEYS` map (`'all'` until per-vendor TOC lists are filled); Tab14 sidebar rebuilds from selected source.
+- i18n + 5-column EHR card grid; upload copy updated.
+
+**Outcome:** Users can pick Generic/Other. Left menu is wired to follow the PDF selector; fill `EHR_SIDEBAR_SECTION_KEYS` once section titles per EHR are tracked.
+
+**Primary paths:** `ehrDocumentTypes.ts`, `ehrSidebarNav.ts`, `Tab14.tsx`, `tab14DocumentParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 147 — `MT-AG-143`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-143`
+
+**Summary:** Lock MEDITECH left-menu order to the Jordan CCD Table of Contents (26 sections).
+
+**What was done:**
+
+- `EHR_SIDEBAR_SECTION_KEYS.meditech` — Demographics → Care Team (omit Patient Instructions, Surgical History, Imaging Results, Procedure Notes, Obstetrics History).
+- Tests lock the exact TOC key order.
+
+**Outcome:** Selecting **MEDITECH** on Tab14 shows only the CCD TOC sidebar sections in document order.
+
+**Primary paths:** `ehrSidebarNav.ts`, `ehrDocumentTypes.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 148 — `MT-AG-144`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-144`
+
+**Summary:** Move Tab14 EHR format selector to the top and show an active intake-panel badge on the left sidebar.
+
+**What was done:**
+
+- Document-source (EHR) card grid moved above the master–detail layout (was below Upload).
+- Sidebar top badge: “Athena Intake Panel”, “MEDITECH Intake Panel”, etc. (updates with selection).
+- Removed temporary Care Team sidebar build marker.
+- i18n en/es/zh + `ehrIntakePanelTitle` helper + unit tests.
+
+**Outcome:** Format choice is visible before sections; left nav clearly shows which intake panel is active.
+
+**Primary paths:** `Tab14.tsx`, `Tab14.css`, `ehrDocumentTypes.ts`, locales
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 149 — `MT-AG-145`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-145`
+
+**Summary:** Raise Active Format into the EHR strip and place the PDF upload panel beside it.
+
+**What was done:**
+
+- Top toolbar: EHR source cards (left) + Upload PDF panel (right).
+- Active Format badge moved from left sidebar into the Document source header.
+- Compact uploaded-file list lives in the PDF panel; bottom upload strip removed.
+
+**Outcome:** Format choice, active panel label, and PDF upload sit together above the chart sections.
+
+**Primary paths:** `Tab14.tsx`, `Tab14.css`, locales
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 150 — `MT-AG-146`
+
+**Type:** Docs
+
+**Key:** `MT-AG-146`
+
+**Summary:** MediTap technical Q&A brief (MD + branded PDF) for leadership talking points.
+
+**What was done:**
+
+- `docs/meditap-technical-qa-brief-2026-08-27.md` — concise answers across product, intake/OCR, accuracy, FHIR/EHR, security, moat.
+- `docs/generate_meditap_technical_qa_pdf.py` — Lomont/Cargo report layout with MediTap teal brand.
+- Output PDF: `docs/meditap-technical-qa-brief-2026-08-27.pdf`.
+
+**Outcome:** Shareable internal brief; clearly separates safe claims vs do-not-claim items.
+
+**Primary paths:** `docs/meditap-technical-qa-brief-2026-08-27.md`, `docs/generate_meditap_technical_qa_pdf.py`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 151 — `MT-AG-147`
+
+**Type:** Docs
+
+**Key:** `MT-AG-147`
+
+**Summary:** Rebalance technical Q&A brief to lead with working user + admin portals (not only PDF fixtures).
+
+**What was done:**
+
+- Emphasized appointments, labs, insurance, conditions, incidents, meds/allergies, dashboard.
+- Documented admin portal as working (patients, charts, hospitals, documents, activity).
+- Framed PDF fixtures as parser regression loop feeding the chart.
+- Regenerated PDF; copied MD + PDF to Desktop.
+
+**Outcome:** Brief matches the full product story for leadership talking points.
+
+**Primary paths:** `docs/meditap-technical-qa-brief-2026-08-27.md`, `docs/generate_meditap_technical_qa_pdf.py`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 152 — `MT-AG-148`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-148`
+
+**Summary:** Lock Epic left menu to Jane Doe My Health Summary TOC (color sections + multi-intake / Results playbook).
+
+**What was done:**
+
+- `epicMyHealthSummaryToc.ts` — canonical TOC with colors, aliases, session split, Results - as of slicer + playbook.
+- `ehrSidebarNav.ts` — Epic sidebar keys + Lucy/Mayo display labels.
+- Tab14 uses `ehrSidebarNavLabel` for Epic titles.
+- `parseEpicMayoResults` walks every Results - as of session (not one blob).
+- Tests lock sidebar order + Results session split.
+
+**Outcome:** Selecting **Epic** shows Patient Demographics → … → Patient Contacts in document order; Results extraction is session-aware for ~540pp Continuity PDFs.
+
+**Primary paths:** `epicMyHealthSummaryToc.ts`, `ehrSidebarNav.ts`, `epicMayoMyHealthSummaryParse.ts`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+
+### Entry 153 — `MT-AG-149`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-149`
+
+**Summary:** Integrate Epic “Encounter Details” multi-hit sessions into PDF intake (visit boundaries + Past Encounters).
+
+**What was done:**
+
+- `sliceEpicEncounterDetailSessions` / local subsection slicer already in TOC; hardened Date/Type/Department/Care Team peek.
+- `parseEpicMayoEncounters` prefers Encounter Details blocks → Past Encounters + Care Team.
+- `splitEpicMyHealthSummarySessions` prefers Encounter Details when ≥2 hits.
+- Tests: `epicEncounterDetailsSessions.test.ts` (5 passing).
+- Results playbook updated to start from Encounter Details session split.
+
+**Outcome:** Searching “Encounter Details” in the ~540pp Continuity PDF maps directly to intake session boundaries and Past Encounters rows.
+
+**Primary paths:** `epicMyHealthSummaryToc.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicEncounterDetailsSessions.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 154 — `MT-AG-150`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-150`
+
+**Summary:** Apply Encounter Details–style multi-hit search to every established Epic TOC section title.
+
+**What was done:**
+
+- Generalized indexer in `epicMyHealthSummaryToc.ts`: `findEpicSectionHits`, `indexEpicTocSections`, `countEpicTocSectionHits`, `pickEpicSectionBodies`.
+- Bodies slice until the next TOC header; kinds = plain / as-of / encounter-local.
+- Non-header aliases excluded (e.g. Active Allergy Reactions, Final result, Care Team field) so table columns don’t truncate sections.
+- `sliceEpicMayoAsOfSection` prefers indexer primary body (latest as-of).
+- Tests: `epicTocSectionIndex.test.ts` (6 passing).
+
+**Outcome:** Allergies, Medications, Active Problems, Results, etc. use the same multi-hit PDF-search model as Encounter Details — not a one-section special case.
+
+**Primary paths:** `epicMyHealthSummaryToc.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicTocSectionIndex.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 155 — `MT-AG-151`
+
+**Type:** Bugfix / Intake
+
+**Key:** `MT-AG-151`
+
+**Summary:** Fix sparse Encounter Details extraction (~9 vs PDF Find ~31) by using the full Encounters inventory table.
+
+**What was done:**
+
+- Root cause: PDF Find hits yellow “Encounter Details” titles that are often **image/vector** — text layer had **1** literal hit across 540 pages, while `Encounters - as of` lists ~30 visits.
+- Removed early-return on sparse Encounter Details sessions.
+- Added `parseEpicEncountersAsOfTable` with line-break-tolerant visit types (Hospital Encounter, Comprehensive Visit, Appointment, …).
+- `parseEpicMayoEncounters` merges table + detail sessions (prefer larger set).
+- Probe: Jane Doe PDF → 29 table / 30 merged visits (was 1 detail session).
+- Tests: `epicEncountersAsOfTable.test.ts`.
+
+**Outcome:** MediTap now inventories ~30 encounters from the text layer instead of stopping at image-only section titles.
+
+**Primary paths:** `epicMayoMyHealthSummaryParse.ts`, `epicEncountersAsOfTable.test.ts`, `scripts/probe-encounter-counts.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 156 — `MT-AG-152`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-152`
+
+**Summary:** Apply the Encounters inventory pattern to every established Epic TOC section (not only Encounter Details).
+
+**What was done:**
+
+- Root cause for sparse sections matched Encounters: yellow TOC titles are often image/vector; text layer inventories are `Section - as of DATE` (+ encounter-local copies).
+- Added `collectEpicSectionBodies` / `collectEpicMayoSectionBodies` — gather all as-of + encounter-local bodies per TOC title.
+- `preprocessEpicMayoMyHealthSummaryText` no longer mid-document truncates (was dropping later inventories).
+- Added `buildEpicMayoSectionCorpus` for labeled full-section corpora.
+- Wired Mayo list parsers (Allergies, Medications, Active Problems, Immunizations, Social History, Plan of Treatment, Procedures, Vitals, Results) through the multi-body collector.
+- Tests: `epicMayoSectionCorpus.test.ts` (5 passing).
+
+**Outcome:** Every Epic PDF mode section uses the same multi-hit / inventory model as Encounters — full extract, all as-of hits, not image-title-only.
+
+**Primary paths:** `epicMyHealthSummaryToc.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicMayoSectionCorpus.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 157 — `MT-AG-153`
+
+**Type:** Bugfix / Intake
+
+**Key:** `MT-AG-153`
+
+**Summary:** Fix Epic “only 1 allergy / sparse sections” — mid-line TOC headers were invisible to the indexer.
+
+**What was done:**
+
+- Root cause: Continuity text glues section titles mid-line (`…Ph.D. Allergies - as of DATE`). Indexer only matched line-starts, so Allergies/Medications/Problems hits were ~0.
+- Secondary bug: template-literal `\s`/`\b` were eaten before RegExp (pattern became `Allergiess*-s*`).
+- `epicSectionHeaderRegex` now matches line-start **or** mid-line `Title - as of|documented`.
+- Jane Doe probe after fix: Allergies×2, Medications×35, Active Problems×24, Results×15; unique allergies remain Penicillamine + Penicillins (true chart content).
+- Allergy parser always does a whole-document pass; meds use PDF de-glue.
+- Tests: mid-line header case in `epicTocSectionIndex.test.ts` (19 Epic tests passing).
+
+**Outcome:** Full-document section analysis no longer stops at the first line-start header; re-upload Epic PDF to refresh the form.
+
+**Primary paths:** `epicMyHealthSummaryToc.ts`, `epicMayoMyHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 158 — `MT-AG-154`
+
+**Type:** Feature / Intake
+
+**Key:** `MT-AG-154`
+
+**Summary:** Epic Patient Demographics multi-hit tracking (PDF Find ≈ 33) + Epic-only demographics columns on Tab14.
+
+**What was done:**
+
+- `epicPatientDemographics.ts` — index header + field-cluster hits; sparse proxy = cover signal + `Encounters - as of` visit count when yellow titles are image-only (Jane Doe estimate **32** ≈ PDF Find **33**).
+- Parse Epic columns only: Patient Address, Patient Name (+ Former/Aliases), Communication (mobile/home/email), Language, Race, Ethnicity, Marital Status.
+- `inventoryEpicPatientDemographics` wired into Mayo dialect → `epicSectionOccurrenceCounts['Patient Demographics']` on parse result / upload chip.
+- Tab14 Epic mode demographics UI shows only those columns (hides blood type, sex/gender stack, emergency contact, etc.).
+- Tests: `epicPatientDemographics.test.ts` + cover demographics alias/home-phone expectations.
+
+**Outcome:** Selecting Epic and uploading Jane Doe registers Patient Demographics × ~32 and shows the Lucy-style column set. Variable counts work for later documents (literal hits win when text-rich).
+
+**Primary paths:** `epicPatientDemographics.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicHealthSummaryParse.ts`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 159 — `MT-AG-155`
+
+**Type:** Bug fix / UX
+
+**Key:** `MT-AG-155`
+
+**Summary:** Fix Epic Patient Demographics UI + fill — exact seven Lucy columns; stop Language greed / empty Address-Name-Communication.
+
+**What was done:**
+
+- Tab14 Epic demographics form is only: **Patient Address**, **Patient Name**, **Communication**, **Language**, **Race**, **Ethnicity**, **Marital Status** (removed given/family split, Former/Aliases, Mobile/Home/Email subfields).
+- Parser now clips to the cover demographics window and extracts **label-bounded** values (no whole-document Language greed that swallowed Race/Marital/aliases).
+- Builds a single `communication` column from mobile/home/email; keeps `patientFullName` as the name column.
+- Scrub rejects Language values that still contain grid labels.
+- Tests cover clean + OCR-messy glue cases.
+
+**Outcome:** Re-select Epic and re-upload Jane Doe — Demographics should fill the seven columns and match the PDF section layout.
+
+**Primary paths:** `epicPatientDemographics.ts`, `Tab14.tsx`, `epicMayoMyHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **160** / **`MT-AG-156`**
+
+*Last updated: entry 159 (Epic demographics columns + fill fix).*
+
+
+*Last updated: entry 156 (Encounters pattern for every Epic TOC section).*
+
+
+
+*Last updated: entry 155 (full Encounters inventory vs image Encounter Details).*
+
+*Last updated: entry 152 (Epic My Health Summary TOC).*
+
+
+*Last updated: entry 151 (Q&A brief portal rebalance).*
+
+
+*Last updated: entry 150 (technical Q&A brief).*
+
+
+*Last updated: entry 149 (intake toolbar PDF panel).*
+
+
+*Last updated: entry 148 (Tab14 EHR selector top + panel badge).*
+
+
+*Last updated: entry 147 (MEDITECH CCD TOC sidebar).*
+
+
+*Last updated: entry 146 (Generic EHR option + sidebar profiles).*
+
+
+*Last updated: entry 145 (Epic Mayo cover demographics OCR).*

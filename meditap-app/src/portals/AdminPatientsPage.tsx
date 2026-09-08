@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { searchPatientsForAdmin, type PatientApi } from '../api';
+import GoBackButton from '../components/GoBackButton';
 import { useAdminPatient } from './AdminPatientContext';
 import { formatPatientDisplayName } from './adminPatientStorage';
+import { ADMIN_PORTAL_HOME } from './portalPaths';
 import './adminOps.css';
 
 const AdminPatientsPage: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const { selectPatient, selected } = useAdminPatient();
-  const [q, setQ] = useState('');
+  const initialQ = new URLSearchParams(location.search).get('q') || '';
+  const [q, setQ] = useState(initialQ);
   const [rows, setRows] = useState<PatientApi[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +32,10 @@ const AdminPatientsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    void load('');
-  }, []);
+    const fromUrl = new URLSearchParams(location.search).get('q') || '';
+    setQ(fromUrl);
+    void load(fromUrl);
+  }, [location.search]);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +58,9 @@ const AdminPatientsPage: React.FC = () => {
             <Link to={`/admin-portal/patients/${selected.patientId}`}>Open hub</Link>
           </p>
         ) : null}
+        <div className="admin-ops__actions">
+          <GoBackButton fallback={ADMIN_PORTAL_HOME} variant="plain" />
+        </div>
       </header>
 
       <form className="admin-ops__search" onSubmit={onSearch}>

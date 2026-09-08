@@ -98,3 +98,26 @@
 .auth-public-footer-link a:hover {
   text-decoration: underline;
 }
+
+.password-security--public {
+  margin-top: 0.25rem;
+}
+
+.password-security--public .password-security__hint,
+.password-security--public .password-security__strength-text {
+  color: var(--meditap-text-secondary, #a8b0bc);
+}
+
+.password-security--public .password-security__suggest-btn {
+  border-color: rgba(23, 162, 184, 0.45);
+  background: rgba(23, 162, 184, 0.18);
+  color: #9eeaf5;
+}
+
+.password-security--public .password-security__meter {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.password-security--public .password-security__suggested-note {
+  color: #9eeaf5;
+}

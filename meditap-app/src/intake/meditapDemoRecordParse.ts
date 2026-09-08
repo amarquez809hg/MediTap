@@ -4,6 +4,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { detectNoKnownProblems } from './detectNoKnownProblems';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
 import type {
   Tab14AllergyRow,
@@ -815,6 +816,7 @@ function parseDataPortabilityCompactRecord(raw: string): Tab14IntakeParseResult 
   return withSanitizedPatientFieldWarnings({
     patientFields: parseCompactPatient(text),
     noKnownDrugAllergies: detectNoKnownDrugAllergies(text, allergies.length),
+    noKnownProblems: detectNoKnownProblems(text),
     insurances,
     allergies,
     medications,
@@ -874,6 +876,7 @@ export function parseMeditapDemoRecordDocument(raw: string): Tab14IntakeParseRes
   return withSanitizedPatientFieldWarnings({
     patientFields,
     noKnownDrugAllergies: detectNoKnownDrugAllergies(text, allergies.length),
+    noKnownProblems: detectNoKnownProblems(text),
     insurances,
     allergies,
     medications,

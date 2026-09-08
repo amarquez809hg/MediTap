@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import PortalNavLink from './PortalNavLink';
 import './DashboardSectionActions.css';
 
 type DashboardSectionActionsProps = {
@@ -16,12 +16,12 @@ const DashboardSectionActions: React.FC<DashboardSectionActionsProps> = ({
   onAddEntry,
 }) => (
   <div className="dashboard-tab-section__actions dashboard-section-actions">
-    <Link
+    <PortalNavLink
       to={viewHref}
       className="book-btn dashboard-tab-section__btn dashboard-section-actions__view meditap-glass-btn meditap-glass-btn--compact"
     >
       <i className="fas fa-external-link-alt" aria-hidden /> {viewLabel}
-    </Link>
+    </PortalNavLink>
     <button
       type="button"
       className="book-btn dashboard-tab-section__btn dashboard-section-actions__add meditap-glass-btn meditap-glass-btn--compact meditap-glass-btn--outline"
