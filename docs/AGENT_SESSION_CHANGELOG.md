@@ -1197,9 +1197,30 @@
 
 ---
 
-**Next register entry:** **169** / **`MT-AG-165`**
+### Entry 169 — `MT-AG-165`
 
-*Last updated: entry 168 (staff card assignment and full tap chart).*
+**Type:** Feature
+
+**Key:** `MT-AG-165`
+
+**Summary:** Give each patient a new card instead of moving the one card already burned.
+
+**What was done:**
+
+- Staff **New card** creates a separate per-tap card and prints a burn command for a blank DESFire card.
+- The existing card’s UID stays on its patient. After the burn, staff save that card’s UID and read counter.
+- The burn script can start from a factory card that has no NDEF application yet.
+
+**Outcome:** A second patient gets a second plastic. The button on meditap.ai still moves the existing card until this update is pulled and the frontend is rebuilt.
+
+**Primary paths:** `backend/medical/card_profile.py`, `meditap-app/src/portals/StaffCardAssignPage.tsx`, `tools/desfire/burn_profile_url.py`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **170** / **`MT-AG-166`**
+
+*Last updated: entry 169 (a new card per patient).*
 
 ---
 

@@ -1,10 +1,10 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `168` (`MT-AG-164`)
-- Next register entry should start at: `169` (`MT-AG-165`)
+- Last completed register entry: `169` (`MT-AG-165`)
+- Next register entry should start at: `170` (`MT-AG-166`)
 - Checkpoint date: `2026-09-22`
 - Scope baseline (Set 6 — since entry 65):
-  - Staff card assignment and full tap chart (`MT-AG-164`)
+  - A new DESFire card per patient (`MT-AG-165`)
   - Per-tap DESFire SUN links (`MT-AG-163`)
   - Profile card bind panel and reader `--open` (`MT-AG-162`)
   - DESFire card URL opens a limited public profile (`MT-AG-161`)

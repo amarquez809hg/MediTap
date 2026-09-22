@@ -12,10 +12,10 @@ from medapp.admin_ops import user_is_admin_operator
 
 from .card_profile import (
     accept_sun_tap,
-    assign_active_card,
     bind_uid,
     card_for_token,
     issue_card,
+    issue_sun_card,
     public_profile,
     revoke_card,
 )
@@ -84,13 +84,21 @@ def assign_patient_card(request):
     if not patient_id:
         return Response({"detail": "patient is required."}, status=400)
     patient = get_object_or_404(Patient, patient_id=patient_id)
-    try:
-        card = assign_active_card(patient)
-    except ValueError as exc:
-        return Response({"detail": str(exc)}, status=400)
+    base_url = str(request.data.get("base_url") or "").strip() or None
+    card, sun_url, key = issue_sun_card(
+        patient=patient,
+        issued_by=request.user,
+        base_url=base_url,
+    )
     body = _card_summary(card)
     body["patient_name"] = f"{patient.given_name} {patient.family_name}".strip()
-    return Response(body)
+    body["sun_url"] = sun_url
+    body["sun_key"] = key
+    body["burn_command"] = (
+        "~/acr1311-env/bin/python tools/desfire/burn_profile_url.py "
+        f"--sun {sun_url} --sun-key {key}"
+    )
+    return Response(body, status=201)
 
 
 @api_view(["GET", "POST"])
@@ -137,6 +145,16 @@ def bind_patient_card_uid(request, card_id):
         bind_uid(card, raw_uid)
     except ValueError as exc:
         return Response({"detail": str(exc)}, status=400)
+    raw_counter = request.data.get("counter", None)
+    if raw_counter not in (None, ""):
+        try:
+            counter = int(raw_counter)
+        except (TypeError, ValueError):
+            return Response({"detail": "counter must be a number."}, status=400)
+        if counter < -1 or counter > 0xFFFFFF:
+            return Response({"detail": "counter must be from -1 to 16777215."}, status=400)
+        card.sdm_read_counter = counter
+        card.save(update_fields=["sdm_read_counter"])
     return Response(_card_summary(card))
 
 

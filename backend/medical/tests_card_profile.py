@@ -208,19 +208,33 @@ class PatientCardApiTests(APITestCase):
 
         assigned = self.client.post(
             "/api/patient-cards/assign/",
-            {"patient": str(self.stranger.patient_id)},
+            {"patient": str(self.stranger.patient_id), "base_url": "https://meditap.ai"},
             format="json",
         )
-        self.assertEqual(assigned.status_code, 200)
-        self.assertEqual(assigned.data["patient_id"], str(self.stranger.patient_id))
+        self.assertEqual(assigned.status_code, 201)
+        self.assertNotEqual(assigned.data["card_id"], str(card.card_id))
+        self.assertIn(f"/card/s/{assigned.data['card_id']}", assigned.data["sun_url"])
+        self.assertEqual(len(assigned.data["sun_key"]), 32)
         card.refresh_from_db()
-        self.assertEqual(card.patient_id, self.stranger.patient_id)
+        self.assertEqual(card.patient_id, self.patient.patient_id)
+        self.assertEqual(card.card_uid, uid.hex().upper())
+
+        new_card = PatientCard.objects.get(card_id=assigned.data["card_id"])
+        self.assertEqual(new_card.patient_id, self.stranger.patient_id)
+        bound = self.client.post(
+            f"/api/patient-cards/{new_card.card_id}/bind-uid/",
+            {"card_uid": "04DE5F1EACC040", "counter": 1},
+            format="json",
+        )
+        self.assertEqual(bound.status_code, 200)
+        self.assertEqual(bound.data["card_uid"], "04DE5F1EACC040")
+        new_card.refresh_from_db()
+        self.assertEqual(new_card.sdm_read_counter, 1)
 
         self.client.force_authenticate(user=None)
         opened = self._sun_get(card.card_id, meta, uid, 1)
         self.assertEqual(opened.status_code, 200)
-        self.assertEqual(opened.data["given_name"], "Casey")
-        self.assertEqual(opened.data["address"], None)
+        self.assertEqual(opened.data["given_name"], "Riley")
 
     def _sun_get(self, card_id, key: bytes, uid: bytes, counter: int):
         picc = seal_picc(key, uid, counter)

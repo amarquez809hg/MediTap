@@ -41,10 +41,17 @@ export function issuePatientCard(patientId: string): Promise<PatientCardRow> {
   });
 }
 
-export function bindPatientCardUid(cardId: string, cardUid: string): Promise<PatientCardRow> {
+export function bindPatientCardUid(
+  cardId: string,
+  cardUid: string,
+  counter?: number,
+): Promise<PatientCardRow> {
   return cardRequest<PatientCardRow>(`/api/patient-cards/${cardId}/bind-uid/`, {
     method: 'POST',
-    body: JSON.stringify({ card_uid: cardUid }),
+    body: JSON.stringify({
+      card_uid: cardUid,
+      ...(counter === undefined ? {} : { counter }),
+    }),
   });
 }
 
@@ -52,10 +59,18 @@ export function listCardDirectory(): Promise<CardDirectoryRow[]> {
   return cardRequest<CardDirectoryRow[]>('/api/patient-cards/directory/');
 }
 
-export function assignCardToPatient(patientId: string): Promise<PatientCardRow> {
-  return cardRequest<PatientCardRow>('/api/patient-cards/assign/', {
+export type IssuedSunCard = PatientCardRow & {
+  patient_name?: string;
+  sun_url: string;
+  sun_key: string;
+  burn_command: string;
+};
+
+export function assignCardToPatient(patientId: string): Promise<IssuedSunCard> {
+  const baseUrl = window.location.origin;
+  return cardRequest<IssuedSunCard>('/api/patient-cards/assign/', {
     method: 'POST',
-    body: JSON.stringify({ patient: patientId }),
+    body: JSON.stringify({ patient: patientId, base_url: baseUrl }),
   });
 }
 

@@ -684,21 +684,32 @@ def _verified_sun_read(card: Desfire, key: bytes, expected_uid: str) -> tuple[st
 
 
 def burn_sun(card: Desfire, base: str, old_key: bytes, new_key: bytes, expected_uid: str) -> tuple[str, int]:
-    """Turn on per-tap links. On failure, put the previous fixed URL back."""
+    """Turn on per-tap links. A blank card gets an NDEF application first."""
+    had_url = True
     try:
         original = card.read_ndef_url()
-    except CardError as exc:
-        raise CardError(f"Read the current URL before enabling SUN. {exc}") from exc
+    except CardError:
+        had_url = False
+        original = ""
+        print("Blank card. Creating the NFC application.")
+        _prepare_blank_card(card)
     blob, picc_at, mac_at, template = sun_ndef(base)
     print(f"SUN template: {template}")
     print(f"PICC offset {picc_at}, MAC offset {mac_at}.")
+    changed_key = False
     try:
         print("Replacing the application key.")
         _change_app_key(card, old_key, new_key)
+        changed_key = True
         print("Recreating the NDEF file with per-tap mirroring.")
         card.select_application(NDEF_AID)
         card.authenticate_aes(0x00, new_key)
-        card.delete_file(NDEF_FILE)
+        try:
+            card.delete_file(NDEF_FILE)
+        except CardError as exc:
+            if exc.status != 0xF0:
+                raise
+            card.authenticate_aes(0x00, new_key)
         try:
             card.create_std_file(NDEF_FILE, NDEF_ISO, max(255, len(blob)), file_option=0x40)
         except CardError:
@@ -709,14 +720,43 @@ def burn_sun(card: Desfire, base: str, old_key: bytes, new_key: bytes, expected_
         opened, counter = _verified_sun_read(card, new_key, expected_uid)
         return opened, counter
     except Exception:
-        print("SUN setup did not verify. Restoring the previous URL.")
-        try:
-            # A reset recreates the NDEF application with the factory zero key.
-            burn(card, original, reset=True, app_key=ZERO_AES)
-            print(f"Restored: {original}")
-        except Exception as restore_error:
-            print(f"Restore failed: {restore_error}")
+        if had_url and original:
+            print("SUN setup did not verify. Restoring the previous URL.")
+            try:
+                burn(card, original, reset=True, app_key=ZERO_AES)
+                print(f"Restored: {original}")
+            except Exception as restore_error:
+                print(f"Restore failed: {restore_error}")
+        elif changed_key:
+            print("SUN setup did not verify. Clearing the half-written card.")
+            try:
+                ensure_ndef_app(card, reset=True)
+            except Exception as restore_error:
+                print(f"Clear failed: {restore_error}")
         raise
+
+
+def _prepare_blank_card(card: Desfire) -> None:
+    """Create the Type 4 application and empty files on a factory card."""
+    ensure_ndef_app(card, reset=False)
+    size = 255
+    cc = capability_container(size)
+    card.select_application(NDEF_AID)
+    card.authenticate_aes(0x00, ZERO_AES)
+    try:
+        card.create_std_file(CC_FILE, CC_ISO, len(cc))
+    except CardError as exc:
+        if exc.status != 0xDE:
+            raise
+        card.authenticate_aes(0x00, ZERO_AES)
+    else:
+        card.write_data(CC_FILE, cc)
+    try:
+        card.create_std_file(NDEF_FILE, NDEF_ISO, size)
+    except CardError as exc:
+        if exc.status != 0xDE:
+            raise
+        card.authenticate_aes(0x00, ZERO_AES)
 
 
 def main(argv: list[str]) -> int:

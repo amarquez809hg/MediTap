@@ -233,15 +233,26 @@ def chart_profile(card: PatientCard) -> dict[str, Any]:
     return profile
 
 
-def assign_active_card(patient: Patient) -> PatientCard:
-    """Point the physical card at this patient. The link on the plastic stays the same."""
-    active = PatientCard.objects.filter(revoked_at__isnull=True)
-    card = active.exclude(card_uid="").order_by("-created_at").first() or active.order_by("-created_at").first()
-    if card is None:
-        raise ValueError("No active card to assign. Issue one before assigning a patient.")
-    card.patient = patient
-    card.save(update_fields=["patient"])
-    return card
+def issue_sun_card(
+    *,
+    patient: Patient,
+    issued_by,
+    base_url: str | None = None,
+) -> tuple[PatientCard, str, str]:
+    """Create a new per-tap card for this patient. Other cards stay where they are."""
+    card, _token, _url = issue_card(
+        patient=patient,
+        issued_by=issued_by,
+        label="profile card",
+        base_url=base_url,
+    )
+    key = secrets.token_hex(16)
+    card.sdm_meta_key = key
+    card.sdm_file_key = key
+    card.sdm_read_counter = -1
+    card.save(update_fields=["sdm_meta_key", "sdm_file_key", "sdm_read_counter"])
+    sun_url = f"{frontend_base(base_url)}/card/s/{card.card_id}"
+    return card, sun_url, key
 
 
 def accept_sun_tap(card: PatientCard, picc_hex: str, cmac_hex: str) -> dict[str, Any]:

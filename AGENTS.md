@@ -16,6 +16,6 @@ Cursor rule: `.cursor/rules/meditap-agent.mdc` (always applied in this workspace
 
 Append a register entry (Type / Summary / What was done / Outcome), then update `REGISTER_CHECKPOINT.md`.
 
-**Next entry:** 169 (`MT-AG-165`).
+**Next entry:** 170 (`MT-AG-166`).
 
 Go back matrix: [docs/PORTAL_GO_BACK_MATRIX.md](docs/PORTAL_GO_BACK_MATRIX.md).
