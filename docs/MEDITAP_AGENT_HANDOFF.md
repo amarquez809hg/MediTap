@@ -35,9 +35,9 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 89+)
 
-- **Last entry:** 152 (`MT-AG-148`) — Epic My Health Summary TOC left menu
-- **Next entry:** 153 (`MT-AG-149`)
-- **Checkpoint date:** 2026-08-31
+- **Last entry:** 165 (`MT-AG-161`) — DESFire card profile URL
+- **Next entry:** 166 (`MT-AG-162`)
+- **Checkpoint date:** 2026-09-22
 - **Go back matrix:** `docs/PORTAL_GO_BACK_MATRIX.md` (all tabs tracked)
 - **Branch:** `feature/portal-split` (much of Set 6 still uncommitted — rely on register + working tree, not only `git log`)
 

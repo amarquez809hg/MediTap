@@ -19,6 +19,7 @@ import Tab9 from './pages/Tab9';
 import Tab10 from './pages/Tab10';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
+import CardProfilePage from './pages/CardProfilePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import OnboardingPage from './pages/OnboardingPage';
@@ -163,6 +164,9 @@ const AppRoutes: React.FC = () => {
             </Route>
             <Route exact path="/privacy">
               <PrivacyPage />
+            </Route>
+            <Route exact path="/card/:token">
+              <CardProfilePage />
             </Route>
             <Route exact path="/forgot-password">
               <ForgotPasswordPage />

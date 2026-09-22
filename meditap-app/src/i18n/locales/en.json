@@ -1107,6 +1107,20 @@
       "createHospitalError": "Could not create hospital."
     }
   },
+  "cardProfile": {
+    "title": "Medical card",
+    "subtitle": "Emergency details for this card. The full chart stays behind sign-in.",
+    "loading": "Opening card profile…",
+    "notActive": "This card link is not active.",
+    "loadError": "Could not open this card profile.",
+    "bloodType": "Blood type",
+    "dateOfBirth": "Date of birth",
+    "notRecorded": "Not recorded",
+    "allergies": "Allergies",
+    "noAllergies": "None recorded",
+    "emergencyContact": "Emergency contact",
+    "noEmergencyContact": "None recorded"
+  },
   "cookies": {
     "title": "Cookies on MediTap",
     "description": "We use essential cookies so you can sign in and use the site. With your permission we also use analytics cookies to understand how visitors use MediTap and improve the experience.",

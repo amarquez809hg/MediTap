@@ -1,0 +1,2 @@
+pyscard>=2.2
+pycryptodome>=3.20

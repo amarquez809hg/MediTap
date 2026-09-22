@@ -526,3 +526,33 @@ class PatientDocument(models.Model):
     def __str__(self):
         return f"{self.original_filename} ({self.status})"
 
+
+class PatientCard(models.Model):
+    """DESFire / NFC card that opens a limited public profile.
+
+    The plastic stores only an unguessable URL. This row stores the hash of
+    that secret, so a lost card can be revoked without rewriting the chart.
+    """
+
+    card_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="cards")
+    card_uid = models.CharField(max_length=32, blank=True, default="", db_index=True)
+    token_hash = models.CharField(max_length=64, unique=True)
+    label = models.CharField(max_length=80, blank=True, default="")
+    revoked_at = models.DateTimeField(blank=True, null=True)
+    issued_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="issued_patient_cards",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        uid = self.card_uid or "unbound"
+        return f"{self.patient} card {uid}"
+

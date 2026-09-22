@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenVerifyView
-from medical import views as mviews
+from medical import card_views, views as mviews
 from django.http import JsonResponse
 from medapp import staff_elevation_views, epic_views, native_auth_views, public_views, user_preferences_views
 
@@ -109,4 +109,16 @@ urlpatterns = [
         epic_views.PrepareEpicAuthorizeView.as_view(),
         name="patient_epic_prepare_authorize",
     ),
+    path("api/patient-cards/", card_views.patient_cards, name="patient_cards"),
+    path(
+        "api/patient-cards/<uuid:card_id>/bind-uid/",
+        card_views.bind_patient_card_uid,
+        name="patient_card_bind_uid",
+    ),
+    path(
+        "api/patient-cards/<uuid:card_id>/revoke/",
+        card_views.revoke_patient_card,
+        name="patient_card_revoke",
+    ),
+    path("api/card-profile/<str:token>/", card_views.card_profile, name="card_profile"),
 ]

@@ -66,6 +66,7 @@ Admin shell UI: sidebar layout in `AdminPortalLayout` + `adminDashboard.css` (da
 | `/tab9` | Register | n/a |
 | `/tab10` | Support | n/a |
 | `/terms`, `/privacy` | Legal | n/a |
+| `/card/:token` | NFC card profile (public, no portal chrome) | n/a |
 | `/forgot-password`, `/reset-password` | Auth recovery | n/a |
 | `/onboarding` | Onboarding | n/a |
 | `/epic-callback` | OAuth return | n/a (redirects to panel) |

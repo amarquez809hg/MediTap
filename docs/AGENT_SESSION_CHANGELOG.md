@@ -1111,9 +1111,32 @@
 
 ---
 
-**Next register entry:** **165** / **`MT-AG-161`**
+### Entry 165 — `MT-AG-161`
 
-*Last updated: entry 164 (Epic multi-hit batches for all sidebar sections).*
+**Type:** Feature
+
+**Key:** `MT-AG-161`
+
+**Summary:** Give each patient a revocable card URL, show a limited public profile when it is opened, and write that URL onto a DESFire card with the ACR1311.
+
+**What was done:**
+
+- Added `PatientCard` (token hash, UID, revoke) plus issue, bind-UID, revoke, and public `GET /api/card-profile/<token>/`.
+- The public payload is name, date of birth, blood type, allergies, and emergency contact. Address and email stay off that response.
+- Added `/card/:token` and `python manage.py issue_patient_card`.
+- Added `tools/desfire/burn_profile_url.py`, which personalizes a blank DESFire EV3 (this card’s PICC master key is factory 2TDEA, not AES) as an NFC Forum Type 4 tag.
+- Proved a round trip on the attached ACR1311: UID `04860CFA0B2190` now reads back `http://127.0.0.1:8100/card/setup-test`. That setup URL is replaced by the next burn.
+
+**Outcome:** A tap can open a live MediTap profile without storing the chart on the plastic. The full chart stays behind sign-in. Re-burning with a real issued URL, phone taps on a LAN or public host, and a view PIN are still open.
+
+**Primary paths:** `backend/medical/card_profile.py`, `backend/medical/card_views.py`, `meditap-app/src/pages/CardProfilePage.tsx`, `tools/desfire/burn_profile_url.py`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **166** / **`MT-AG-162`**
+
+*Last updated: entry 165 (DESFire card profile URL).*
 
 ---
 
