@@ -777,6 +777,7 @@ def main(argv: list[str]) -> int:
         default="",
         help="Current NDEF application key, if it is no longer 16 zero bytes.",
     )
+    parser.add_argument("--read", action="store_true", help="Read UID, applications, and any NDEF URL.")
     parser.add_argument("--auth-test", action="store_true", help="Check the factory AES key. Does not write.")
     parser.add_argument("--reset", action="store_true", help="Delete the NDEF application before writing.")
     parser.add_argument("--self-test", action="store_true", help="Check crypto and NDEF encoding. No reader.")
