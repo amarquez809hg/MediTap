@@ -35,8 +35,8 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 89+)
 
-- **Last entry:** 165 (`MT-AG-161`) — DESFire card profile URL
-- **Next entry:** 166 (`MT-AG-162`)
+- **Last entry:** 168 (`MT-AG-164`) — staff card assignment and full tap chart
+- **Next entry:** 169 (`MT-AG-165`)
 - **Checkpoint date:** 2026-09-22
 - **Go back matrix:** `docs/PORTAL_GO_BACK_MATRIX.md` (all tabs tracked)
 - **Branch:** `feature/portal-split` (much of Set 6 still uncommitted — rely on register + working tree, not only `git log`)

@@ -4,25 +4,30 @@
 The card is formatted as an NFC Forum Type 4 tag. A phone that taps it opens
 the URL. Medical details stay on the MediTap server.
 
-Factory PICC master key and the new application's master key are AES-128
-zeros, which is the DESFire EV2/EV3 default. This script refuses to change
-those keys.
+`--url` writes one fixed link. `--sun` turns on Secure Dynamic Messaging so
+each tap produces a new `picc_data` and `cmac`. That mode replaces the
+application key, which starts as AES-128 zeros.
 
 Examples (from the MediTap repo, with the acr1311 virtualenv active):
 
   python tools/desfire/burn_profile_url.py --self-test
   python tools/desfire/burn_profile_url.py --read
   python tools/desfire/burn_profile_url.py --auth-test
-  python tools/desfire/burn_profile_url.py --url http://localhost:8100/card/TOKEN
+  python tools/desfire/burn_profile_url.py --url https://meditap.ai/card/TOKEN
+  python tools/desfire/burn_profile_url.py --sun https://meditap.ai/card/s/CARD-UUID --sun-key HEX
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import secrets
 import sys
 import time
+import webbrowser
 from dataclasses import dataclass
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 try:
     from Crypto.Cipher import AES, DES
@@ -247,7 +252,17 @@ def _self_test() -> None:
     cc = capability_container(255)
     if cc.hex() != "000f20003b00340406e10400ff00ff":
         raise SystemExit(f"CC self-test failed: {cc.hex()}")
-    print("Self-test passed (AES-CMAC, NDEF URI, capability container).")
+    blob, picc_at, mac_at = sun_ndef("https://meditap.ai/card/s/b58d5b63-4d42-4273-96c4-49ecfbe3d315")[:3]
+    if picc_at <= 0 or mac_at <= picc_at or len(blob) > 255:
+        raise SystemExit("SUN NDEF self-test failed.")
+    backend = Path(__file__).resolve().parents[2] / "backend"
+    sys.path.insert(0, str(backend))
+    from ev2_session import self_check as ev2_self_check
+    from medical.sun_crypto import self_check as sun_self_check
+
+    sun_self_check()
+    ev2_self_check()
+    print("Self-test passed (AES-CMAC, NDEF URI, SUN vector, EV2 secure messaging).")
 
 
 def _hex(blob: bytes) -> str:
@@ -379,6 +394,33 @@ class Desfire:
         self.session = Session.from_key(session_key)
         self._log("  authenticated with AES")
 
+    def authenticate_ev2(self, key_no: int, key: bytes):
+        """Start an EV2 session. Returns an Ev2Session; plain commands are not used after this."""
+        from ev2_session import Ev2Session, decrypt_auth_response, derive_session_keys
+
+        enc_b, status = self.raw_command(0x71, bytes([key_no, 0x00]))
+        if status != 0xAF or len(enc_b) != 16:
+            raise CardError("AuthenticateEV2First was rejected", status)
+        rnd_b = _cbc(key, bytes(16), enc_b, decrypt=True)
+        rnd_a = os.urandom(16)
+        token = _cbc(key, bytes(16), rnd_a + rnd_b[1:] + rnd_b[:1], decrypt=False)
+        enc_a, status = self.raw_command(0xAF, token)
+        if status != 0x00 or len(enc_a) < 20:
+            raise CardError("AuthenticateEV2First second step failed", status)
+        try:
+            ti = decrypt_auth_response(key, rnd_a, enc_a)
+        except Exception as exc:
+            raise CardError(f"EV2 authentication response could not be checked: {exc}") from exc
+        enc_key, mac_key = derive_session_keys(key, rnd_a, rnd_b)
+        self.session = None
+        self._log("  authenticated with EV2")
+        return Ev2Session(enc_key=enc_key, mac_key=mac_key, ti=ti, counter=0)
+
+    def ev2_command(self, session, code: int, payload: bytes) -> None:
+        _raw, status = self.raw_command(code, payload)
+        if status != 0x00:
+            raise CardError(f"EV2 command {code:02X} failed", status)
+
     def create_ndef_application(self) -> None:
         payload = bytearray(NDEF_AID)
         payload.append(0x0B)  # key settings 1
@@ -388,14 +430,15 @@ class Desfire:
         payload.extend(NDEF_DF)
         self.command(0xCA, bytes(payload))
 
-    def create_std_file(self, file_no: int, iso_fid: int, size: int) -> None:
+    def create_std_file(self, file_no: int, iso_fid: int, size: int, file_option: int = 0x00) -> None:
         # Access rights 0xE000 little-endian: read free, other rights = key 0.
+        # file_option 0x40 enables Secure Dynamic Messaging on EV2/EV3.
         payload = bytes(
             [
                 file_no,
                 iso_fid & 0xFF,
                 (iso_fid >> 8) & 0xFF,
-                0x00,
+                file_option,
                 0x00,
                 0xE0,
                 size & 0xFF,
@@ -404,6 +447,9 @@ class Desfire:
             ]
         )
         self.command(0xCD, payload)
+
+    def delete_file(self, file_no: int) -> None:
+        self.command(0xDF, bytes([file_no]))
 
     def write_data(self, file_no: int, blob: bytes) -> None:
         offset = 0
@@ -539,21 +585,21 @@ def ensure_ndef_app(card: Desfire, reset: bool) -> None:
             card.create_ndef_application()
 
 
-def burn(card: Desfire, url: str, reset: bool) -> str:
+def burn(card: Desfire, url: str, reset: bool, app_key: bytes = ZERO_AES) -> str:
     ndef = build_ndef_file(url)
     size = max(255, len(ndef))
     cc = capability_container(size)
     ensure_ndef_app(card, reset)
     print("Selecting the NDEF application and writing the URL.")
     card.select_application(NDEF_AID)
-    card.authenticate_aes(0x00, ZERO_AES)
+    card.authenticate_aes(0x00, app_key)
     # Duplicate (DE) means a previous burn already created the file.
     try:
         card.create_std_file(CC_FILE, CC_ISO, len(cc))
     except CardError as exc:
         if exc.status != 0xDE:
             raise
-        card.authenticate_aes(0x00, ZERO_AES)
+        card.authenticate_aes(0x00, app_key)
     else:
         card.write_data(CC_FILE, cc)
     try:
@@ -561,7 +607,7 @@ def burn(card: Desfire, url: str, reset: bool) -> str:
     except CardError as exc:
         if exc.status != 0xDE:
             raise
-        card.authenticate_aes(0x00, ZERO_AES)
+        card.authenticate_aes(0x00, app_key)
     card.write_data(NDEF_FILE, ndef)
     if card.session is not None:
         card.select_application(NDEF_AID)
@@ -569,22 +615,143 @@ def burn(card: Desfire, url: str, reset: bool) -> str:
     return opened
 
 
+def sun_ndef(base: str) -> tuple[bytes, int, int, str]:
+    root = base.strip().rstrip("/")
+    if not root or "?" in root or not root.startswith("https://"):
+        raise ValueError("SUN base URL must be an https link with no query string.")
+    placeholder_picc = "0" * 32
+    placeholder_cmac = "0" * 16
+    url = f"{root}?picc_data={placeholder_picc}&cmac={placeholder_cmac}"
+    blob = build_ndef_file(url)
+    picc_at = blob.find(placeholder_picc.encode("ascii"))
+    marker = b"&cmac="
+    mac_at = blob.find(marker)
+    if picc_at < 0 or mac_at < 0:
+        raise ValueError("Could not place the SUN fields in the NDEF file.")
+    return blob, picc_at, mac_at + len(marker), url
+
+
+def _sdm_settings(picc_at: int, mac_at: int) -> bytes:
+    from ev2_session import pad_80
+
+    # File option 0x40 = SDM on, plain communication.
+    # Access 00 E0 = read free. SDM access F000 = encrypt and MAC with key 0.
+    # MAC input offset equals the MAC offset, so the CMAC covers an empty message.
+    body = bytes([0x40, 0x00, 0xE0, 0xC1, 0xF0, 0x00])
+    body += picc_at.to_bytes(3, "little") + mac_at.to_bytes(3, "little") + mac_at.to_bytes(3, "little")
+    return pad_80(body)
+
+
+def _parse_sun_key(raw: str) -> bytes:
+    compact = "".join(ch for ch in raw.strip() if ch in "0123456789abcdefABCDEF")
+    if len(compact) != 32:
+        raise SystemExit("--sun-key must be 32 hex characters (16 bytes).")
+    return bytes.fromhex(compact)
+
+
+def _enable_sdm(card: Desfire, app_key: bytes, picc_at: int, mac_at: int) -> None:
+    card.select_application(NDEF_AID)
+    session = card.authenticate_ev2(0x00, app_key)
+    card.ev2_command(session, 0x5F, session.wrap(0x5F, bytes([NDEF_FILE]), _sdm_settings(picc_at, mac_at)))
+
+
+def _change_app_key(card: Desfire, old_key: bytes, new_key: bytes) -> None:
+    from ev2_session import pad_80
+
+    card.select_application(NDEF_AID)
+    session = card.authenticate_ev2(0x00, old_key)
+    plain = pad_80(new_key + bytes([0x01]))
+    card.ev2_command(session, 0xC4, session.wrap(0xC4, bytes([0x00]), plain))
+
+
+def _verified_sun_read(card: Desfire, key: bytes, expected_uid: str) -> tuple[str, int]:
+    backend = Path(__file__).resolve().parents[2] / "backend"
+    sys.path.insert(0, str(backend))
+    from medical.sun_crypto import open_sun
+
+    opened = card.read_ndef_url()
+    query = parse_qs(urlparse(opened).query)
+    picc = (query.get("picc_data") or [""])[0]
+    cmac = (query.get("cmac") or [""])[0]
+    if set(picc) == {"0"} or set(cmac) == {"0"}:
+        raise CardError("The card returned the placeholder URL. SDM mirroring did not run.")
+    tap = open_sun(key, key, picc, cmac)
+    if tap.uid.hex().upper() != expected_uid.upper():
+        raise CardError(
+            f"SUN UID {tap.uid.hex().upper()} does not match the card UID {expected_uid.upper()}."
+        )
+    return opened, tap.read_ctr
+
+
+def burn_sun(card: Desfire, base: str, old_key: bytes, new_key: bytes, expected_uid: str) -> tuple[str, int]:
+    """Turn on per-tap links. On failure, put the previous fixed URL back."""
+    try:
+        original = card.read_ndef_url()
+    except CardError as exc:
+        raise CardError(f"Read the current URL before enabling SUN. {exc}") from exc
+    blob, picc_at, mac_at, template = sun_ndef(base)
+    print(f"SUN template: {template}")
+    print(f"PICC offset {picc_at}, MAC offset {mac_at}.")
+    try:
+        print("Replacing the application key.")
+        _change_app_key(card, old_key, new_key)
+        print("Recreating the NDEF file with per-tap mirroring.")
+        card.select_application(NDEF_AID)
+        card.authenticate_aes(0x00, new_key)
+        card.delete_file(NDEF_FILE)
+        try:
+            card.create_std_file(NDEF_FILE, NDEF_ISO, max(255, len(blob)), file_option=0x40)
+        except CardError:
+            card.authenticate_aes(0x00, new_key)
+            card.create_std_file(NDEF_FILE, NDEF_ISO, max(255, len(blob)))
+        card.write_data(NDEF_FILE, blob)
+        _enable_sdm(card, new_key, picc_at, mac_at)
+        opened, counter = _verified_sun_read(card, new_key, expected_uid)
+        return opened, counter
+    except Exception:
+        print("SUN setup did not verify. Restoring the previous URL.")
+        try:
+            # A reset recreates the NDEF application with the factory zero key.
+            burn(card, original, reset=True, app_key=ZERO_AES)
+            print(f"Restored: {original}")
+        except Exception as restore_error:
+            print(f"Restore failed: {restore_error}")
+        raise
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Burn a MediTap profile URL onto a DESFire card.")
-    parser.add_argument("--url", default="", help="Profile URL to store, from issue_patient_card.")
-    parser.add_argument("--read", action="store_true", help="Read UID, applications, and any NDEF URL.")
+    parser.add_argument("--url", default="", help="Fixed profile URL to store, from issue_patient_card.")
+    parser.add_argument(
+        "--sun",
+        default="",
+        help="Base https URL for per-tap links, with no query. Example: https://meditap.ai/card/s/CARD-UUID",
+    )
+    parser.add_argument(
+        "--sun-key",
+        default="",
+        help="32 hex chars used as the application key and both SDM keys. Generated when omitted.",
+    )
+    parser.add_argument(
+        "--app-key",
+        default="",
+        help="Current NDEF application key, if it is no longer 16 zero bytes.",
+    )
     parser.add_argument("--auth-test", action="store_true", help="Check the factory AES key. Does not write.")
     parser.add_argument("--reset", action="store_true", help="Delete the NDEF application before writing.")
     parser.add_argument("--self-test", action="store_true", help="Check crypto and NDEF encoding. No reader.")
     parser.add_argument("--wait", type=float, default=8, help="Seconds to wait for a card.")
     parser.add_argument("--quiet", action="store_true", help="Hide APDU traces.")
+    parser.add_argument("--open", action="store_true", help="Open the profile URL in the browser.")
     args = parser.parse_args(argv)
 
     if args.self_test:
         _self_test()
         return 0
-    if not args.read and not args.auth_test and not args.url:
-        parser.error("Pass --read, --auth-test, --self-test, or --url.")
+    if args.url and args.sun:
+        parser.error("Pass either --url or --sun, not both.")
+    if not args.read and not args.auth_test and not args.url and not args.sun:
+        parser.error("Pass --read, --auth-test, --self-test, --url, or --sun.")
 
     connection = connect(args.wait)
     card = Desfire(connection, verbose=not args.quiet)
@@ -594,20 +761,43 @@ def main(argv: list[str]) -> int:
             auth_picc(card)
             print("Factory AES master key accepted. The card can be personalized.")
             return 0
-        if args.read and not args.url:
+        if args.read and not args.url and not args.sun:
             try:
-                print(f"NDEF URL: {card.read_ndef_url()}")
+                opened = card.read_ndef_url()
             except CardError as exc:
                 print(f"NDEF URL: not readable yet ({exc})")
+                print(f"UID for MediTap bind: {uid}")
+                return 1
+            print(f"NDEF URL: {opened}")
             print(f"UID for MediTap bind: {uid}")
+            if args.open:
+                webbrowser.open(opened)
+            return 0
+        if args.sun:
+            current_key = _parse_sun_key(args.app_key) if args.app_key else ZERO_AES
+            new_key = _parse_sun_key(args.sun_key) if args.sun_key else secrets.token_bytes(16)
+            opened, counter = burn_sun(card, args.sun, current_key, new_key, uid)
+            card_id = urlparse(args.sun).path.rstrip("/").split("/")[-1]
+            print(f"Card now opens a new link on every tap. This read used counter {counter}.")
+            print(f"Sample URL: {opened}")
+            print(f"UID for MediTap bind: {uid}")
+            print(f"sun_key: {new_key.hex()}")
+            print("On the VM, after this code is pulled and migrated:")
+            print(
+                "  python manage.py enable_card_sun "
+                f"--card-id {card_id} --meta-key {new_key.hex()} --file-key {new_key.hex()} --counter {counter}"
+            )
             return 0
         print(f"Writing {args.url}")
-        opened = burn(card, args.url, args.reset)
+        current_key = _parse_sun_key(args.app_key) if args.app_key else ZERO_AES
+        opened = burn(card, args.url, args.reset, app_key=current_key)
         print(f"Card now opens: {opened}")
         print(f"UID for MediTap bind: {uid}")
         if opened.rstrip("/") != args.url.strip().rstrip("/"):
             print("Warning: the URL read back does not match the URL written.")
             return 1
+        if args.open:
+            webbrowser.open(opened)
         return 0
     finally:
         try:

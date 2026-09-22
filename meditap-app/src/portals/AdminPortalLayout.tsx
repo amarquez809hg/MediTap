@@ -30,6 +30,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Patient care',
     items: [
       { to: '/admin-portal/patients', label: 'Patients', icon: 'fa-users' },
+      { to: '/admin-portal/cards', label: 'Profile cards', icon: 'fa-id-card' },
       { to: '/admin-portal/documents', label: 'Document review', icon: 'fa-folder-open' },
       { to: '/admin-portal/hospitals', label: 'Hospitals', icon: 'fa-hospital' },
       { to: '/admin-portal/charts', label: 'Clinical charts', icon: 'fa-notes-medical' },

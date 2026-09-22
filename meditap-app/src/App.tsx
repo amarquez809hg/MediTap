@@ -42,6 +42,7 @@ import AdminPortalLayout from './portals/AdminPortalLayout';
 import AdminPortalHome from './portals/AdminPortalHome';
 import AdminLoginPage from './portals/AdminLoginPage';
 import AdminPatientsPage from './portals/AdminPatientsPage';
+import StaffCardAssignPage from './portals/StaffCardAssignPage';
 import AdminPatientHubPage from './portals/AdminPatientHubPage';
 import AdminDocumentReviewQueuePage from './portals/AdminDocumentReviewQueuePage';
 import AdminHospitalsPage from './portals/AdminHospitalsPage';
@@ -165,6 +166,9 @@ const AppRoutes: React.FC = () => {
             <Route exact path="/privacy">
               <PrivacyPage />
             </Route>
+            <Route exact path="/card/s/:cardId">
+              <CardProfilePage sun />
+            </Route>
             <Route exact path="/card/:token">
               <CardProfilePage />
             </Route>
@@ -260,6 +264,13 @@ const AppRoutes: React.FC = () => {
               <AdminPortalRoute>
                 <AdminPortalLayout>
                   <AdminPatientsPage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/cards">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <StaffCardAssignPage />
                 </AdminPortalLayout>
               </AdminPortalRoute>
             </Route>

@@ -111,6 +111,16 @@ urlpatterns = [
     ),
     path("api/patient-cards/", card_views.patient_cards, name="patient_cards"),
     path(
+        "api/patient-cards/directory/",
+        card_views.patient_card_directory,
+        name="patient_card_directory",
+    ),
+    path(
+        "api/patient-cards/assign/",
+        card_views.assign_patient_card,
+        name="patient_card_assign",
+    ),
+    path(
         "api/patient-cards/<uuid:card_id>/bind-uid/",
         card_views.bind_patient_card_uid,
         name="patient_card_bind_uid",
@@ -119,6 +129,11 @@ urlpatterns = [
         "api/patient-cards/<uuid:card_id>/revoke/",
         card_views.revoke_patient_card,
         name="patient_card_revoke",
+    ),
+    path(
+        "api/card-profile/s/<uuid:card_id>/",
+        card_views.card_sun_profile,
+        name="card_sun_profile",
     ),
     path("api/card-profile/<str:token>/", card_views.card_profile, name="card_profile"),
 ]

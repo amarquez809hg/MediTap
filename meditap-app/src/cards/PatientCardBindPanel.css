@@ -1,0 +1,97 @@
+.card-bind {
+  margin: 1.25rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: var(--meditap-surface, rgba(21, 27, 34, 0.72));
+}
+
+.card-bind__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.card-bind h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.card-bind__hint,
+.card-bind__error {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.card-bind__error {
+  color: #ffb4b4;
+}
+
+.card-bind__url {
+  margin-top: 0.8rem;
+}
+
+.card-bind__url label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.card-bind__url-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.card-bind input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.16));
+  background: transparent;
+  color: inherit;
+}
+
+.card-bind button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  background: #17a2b8;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card-bind button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.card-bind__list {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+}
+
+.card-bind__list li {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.08));
+}
+
+.card-bind__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.card-bind__revoke {
+  margin-top: 0.45rem;
+  background: transparent !important;
+  color: #ffb4b4 !important;
+  padding-left: 0;
+}

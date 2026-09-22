@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getApiBase } from '../config/api';
 import PublicPageLayout from '../components/PublicPageLayout';
@@ -11,13 +11,37 @@ type EmergencyContact = {
   relationship: string | null;
   phone: string | null;
 };
+type NamedRow = { name: string; severity?: string | null; notes?: string | null };
 type CardProfile = {
   given_name: string;
   family_name: string;
   date_of_birth: string;
   blood_type: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  sex_at_birth?: string | null;
+  legal_sex?: string | null;
+  gender_identity?: string | null;
+  preferred_language?: string | null;
+  other_notes?: string | null;
   allergies: AllergyRow[];
-  emergency_contact: EmergencyContact | null;
+  emergency_contact: (EmergencyContact & { email?: string | null }) | null;
+  medications?: Array<{ name: string; dosage?: string | null; frequency?: string | null; notes?: string | null }>;
+  conditions?: NamedRow[];
+  insurance?: Array<{ provider: string; plan?: string | null; member_id?: string | null; policy_number?: string | null }>;
+  appointments?: Array<{ when: string; specialist: string; status?: string | null; reason?: string | null }>;
+  labs?: Array<{ name: string; collected_on?: string | null; status?: string | null; impression?: string | null }>;
+  visits?: Array<{ occurred_at?: string | null; type: string; summary: string; home_instructions?: string | null }>;
+  vitals?: {
+    systolic_bp?: number | null;
+    diastolic_bp?: number | null;
+    heart_rate_bpm?: number | null;
+    temperature_f?: string | null;
+    oxygen_saturation_pct?: number | null;
+    weight_kg?: string | null;
+    height_cm?: string | null;
+  };
 };
 
 function cardApiBase(): string {
@@ -43,8 +67,13 @@ function formatDob(iso: string): string {
   });
 }
 
-const CardProfilePage: React.FC = () => {
-  const { token } = useParams<{ token: string }>();
+type CardProfilePageProps = {
+  sun?: boolean;
+};
+
+const CardProfilePage: React.FC<CardProfilePageProps> = ({ sun = false }) => {
+  const { token, cardId } = useParams<{ token?: string; cardId?: string }>();
+  const { search } = useLocation();
   const { t } = useTranslation();
   const [profile, setProfile] = useState<CardProfile | null>(null);
   const [error, setError] = useState('');
@@ -53,17 +82,19 @@ const CardProfilePage: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!token) {
+      const pathId = sun ? cardId : token;
+      if (!pathId) {
         setError(t('cardProfile.notActive'));
         setLoading(false);
         return;
       }
       setLoading(true);
       setError('');
+      const endpoint = sun
+        ? `${cardApiBase()}/api/card-profile/s/${encodeURIComponent(pathId)}/${search}`
+        : `${cardApiBase()}/api/card-profile/${encodeURIComponent(pathId)}/`;
       try {
-        const response = await fetch(
-          `${cardApiBase()}/api/card-profile/${encodeURIComponent(token)}/`,
-        );
+        const response = await fetch(endpoint);
         if (response.status === 404) {
           if (!cancelled) setError(t('cardProfile.notActive'));
           return;
@@ -84,7 +115,7 @@ const CardProfilePage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, t]);
+  }, [token, cardId, search, sun, t]);
 
   const name = profile ? `${profile.given_name} ${profile.family_name}`.trim() : '';
 
@@ -111,6 +142,11 @@ const CardProfilePage: React.FC = () => {
             <p className="card-profile__dob">
               {t('cardProfile.dateOfBirth')}: {formatDob(profile.date_of_birth)}
             </p>
+            {profile.phone || profile.email || profile.address ? (
+              <p className="card-profile__dob">
+                {[profile.phone, profile.email, profile.address].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
           </section>
 
           <section className="public-page__card">
@@ -149,10 +185,113 @@ const CardProfilePage: React.FC = () => {
               <p>{t('cardProfile.noEmergencyContact')}</p>
             )}
           </section>
+
+          {profile.medications ? (
+            <ChartList
+              title={t('cardProfile.medications')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.medications.map((row) =>
+                [row.name, row.dosage, row.frequency].filter(Boolean).join(' · '),
+              )}
+            />
+          ) : null}
+          {profile.conditions ? (
+            <ChartList
+              title={t('cardProfile.conditions')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.conditions.map((row) =>
+                [row.name, row.severity].filter(Boolean).join(' · '),
+              )}
+            />
+          ) : null}
+          {profile.insurance ? (
+            <ChartList
+              title={t('cardProfile.insurance')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.insurance.map((row) =>
+                [row.provider, row.plan, row.member_id].filter(Boolean).join(' · '),
+              )}
+            />
+          ) : null}
+          {profile.appointments ? (
+            <ChartList
+              title={t('cardProfile.appointments')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.appointments.map((row) =>
+                [row.when, row.specialist, row.status].filter(Boolean).join(' · '),
+              )}
+            />
+          ) : null}
+          {profile.labs ? (
+            <ChartList
+              title={t('cardProfile.labs')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.labs.map((row) =>
+                [row.name, row.collected_on, row.status].filter(Boolean).join(' · '),
+              )}
+            />
+          ) : null}
+          {profile.visits ? (
+            <ChartList
+              title={t('cardProfile.visits')}
+              empty={t('cardProfile.noneRecorded')}
+              rows={profile.visits.map((row) =>
+                [row.type, row.summary].filter(Boolean).join(' — '),
+              )}
+            />
+          ) : null}
+          {profile.vitals ? <VitalsBlock vitals={profile.vitals} label={t('cardProfile.vitals')} /> : null}
+          {profile.other_notes ? (
+            <section className="public-page__card">
+              <h2>{t('cardProfile.notes')}</h2>
+              <p>{profile.other_notes}</p>
+            </section>
+          ) : null}
         </>
       )}
     </PublicPageLayout>
   );
 };
+
+function ChartList({ title, empty, rows }: { title: string; empty: string; rows: string[] }) {
+  return (
+    <section className="public-page__card">
+      <h2>{title}</h2>
+      {rows.length === 0 ? (
+        <p>{empty}</p>
+      ) : (
+        <ul className="card-profile__list">
+          {rows.map((row, index) => (
+            <li key={`${index}-${row}`}>{row}</li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function VitalsBlock({
+  vitals,
+  label,
+}: {
+  vitals: NonNullable<CardProfile['vitals']>;
+  label: string;
+}) {
+  const parts = [
+    vitals.systolic_bp && vitals.diastolic_bp ? `BP ${vitals.systolic_bp}/${vitals.diastolic_bp}` : '',
+    vitals.heart_rate_bpm ? `HR ${vitals.heart_rate_bpm}` : '',
+    vitals.temperature_f ? `${vitals.temperature_f}°F` : '',
+    vitals.oxygen_saturation_pct ? `SpO2 ${vitals.oxygen_saturation_pct}%` : '',
+    vitals.weight_kg ? `${vitals.weight_kg} kg` : '',
+    vitals.height_cm ? `${vitals.height_cm} cm` : '',
+  ].filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <section className="public-page__card">
+      <h2>{label}</h2>
+      <p>{parts.join(' · ')}</p>
+    </section>
+  );
+}
 
 export default CardProfilePage;

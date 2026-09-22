@@ -47,6 +47,7 @@ Shell chrome (`UserPortalLayout`): always shows Go back with fallback `/app/dash
 |-------|------|-----------------|----------|--------|
 | `/admin-portal/home` | Admin home | Shell chrome (sidebar + top bar) | `/admin-portal/home` | shell-only |
 | `/admin-portal/patients` | Patients list | Page + top-bar Go back | Admin home | ok |
+| `/admin-portal/cards` | Assign a profile card | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/patients/:id` | Patient hub | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/charts` | Clinical charts | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/patient-view` (+ sections) | Embedded patient UI | Banner + subnav; page Go back | Charts / hub / home | ok |
@@ -67,6 +68,7 @@ Admin shell UI: sidebar layout in `AdminPortalLayout` + `adminDashboard.css` (da
 | `/tab10` | Support | n/a |
 | `/terms`, `/privacy` | Legal | n/a |
 | `/card/:token` | NFC card profile (public, no portal chrome) | n/a |
+| `/card/s/:cardId` | NFC per-tap profile (public, no portal chrome) | n/a |
 | `/forgot-password`, `/reset-password` | Auth recovery | n/a |
 | `/onboarding` | Onboarding | n/a |
 | `/epic-callback` | OAuth return | n/a (redirects to panel) |

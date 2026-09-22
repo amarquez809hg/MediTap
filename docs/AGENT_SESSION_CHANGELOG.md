@@ -1134,9 +1134,72 @@
 
 ---
 
-**Next register entry:** **166** / **`MT-AG-162`**
+### Entry 166 — `MT-AG-162`
 
-*Last updated: entry 165 (DESFire card profile URL).*
+**Type:** Feature
+
+**Key:** `MT-AG-162`
+
+**Summary:** Let staff and the signed-in patient issue a card link and bind its UID from the site, and let the desktop reader open that URL.
+
+**What was done:**
+
+- Added a profile-card panel on the admin patient hub and on Settings. It creates the public link, copies it, binds a pasted UID, and revokes the link.
+- Added `--open` to `tools/desfire/burn_profile_url.py` so `--read --open` launches the profile in the Mac browser.
+
+**Outcome:** Binding no longer needs the Django shell. The panel is in the repo and still needs a push, VM pull, and frontend rebuild before it appears on meditap.ai. Android tap behavior is unchanged.
+
+**Primary paths:** `meditap-app/src/cards/PatientCardBindPanel.tsx`, `meditap-app/src/pages/Tab11.tsx`, `meditap-app/src/portals/AdminPatientHubPage.tsx`, `tools/desfire/burn_profile_url.py`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 167 — `MT-AG-163`
+
+**Type:** Feature
+
+**Key:** `MT-AG-163`
+
+**Summary:** Make each DESFire tap open a new link, and reject a link that has already been used.
+
+**What was done:**
+
+- Added SUN verification for the encrypted PICC blob and CMAC on a patient card. The server keeps the last accepted read counter.
+- Once those keys are stored, the old fixed `/card/<token>` link returns not active.
+- Added public route `/card/s/:cardId` and `enable_card_sun`. The burn script can turn mirroring on and replace the application key.
+- Programmed the Riley Moore card on the ACR1311. Two reads produced different links and both checked out. The keys stay off the VM until `enable_card_sun` is run there.
+
+**Outcome:** A copied tap link cannot be reused after the server has seen that counter. The VM still needs this code, a migration, and the key command before a phone tap opens the profile. The fixed link keeps working until that command runs.
+
+**Primary paths:** `backend/medical/sun_crypto.py`, `backend/medical/card_views.py`, `meditap-app/src/pages/CardProfilePage.tsx`, `tools/desfire/burn_profile_url.py`
+**Branch:** `feature/portal-split`
+
+---
+
+### Entry 168 — `MT-AG-164`
+
+**Type:** Feature
+
+**Key:** `MT-AG-164`
+
+**Summary:** Keep card assignment on the staff sign-in, list every patient there, and open the chart from a one-time tap.
+
+**What was done:**
+
+- Removed the card panel from patient Settings and from the single-patient hub.
+- Added Profile cards in the staff portal. It lists every patient and assigns the physical card to the one staff picks.
+- A per-tap link now returns the chart (contact, vitals, medications, conditions, insurance, visits, labs, appointments). Passwords and card keys stay off that page. The fixed token link still hides the chart.
+
+**Outcome:** Staff assign a patient without pasting a UID. The next tap opens that chart once. This page is local until the VM is rebuilt.
+
+**Primary paths:** `meditap-app/src/portals/StaffCardAssignPage.tsx`, `backend/medical/card_views.py`, `backend/medical/card_profile.py`, `meditap-app/src/pages/CardProfilePage.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **169** / **`MT-AG-165`**
+
+*Last updated: entry 168 (staff card assignment and full tap chart).*
 
 ---
 

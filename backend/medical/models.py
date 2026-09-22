@@ -530,8 +530,9 @@ class PatientDocument(models.Model):
 class PatientCard(models.Model):
     """DESFire / NFC card that opens a limited public profile.
 
-    The plastic stores only an unguessable URL. This row stores the hash of
-    that secret, so a lost card can be revoked without rewriting the chart.
+    The plastic stores a link. A static token is hashed here so a lost card
+    can be revoked. When SDM keys are set, the card instead sends a new
+    encrypted tap on every read, and the static token stops working.
     """
 
     card_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -539,6 +540,9 @@ class PatientCard(models.Model):
     card_uid = models.CharField(max_length=32, blank=True, default="", db_index=True)
     token_hash = models.CharField(max_length=64, unique=True)
     label = models.CharField(max_length=80, blank=True, default="")
+    sdm_meta_key = models.CharField(max_length=32, blank=True, default="")
+    sdm_file_key = models.CharField(max_length=32, blank=True, default="")
+    sdm_read_counter = models.IntegerField(default=-1)
     revoked_at = models.DateTimeField(blank=True, null=True)
     issued_by = models.ForeignKey(
         User,

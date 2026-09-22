@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -9,18 +10,21 @@ from rest_framework.response import Response
 
 from medapp.admin_ops import user_is_admin_operator
 
-from .card_profile import bind_uid, card_for_token, issue_card, public_profile, revoke_card
+from .card_profile import (
+    accept_sun_tap,
+    assign_active_card,
+    bind_uid,
+    card_for_token,
+    issue_card,
+    public_profile,
+    revoke_card,
+)
 from .models import Patient, PatientCard
-from .patient_api_scoping import allowed_patient_ids
+from .sun_crypto import SunError
 
 
 def _can_manage(request, patient: Patient) -> bool:
-    if user_is_admin_operator(request):
-        return True
-    allowed = allowed_patient_ids(request)
-    if allowed is None:
-        return True
-    return str(patient.patient_id) in allowed
+    return user_is_admin_operator(request) and patient is not None
 
 
 def _card_summary(card: PatientCard) -> dict:
@@ -39,6 +43,54 @@ def _managed_card(request, card_id):
     if not _can_manage(request, card.patient):
         return None
     return card
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def patient_card_directory(request):
+    """Every chart, for staff who assign the physical card."""
+    if not user_is_admin_operator(request):
+        return Response({"detail": "Staff sign-in is required."}, status=403)
+    patients = Patient.objects.select_related("portal_user").prefetch_related("cards").order_by(
+        "family_name", "given_name"
+    )
+    rows = []
+    for patient in patients:
+        username = patient.portal_user.username if patient.portal_user_id else ""
+        rows.append(
+            {
+                "patient_id": str(patient.patient_id),
+                "given_name": patient.given_name,
+                "family_name": patient.family_name,
+                "date_of_birth": patient.date_of_birth.isoformat(),
+                "email": patient.email or "",
+                "username": username,
+                "cards": [
+                    _card_summary(card)
+                    for card in patient.cards.all()
+                    if card.revoked_at is None
+                ],
+            }
+        )
+    return Response(rows)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def assign_patient_card(request):
+    if not user_is_admin_operator(request):
+        return Response({"detail": "Staff sign-in is required."}, status=403)
+    patient_id = (request.data.get("patient") or request.data.get("patient_id") or "").strip()
+    if not patient_id:
+        return Response({"detail": "patient is required."}, status=400)
+    patient = get_object_or_404(Patient, patient_id=patient_id)
+    try:
+        card = assign_active_card(patient)
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=400)
+    body = _card_summary(card)
+    body["patient_name"] = f"{patient.given_name} {patient.family_name}".strip()
+    return Response(body)
 
 
 @api_view(["GET", "POST"])
@@ -106,3 +158,28 @@ def card_profile(request, token):
     if card is None:
         return Response({"detail": "This card link is not active."}, status=404)
     return Response(public_profile(card))
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def card_sun_profile(request, card_id):
+    """Open the limited profile for one DESFire SUN tap. A repeated URL is rejected."""
+    picc = str(request.query_params.get("picc_data") or "")
+    cmac = str(request.query_params.get("cmac") or "")
+    if not picc or not cmac:
+        return Response({"detail": "This card link is not active."}, status=404)
+    try:
+        with transaction.atomic():
+            card = (
+                PatientCard.objects.select_for_update()
+                .select_related("patient")
+                .filter(card_id=card_id)
+                .first()
+            )
+            if card is None:
+                return Response({"detail": "This card link is not active."}, status=404)
+            profile = accept_sun_tap(card, picc, cmac)
+    except SunError:
+        return Response({"detail": "This card link is not active."}, status=404)
+    return Response(profile)

@@ -20,4 +20,9 @@ admin.site.register(models.EpicPatientLink)
 admin.site.register(models.PatientAppointment)
 admin.site.register(models.AdminActivityEvent)
 admin.site.register(models.PatientDocument)
-admin.site.register(models.PatientCard)
+
+
+@admin.register(models.PatientCard)
+class PatientCardAdmin(admin.ModelAdmin):
+    exclude = ("sdm_meta_key", "sdm_file_key")
+    readonly_fields = ("sdm_read_counter",)
