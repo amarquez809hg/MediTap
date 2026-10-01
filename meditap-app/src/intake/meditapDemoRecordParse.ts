@@ -6,6 +6,7 @@
 import { tryParseDateToIso } from './intakeDateParse';
 import { detectNoKnownProblems } from './detectNoKnownProblems';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
+import { cleanConditionDisplayName } from './intakeNameCleanup';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -598,10 +599,13 @@ function parseCompactChronic(section: string): Tab14ChronicRow[] {
     /([A-Za-z][A-Za-z0-9\s/+-]{2,80}?)\s*\(([A-Z0-9.]+)\)\s*[-–—]\s*Diagnosed\s+(\d{1,2}\/\d{1,2}\/\d{4})/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(normalized)) !== null) {
-    const name = m[1].trim();
-    const icd = m[2].trim();
+    const cleaned = cleanConditionDisplayName(
+      `${m[1].trim()} (${m[2].trim()}) – Diagnosed ${m[3]}`
+    );
+    const name = cleaned.name || m[1].trim();
+    const icd = cleaned.icdCode || m[2].trim();
     if (!name || /^group\s*#/i.test(name)) continue;
-    const iso = tryParseDateToIso(m[3]);
+    const iso = cleaned.diagnosisDate || tryParseDateToIso(m[3]) || '';
     rows.push({
       conditionName: name,
       icdCode: icd,

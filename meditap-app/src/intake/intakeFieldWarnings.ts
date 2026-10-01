@@ -8,6 +8,7 @@ import {
   DEMOGRAPHIC_LABELS,
   type DemographicFieldKey,
 } from './intakeFieldLabels';
+import { cleanDemographicFieldValue } from './intakeNameCleanup';
 import {
   assessTerminologyHint,
   findSourcePageForValue,
@@ -265,11 +266,14 @@ export function assessDemographicRawValue(
   const collapsed = collapseWs(raw);
   if (!collapsed) return { value: '' };
 
-  const { value: stripped, stripped: hadBleed } = stripLeadingLabelBleed(collapsed);
+  const cleaned = cleanDemographicFieldValue(String(field), collapsed);
+  const { value: stripped, stripped: hadBleed } = stripLeadingLabelBleed(
+    cleaned.value || collapsed
+  );
   let value = stripped;
   let warning: Tab14FieldWarning | undefined;
 
-  if (hadBleed) {
+  if (hadBleed || cleaned.changed) {
     warning = { message: VERIFY_LABEL_BLEED, reason: 'label_bleed' };
   }
 

@@ -5,9 +5,23 @@ import {
   updateHospitalForAdmin,
   type HospitalApi,
 } from '../api';
+import { cleanFacilityDisplayName } from '../intake/intakeNameCleanup';
 import GoBackButton from '../components/GoBackButton';
 import { ADMIN_PORTAL_HOME } from './portalPaths';
 import './adminOps.css';
+
+function displayHospital(h: HospitalApi): {
+  name: string;
+  city: string;
+  region: string;
+} {
+  const cleaned = cleanFacilityDisplayName(h.name || '');
+  return {
+    name: cleaned.name || h.name,
+    city: (h.city || cleaned.city || '').trim(),
+    region: (h.region || cleaned.region || '').trim(),
+  };
+}
 
 const AdminHospitalsPage: React.FC = () => {
   const [rows, setRows] = useState<HospitalApi[]>([]);
@@ -56,11 +70,19 @@ const AdminHospitalsPage: React.FC = () => {
   };
 
   const rename = async (h: HospitalApi) => {
-    const next = window.prompt('Hospital name', h.name);
-    if (!next || !next.trim() || next.trim() === h.name) return;
+    const shown = displayHospital(h);
+    const next = window.prompt('Hospital name', shown.name);
+    if (!next || !next.trim() || next.trim() === shown.name) return;
     setBusy(true);
     try {
-      await updateHospitalForAdmin(h.hospital_id, { name: next.trim() });
+      const cleaned = cleanFacilityDisplayName(next);
+      await updateHospitalForAdmin(h.hospital_id, {
+        name: cleaned.name || next.trim(),
+        city: cleaned.city || h.city || undefined,
+        region: cleaned.region || h.region || undefined,
+        postal_code: cleaned.postalCode || h.postal_code || undefined,
+        address_line1: cleaned.addressLine1 || h.address_line1 || undefined,
+      });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed.');
@@ -111,18 +133,21 @@ const AdminHospitalsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map((h) => (
+            {rows.map((h) => {
+              const shown = displayHospital(h);
+              return (
               <tr key={h.hospital_id}>
-                <td>{h.name}</td>
-                <td>{h.city || '—'}</td>
-                <td>{h.region || '—'}</td>
+                <td>{shown.name}</td>
+                <td>{shown.city || '—'}</td>
+                <td>{shown.region || '—'}</td>
                 <td>
                   <button type="button" onClick={() => void rename(h)} disabled={busy}>
                     Rename
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {!busy && rows.length === 0 ? (
               <tr>
                 <td colSpan={4}>No hospitals yet.</td>

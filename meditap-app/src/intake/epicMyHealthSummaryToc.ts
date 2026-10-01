@@ -84,12 +84,8 @@ export const EPIC_MY_HEALTH_SUMMARY_TOC: EpicTocEntry[] = [
     title: 'Encounter Details',
     color: 'gray',
     key: 'pastEncounters',
-    aliases: [
-      'Encounter Details',
-      'Encounters',
-      'Encounters - as of',
-      'Hospital Encounter',
-    ],
+    notes:
+      'Often image-only yellow titles — PDF Find shows many hits while text layer has 1–2. Multi-hit UI uses Encounter Details sessions + Encounters — as of visit inventory (same sparse strategy as Demographics).',
   },
   {
     title: 'Allergies',
@@ -135,6 +131,8 @@ export const EPIC_MY_HEALTH_SUMMARY_TOC: EpicTocEntry[] = [
     color: 'darkBlue',
     key: 'immunizations',
     aliases: ['Immunizations', 'Immunizations - as of'],
+    notes:
+      'Yellow titles often image-only (PDF Find ~30). Multi-hit pads from Encounters — as of. Each intake shows structured Immunization Name + Given Date rows (not raw section dump).',
   },
   {
     title: 'Social History',

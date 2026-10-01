@@ -389,7 +389,11 @@ export default function Tab14ExtendedSectionPanel({
                         ) : (
                           <>
                             <div className="form-field">
-                              <label>Title / name</label>
+                              <label>
+                                {sectionKey === 'immunizations'
+                                  ? 'Immunization Name'
+                                  : 'Title / name'}
+                              </label>
                               <input
                                 value={row.title}
                                 onChange={(e) => update(index, { title: e.target.value })}
@@ -423,7 +427,9 @@ export default function Tab14ExtendedSectionPanel({
                               />
                             </div>
                             <div className="form-field">
-                              <label>Date</label>
+                              <label>
+                                {sectionKey === 'immunizations' ? 'Given Date' : 'Date'}
+                              </label>
                               <input
                                 value={row.date}
                                 onChange={(e) => update(index, { date: e.target.value })}

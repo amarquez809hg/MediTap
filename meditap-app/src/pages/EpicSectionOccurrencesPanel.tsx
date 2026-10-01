@@ -160,7 +160,37 @@ export function EpicSectionOccurrencesPanel({
 
                       {open ? (
                         <div className="epic-demo-card__body">
-                          {occ.previewLines.length > 0 ? (
+                          {occ.immunizationShots && occ.immunizationShots.length > 0 ? (
+                            <div className="epic-imm-shots">
+                              {occ.immunizationShots.map((shot, i) => (
+                                <div
+                                  key={`${occ.index}-imm-${i}`}
+                                  className="epic-imm-shot-row"
+                                >
+                                  <div className="epic-demo-card__cell">
+                                    <label htmlFor={`epic-imm-name-${sectionTitle}-${occ.index}-${i}`}>
+                                      Immunization Name
+                                    </label>
+                                    <input
+                                      id={`epic-imm-name-${sectionTitle}-${occ.index}-${i}`}
+                                      readOnly
+                                      value={shot.name}
+                                    />
+                                  </div>
+                                  <div className="epic-demo-card__cell">
+                                    <label htmlFor={`epic-imm-given-${sectionTitle}-${occ.index}-${i}`}>
+                                      Given Date
+                                    </label>
+                                    <input
+                                      id={`epic-imm-given-${sectionTitle}-${occ.index}-${i}`}
+                                      readOnly
+                                      value={shot.givenDate}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : occ.previewLines.length > 0 ? (
                             <ul className="epic-section-preview-list">
                               {occ.previewLines.map((line, i) => (
                                 <li key={`${occ.index}-pv-${i}`}>{line}</li>
@@ -171,17 +201,19 @@ export function EpicSectionOccurrencesPanel({
                               No structured rows parsed for this intake — showing document text.
                             </p>
                           )}
-                          <div className="epic-demo-card__cell epic-note-card__body-cell">
-                            <label htmlFor={`epic-sec-body-${sectionTitle}-${occ.index}`}>
-                              Section text
-                            </label>
-                            <textarea
-                              id={`epic-sec-body-${sectionTitle}-${occ.index}`}
-                              rows={6}
-                              readOnly
-                              value={occ.body.slice(0, 4000)}
-                            />
-                          </div>
+                          {!(occ.immunizationShots && occ.immunizationShots.length > 0) ? (
+                            <div className="epic-demo-card__cell epic-note-card__body-cell">
+                              <label htmlFor={`epic-sec-body-${sectionTitle}-${occ.index}`}>
+                                Section text
+                              </label>
+                              <textarea
+                                id={`epic-sec-body-${sectionTitle}-${occ.index}`}
+                                rows={6}
+                                readOnly
+                                value={occ.body.slice(0, 4000)}
+                              />
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                     </article>

@@ -15,6 +15,7 @@
  */
 
 import { tryParseDateToIso } from './intakeDateParse';
+import { cleanConditionDisplayName } from './intakeNameCleanup';
 import { collapseWs } from './intakeFieldLabels';
 import {
   EPIC_MY_HEALTH_SUMMARY_TOC,
@@ -32,6 +33,10 @@ import {
   sliceEpicPatientDemographicsSessions,
 } from './epicPatientDemographics';
 import { inventoryEpicNoteFromClinic } from './epicNoteFromClinic';
+import {
+  epicImmunizationShotsToClinicalEntries,
+  parseEpicImmunizationShots,
+} from './epicImmunizations';
 import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
@@ -502,18 +507,20 @@ export function parseEpicMayoActiveProblems(text: string): Tab14ChronicRow[] {
   const re =
     /\b([A-Z][A-Za-z0-9 ,/+'-]{2,80}?)\s+(\d{1,2}\/\d{1,2}\/\d{4})(?=\s+[A-Z]|\s*$)/g;
   for (const m of flat.matchAll(re)) {
-    const name = collapseWs(m[1])
+    const rawName = collapseWs(m[1])
       .replace(/^(Problem|Noted|Diagnosed|Date)\s+/i, '')
       .trim();
-    if (!name || name.length < 3) continue;
-    if (/^(Immunizations|Social History|Medications)$/i.test(name)) break;
+    if (!rawName || rawName.length < 3) continue;
+    if (/^(Immunizations|Social History|Medications)$/i.test(rawName)) break;
+    const cleaned = cleanConditionDisplayName(rawName);
+    const name = cleaned.name || rawName;
     const key = name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     rows.push({
       conditionName: name,
-      icdCode: '',
-      diagnosisDate: tryParseDateToIso(m[2]) || m[2],
+      icdCode: cleaned.icdCode || '',
+      diagnosisDate: cleaned.diagnosisDate || tryParseDateToIso(m[2]) || m[2],
       severity: '',
       prexisting: '',
       notesChronicConditions: '',
@@ -523,39 +530,19 @@ export function parseEpicMayoActiveProblems(text: string): Tab14ChronicRow[] {
 }
 
 export function parseEpicMayoImmunizations(text: string): Tab14ClinicalEntry[] {
-  const block =
-    collectEpicMayoSectionBodies(text, 'Immunizations').join('\n\n') ||
-    (text.match(/Immunizations\b[\s\S]{0,2500}?(?=Social History\b|Procedures\b|Results\b|$)/i)?.[0] ??
-      '');
-  if (!block) return [];
-  const flat = collapseWs(block);
-  const rows: Tab14ClinicalEntry[] = [];
-  const seen = new Set<string>();
-
-  for (const m of flat.matchAll(
-    /\b([A-Z][A-Za-z0-9 ,()/-]{1,80}?)\s+(?:\(Given\s+)?(\d{1,2}\/\d{1,2}\/\d{2,4})(?:\s*,\s*(\d{1,2}\/\d{1,2}\/\d{2,4}))?/gi
-  )) {
-    const title = collapseWs(m[1])
-      .replace(/\(\s*$/, '')
-      .replace(/^(Immunization|Administration|Dates|Next Due)\s+/i, '')
-      .trim();
-    if (!title || title.length < 2) continue;
-    if (/^(Given|Social|Tobacco|Alcohol)$/i.test(title)) continue;
-    const key = title.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const d1 = tryParseDateToIso(m[2]) || m[2];
-    const d2 = m[3] ? tryParseDateToIso(m[3]) || m[3] : '';
-    rows.push(
-      entry({
-        title,
-        detail: d2 ? `Also given ${d2}` : '',
-        date: d1,
-        status: 'Completed',
-      })
-    );
+  // Prefer cover `(Given …)` prose when present — clearest Name / Given Date pairs.
+  // Fall back to as-of inventory / truncated slice when cover is image-only.
+  const bodies = collectEpicMayoSectionBodies(text, 'Immunizations');
+  const cover =
+    text.match(/Immunizations\b[\s\S]{0,3500}?(?=Social History\b|Procedures\b|Results\b|$)/i)?.[0] ??
+    '';
+  const candidates = [...bodies, cover].filter(Boolean);
+  let best = parseEpicImmunizationShots('');
+  for (const block of candidates) {
+    const shots = parseEpicImmunizationShots(block);
+    if (shots.length > best.length) best = shots;
   }
-  return rows;
+  return epicImmunizationShotsToClinicalEntries(best);
 }
 
 export function parseEpicMayoSocialHistory(text: string): Tab14ClinicalEntry[] {

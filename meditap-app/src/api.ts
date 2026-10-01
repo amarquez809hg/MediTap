@@ -8,6 +8,11 @@ import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage'
 import { getAdminPatientRequestHeaders, getAdminSelectedPatientId } from './portals/adminPatientStorage';
 import type { IncidentRecord } from './incidents/incidentModel';
 import {
+  cleanConditionDisplayName,
+  cleanFacilityDisplayName,
+  cleanDemographicFieldValue,
+} from './intake/intakeNameCleanup';
+import {
   bmiCategoryLabel,
   cmToInches,
   computeBmiFromMetric,
@@ -355,15 +360,16 @@ export async function fetchTab5ChronicConditions(
     .filter((r) => r.patient === current.patient_id)
     .map((r) => {
       const cat = r.disease ? catalogById.get(r.disease) : undefined;
+      const cleaned = cleanConditionDisplayName(cat?.name || '');
       const { treatment, hospitalizations } = parseChronicConditionNotes(
         r.notes
       );
       return {
         apiId: r.id,
         diseaseId: r.disease,
-        name: cat?.name || '—',
-        icdCode: (cat?.icd10_code || '').trim(),
-        diagnosisDate: (r.diagnosis_date || '').trim(),
+        name: cleaned.name || cat?.name || '—',
+        icdCode: (cat?.icd10_code || cleaned.icdCode || '').trim(),
+        diagnosisDate: (r.diagnosis_date || cleaned.diagnosisDate || '').trim(),
         severity: (r.severity || '').trim(),
         preExisting: Boolean(r.pre_existing),
         currentTreatment: treatment,
@@ -388,7 +394,12 @@ export async function saveTab5ChronicCondition(
     );
   }
 
-  const diseaseId = await ensureDiseaseCatalog(condition.name, condition.icdCode);
+  const cleaned = cleanConditionDisplayName(condition.name);
+  const name = cleaned.name || condition.name;
+  const icdCode = condition.icdCode.trim() || cleaned.icdCode;
+  const diagnosisDate =
+    condition.diagnosisDate.trim() || cleaned.diagnosisDate || '';
+  const diseaseId = await ensureDiseaseCatalog(name, icdCode);
   const notes = buildChronicConditionNotes(
     condition.currentTreatment,
     condition.hospitalizations
@@ -397,7 +408,7 @@ export async function saveTab5ChronicCondition(
   const body = {
     patient: patient.patient_id,
     disease: diseaseId,
-    diagnosis_date: condition.diagnosisDate.trim() || null,
+    diagnosis_date: diagnosisDate || null,
     severity: condition.severity.trim() || null,
     pre_existing: condition.preExisting,
     notes,
@@ -1391,10 +1402,11 @@ export async function fetchDashboardDetail(
     .filter((c) => c.patient === pid)
     .map((row) => {
       const disease = chronicById.get(row.disease);
+      const cleaned = cleanConditionDisplayName(disease?.name || '');
       return {
-        conditionName: disease?.name || '—',
-        icdCode: disease?.icd10_code || '—',
-        diagnosisDate: formatDate(row.diagnosis_date),
+        conditionName: cleaned.name || disease?.name || '—',
+        icdCode: disease?.icd10_code || cleaned.icdCode || '—',
+        diagnosisDate: formatDate(row.diagnosis_date || cleaned.diagnosisDate || null),
         severity: row.severity || '—',
         preexisting: row.pre_existing ? 'Yes' : 'No',
         notes: row.notes || '—',
@@ -1413,7 +1425,7 @@ export async function fetchDashboardDetail(
     const attM = notes.match(/Attending:\s*([^\n]+)/i);
     hospital = {
       type: latest.incident_type || '—',
-      facility: h?.name || '—',
+      facility: cleanFacilityDisplayName(h?.name || '').name || h?.name || '—',
       reason: latest.summary || '—',
       date: formatDate(latest.occurred_at),
       discharge: discM?.[1]?.trim() || '—',
@@ -1919,10 +1931,12 @@ export async function loadTab14FromBackend(
     .filter((c) => c.patient === pid)
     .map((row) => {
       const disease = chronicById.get(row.disease);
+      const cleaned = cleanConditionDisplayName(disease?.name || '');
       return {
-        conditionName: dashToEmpty(disease?.name),
-        icdCode: dashToEmpty(disease?.icd10_code),
-        diagnosisDate: isoDateForInput(row.diagnosis_date),
+        conditionName: cleaned.name || dashToEmpty(disease?.name),
+        icdCode: dashToEmpty(disease?.icd10_code) || cleaned.icdCode,
+        diagnosisDate:
+          isoDateForInput(row.diagnosis_date) || cleaned.diagnosisDate || '',
         severity: dashToEmpty(row.severity),
         prexisting: row.pre_existing ? 'Yes' : 'No',
         notesChronicConditions: dashToEmpty(row.notes),
@@ -1935,11 +1949,12 @@ export async function loadTab14FromBackend(
     .sort((a, b) => +new Date(b.occurred_at) - +new Date(a.occurred_at))
     .map((incident) => {
       const h = hospitalById.get(incident.hospital);
+      const cleaned = cleanFacilityDisplayName(h?.name || '');
       const notes = incident.clinical_notes || '';
       const discM = notes.match(/Discharge:\s*([0-9-]+)/i);
       const attM = notes.match(/Attending:\s*([^\n]+)/i);
       return {
-        facilityName: dashToEmpty(h?.name),
+        facilityName: cleaned.name || dashToEmpty(h?.name),
         visitType: dashToEmpty(incident.incident_type),
         reason: dashToEmpty(incident.summary),
         visitDate: isoDateForInput(incident.occurred_at),
@@ -1953,20 +1968,39 @@ export async function loadTab14FromBackend(
   return {
     hasPatient: true,
     patient: {
-      givenName: current.given_name || '',
-      familyName: current.family_name || '',
+      givenName: cleanDemographicFieldValue(
+        'givenName',
+        current.given_name || ''
+      ).value,
+      familyName: cleanDemographicFieldValue(
+        'familyName',
+        current.family_name || ''
+      ).value,
       dateOfBirth: isoDateForInput(current.date_of_birth),
       bloodType: dashToEmpty(current.blood_type),
-      email: current.email || '',
+      email: cleanDemographicFieldValue('email', current.email || '').value,
       additionalEmails: Array.isArray(current.additional_emails)
         ? current.additional_emails
         : [],
-      phoneNumber: current.phone || '',
-      address: current.address || '',
-      race: current.race || '',
-      ethnicity: current.ethnicity || '',
-      preferredLanguage: current.preferred_language || '',
-      maritalStatus: current.marital_status || '',
+      phoneNumber: cleanDemographicFieldValue(
+        'phoneNumber',
+        current.phone || ''
+      ).value,
+      address: cleanDemographicFieldValue('address', current.address || '')
+        .value,
+      race: cleanDemographicFieldValue('race', current.race || '').value,
+      ethnicity: cleanDemographicFieldValue(
+        'ethnicity',
+        current.ethnicity || ''
+      ).value,
+      preferredLanguage: cleanDemographicFieldValue(
+        'preferredLanguage',
+        current.preferred_language || ''
+      ).value,
+      maritalStatus: cleanDemographicFieldValue(
+        'maritalStatus',
+        current.marital_status || ''
+      ).value,
       sexAtBirth: current.sex_at_birth || '',
       legalSex: dashToEmpty(current.legal_sex),
       genderIdentity: dashToEmpty(current.gender_identity),
@@ -2042,8 +2076,10 @@ async function ensureDiseaseCatalog(
   name: string,
   icd: string
 ): Promise<string> {
-  const n = name.trim();
+  const cleaned = cleanConditionDisplayName(name);
+  const n = (cleaned.name || name).trim();
   if (!n) throw new Error('Condition name is required.');
+  const icdOut = (icd.trim() || cleaned.icdCode || '').trim();
   const all = await fetchAllPages<ChronicDiseaseCatalogApi>(
     '/api/chronic-disease-catalog/'
   );
@@ -2056,7 +2092,7 @@ async function ensureDiseaseCatalog(
       body: JSON.stringify({
         name: n,
         description: '',
-        icd10_code: icd.trim() || '',
+        icd10_code: icdOut || '',
       }),
     }
   );
@@ -2064,14 +2100,21 @@ async function ensureDiseaseCatalog(
 }
 
 export async function ensureHospital(name: string): Promise<string> {
-  const n = name.trim();
+  const cleaned = cleanFacilityDisplayName(name);
+  const n = (cleaned.name || name).trim();
   if (!n) throw new Error('Hospital / facility name is required.');
   const all = await fetchAllPages<HospitalApi>('/api/hospitals/');
   const found = all.find((h) => h.name.toLowerCase() === n.toLowerCase());
   if (found) return found.hospital_id;
   const created = await requestJson<HospitalApi>('/api/hospitals/', {
     method: 'POST',
-    body: JSON.stringify({ name: n }),
+    body: JSON.stringify({
+      name: n,
+      address_line1: cleaned.addressLine1 || undefined,
+      city: cleaned.city || undefined,
+      region: cleaned.region || undefined,
+      postal_code: cleaned.postalCode || undefined,
+    }),
   });
   return created.hospital_id;
 }
@@ -2293,8 +2336,14 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
   );
 
   const body = {
-    given_name: input.patient.givenName.trim(),
-    family_name: input.patient.familyName.trim(),
+    given_name: cleanDemographicFieldValue(
+      'givenName',
+      input.patient.givenName
+    ).value.trim(),
+    family_name: cleanDemographicFieldValue(
+      'familyName',
+      input.patient.familyName
+    ).value.trim(),
     date_of_birth: input.patient.dateOfBirth,
     blood_type: input.patient.bloodType.trim() || null,
     sex_at_birth: input.patient.sexAtBirth.trim() || null,
@@ -2317,13 +2366,29 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       (input.patient.emergencyContactPhone || '').trim() || null,
     emergency_contact_email:
       (input.patient.emergencyContactEmail || '').trim() || null,
-    email: saveEmail,
-    phone: (input.patient.phoneNumber || '').trim() || null,
-    address: (input.patient.address || '').trim() || null,
-    race: (input.patient.race || '').trim() || null,
-    ethnicity: (input.patient.ethnicity || '').trim() || null,
-    preferred_language: (input.patient.preferredLanguage || '').trim() || null,
-    marital_status: (input.patient.maritalStatus || '').trim() || null,
+    email:
+      cleanDemographicFieldValue('email', saveEmail).value || saveEmail || null,
+    phone:
+      cleanDemographicFieldValue('phoneNumber', input.patient.phoneNumber || '')
+        .value || null,
+    address:
+      cleanDemographicFieldValue('address', input.patient.address || '').value ||
+      null,
+    race:
+      cleanDemographicFieldValue('race', input.patient.race || '').value || null,
+    ethnicity:
+      cleanDemographicFieldValue('ethnicity', input.patient.ethnicity || '')
+        .value || null,
+    preferred_language:
+      cleanDemographicFieldValue(
+        'preferredLanguage',
+        input.patient.preferredLanguage || ''
+      ).value || null,
+    marital_status:
+      cleanDemographicFieldValue(
+        'maritalStatus',
+        input.patient.maritalStatus || ''
+      ).value || null,
     ...vitalsPayloadFromTab14Patient(input.patient),
   };
 
@@ -2549,7 +2614,12 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
 
   for (const c of input.chronicConditions) {
     if (!(c.conditionName || '').trim()) continue;
-    const did = await ensureDiseaseCatalog(c.conditionName, c.icdCode);
+    const cleaned = cleanConditionDisplayName(c.conditionName);
+    const name = cleaned.name || c.conditionName;
+    const icd = (c.icdCode || '').trim() || cleaned.icdCode;
+    const diagnosisDate =
+      (c.diagnosisDate || '').trim() || cleaned.diagnosisDate || '';
+    const did = await ensureDiseaseCatalog(name, icd);
     await requestJson<PatientChronicDiseaseApi>(
       '/api/patient-chronic-diseases/',
       {
@@ -2557,7 +2627,7 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
         body: JSON.stringify({
           patient: pid,
           disease: did,
-          diagnosis_date: (c.diagnosisDate || '').trim() || null,
+          diagnosis_date: diagnosisDate || null,
           severity: (c.severity || '').trim() || null,
           pre_existing: (c.prexisting || '').toLowerCase() === 'yes',
           notes: (c.notesChronicConditions || '').trim() || null,
@@ -2617,9 +2687,17 @@ export async function createHospitalForAdmin(payload: {
   postal_code?: string;
   country?: string;
 }): Promise<HospitalApi> {
+  const cleaned = cleanFacilityDisplayName(payload.name);
   return requestJson<HospitalApi>('/api/hospitals/', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      name: cleaned.name || payload.name.trim(),
+      address_line1: payload.address_line1 || cleaned.addressLine1 || undefined,
+      city: payload.city || cleaned.city || undefined,
+      region: payload.region || cleaned.region || undefined,
+      postal_code: payload.postal_code || cleaned.postalCode || undefined,
+    }),
   });
 }
 
@@ -2627,9 +2705,20 @@ export async function updateHospitalForAdmin(
   hospitalId: string,
   payload: Partial<HospitalApi>
 ): Promise<HospitalApi> {
+  const next = { ...payload };
+  if (typeof next.name === 'string' && next.name.trim()) {
+    const cleaned = cleanFacilityDisplayName(next.name);
+    next.name = cleaned.name || next.name.trim();
+    if (!next.city && cleaned.city) next.city = cleaned.city;
+    if (!next.region && cleaned.region) next.region = cleaned.region;
+    if (!next.postal_code && cleaned.postalCode) next.postal_code = cleaned.postalCode;
+    if (!next.address_line1 && cleaned.addressLine1) {
+      next.address_line1 = cleaned.addressLine1;
+    }
+  }
   return requestJson<HospitalApi>(`/api/hospitals/${hospitalId}/`, {
     method: 'PATCH',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(next),
   });
 }
 

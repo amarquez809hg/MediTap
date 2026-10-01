@@ -6,6 +6,7 @@ import { tryParseDateToIso } from './intakeDateParse';
 import { detectNoKnownProblems } from './detectNoKnownProblems';
 import { collapseWs, normalizeMaritalStatus, splitPersonName } from './intakeFieldLabels';
 import { withSanitizedPatientFieldWarnings } from './intakeFieldWarnings';
+import { cleanFacilityDisplayName } from './intakeNameCleanup';
 import {
   buildEpicMayoExtendedOverlays,
   inventoryEpicPatientDemographics,
@@ -415,7 +416,10 @@ function parseEpicHospital(flat: string, raw: string): Tab14HospitalFields {
 
   if (visitDate) out.visitDate = tryParseDateToIso(visitDate) ?? visitDate;
   if (visitType) out.visitType = visitType;
-  if (facility) out.facilityName = collapseWs(facility);
+  if (facility) {
+    out.facilityName =
+      cleanFacilityDisplayName(facility).name || collapseWs(facility);
+  }
 
   const attending = flatEnc.match(/((?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?),\s*MD)/);
   if (attending) out.attendingPhysician = attending[1];

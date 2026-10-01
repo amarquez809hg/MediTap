@@ -44,4 +44,40 @@ describe('Epic generic section multi-hit', () => {
     expect(inv.byKey.demographics).toBeUndefined();
     expect(inv.byKey.patientInstructions).toBeUndefined();
   });
+
+  it('expands Encounter Details from Encounters-as-of when headers are sparse', () => {
+    const sample = `
+Patient Health Summary, generated on Aug. 07, 2026
+Encounter Details
+Date: 08/05/2026, 4:00 PM CDT
+Type: Office Visit
+Department: Department of Neurology in Rochester, Minnesota
+Care Team: Orhun Kantarci, M.D.
+Encounters - as of 08/07/2026
+08/06/2026 Hospital Encounter Lab
+08/05/2026 Office Visit Neurology
+08/04/2026 Comprehensive Visit Ophthalmology
+07/23/2026 Telemedicine Neurology
+05/12/2026 Appointment Neurology
+`;
+    const list = buildEpicSectionOccurrenceList(sample, 'Encounter Details', 'pastEncounters');
+    expect(list.length).toBeGreaterThanOrEqual(5);
+    expect(list[0]!.intakeDateIso).toBeTruthy();
+    expect(list.some((r) => /Office Visit|Hospital Encounter/i.test(r.visitType))).toBe(true);
+  });
+
+  it('lists Results as-of sessions and pads when visit inventory is richer', () => {
+    const sample = `
+Patient Health Summary, generated on Aug. 07, 2026
+Results - as of 08/07/2026
+DSDNA AB, IGG, S - Final result (08/06/2026 8:41 AM CDT) Component Value
+Encounters - as of 08/07/2026
+08/06/2026 Hospital Encounter Lab
+08/05/2026 Office Visit Neurology
+08/04/2026 Comprehensive Visit Ophthalmology
+`;
+    const list = buildEpicSectionOccurrenceList(sample, 'Results', 'results');
+    expect(list.length).toBeGreaterThanOrEqual(3);
+    expect(list[0]!.previewLines.some((l) => /DSDNA/i.test(l))).toBe(true);
+  });
 });

@@ -1218,9 +1218,84 @@
 
 ---
 
-**Next register entry:** **170** / **`MT-AG-166`**
+### Entry 170 — `MT-AG-166`
 
-*Last updated: entry 169 (a new card per patient).*
+**Type:** Integration / Merge
+
+**Key:** `MT-AG-166`
+
+**Summary:** Merge other-device DESFire integration (main v1–v3) onto this machine’s `feature/portal-split` as the MediTap source of truth.
+
+**What was done:**
+
+- Fast-forwarded `feature/portal-split` to `main` (`5416593`) bringing PatientCard, SUN per-tap links, staff Profile cards assign, public `/card` routes, and ACR1311 burn tooling.
+- Stashed and discarded the parallel local keyboard-wedge registry/tap-station WIP so it does not conflict with the shipped DESFire stack.
+- Restored local Epic immunizations / section-occurrence intake WIP on top of the merge; left ads-report PDFs and old card PoC in stash.
+
+**Outcome:** This device’s working branch carries the complete DESFire functions from GitHub. Next register work starts after migration `0022_patient_card_sun` on local DB.
+
+**Primary paths:** `backend/medical/card_*.py`, `sun_crypto.py`, `StaffCardAssignPage.tsx`, `CardProfilePage.tsx`, `tools/desfire/`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **171** / **`MT-AG-167`**
+
+*Last updated: entry 170 (merge DESFire from main onto this device).*
+
+---
+
+### Entry 171 — `MT-AG-167`
+
+**Type:** Bug Fix / UX
+
+**Key:** `MT-AG-167`
+
+**Summary:** Organize Conditions and Hospitals display like Patient Information — strip section bleed, diagnosis dates, and address tails from catalog names.
+
+**What was done:**
+
+- Added `intakeNameCleanup.ts` (`cleanConditionDisplayName`, `cleanFacilityDisplayName`) with unit tests for Jordan-style bleed strings.
+- Apply cleaners on Tab5/Tab14/dashboard load, `ensureDiseaseCatalog` / `ensureHospital` / admin hospital create-rename, and compact/Epic hospital parsers.
+- Diagnosis dates mashed into condition names now fill the Diagnosed field; hospital city/region peel out of NAME when possible.
+
+**Outcome:** Conditions cards/modals show e.g. “Essential Hypertension” with Diagnosed date; Hospitals shows “Cayuga Medical Center Emergency Department” with Ithaca / NY instead of one glued blob.
+
+**Primary paths:** `intakeNameCleanup.ts`, `api.ts`, `AdminHospitalsPage.tsx`, `meditapDemoRecordParse.ts`, `epicHealthSummaryParse.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **172** / **`MT-AG-168`**
+
+*Last updated: entry 171 (conditions/hospitals name cleanup).*
+
+---
+
+### Entry 172 — `MT-AG-168`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-168`
+
+**Summary:** Fix Patient Information field bleed (Harold-style mash) and Tab14 Save API 403 for non-staff sessions.
+
+**What was done:**
+
+- Added `cleanDemographicFieldValue` — truncates Demographics/Related Person/mailto/address/race bleed instead of only warning.
+- Apply on parse sanitize, Tab14 load, and patient PATCH save.
+- Tab14 Save now opens Staff elevation when the session is not staff/editor; clearer 403 copy when permission is still denied.
+
+**Outcome:** Family name shows “Jennings”, phone/race/ethnicity/language peel cleanly; patients are prompted for staff credentials instead of a raw API 403.
+
+**Primary paths:** `intakeNameCleanup.ts`, `intakeFieldWarnings.ts`, `api.ts`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **173** / **`MT-AG-169`**
+
+*Last updated: entry 172 (demographics bleed + Tab14 save 403).*
 
 ---
 

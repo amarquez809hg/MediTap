@@ -42,7 +42,8 @@ describe('assessDemographicRawValue', () => {
 
   it('flags neighboring field labels inside a value', () => {
     const r = assessDemographicRawValue('givenName', 'Maria DOB 01/02/1990');
-    expect(r.warning?.reason).toBe('contains_other_label');
+    expect(r.value).toBe('Maria');
+    expect(r.warning?.reason).toBe('label_bleed');
   });
 
   it('flags digit bleed into names even without an explicit label token', () => {
@@ -55,15 +56,16 @@ describe('assessDemographicRawValue', () => {
       'phoneNumber',
       'tel:+1-(503) 555-0199 mailto:taylor.rivera.sample@example.com'
     );
-    expect(r.warning?.reason).toBe('contains_other_label');
+    expect(r.value).toBe('(503) 555-0199');
+    expect(r.warning?.reason).toBe('label_bleed');
   });
 
   it('flags CCD glue on preferred language and marital status', () => {
-    expect(assessDemographicRawValue('preferredLanguage', 'English Previous').warning?.reason).toBe(
-      'contains_other_label'
+    expect(assessDemographicRawValue('preferredLanguage', 'English Previous').value).toBe(
+      'English'
     );
-    expect(assessDemographicRawValue('maritalStatus', 'Married Preferred').warning?.reason).toBe(
-      'contains_other_label'
+    expect(assessDemographicRawValue('maritalStatus', 'Married Preferred').value).toBe(
+      'Married'
     );
   });
 

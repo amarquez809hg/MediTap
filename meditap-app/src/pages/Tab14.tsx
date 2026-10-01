@@ -10,6 +10,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { markOnboardingStep } from '../onboarding/onboardingStorage';
 import { getMeditapRecordEditorRole } from '../config/meditap-roles';
 import { clearTab14DraftKeysOnly } from '../auth/clearWorkflowLocalState';
+import StaffElevationModal from '../components/StaffElevationModal';
+import { useStaffElevationGate } from '../hooks/useStaffElevationGate';
 import {
     loadTab14FromBackend,
     saveTab14ToBackend,
@@ -810,8 +812,10 @@ const Tab14: React.FC = () => {
     const { username, authReady, isStaff, isSuperuser, hasRealmRole } = useAuth();
     const { goBack } = usePortalHistory();
     const hasEditorRealmRole = hasRealmRole(getMeditapRecordEditorRole());
-    // Chart edits are admin/staff only; patients may upload documents for clinic review.
-    const canEditPatientRecords = isStaff || isSuperuser || hasEditorRealmRole;
+    const staffGate = useStaffElevationGate();
+    // Chart edits: staff session, editor role, or temporary staff elevation on a patient session.
+    const canEditPatientRecords =
+        isStaff || isSuperuser || hasEditorRealmRole || staffGate.canEdit;
 
     const goBackFallback = chartPageGoBackFallback();
 
@@ -2128,30 +2132,61 @@ const Tab14: React.FC = () => {
             setTimeout(() => setSaveMessage(false), 2000);
             return true;
         } catch (e) {
-            setBackendError(
-                e instanceof Error ? e.message : 'Could not save to server.'
-            );
+            const msg =
+                e instanceof Error ? e.message : 'Could not save to server.';
+            if (/\b403\b/.test(msg) || /do not have permission/i.test(msg)) {
+                setBackendError(
+                    'Staff access is required to save Patient Information and Emergency Contact. Use Staff mode (sign in with a staff account) or open this chart from the Admin portal.'
+                );
+            } else {
+                setBackendError(msg);
+            }
             return false;
         } finally {
             setSaving(false);
         }
     };
 
+    const requestSaveForm = () => {
+        if (canEditPatientRecords) {
+            void saveForm();
+            return;
+        }
+        staffGate.gateEdit(
+            () => {
+                void saveForm();
+            },
+            'Staff credentials are required to save chart fields. The patient stays signed in.'
+        );
+    };
+
     const saveAndLeavePage = async () => {
         if (!pendingLeaveUrl) return;
         const destination = pendingLeaveUrl;
-        const saved = await saveForm();
-        if (!saved) {
+        const run = async () => {
+            const saved = await saveForm();
+            if (!saved) {
+                setShowUnsavedLeavePrompt(false);
+                return;
+            }
             setShowUnsavedLeavePrompt(false);
+            setPendingLeaveUrl(null);
+            if (destination === '__portal_go_back__') {
+                goBack(goBackFallback);
+            } else {
+                navigateAwayFromTab14(destination);
+            }
+        };
+        if (canEditPatientRecords) {
+            await run();
             return;
         }
-        setShowUnsavedLeavePrompt(false);
-        setPendingLeaveUrl(null);
-        if (destination === '__portal_go_back__') {
-            goBack(goBackFallback);
-        } else {
-            navigateAwayFromTab14(destination);
-        }
+        staffGate.gateEdit(
+            () => {
+                void run();
+            },
+            'Staff credentials are required to save chart fields before leaving.'
+        );
     };
 
     const leaveWithoutSaving = () => {
@@ -5406,7 +5441,7 @@ const Tab14: React.FC = () => {
                         <button
                             className = "save-button"
                             type = "button"
-                            onClick = {() => void saveForm()}
+                            onClick = {() => requestSaveForm()}
                             disabled={saving || !authReady}
                         >
                             {saving ? t('patientIntake.saving') : t('patientIntake.save')}
@@ -5596,6 +5631,19 @@ const Tab14: React.FC = () => {
                         </div>
                     </div>
                 )}
+                <StaffElevationModal
+                    open={staffGate.staffModalOpen}
+                    titleId="tab14-staff-modal-title"
+                    hint={staffGate.staffHint}
+                    username={staffGate.staffUsername}
+                    password={staffGate.staffPassword}
+                    submitting={staffGate.staffSubmitting}
+                    error={staffGate.staffModalError}
+                    onUsernameChange={staffGate.setStaffUsername}
+                    onPasswordChange={staffGate.setStaffPassword}
+                    onClose={staffGate.closeStaffModal}
+                    onSubmit={(e) => void staffGate.submitStaffModal(e)}
+                />
             </IonContent>
         </IonPage>
     );

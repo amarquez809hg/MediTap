@@ -1866,6 +1866,29 @@ ion-page.ct-page.ct-tab14 ion-content {
   margin-bottom: 4px;
 }
 
+.epic-imm-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.epic-imm-shot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  gap: 10px 12px;
+  padding: 8px 10px;
+  border: 1px solid #cce3e0;
+  border-radius: 8px;
+  background: #f7fbfa;
+}
+
+@media (max-width: 720px) {
+  .epic-imm-shot-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .epic-note-card__body-cell {
   grid-column: 1 / -1;
 }
