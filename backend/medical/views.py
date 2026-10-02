@@ -15,6 +15,7 @@ from .patient_api_scoping import (
     scoped_patient_queryset,
 )
 from .permissions import IntakeEditorWritePermission, OwnChartOrIntakeEditorPermission
+from medapp.intake_editor import can_edit_intake_records
 from medapp.admin_ops import log_admin_activity, request_admin_patient_id, user_is_admin_operator
 
 
@@ -70,9 +71,20 @@ class PatientViewSet(BaseViewSet):
         )
 
     def perform_update(self, serializer):
-        serializer.save()
+        user = self.request.user if self.request.user.is_authenticated else None
+        instance = serializer.instance
+        # Claim unlinked chart when the patient saves from the user portal.
+        if (
+            user is not None
+            and not user_is_admin_operator(self.request)
+            and not can_edit_intake_records(self.request)
+            and getattr(instance, "portal_user_id", None) is None
+        ):
+            serializer.save(portal_user=user)
+        else:
+            serializer.save()
         log_admin_activity(
-            actor=self.request.user if self.request.user.is_authenticated else None,
+            actor=user,
             action="patient.update",
             patient_id=str(serializer.instance.patient_id),
             detail={"source": "api", "admin_patient_header": request_admin_patient_id(self.request)},

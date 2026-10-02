@@ -854,7 +854,7 @@
     "loadingRecord": "Cargando su expediente de paciente guardado…",
     "staffActiveBanner": "Edición del personal activa para este paciente. El paciente sigue con sesión iniciada. Cuando termine, use Finalizar modo personal para volver a solo lectura.",
     "viewOnlyBanner": "Puede subir un PDF o imagen para llenar estos campos, Aceptar o Rechazar advertencias, luego Guarde. Los campos son de solo lectura aquí — el personal los edita en el portal de administración.",
-    "patientViewOnlyBanner": "Suba un PDF o imagen para llenar su expediente, Acepte o Rechace campos marcados, luego Guarde. No puede escribir en los campos aquí — el personal edita en el portal de administración.",
+    "patientViewOnlyBanner": "Suba un PDF o imagen para llenar su expediente, revise los campos marcados y pulse Guardar. Guardar guarda Información del paciente y Contacto de emergencia en su expediente. El personal edita secciones solo-personal en el portal de administración.",
     "patientLabsReadOnly": "Los resultados de laboratorio se llenan con su PDF. Las ediciones manuales son solo del personal en el portal de administración.",
     "uploadReceivedPendingReview": "Documento recibido y analizado en el formulario. Acepte o Rechace campos marcados, luego Guarde. El personal también puede revisarlo en el portal de administración.",
     "vitalsPanelSub": "Los signos vitales se llenan con su PDF (o el personal en el portal de administración). Guardar los aplica a su expediente e IMC.",

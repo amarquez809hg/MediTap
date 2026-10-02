@@ -35,6 +35,31 @@ class OwnChartPatientUpdateTests(TestCase):
         self.assertEqual(self.patient.phone, "555-0100")
         self.assertEqual(self.patient.race, "Black or African American")
 
+    def test_user_can_claim_unlinked_chart_matching_email(self):
+        unlinked = Patient.objects.create(
+            given_name="Priya",
+            family_name="Kapoor",
+            date_of_birth="1990-01-01",
+            email="priya.kapoor73@example.com",
+            portal_user=None,
+        )
+        claimer = User.objects.create_user(
+            username="priya.kapoor73@example.com",
+            email="priya.kapoor73@example.com",
+            password="pass12345",
+        )
+        self.client.force_authenticate(user=claimer)
+        res = self.client.patch(
+            f"/api/patients/{unlinked.patient_id}/",
+            {"phone": "555-0200", "emergency_contact_given_name": "Alex"},
+            format="json",
+        )
+        self.assertEqual(res.status_code, 200, res.content)
+        unlinked.refresh_from_db()
+        self.assertEqual(unlinked.phone, "555-0200")
+        self.assertEqual(unlinked.emergency_contact_given_name, "Alex")
+        self.assertEqual(unlinked.portal_user_id, claimer.pk)
+
     def test_other_user_cannot_patch_patient(self):
         self.client.force_authenticate(user=self.other)
         res = self.client.patch(

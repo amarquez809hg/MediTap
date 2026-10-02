@@ -1326,6 +1326,33 @@
 
 ---
 
+### Entry 174 — `MT-AG-170`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-170`
+
+**Summary:** Patient portal Save must persist Patient Information and Emergency Contact (not staff-only); claim unlinked email-matched charts on PATCH.
+
+**What was done:**
+
+- Extended `user_may_write_patient_chart` / scoping so a signed-in patient can PATCH an unlinked chart whose email matches login (username or email), then claim `portal_user` on update.
+- Patient-portal Save no longer shows the misleading “Staff access is required” copy on 403; related clinical sync failures no longer undo a successful demographics/emergency-contact PATCH.
+- Banner copy updated to state that Save writes the chart.
+
+**Outcome:** Users can Save Emergency Contact and Patient Information from the user portal without staff elevation when the chart is theirs or claimable by email.
+
+**Primary paths:** `medical/permissions.py`, `medical/views.py`, `medical/patient_api_scoping.py`, `Tab14.tsx`, `api.ts`, `tests_own_chart_update.py`
+**Branch:** `feature/portal-split` / `main`
+
+---
+
+**Next register entry:** **175** / **`MT-AG-171`**
+
+*Last updated: entry 174 (patient own-chart Save claim).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

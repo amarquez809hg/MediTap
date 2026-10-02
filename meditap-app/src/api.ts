@@ -2409,259 +2409,296 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
 
   const pid = patient.patient_id;
 
-  const [paRows, pmRows, piRows, pcRows, incRows] = await Promise.all([
-    fetchAllPages<PatientAllergyApi & { id: number }>('/api/patient-allergies/'),
-    fetchAllPages<PatientMedicationApi & { id: number }>(
-      '/api/patient-medications/'
-    ),
-    fetchAllPages<PatientInsuranceApi & { id: number }>(
-      '/api/patient-insurances/'
-    ),
-    fetchAllPages<PatientChronicDiseaseApi & { id: number }>(
-      '/api/patient-chronic-diseases/'
-    ),
-    fetchAllPages<IncidentApi>('/api/incidents/'),
-  ]);
+  const syncRelatedClinical = async () => {
+    const [paRows, pmRows, piRows, pcRows, incRows] = await Promise.all([
+      fetchAllPages<PatientAllergyApi & { id: number }>('/api/patient-allergies/'),
+      fetchAllPages<PatientMedicationApi & { id: number }>(
+        '/api/patient-medications/'
+      ),
+      fetchAllPages<PatientInsuranceApi & { id: number }>(
+        '/api/patient-insurances/'
+      ),
+      fetchAllPages<PatientChronicDiseaseApi & { id: number }>(
+        '/api/patient-chronic-diseases/'
+      ),
+      fetchAllPages<IncidentApi>('/api/incidents/'),
+    ]);
 
-  const [policiesForStash, providersForStash] = await Promise.all([
-    fetchAllPages<InsurancePolicyApi>('/api/insurance-policies/'),
-    fetchAllPages<InsuranceProviderApi>('/api/insurance-providers/'),
-  ]);
-  const policyByIdStash = new Map(
-    policiesForStash.map((p) => [p.policy_id, p])
-  );
-  const providerByIdStash = new Map(
-    providersForStash.map((p) => [p.provider_id, p])
-  );
-  const coverageByInsKey = new Map<string, Record<string, unknown>>();
-  for (const row of piRows.filter((r) => r.patient === pid)) {
-    const pol = policyByIdStash.get(row.policy);
-    if (!pol) continue;
-    const prov = providerByIdStash.get(pol.provider);
-    const key = `${(prov?.name || '').trim().toLowerCase()}|${(pol.policy_number || '').trim().toLowerCase()}`;
-    const cd = row.coverage_details;
-    if (
-      cd &&
-      typeof cd === 'object' &&
-      !Array.isArray(cd) &&
-      Object.keys(cd).length > 0
-    ) {
-      coverageByInsKey.set(key, { ...(cd as Record<string, unknown>) });
-    }
-  }
-
-  for (const row of paRows.filter((r) => r.patient === pid)) {
-    if (row.id != null) await deleteById('/api/patient-allergies/', row.id);
-  }
-  for (const row of pmRows.filter((r) => r.patient === pid)) {
-    if (row.id != null) await deleteById('/api/patient-medications/', row.id);
-  }
-  if (allowStaffOnlySections) {
+    const [policiesForStash, providersForStash] = await Promise.all([
+      fetchAllPages<InsurancePolicyApi>('/api/insurance-policies/'),
+      fetchAllPages<InsuranceProviderApi>('/api/insurance-providers/'),
+    ]);
+    const policyByIdStash = new Map(
+      policiesForStash.map((p) => [p.policy_id, p])
+    );
+    const providerByIdStash = new Map(
+      providersForStash.map((p) => [p.provider_id, p])
+    );
+    const coverageByInsKey = new Map<string, Record<string, unknown>>();
     for (const row of piRows.filter((r) => r.patient === pid)) {
-      if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
+      const pol = policyByIdStash.get(row.policy);
+      if (!pol) continue;
+      const prov = providerByIdStash.get(pol.provider);
+      const key = `${(prov?.name || '').trim().toLowerCase()}|${(pol.policy_number || '').trim().toLowerCase()}`;
+      const cd = row.coverage_details;
+      if (
+        cd &&
+        typeof cd === 'object' &&
+        !Array.isArray(cd) &&
+        Object.keys(cd).length > 0
+      ) {
+        coverageByInsKey.set(key, { ...(cd as Record<string, unknown>) });
+      }
     }
-  }
-  for (const row of pcRows.filter((r) => r.patient === pid)) {
-    if (row.id != null)
-      await deleteById('/api/patient-chronic-diseases/', row.id);
-  }
-  if (allowStaffOnlySections) {
-    for (const row of incRows.filter((r) => r.patient === pid)) {
-      await apiRequest(`/api/incidents/${row.incident_id}/`, {
-        method: 'DELETE',
-      });
-    }
-  }
 
-  if (!input.noAllergies) {
-    for (const a of input.allergies) {
-      if (!(a.allergyName || '').trim()) continue;
-      const aid = await ensureAllergyCatalog(a.allergyName);
-      const typeLabel = (() => {
-        const t = (a.allergyType || '').trim();
-        if (!t) return '';
-        if (t === 'Other') {
-          const o = (a.allergyTypeOther || '').trim();
-          return o ? `Other (${o})` : 'Other';
-        }
-        return t;
-      })();
-      const reactionNotes = [
-        typeLabel ? `Type: ${typeLabel}` : '',
-        (a.reactionNotes || '').trim()
-          ? `Reaction: ${(a.reactionNotes || '').trim()}`
-          : '',
-        (a.lastObserved || '').trim()
-          ? `LastObserved: ${(a.lastObserved || '').trim()}`
-          : '',
-        (a.allergenId || '').trim() ? `AllergenId: ${(a.allergenId || '').trim()}` : '',
-        (a.category || '').trim() ? `Category: ${(a.category || '').trim()}` : '',
-        (a.criticality || '').trim() ? `Criticality: ${(a.criticality || '').trim()}` : '',
-        (a.code || '').trim() ? `Code: ${(a.code || '').trim()}` : '',
-        (a.codeSystem || '').trim() ? `CodeSystem: ${(a.codeSystem || '').trim()}` : '',
-        (a.recordedBy || '').trim() ? `RecordedBy: ${(a.recordedBy || '').trim()}` : '',
-        (a.organization || '').trim() ? `Organization: ${(a.organization || '').trim()}` : '',
-        (a.recordedTime || '').trim() ? `RecordedTime: ${(a.recordedTime || '').trim()}` : '',
-      ]
-        .filter(Boolean)
-        .join(' / ');
-      await requestJson<PatientAllergyApi>('/api/patient-allergies/', {
-        method: 'POST',
-        body: JSON.stringify({
-          patient: pid,
-          allergy: aid,
-          severity: (a.severity || '').trim() || null,
-          reaction_notes: reactionNotes || null,
-        }),
-      });
+    for (const row of paRows.filter((r) => r.patient === pid)) {
+      if (row.id != null) await deleteById('/api/patient-allergies/', row.id);
     }
-  }
-
-  for (const m of input.medications) {
-    if (!(m.genericName || '').trim()) continue;
-    const mid = await ensureMedicationCatalog(m.genericName, m.brandName);
-    const purpose = (m.purpose || '').trim();
-    const prescriber = (m.prescribingPhysician || '').trim();
-    const dosing = [
-      purpose ? `Purpose: ${purpose}` : '',
-      (m.sig || '').trim() ? `Sig: ${(m.sig || '').trim()}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-    const notes = [
-      prescriber ? `Prescriber: ${prescriber}` : '',
-      (m.status || '').trim() ? `Status: ${(m.status || '').trim()}` : '',
-      (m.authoredOn || '').trim() ? `AuthoredOn: ${(m.authoredOn || '').trim()}` : '',
-      (m.fillQuantity || '').trim() ? `FillQuantity: ${(m.fillQuantity || '').trim()}` : '',
-      (m.recordedBy || '').trim() ? `RecordedBy: ${(m.recordedBy || '').trim()}` : '',
-      (m.organization || '').trim() ? `Organization: ${(m.organization || '').trim()}` : '',
-      (m.recordedTime || '').trim() ? `RecordedTime: ${(m.recordedTime || '').trim()}` : '',
-      (m.notesMedication || '').trim(),
-    ]
-      .filter(Boolean)
-      .join('\n');
-    await requestJson<PatientMedicationApi>('/api/patient-medications/', {
-      method: 'POST',
-      body: JSON.stringify({
-        patient: pid,
-        medication: mid,
-        dosage: (m.dosage || '').trim() || null,
-        route: (m.route || '').trim() || null,
-        frequency: (m.frequency || '').trim() || null,
-        dosing_instructions: dosing || null,
-        notes: notes || null,
-        start_date: (m.startDate || '').trim() || null,
-        end_date: (m.endDate || '').trim() || null,
-      }),
-    });
-  }
-
-  if (allowStaffOnlySections) {
-    for (const ins of input.insurances) {
-      if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
-        continue;
-      const provId = await ensureInsuranceProvider(ins.providerName);
-    let planName = (ins.planName || '').trim();
-    if ((ins.groupNumber || '').trim()) {
-      planName = planName
-        ? `${planName} (Group: ${ins.groupNumber.trim()})`
-        : `(Group: ${ins.groupNumber.trim()})`;
+    for (const row of pmRows.filter((r) => r.patient === pid)) {
+      if (row.id != null) await deleteById('/api/patient-medications/', row.id);
     }
-    const policies = await fetchAllPages<InsurancePolicyApi>(
-      '/api/insurance-policies/'
-    );
-    let policy = policies.find(
-      (p) =>
-        p.provider === provId &&
-        p.policy_number === ins.policyNumber.trim()
-    );
-    if (!policy) {
-      policy = await requestJson<InsurancePolicyApi>(
-        '/api/insurance-policies/',
-        {
+    if (allowStaffOnlySections) {
+      for (const row of piRows.filter((r) => r.patient === pid)) {
+        if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
+      }
+    }
+    for (const row of pcRows.filter((r) => r.patient === pid)) {
+      if (row.id != null)
+        await deleteById('/api/patient-chronic-diseases/', row.id);
+    }
+    if (allowStaffOnlySections) {
+      for (const row of incRows.filter((r) => r.patient === pid)) {
+        await apiRequest(`/api/incidents/${row.incident_id}/`, {
+          method: 'DELETE',
+        });
+      }
+    }
+
+    if (!input.noAllergies) {
+      for (const a of input.allergies) {
+        if (!(a.allergyName || '').trim()) continue;
+        const aid = await ensureAllergyCatalog(a.allergyName);
+        const typeLabel = (() => {
+          const t = (a.allergyType || '').trim();
+          if (!t) return '';
+          if (t === 'Other') {
+            const o = (a.allergyTypeOther || '').trim();
+            return o ? `Other (${o})` : 'Other';
+          }
+          return t;
+        })();
+        const reactionNotes = [
+          typeLabel ? `Type: ${typeLabel}` : '',
+          (a.reactionNotes || '').trim()
+            ? `Reaction: ${(a.reactionNotes || '').trim()}`
+            : '',
+          (a.lastObserved || '').trim()
+            ? `LastObserved: ${(a.lastObserved || '').trim()}`
+            : '',
+          (a.allergenId || '').trim()
+            ? `AllergenId: ${(a.allergenId || '').trim()}`
+            : '',
+          (a.category || '').trim() ? `Category: ${(a.category || '').trim()}` : '',
+          (a.criticality || '').trim()
+            ? `Criticality: ${(a.criticality || '').trim()}`
+            : '',
+          (a.code || '').trim() ? `Code: ${(a.code || '').trim()}` : '',
+          (a.codeSystem || '').trim()
+            ? `CodeSystem: ${(a.codeSystem || '').trim()}`
+            : '',
+          (a.recordedBy || '').trim()
+            ? `RecordedBy: ${(a.recordedBy || '').trim()}`
+            : '',
+          (a.organization || '').trim()
+            ? `Organization: ${(a.organization || '').trim()}`
+            : '',
+          (a.recordedTime || '').trim()
+            ? `RecordedTime: ${(a.recordedTime || '').trim()}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' / ');
+        await requestJson<PatientAllergyApi>('/api/patient-allergies/', {
           method: 'POST',
           body: JSON.stringify({
-            provider: provId,
-            policy_number: ins.policyNumber.trim(),
-            plan_name: planName || null,
+            patient: pid,
+            allergy: aid,
+            severity: (a.severity || '').trim() || null,
+            reaction_notes: reactionNotes || null,
           }),
-        }
-      );
-    } else if (planName) {
-      await requestJson<InsurancePolicyApi>(
-        `/api/insurance-policies/${policy.policy_id}/`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ plan_name: planName }),
-        }
-      );
-    }
-    const insKey = `${ins.providerName.trim().toLowerCase()}|${ins.policyNumber.trim().toLowerCase()}`;
-    const preserved = coverageByInsKey.get(insKey) || {};
-    await requestJson<PatientInsuranceApi>('/api/patient-insurances/', {
-      method: 'POST',
-      body: JSON.stringify({
-        patient: pid,
-        policy: policy.policy_id,
-        member_id: (ins.memberID || '').trim() || null,
-        start_date: (ins.startDate || '').trim() || null,
-        end_date: (ins.endDate || '').trim() || null,
-        coverage_details: tab14InsuranceCoverageDetails(ins, preserved),
-      }),
-    });
-    }
-  }
-
-  for (const c of input.chronicConditions) {
-    if (!(c.conditionName || '').trim()) continue;
-    const cleaned = cleanConditionDisplayName(c.conditionName);
-    const name = cleaned.name || c.conditionName;
-    const icd = (c.icdCode || '').trim() || cleaned.icdCode;
-    const diagnosisDate =
-      (c.diagnosisDate || '').trim() || cleaned.diagnosisDate || '';
-    const did = await ensureDiseaseCatalog(name, icd);
-    await requestJson<PatientChronicDiseaseApi>(
-      '/api/patient-chronic-diseases/',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          patient: pid,
-          disease: did,
-          diagnosis_date: diagnosisDate || null,
-          severity: (c.severity || '').trim() || null,
-          pre_existing: (c.prexisting || '').toLowerCase() === 'yes',
-          notes: (c.notesChronicConditions || '').trim() || null,
-          is_active: true,
-        }),
+        });
       }
-    );
-  }
+    }
 
-  if (allowStaffOnlySections) {
-    for (const hv of input.hospitalVisits) {
-      if (!(hv.facilityName || '').trim() || !(hv.visitDate || '').trim()) continue;
-      const hid = await ensureHospital(hv.facilityName);
-      const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
-      const disc = (hv.dischargeDate || '').trim();
-      const att = (hv.attendingPhysician || '').trim();
-      const clinical = [
-        disc ? `Discharge: ${disc}` : '',
-        att ? `Attending: ${att}` : '',
+    for (const m of input.medications) {
+      if (!(m.genericName || '').trim()) continue;
+      const mid = await ensureMedicationCatalog(m.genericName, m.brandName);
+      const purpose = (m.purpose || '').trim();
+      const prescriber = (m.prescribingPhysician || '').trim();
+      const dosing = [
+        purpose ? `Purpose: ${purpose}` : '',
+        (m.sig || '').trim() ? `Sig: ${(m.sig || '').trim()}` : '',
       ]
         .filter(Boolean)
         .join('\n');
-      await requestJson<IncidentApi>('/api/incidents/', {
+      const notes = [
+        prescriber ? `Prescriber: ${prescriber}` : '',
+        (m.status || '').trim() ? `Status: ${(m.status || '').trim()}` : '',
+        (m.authoredOn || '').trim()
+          ? `AuthoredOn: ${(m.authoredOn || '').trim()}`
+          : '',
+        (m.fillQuantity || '').trim()
+          ? `FillQuantity: ${(m.fillQuantity || '').trim()}`
+          : '',
+        (m.recordedBy || '').trim()
+          ? `RecordedBy: ${(m.recordedBy || '').trim()}`
+          : '',
+        (m.organization || '').trim()
+          ? `Organization: ${(m.organization || '').trim()}`
+          : '',
+        (m.recordedTime || '').trim()
+          ? `RecordedTime: ${(m.recordedTime || '').trim()}`
+          : '',
+        (m.notesMedication || '').trim(),
+      ]
+        .filter(Boolean)
+        .join('\n');
+      await requestJson<PatientMedicationApi>('/api/patient-medications/', {
         method: 'POST',
         body: JSON.stringify({
           patient: pid,
-          hospital: hid,
-          occurred_at: occurred,
-          incident_type: (hv.visitType || '').trim() || 'Visit',
-          summary: (hv.reason || '').trim() || '—',
-          clinical_notes: clinical || null,
-          diagnosis_code: (hv.reportId || '').trim() || null,
+          medication: mid,
+          dosage: (m.dosage || '').trim() || null,
+          route: (m.route || '').trim() || null,
+          frequency: (m.frequency || '').trim() || null,
+          dosing_instructions: dosing || null,
+          notes: notes || null,
+          start_date: (m.startDate || '').trim() || null,
+          end_date: (m.endDate || '').trim() || null,
         }),
       });
+    }
+
+    if (allowStaffOnlySections) {
+      for (const ins of input.insurances) {
+        if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
+          continue;
+        const provId = await ensureInsuranceProvider(ins.providerName);
+        let planName = (ins.planName || '').trim();
+        if ((ins.groupNumber || '').trim()) {
+          planName = planName
+            ? `${planName} (Group: ${ins.groupNumber.trim()})`
+            : `(Group: ${ins.groupNumber.trim()})`;
+        }
+        const policies = await fetchAllPages<InsurancePolicyApi>(
+          '/api/insurance-policies/'
+        );
+        let policy = policies.find(
+          (p) =>
+            p.provider === provId &&
+            p.policy_number === ins.policyNumber.trim()
+        );
+        if (!policy) {
+          policy = await requestJson<InsurancePolicyApi>(
+            '/api/insurance-policies/',
+            {
+              method: 'POST',
+              body: JSON.stringify({
+                provider: provId,
+                policy_number: ins.policyNumber.trim(),
+                plan_name: planName || null,
+              }),
+            }
+          );
+        } else if (planName) {
+          await requestJson<InsurancePolicyApi>(
+            `/api/insurance-policies/${policy.policy_id}/`,
+            {
+              method: 'PATCH',
+              body: JSON.stringify({ plan_name: planName }),
+            }
+          );
+        }
+        const insKey = `${ins.providerName.trim().toLowerCase()}|${ins.policyNumber.trim().toLowerCase()}`;
+        const preserved = coverageByInsKey.get(insKey) || {};
+        await requestJson<PatientInsuranceApi>('/api/patient-insurances/', {
+          method: 'POST',
+          body: JSON.stringify({
+            patient: pid,
+            policy: policy.policy_id,
+            member_id: (ins.memberID || '').trim() || null,
+            start_date: (ins.startDate || '').trim() || null,
+            end_date: (ins.endDate || '').trim() || null,
+            coverage_details: tab14InsuranceCoverageDetails(ins, preserved),
+          }),
+        });
+      }
+    }
+
+    for (const c of input.chronicConditions) {
+      if (!(c.conditionName || '').trim()) continue;
+      const cleaned = cleanConditionDisplayName(c.conditionName);
+      const name = cleaned.name || c.conditionName;
+      const icd = (c.icdCode || '').trim() || cleaned.icdCode;
+      const diagnosisDate =
+        (c.diagnosisDate || '').trim() || cleaned.diagnosisDate || '';
+      const did = await ensureDiseaseCatalog(name, icd);
+      await requestJson<PatientChronicDiseaseApi>(
+        '/api/patient-chronic-diseases/',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            patient: pid,
+            disease: did,
+            diagnosis_date: diagnosisDate || null,
+            severity: (c.severity || '').trim() || null,
+            pre_existing: (c.prexisting || '').toLowerCase() === 'yes',
+            notes: (c.notesChronicConditions || '').trim() || null,
+            is_active: true,
+          }),
+        }
+      );
+    }
+
+    if (allowStaffOnlySections) {
+      for (const hv of input.hospitalVisits) {
+        if (!(hv.facilityName || '').trim() || !(hv.visitDate || '').trim())
+          continue;
+        const hid = await ensureHospital(hv.facilityName);
+        const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
+        const disc = (hv.dischargeDate || '').trim();
+        const att = (hv.attendingPhysician || '').trim();
+        const clinical = [
+          disc ? `Discharge: ${disc}` : '',
+          att ? `Attending: ${att}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+        await requestJson<IncidentApi>('/api/incidents/', {
+          method: 'POST',
+          body: JSON.stringify({
+            patient: pid,
+            hospital: hid,
+            occurred_at: occurred,
+            incident_type: (hv.visitType || '').trim() || 'Visit',
+            summary: (hv.reason || '').trim() || '—',
+            clinical_notes: clinical || null,
+            diagnosis_code: (hv.reportId || '').trim() || null,
+          }),
+        });
+      }
+    }
+  };
+
+  // Patient Information + Emergency Contact are already PATCHed above.
+  // Related clinical sync must not undo a successful patient-portal Save.
+  if (allowStaffOnlySections) {
+    await syncRelatedClinical();
+  } else {
+    try {
+      await syncRelatedClinical();
+    } catch {
+      // Keep demographics/emergency-contact Save; staff can finish related rows.
     }
   }
 }

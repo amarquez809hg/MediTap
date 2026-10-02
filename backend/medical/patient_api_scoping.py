@@ -36,12 +36,13 @@ def scoped_patient_queryset(request: Request) -> QuerySet[models.Patient]:
     if patient_has_intake_editor_role(request):
         return base
     email = (getattr(user, "email", None) or "").strip()
-    if email:
-        # Single-query filter (avoid queryset | queryset, which can break on PostgreSQL).
-        return base.filter(
-            Q(portal_user=user)
-            | Q(portal_user__isnull=True, email__iexact=email)
-        ).distinct()
+    username = (getattr(user, "username", None) or "").strip()
+    login_emails = [e for e in (email, username) if e and "@" in e]
+    if login_emails:
+        email_q = Q()
+        for e in login_emails:
+            email_q |= Q(portal_user__isnull=True, email__iexact=e)
+        return base.filter(Q(portal_user=user) | email_q).distinct()
     return base.filter(portal_user=user)
 
 

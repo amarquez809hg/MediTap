@@ -2151,9 +2151,15 @@ const Tab14: React.FC = () => {
             const msg =
                 e instanceof Error ? e.message : 'Could not save to server.';
             if (/\b403\b/.test(msg) || /do not have permission/i.test(msg)) {
-                setBackendError(
-                    'Staff access is required to save Patient Information and Emergency Contact. Use Staff mode (sign in with a staff account) or open this chart from the Admin portal.'
-                );
+                if (canEditPatientRecords) {
+                    setBackendError(
+                        'Staff session could not save this chart. Re-enter Staff mode or open the chart from the Admin portal.'
+                    );
+                } else {
+                    setBackendError(
+                        'Could not save your chart from this login. Confirm you are signed in with the same e-mail as the patient record, then try Save again. If it still fails, ask clinic staff to link your account.'
+                    );
+                }
             } else {
                 setBackendError(msg);
             }
