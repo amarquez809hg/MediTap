@@ -1,9 +1,10 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `172` (`MT-AG-168`)
-- Next register entry should start at: `173` (`MT-AG-169`)
-- Checkpoint date: `2026-10-01`
+- Last completed register entry: `173` (`MT-AG-169`)
+- Next register entry should start at: `174` (`MT-AG-170`)
+- Checkpoint date: `2026-10-02`
 - Scope baseline (Set 6 — since entry 65):
+  - Patient PDF intake Save without warning hard-block (`MT-AG-169`)
   - Demographics bleed cleanup + Tab14 Save staff gate (`MT-AG-168`)
   - Conditions/Hospitals name cleanup (section bleed) (`MT-AG-167`)
   - Merge DESFire from main onto this MediTap machine (`MT-AG-166`)
@@ -13,4 +14,3 @@
   - DESFire card URL opens a limited public profile (`MT-AG-161`)
   - Epic multi-hit dated batches for all sidebar sections (`MT-AG-160`)
   - Epic Note from Mayo Clinic multi-hit dated batches (`MT-AG-159`)
-  - Epic Demographics sex/DOB + aliases + split Communication (`MT-AG-158`)

@@ -1608,7 +1608,7 @@ const Tab14: React.FC = () => {
             });
             const reviewNote =
                 reviewGate.unresolvedCount > 0
-                    ? ` Review ${reviewGate.unresolvedCount} flagged field(s) (Accept / Reject) before Save.`
+                    ? ` ${reviewGate.unresolvedCount} flagged field(s) available for optional Accept / Reject - Save keeps imported values.`
                     : '';
             let notice = `${formatIntakeCompletenessSummary(completeness)}${reviewNote}`;
             // Athena / portability training signal — surfaces sidebar gaps core score hides
@@ -1991,12 +1991,28 @@ const Tab14: React.FC = () => {
                 decisions: pdfIndexedReview,
             }
         );
+        // Soft gate: Save keeps imported PDF values (same as Accept all) instead of blocking.
         if (!reviewGate.canSave) {
-            setBackendError(
-                `Resolve ${reviewGate.unresolvedCount} PDF-imported field warning(s) before Save (Accept to keep, Reject to clear).`
+            const next = acceptAllPatientFieldWarnings(
+                pdfFieldWarnings,
+                pdfFieldReview,
+                {
+                    allergies: pdfAllergyWarnings,
+                    medications: pdfMedicationWarnings,
+                    chronic: pdfChronicWarnings,
+                    insurances: pdfInsuranceWarnings,
+                    hospital: pdfHospitalWarnings,
+                    decisions: pdfIndexedReview,
+                }
             );
-            setActiveSection(0);
-            return false;
+            setPdfFieldWarnings(next.warnings);
+            setPdfFieldReview(next.decisions);
+            setPdfIndexedReview(next.indexedDecisions);
+            setPdfAllergyWarnings(next.allergies);
+            setPdfMedicationWarnings(next.medications);
+            setPdfChronicWarnings(next.chronic);
+            setPdfInsuranceWarnings(next.insurances);
+            setPdfHospitalWarnings(next.hospital);
         }
 
         setSaving(true);
@@ -2148,16 +2164,9 @@ const Tab14: React.FC = () => {
     };
 
     const requestSaveForm = () => {
-        if (canEditPatientRecords) {
-            void saveForm();
-            return;
-        }
-        staffGate.gateEdit(
-            () => {
-                void saveForm();
-            },
-            'Staff credentials are required to save chart fields. The patient stays signed in.'
-        );
+        // Patients save PDF-imported intake to their own chart without staff elevation.
+        // Staff elevation remains available for locked manual edits / staff-only sections.
+        void saveForm();
     };
 
     const saveAndLeavePage = async () => {
@@ -2181,12 +2190,8 @@ const Tab14: React.FC = () => {
             await run();
             return;
         }
-        staffGate.gateEdit(
-            () => {
-                void run();
-            },
-            'Staff credentials are required to save chart fields before leaving.'
-        );
+        // Patient leave-with-save uses the same own-chart path (no staff modal).
+        await run();
     };
 
     const leaveWithoutSaving = () => {

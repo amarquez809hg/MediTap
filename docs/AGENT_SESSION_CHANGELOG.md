@@ -1299,6 +1299,33 @@
 
 ---
 
+### Entry 173 — `MT-AG-169`
+
+**Type:** Bug Fix / UX
+
+**Key:** `MT-AG-169`
+
+**Summary:** Let patient-portal PDF intake Save proceed without Accept/Reject hard-block; patients may PATCH their own chart.
+
+**What was done:**
+
+- Save auto-accepts remaining PDF field warnings (keeps imported values) instead of blocking with “Resolve N warnings.”
+- Patients no longer forced through Staff elevation solely to Save PDF intake.
+- Backend: `OwnChartOrIntakeEditorPermission` allows a user to PATCH the Patient linked via `portal_user`.
+
+**Outcome:** After uploading a medical-record PDF by type, Save on the user portal persists the extracted chart without clearing 20 Accept/Reject clicks first.
+
+**Primary paths:** `Tab14.tsx`, `medical/permissions.py`, `medical/views.py`, `tests_own_chart_update.py`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **174** / **`MT-AG-170`**
+
+*Last updated: entry 173 (patient PDF intake Save).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

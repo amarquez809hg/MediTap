@@ -14,7 +14,7 @@ from .patient_api_scoping import (
     filter_by_allowed_patients,
     scoped_patient_queryset,
 )
-from .permissions import IntakeEditorWritePermission
+from .permissions import IntakeEditorWritePermission, OwnChartOrIntakeEditorPermission
 from medapp.admin_ops import log_admin_activity, request_admin_patient_id, user_is_admin_operator
 
 
@@ -28,11 +28,14 @@ class PatientViewSet(BaseViewSet):
 
     def get_permissions(self):
         # Patients may create their bootstrap chart once and always read it.
-        # Updates/deletes are staff-only (admin portal on-behalf edits).
+        # Patients may PATCH their own chart (PDF intake save from user portal).
+        # Deletes remain staff-only.
         if self.request.method in permissions.SAFE_METHODS:
             return [IsAuthenticated()]
         if self.request.method == "POST":
             return [IsAuthenticated()]
+        if self.request.method in ("PUT", "PATCH"):
+            return [IsAuthenticated(), OwnChartOrIntakeEditorPermission()]
         return [IsAuthenticated(), IntakeEditorWritePermission()]
 
     def get_queryset(self):
