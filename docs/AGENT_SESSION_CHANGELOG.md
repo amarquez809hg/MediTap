@@ -1353,6 +1353,60 @@
 
 ---
 
+### Entry 175 — `MT-AG-171`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-171`
+
+**Summary:** Selecting MEDITECH must always run the CCD dialect parsers — not fall back to demographics-only general extract when the banner detector misses.
+
+**What was done:**
+
+- Confirmed Jordan MEDITECH fixture still scores 100% with `preferredVendor: 'meditech'` (extraction work intact).
+- When the user explicitly picks MEDITECH, `parseMeditechCcdDocument` runs even if `isMeditechCcdDocument` is false, so soft detector misses no longer wipe Related Person / allergies / PoT / etc.
+
+**Outcome:** MEDITECH selection keeps the full CCD section fill path instead of collapsing to Demographics-only general extract.
+
+**Primary paths:** `tab14DocumentParse.ts`, `ehrDocumentTypes.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **176** / **`MT-AG-172`**
+
+*Last updated: entry 175 (MEDITECH preferred dialect force).*
+
+---
+
+### Entry 176 — `MT-AG-172`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-172`
+
+**Summary:** Athena and Epic document-source selection had the same soft-detector gap as MEDITECH — explicit picks fell back to demographics-only general extract instead of the trained dialect parsers.
+
+**What was done:**
+
+- Audited preferred-vendor routing: Athena and Epic still required banner detectors before running their dialects.
+- Forced `parseAthenaPortabilityDocument` / `parseEpicHealthSummaryDocument` whenever the user explicitly selects Athena or Epic.
+- Kept Epic’s no-general-merge path for preferred Epic so table-header noise cannot overwrite the dialect result.
+- Added regression tests for Athena and Epic soft-detector misses.
+
+**Outcome:** Selecting Athena, MEDITECH, or Epic on the site always uses the established extraction system for that vendor.
+
+**Primary paths:** `tab14DocumentParse.ts`, `ehrDocumentTypes.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **177** / **`MT-AG-173`**
+
+*Last updated: entry 176 (Athena/Epic preferred dialect force).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

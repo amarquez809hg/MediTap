@@ -2152,19 +2152,31 @@ export function parseTab14IntakeDocument(
 
   // Generic / Other: skip specialized Athena/MEDITECH/Epic/NextGen dialects.
   if (preferred !== 'generic') {
-    if (shouldRunVendorParser('epic', preferred) && isEpicHealthSummaryDocument(rawText)) {
+    if (
+      shouldRunVendorParser('epic', preferred) &&
+      (preferred === 'epic' || isEpicHealthSummaryDocument(rawText))
+    ) {
+      // Explicit Epic selection always runs the My Health Summary dialect so a
+      // soft detector miss does not collapse to demographics-only general extract.
       specialized.push(parseEpicHealthSummaryDocument(rawText));
     }
     if (
       shouldRunVendorParser('athena', preferred) &&
-      (isAthenaPortabilityDocument(rawText) || isAthenaPortabilityDocument(preprocessed))
+      (preferred === 'athena' ||
+        isAthenaPortabilityDocument(rawText) ||
+        isAthenaPortabilityDocument(preprocessed))
     ) {
+      // Explicit Athena selection always runs Data Portability dialect parsers.
       specialized.push(parseAthenaPortabilityDocument(preprocessed));
     }
     if (
       shouldRunVendorParser('meditech', preferred) &&
-      (isMeditechCcdDocument(rawText) || isMeditechCcdDocument(preprocessed))
+      (preferred === 'meditech' ||
+        isMeditechCcdDocument(rawText) ||
+        isMeditechCcdDocument(preprocessed))
     ) {
+      // Explicit MEDITECH selection always runs the CCD dialect so a soft
+      // detector miss does not collapse to demographics-only general extract.
       specialized.push(parseMeditechCcdDocument(preprocessed));
     }
     // NextGen: detector only for now — when matched under preferred/auto, we still
@@ -2180,9 +2192,11 @@ export function parseTab14IntakeDocument(
     return withSanitizedPatientFieldWarnings(mergeIntakeParseResults(generic, general));
   }
 
-  // Epic preferred: do not merge general extract (table-header names / department phones).
-  if (preferred === 'epic' && specialized.length === 1) {
-    return withSanitizedPatientFieldWarnings(specialized[0]);
+  // Explicit Epic selection: prefer the Epic dialect result (no general-extract
+  // merge that injects table-header names / department phones). Epic is the last
+  // specialized vendor push when preferred === 'epic' (demos may precede it).
+  if (preferred === 'epic' && specialized.length > 0) {
+    return withSanitizedPatientFieldWarnings(specialized[specialized.length - 1]!);
   }
 
   const merged = withSanitizedPatientFieldWarnings(mergeIntakeParseResults(general, ...specialized));

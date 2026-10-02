@@ -12,7 +12,9 @@ import {
 } from './ehrSidebarNav';
 import { sliceAllEpicResultsSessions } from './epicMyHealthSummaryToc';
 import { isNextGenHealthcareDocument } from './nextgenHealthcareParse';
-import { parseTab14IntakeDocument } from './tab14DocumentParse';
+import { isMeditechCcdDocument } from './meditechCcdParse';
+import { isEpicHealthSummaryDocument } from './epicHealthSummaryParse';
+import { isAthenaPortabilityDocument, parseTab14IntakeDocument } from './tab14DocumentParse';
 
 describe('ehrDocumentTypes', () => {
   it('lists five clinic/generic vendors for the upload panel', () => {
@@ -189,6 +191,60 @@ Allergies Allergen Id Allergen Category
     expect(generic.patientFields.sexAtBirth === 'Female' || !generic.patientFields.givenName).toBe(
       true
     );
+  });
+
+  it('explicit MEDITECH preference runs CCD dialect even without banner hit', () => {
+    // Soft detector miss (no "Patient Health Summary for") must not drop to general-only.
+    const softMeditech = `
+MEDITECH Continuity of Care Document CCD MyHealth Patient Portal
+Demographics Sex: Female
+DOB: 01/02/1990
+`;
+    expect(isMeditechCcdDocument(softMeditech)).toBe(false);
+    const forced = parseTab14IntakeDocument(softMeditech, { preferredVendor: 'meditech' });
+    const generic = parseTab14IntakeDocument(softMeditech, { preferredVendor: 'generic' });
+    expect(forced.extendedSections?.patientInstructions?.[0]?.detail).toMatch(
+      /Not present in MEDITECH/i
+    );
+    expect(generic.extendedSections?.patientInstructions?.[0]?.detail ?? '').not.toMatch(
+      /Not present in MEDITECH/i
+    );
+  });
+
+  it('explicit Athena preference runs Data Portability dialect even without banner hit', () => {
+    const softAthena = `
+Table of Contents
+Demographics Sex: Female
+DOB: 03/14/1985
+Allergies Allergen Id Allergen Category
+Penicillin 123 Drug
+`;
+    expect(isAthenaPortabilityDocument(softAthena)).toBe(false);
+    const forced = parseTab14IntakeDocument(softAthena, { preferredVendor: 'athena' });
+    const generic = parseTab14IntakeDocument(softAthena, { preferredVendor: 'generic' });
+    // Dialect must run (not demographics-only general collapse).
+    expect(forced.patientFields.sexAtBirth).toBe('Female');
+    expect(forced.extendedSections).toBeTruthy();
+    expect(JSON.stringify(forced)).not.toEqual(JSON.stringify(generic));
+  });
+
+  it('explicit Epic preference runs health-summary dialect even without banner hit', () => {
+    const softEpic = `
+Patient Name Jane Doe Communication
+Language English
+Allergies
+Penicillin — Rash
+Medications
+Lisinopril 10 mg oral daily
+`;
+    expect(isEpicHealthSummaryDocument(softEpic)).toBe(false);
+    const forced = parseTab14IntakeDocument(softEpic, { preferredVendor: 'epic' });
+    const generic = parseTab14IntakeDocument(softEpic, { preferredVendor: 'generic' });
+    // Forced Epic path returns the dialect result (not general merge).
+    expect(forced.patientFields.givenName || forced.allergies.length || forced.medications.length).toBeTruthy();
+    // Generic must not invent Epic multi-hit inventory.
+    expect(generic.epicDemographicsOccurrences ?? []).toHaveLength(0);
+    expect(forced).not.toEqual(generic);
   });
 
   it('keeps NextGen detector conservative until fixtures exist', () => {
