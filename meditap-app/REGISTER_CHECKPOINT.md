@@ -1,9 +1,10 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `176` (`MT-AG-172`)
-- Next register entry should start at: `177` (`MT-AG-173`)
+- Last completed register entry: `177` (`MT-AG-173`)
+- Next register entry should start at: `178` (`MT-AG-174`)
 - Checkpoint date: `2026-10-02`
 - Scope baseline (Set 6 — since entry 65):
+  - Restore extended sections from parse_snapshot on load (`MT-AG-173`)
   - Athena/Epic preferred always run dialect parsers (`MT-AG-172`)
   - MEDITECH preferred always runs CCD dialect (`MT-AG-171`)
   - Own-chart claim + patient portal Save (Emergency Contact) (`MT-AG-170`)

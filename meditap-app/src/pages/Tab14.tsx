@@ -77,6 +77,11 @@ import {
     mergePdfPatientFields,
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
+import {
+    extendedSectionsFromSnapshot,
+    mergeSnapshotIntoClinicalSnapshot,
+    pickRichestParseSnapshot,
+} from '../intake/restoreParseSnapshot';
 import type {
     Tab14AllergyFieldKey,
     Tab14AllergyRowWarnings,
@@ -2091,9 +2096,44 @@ const Tab14: React.FC = () => {
             }
 
             clearTab14DraftKeysOnly();
+            // Extended sections live in parse_snapshot only — never wipe them on API refresh.
+            const keptExtended = extendedSections;
+            const keptClinical = buildMergeSnapshot();
             const refreshed = await loadTab14FromBackend(username);
             if (refreshed.hasPatient) {
                 applyTab14Bundle(refreshed);
+                setExtendedSections(keptExtended);
+                // Patient portal clinical sync may be partial; keep richer in-memory rows.
+                applySnapshotToForm(
+                    mergeSnapshotIntoClinicalSnapshot(
+                        {
+                            allergies: refreshed.allergies,
+                            noAllergies: refreshed.noAllergies,
+                            medications: refreshed.medications,
+                            noMedications: refreshed.medications.length === 0,
+                            chronicConditions: refreshed.chronicConditions,
+                            noChronicConditions:
+                                refreshed.chronicConditions.length === 0 ||
+                                (refreshed.chronicConditions.length === 1 &&
+                                    /no\s+known\s+problems/i.test(
+                                        refreshed.chronicConditions[0]?.conditionName ?? ''
+                                    )),
+                            insurances: refreshed.insurances,
+                            hospitalVisits: mapStoredHospitalVisits(refreshed.hospitalVisits),
+                            labPanels: nextLabPanels.map(labResultRowToTab14Panel),
+                        },
+                        {
+                            allergies: keptClinical.allergies,
+                            medications: keptClinical.medications,
+                            chronicConditions: keptClinical.chronicConditions,
+                            insurances: keptClinical.insurances,
+                            hospitalVisits: keptClinical.hospitalVisits,
+                            labPanels: keptClinical.labPanels,
+                            noKnownDrugAllergies: keptClinical.noAllergies,
+                            noKnownProblems: keptClinical.noChronicConditions,
+                        }
+                    )
+                );
             }
             const snapshotPatient = refreshed.hasPatient
                 ? {
@@ -2117,7 +2157,7 @@ const Tab14: React.FC = () => {
                                   ...row,
                                   allergyTypeOther: row.allergyTypeOther ?? '',
                               }))
-                            : [defaultAllergy]
+                            : allergies
                         : allergies,
                     medications:
                         refreshed.hasPatient && refreshed.medications.length > 0
@@ -2128,12 +2168,16 @@ const Tab14: React.FC = () => {
                             ? refreshed.chronicConditions
                             : chronicConditions,
                     hospitalVisits: refreshed.hasPatient
-                        ? mapStoredHospitalVisits(refreshed.hospitalVisits)
+                        ? refreshed.hospitalVisits.length > 0
+                            ? mapStoredHospitalVisits(refreshed.hospitalVisits)
+                            : hospitalVisits
                         : hospitalVisits,
                     labPanels: nextLabPanels,
                     noAllergies: refreshed.hasPatient ? refreshed.noAllergies : noAllergies,
                     noMedications: refreshed.hasPatient
                         ? refreshed.medications.length === 0
+                            ? noMedications
+                            : false
                         : noMedications,
                     noChronicConditions: refreshed.hasPatient
                         ? refreshed.chronicConditions.length === 0 ||
@@ -2566,15 +2610,6 @@ const Tab14: React.FC = () => {
                 if (bundle.hasPatient) {
                     applyTab14Bundle(bundle);
                     try {
-                        const { panels } = await fetchPatientLabPanels(username);
-                        if (!cancelled && panels.length > 0) {
-                            setLabPanels(panels.map(mapPatientLabPanelToRow));
-                            setRemovedLabPanelServerIds([]);
-                        }
-                    } catch {
-                        /* lab panels optional on load */
-                    }
-                    try {
                         const patient = await ensurePatientForCurrentSession(username);
                         if (patient && !cancelled) {
                             const docs = await listPatientDocuments(patient.patient_id);
@@ -2602,10 +2637,54 @@ const Tab14: React.FC = () => {
                                                 : doc.status.replace(/_/g, ' '),
                                     }))
                                 );
+                                // Related Person / PoT / Care Team / etc. only live on
+                                // parse_snapshot — restore them so sections are not empty
+                                // after refresh when Demographics already loaded from API.
+                                const snap = pickRichestParseSnapshot(docs);
+                                const restoredExt = extendedSectionsFromSnapshot(snap);
+                                if (restoredExt) {
+                                    setExtendedSections(restoredExt);
+                                }
+                                if (snap) {
+                                    applySnapshotToForm(
+                                        mergeSnapshotIntoClinicalSnapshot(
+                                            {
+                                                allergies: bundle.allergies,
+                                                noAllergies: bundle.noAllergies,
+                                                medications: bundle.medications,
+                                                noMedications:
+                                                    bundle.medications.length === 0,
+                                                chronicConditions: bundle.chronicConditions,
+                                                noChronicConditions:
+                                                    bundle.chronicConditions.length === 0 ||
+                                                    (bundle.chronicConditions.length === 1 &&
+                                                        /no\s+known\s+problems/i.test(
+                                                            bundle.chronicConditions[0]
+                                                                ?.conditionName ?? ''
+                                                        )),
+                                                insurances: bundle.insurances,
+                                                hospitalVisits: mapStoredHospitalVisits(
+                                                    bundle.hospitalVisits
+                                                ),
+                                                labPanels: [],
+                                            },
+                                            snap
+                                        )
+                                    );
+                                }
                             }
                         }
                     } catch {
                         /* vault list optional on load */
+                    }
+                    try {
+                        const { panels } = await fetchPatientLabPanels(username);
+                        if (!cancelled && panels.length > 0) {
+                            setLabPanels(panels.map(mapPatientLabPanelToRow));
+                            setRemovedLabPanelServerIds([]);
+                        }
+                    } catch {
+                        /* lab panels optional on load */
                     }
                 }
             } catch (e) {

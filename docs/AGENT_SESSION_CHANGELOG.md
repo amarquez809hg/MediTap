@@ -1407,6 +1407,32 @@
 
 ---
 
+### Entry 177 — `MT-AG-173`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-173`
+
+**Summary:** Related Person / Care Team / PoT / Assessment showed “No entries yet” after refresh because extended sections were never restored from document parse_snapshot — only Demographics came back from the Patient API.
+
+**What was done:**
+
+- On Tab14 load, restore `extendedSections` (and sparse clinical rows) from the richest patient-document `parse_snapshot`.
+- After Save, keep in-memory extended sections and do not wipe richer clinical rows when the API refresh is empty/partial.
+
+**Outcome:** PDF-extracted portability sections remain visible after reload, not only Demographics.
+
+**Primary paths:** `restoreParseSnapshot.ts`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **178** / **`MT-AG-174`**
+
+*Last updated: entry 177 (restore parse_snapshot sections).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix
