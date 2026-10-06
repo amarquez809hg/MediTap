@@ -1538,6 +1538,32 @@ export async function fetchDashboardDetail(
         validUntil: i.endDate || '—',
       }));
   }
+  let allergiesOut = allergies;
+  if (!allergiesOut.length && snap?.allergies?.length) {
+    allergiesOut = snap.allergies
+      .filter((a) => (a.allergyName || '').trim())
+      .map((a) => ({
+        name: a.allergyName,
+        typeLabel: a.allergyType || a.category || '—',
+        reaction: a.reactionNotes || '—',
+        severity: a.severity || '—',
+        lastObserved: a.lastObserved || '—',
+      }));
+  }
+  let medicationsOut = medications;
+  if (!medicationsOut.length && snap?.medications?.length) {
+    medicationsOut = snap.medications
+      .filter((m) => (m.genericName || '').trim() || (m.brandName || '').trim())
+      .map((m) => ({
+        genericName: m.genericName || '—',
+        brandName: m.brandName || '—',
+        dosage: m.dosage || '—',
+        frequency: m.frequency || '—',
+        purpose: m.purpose || '—',
+        prescriber: m.prescribingPhysician || '—',
+        startDate: m.startDate || '—',
+      }));
+  }
   const snapLast = snapshotLastVisitLabel(snap);
   const lastVisitFromApi =
     summary.healthSummary.lastVisit &&
@@ -1558,10 +1584,12 @@ export async function fetchDashboardDetail(
       lastVisit,
       allergies: Math.max(
         summary.healthSummary.allergies,
+        allergiesOut.length,
         snap?.allergies?.length ?? 0
       ),
       medications: Math.max(
         summary.healthSummary.medications,
+        medicationsOut.length,
         snap?.medications?.length ?? 0
       ),
     },
@@ -1574,8 +1602,8 @@ export async function fetchDashboardDetail(
       email: current.email || summary.email || '—',
       phone: current.phone || '—',
     },
-    allergies,
-    medications,
+    allergies: allergiesOut,
+    medications: medicationsOut,
     chronicConditions,
     insurance,
     hospital,

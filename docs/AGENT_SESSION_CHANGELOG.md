@@ -1487,6 +1487,34 @@
 
 ---
 
+### Entry 180 — `MT-AG-176`
+
+**Type:** Feature / UX
+
+**Key:** `MT-AG-176`
+
+**Summary:** Dashboard keeps the existing health-metrics strip and appointments, then surfaces the five main clinical sections from Patient Information: Allergies, Medications, Problems, Results, and Past Encounters.
+
+**What was done:**
+
+- Hydrate allergy/medication detail rows from intake snapshot when API lists are empty.
+- Add Allergies and Medications preview cards on Tab1; rename/reorder Problems, Results, Past Encounters.
+- Cap each clinical preview at four rows with a “showing N of M” hint.
+- Optional add-button on dashboard section actions (allergies/meds link to intake only).
+
+**Outcome:** Dashboard at-a-glance metrics stay; the main five clinical surfaces show chart/PDF data below appointments.
+
+**Primary paths:** `Tab1.tsx`, `Tab1.css`, `api.ts`, `DashboardSectionActions.tsx`, `en.json` / `es.json` / `zh.json`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **181** / **`MT-AG-177`**
+
+*Last updated: entry 180 (dashboard main-5 clinical sections).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

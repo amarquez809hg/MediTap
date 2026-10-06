@@ -227,6 +227,63 @@
     margin: 0 0 16px;
 }
 
+.dashboard-clinical-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+}
+
+.dashboard-clinical-card {
+    background: var(--meditap-surface, #fff);
+    border: 1px solid var(--meditap-border, #e5e7eb);
+    border-radius: var(--meditap-radius, 12px);
+    box-shadow: var(--meditap-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+    padding: 16px 18px;
+}
+
+.dashboard-clinical-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.dashboard-clinical-card__header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--meditap-primary, #0f766e);
+}
+
+.dashboard-clinical-card__badge {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--meditap-accent, #0891b2);
+    background: rgba(8, 145, 178, 0.1);
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+.dashboard-clinical-card p {
+    margin: 0 0 6px;
+    font-size: 0.9rem;
+    color: var(--meditap-text-muted, #555);
+    line-height: 1.4;
+}
+
+.dashboard-clinical-card p:last-child {
+    margin-bottom: 0;
+}
+
+.dashboard-more-hint {
+    margin: -4px 0 20px;
+    font-size: 0.85rem;
+    color: var(--meditap-text-muted, #777);
+}
+
 .dashboard-empty-strip__actions {
     display: flex;
     flex-wrap: wrap;

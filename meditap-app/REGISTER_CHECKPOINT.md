@@ -1,9 +1,10 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `179` (`MT-AG-175`)
-- Next register entry should start at: `180` (`MT-AG-176`)
+- Last completed register entry: `180` (`MT-AG-176`)
+- Next register entry should start at: `181` (`MT-AG-177`)
 - Checkpoint date: `2026-10-06`
 - Scope baseline (Set 6 — since entry 65):
+  - Dashboard main-5 clinical sections + keep health metrics (`MT-AG-176`)
   - Persist/reparse PDF snapshot so Tab14 left menu is not empty (`MT-AG-175`)
   - Dashboard/tabs hydrate from Patient Information snapshot (`MT-AG-174`)
   - Restore extended sections from parse_snapshot on load (`MT-AG-173`)

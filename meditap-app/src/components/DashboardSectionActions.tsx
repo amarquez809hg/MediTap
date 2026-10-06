@@ -5,8 +5,8 @@ import './DashboardSectionActions.css';
 type DashboardSectionActionsProps = {
   viewHref: string;
   viewLabel: string;
-  addLabel: string;
-  onAddEntry: () => void;
+  addLabel?: string;
+  onAddEntry?: () => void;
 };
 
 const DashboardSectionActions: React.FC<DashboardSectionActionsProps> = ({
@@ -22,13 +22,15 @@ const DashboardSectionActions: React.FC<DashboardSectionActionsProps> = ({
     >
       <i className="fas fa-external-link-alt" aria-hidden /> {viewLabel}
     </PortalNavLink>
-    <button
-      type="button"
-      className="book-btn dashboard-tab-section__btn dashboard-section-actions__add meditap-glass-btn meditap-glass-btn--compact meditap-glass-btn--outline"
-      onClick={onAddEntry}
-    >
-      <i className="fas fa-plus" aria-hidden /> {addLabel}
-    </button>
+    {addLabel && onAddEntry ? (
+      <button
+        type="button"
+        className="book-btn dashboard-tab-section__btn dashboard-section-actions__add meditap-glass-btn meditap-glass-btn--compact meditap-glass-btn--outline"
+        onClick={onAddEntry}
+      >
+        <i className="fas fa-plus" aria-hidden /> {addLabel}
+      </button>
+    ) : null}
   </div>
 );
 

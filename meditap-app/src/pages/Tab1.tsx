@@ -70,6 +70,8 @@ const defaultUserProfile = {
   },
 };
 
+const DASHBOARD_PREVIEW_LIMIT = 4;
+
 interface MetricTileProps {
   iconClass: string;
   title: string;
@@ -347,6 +349,13 @@ const Tab1: React.FC = () => {
   }, [username, dashboardRefreshKey]);
 
   const hs = user.healthSummary;
+  const allergyRows = detail?.allergies ?? [];
+  const medicationRows = detail?.medications ?? [];
+  const allergyPreview = allergyRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const medicationPreview = medicationRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const labPreview = labRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const incidentPreview = incidentRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const chronicPreview = chronicConditions.slice(0, DASHBOARD_PREVIEW_LIMIT);
 
   const labAttention = React.useMemo(() => countLabAttention(labPanels), [labPanels]);
 
@@ -609,105 +618,135 @@ const Tab1: React.FC = () => {
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-vial"></i> {t('dashboard.labResults')}
+                <i className="fas fa-allergies"></i> {t('dashboard.allergies')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                {t('dashboard.labResultsSubtitleLong')}
+                {t('dashboard.allergiesSubtitle')}
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/labs"
-              viewLabel={t('dashboard.labResultsTab')}
-              addLabel={t('dashboard.addLabResult')}
-              onAddEntry={() =>
-                requestAddEntry('/tab7', t('dashboard.staffHintLabs'))
-              }
+              viewHref="/app/intake"
+              viewLabel={t('dashboard.allergiesTab')}
             />
           </header>
-
-          {labLoading && (
+          {loadingSummary ? (
             <p className="content-subtitle dashboard-preview-block">
-              {t('dashboard.loadingLabs')}
+              {t('dashboard.loadingAllergies')}
             </p>
-          )}
-          {labError && !labLoading && (
-            <p
-              className="content-subtitle dashboard-preview-block"
-              style={{ color: '#ffcece' }}
-            >
-              {formatSessionOrTokenErrorForUi(labError)}
-            </p>
-          )}
-          {!labLoading && !labError && labRows.length > 0 && (
-            <div className="results-list results-list--dashboard dashboard-preview-block">
-              {labRows.map((result) => (
-                <LabResultCard key={result.id} result={result} />
+          ) : allergyPreview.length > 0 ? (
+            <div className="dashboard-clinical-list dashboard-preview-block" role="list">
+              {allergyPreview.map((row, idx) => (
+                <article
+                  key={`allergy-${idx}-${row.name}`}
+                  className="dashboard-clinical-card"
+                  role="listitem"
+                >
+                  <header className="dashboard-clinical-card__header">
+                    <h3>{row.name || '—'}</h3>
+                    <span className="dashboard-clinical-card__badge">
+                      {row.severity || '—'}
+                    </span>
+                  </header>
+                  <p>
+                    <strong>{t('dashboard.allergyType')}</strong> {row.typeLabel || '—'}
+                  </p>
+                  <p>
+                    <strong>{t('dashboard.allergyReaction')}</strong> {row.reaction || '—'}
+                  </p>
+                  <p>
+                    <strong>{t('dashboard.allergyLastObserved')}</strong>{' '}
+                    {row.lastObserved || '—'}
+                  </p>
+                </article>
               ))}
             </div>
-          )}
-          {!labLoading && !labError && labRows.length === 0 && (
+          ) : (
             <div className="dashboard-empty-strip dashboard-preview-block">
-              <p>{t('dashboard.noLabsExtended')}</p>
+              <p>{t('dashboard.noAllergiesExtended')}</p>
             </div>
+          )}
+          {!loadingSummary && allergyRows.length > DASHBOARD_PREVIEW_LIMIT && (
+            <p className="dashboard-more-hint">
+              {t('dashboard.showingPreview', {
+                shown: DASHBOARD_PREVIEW_LIMIT,
+                total: allergyRows.length,
+              })}
+            </p>
           )}
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-clipboard-list"></i> {t('dashboard.incidentRecords')}
+                <i className="fas fa-pills"></i> {t('dashboard.medications')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                {t('dashboard.incidentSubtitleLong')}
+                {t('dashboard.medicationsSubtitle')}
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/incidents"
-              viewLabel={t('dashboard.incidentsTab')}
-              addLabel={t('dashboard.logIncident')}
-              onAddEntry={() =>
-                requestAddEntry('/tab6', t('dashboard.staffHintIncidents'))
-              }
+              viewHref="/app/intake"
+              viewLabel={t('dashboard.medicationsTab')}
             />
           </header>
-
-          {incidentLoading && (
+          {loadingSummary ? (
             <p className="content-subtitle dashboard-preview-block">
-              {t('dashboard.loadingIncidents')}
+              {t('dashboard.loadingMedications')}
             </p>
-          )}
-          {incidentError && !incidentLoading && (
-            <p
-              className="content-subtitle dashboard-preview-block"
-              style={{ color: '#ffcece' }}
-            >
-              {formatSessionOrTokenErrorForUi(incidentError)}
-            </p>
-          )}
-          {!incidentLoading && !incidentError && incidentRows.length > 0 && (
-            <div className="incidents-list incidents-list--dashboard dashboard-preview-block">
-              {incidentRows.map((incident) => (
-                <IncidentRecordCard key={incident.id} incident={incident} />
+          ) : medicationPreview.length > 0 ? (
+            <div className="dashboard-clinical-list dashboard-preview-block" role="list">
+              {medicationPreview.map((row, idx) => (
+                <article
+                  key={`med-${idx}-${row.genericName}`}
+                  className="dashboard-clinical-card"
+                  role="listitem"
+                >
+                  <header className="dashboard-clinical-card__header">
+                    <h3>{row.genericName || '—'}</h3>
+                    <span className="dashboard-clinical-card__badge">
+                      {row.dosage || '—'}
+                    </span>
+                  </header>
+                  <p>
+                    <strong>{t('dashboard.medBrand')}</strong> {row.brandName || '—'}
+                  </p>
+                  <p>
+                    <strong>{t('dashboard.medFrequency')}</strong> {row.frequency || '—'}
+                  </p>
+                  <p>
+                    <strong>{t('dashboard.medPurpose')}</strong> {row.purpose || '—'}
+                  </p>
+                  <p>
+                    <strong>{t('dashboard.medPrescriber')}</strong> {row.prescriber || '—'}
+                  </p>
+                </article>
               ))}
             </div>
-          )}
-          {!incidentLoading && !incidentError && incidentRows.length === 0 && (
-            <div className="dashboard-empty-strip">
-              <p>{t('dashboard.noIncidentsExtended')}</p>
+          ) : (
+            <div className="dashboard-empty-strip dashboard-preview-block">
+              <p>{t('dashboard.noMedicationsExtended')}</p>
             </div>
+          )}
+          {!loadingSummary && medicationRows.length > DASHBOARD_PREVIEW_LIMIT && (
+            <p className="dashboard-more-hint">
+              {t('dashboard.showingPreview', {
+                shown: DASHBOARD_PREVIEW_LIMIT,
+                total: medicationRows.length,
+              })}
+            </p>
           )}
 
           <header className="dashboard-tab-section dashboard-tab-section--secondary">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
-                <i className="fas fa-notes-medical"></i> {t('dashboard.chronicConditions')}
+                <i className="fas fa-notes-medical"></i> {t('dashboard.problems')}
               </h2>
               <p className="dashboard-tab-section__subtitle">
-                {t('dashboard.chronicSubtitleLong')}
+                {t('dashboard.problemsSubtitle')}
               </p>
             </div>
             <DashboardSectionActions
               viewHref="/app/conditions"
-              viewLabel={t('dashboard.chronicTab')}
+              viewLabel={t('dashboard.problemsTab')}
               addLabel={t('dashboard.addCondition')}
               onAddEntry={() =>
                 requestAddEntry('/tab5', t('dashboard.staffHintChronic'))
@@ -728,9 +767,9 @@ const Tab1: React.FC = () => {
               {chronicError}
             </p>
           )}
-          {!chronicLoading && !chronicError && chronicConditions.length > 0 && (
+          {!chronicLoading && !chronicError && chronicPreview.length > 0 && (
             <div className="conditions-list conditions-list--dashboard dashboard-preview-block">
-              {chronicConditions.map((c, idx) => (
+              {chronicPreview.map((c, idx) => (
                 <ConditionCard
                   key={
                     c.apiId != null
@@ -746,9 +785,127 @@ const Tab1: React.FC = () => {
           )}
           {!chronicLoading && !chronicError && chronicConditions.length === 0 && (
             <div className="dashboard-empty-strip">
-              <p>{t('dashboard.noChronicExtended')}</p>
+              <p>{t('dashboard.noProblemsExtended')}</p>
             </div>
           )}
+          {!chronicLoading &&
+            !chronicError &&
+            chronicConditions.length > DASHBOARD_PREVIEW_LIMIT && (
+              <p className="dashboard-more-hint">
+                {t('dashboard.showingPreview', {
+                  shown: DASHBOARD_PREVIEW_LIMIT,
+                  total: chronicConditions.length,
+                })}
+              </p>
+            )}
+
+          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+            <div className="dashboard-tab-section__titles">
+              <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
+                <i className="fas fa-vial"></i> {t('dashboard.results')}
+              </h2>
+              <p className="dashboard-tab-section__subtitle">
+                {t('dashboard.resultsSubtitle')}
+              </p>
+            </div>
+            <DashboardSectionActions
+              viewHref="/app/labs"
+              viewLabel={t('dashboard.resultsTab')}
+              addLabel={t('dashboard.addLabResult')}
+              onAddEntry={() =>
+                requestAddEntry('/tab7', t('dashboard.staffHintLabs'))
+              }
+            />
+          </header>
+
+          {labLoading && (
+            <p className="content-subtitle dashboard-preview-block">
+              {t('dashboard.loadingLabs')}
+            </p>
+          )}
+          {labError && !labLoading && (
+            <p
+              className="content-subtitle dashboard-preview-block"
+              style={{ color: '#ffcece' }}
+            >
+              {formatSessionOrTokenErrorForUi(labError)}
+            </p>
+          )}
+          {!labLoading && !labError && labPreview.length > 0 && (
+            <div className="results-list results-list--dashboard dashboard-preview-block">
+              {labPreview.map((result) => (
+                <LabResultCard key={result.id} result={result} />
+              ))}
+            </div>
+          )}
+          {!labLoading && !labError && labRows.length === 0 && (
+            <div className="dashboard-empty-strip dashboard-preview-block">
+              <p>{t('dashboard.noResultsExtended')}</p>
+            </div>
+          )}
+          {!labLoading && !labError && labRows.length > DASHBOARD_PREVIEW_LIMIT && (
+            <p className="dashboard-more-hint">
+              {t('dashboard.showingPreview', {
+                shown: DASHBOARD_PREVIEW_LIMIT,
+                total: labRows.length,
+              })}
+            </p>
+          )}
+
+          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+            <div className="dashboard-tab-section__titles">
+              <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
+                <i className="fas fa-clipboard-list"></i> {t('dashboard.pastEncounters')}
+              </h2>
+              <p className="dashboard-tab-section__subtitle">
+                {t('dashboard.pastEncountersSubtitle')}
+              </p>
+            </div>
+            <DashboardSectionActions
+              viewHref="/app/incidents"
+              viewLabel={t('dashboard.pastEncountersTab')}
+              addLabel={t('dashboard.logIncident')}
+              onAddEntry={() =>
+                requestAddEntry('/tab6', t('dashboard.staffHintIncidents'))
+              }
+            />
+          </header>
+
+          {incidentLoading && (
+            <p className="content-subtitle dashboard-preview-block">
+              {t('dashboard.loadingIncidents')}
+            </p>
+          )}
+          {incidentError && !incidentLoading && (
+            <p
+              className="content-subtitle dashboard-preview-block"
+              style={{ color: '#ffcece' }}
+            >
+              {formatSessionOrTokenErrorForUi(incidentError)}
+            </p>
+          )}
+          {!incidentLoading && !incidentError && incidentPreview.length > 0 && (
+            <div className="incidents-list incidents-list--dashboard dashboard-preview-block">
+              {incidentPreview.map((incident) => (
+                <IncidentRecordCard key={incident.id} incident={incident} />
+              ))}
+            </div>
+          )}
+          {!incidentLoading && !incidentError && incidentRows.length === 0 && (
+            <div className="dashboard-empty-strip">
+              <p>{t('dashboard.noPastEncountersExtended')}</p>
+            </div>
+          )}
+          {!incidentLoading &&
+            !incidentError &&
+            incidentRows.length > DASHBOARD_PREVIEW_LIMIT && (
+              <p className="dashboard-more-hint">
+                {t('dashboard.showingPreview', {
+                  shown: DASHBOARD_PREVIEW_LIMIT,
+                  total: incidentRows.length,
+                })}
+              </p>
+            )}
         </section>
       </main>
 

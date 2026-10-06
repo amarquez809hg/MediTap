@@ -35,8 +35,8 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 89+)
 
-- **Last entry:** 179 (`MT-AG-175`) — persist/reparse PDF snapshot for left menu
-- **Next entry:** 180 (`MT-AG-176`)
+- **Last entry:** 180 (`MT-AG-176`) — dashboard main-5 clinical sections
+- **Next entry:** 181 (`MT-AG-177`)
 - **Checkpoint date:** 2026-10-06
 - **Go back matrix:** `docs/PORTAL_GO_BACK_MATRIX.md` (all tabs tracked)
 - **Branch:** `feature/portal-split` (much of Set 6 still uncommitted — rely on register + working tree, not only `git log`)
