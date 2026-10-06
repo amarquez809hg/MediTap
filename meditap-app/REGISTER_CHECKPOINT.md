@@ -1,9 +1,10 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `177` (`MT-AG-173`)
-- Next register entry should start at: `178` (`MT-AG-174`)
-- Checkpoint date: `2026-10-02`
+- Last completed register entry: `178` (`MT-AG-174`)
+- Next register entry should start at: `179` (`MT-AG-175`)
+- Checkpoint date: `2026-10-06`
 - Scope baseline (Set 6 — since entry 65):
+  - Dashboard/tabs hydrate from Patient Information snapshot (`MT-AG-174`)
   - Restore extended sections from parse_snapshot on load (`MT-AG-173`)
   - Athena/Epic preferred always run dialect parsers (`MT-AG-172`)
   - MEDITECH preferred always runs CCD dialect (`MT-AG-171`)

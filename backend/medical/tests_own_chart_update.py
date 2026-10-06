@@ -68,3 +68,70 @@ class OwnChartPatientUpdateTests(TestCase):
             format="json",
         )
         self.assertIn(res.status_code, (403, 404), res.content)
+
+    def test_owner_can_create_lab_panel_and_hospital(self):
+        self.client.force_authenticate(user=self.owner)
+        hosp = self.client.post(
+            "/api/hospitals/",
+            {"name": "Riverside Community Hospital"},
+            format="json",
+        )
+        self.assertEqual(hosp.status_code, 201, hosp.content)
+        hid = hosp.data["hospital_id"]
+        inc = self.client.post(
+            "/api/incidents/",
+            {
+                "patient": str(self.patient.patient_id),
+                "hospital": hid,
+                "occurred_at": "2024-06-01T12:00:00Z",
+                "incident_type": "Visit",
+                "summary": "Hypertension follow-up",
+            },
+            format="json",
+        )
+        self.assertEqual(inc.status_code, 201, inc.content)
+        lab = self.client.post(
+            "/api/patient-lab-panels/",
+            {
+                "patient": str(self.patient.patient_id),
+                "test_name": "Basic metabolic panel",
+                "collected_on": "2024-06-01",
+                "status": "Final",
+                "is_new": False,
+                "components": [
+                    {
+                        "name": "Glucose",
+                        "value": 98,
+                        "unit": "mg/dL",
+                        "range": "70-99",
+                        "critical": False,
+                    }
+                ],
+            },
+            format="json",
+        )
+        self.assertEqual(lab.status_code, 201, lab.content)
+
+    def test_other_user_cannot_create_lab_panel_on_foreign_chart(self):
+        self.client.force_authenticate(user=self.other)
+        lab = self.client.post(
+            "/api/patient-lab-panels/",
+            {
+                "patient": str(self.patient.patient_id),
+                "test_name": "CBC",
+                "collected_on": "2024-06-01",
+                "status": "Final",
+                "is_new": False,
+                "components": [
+                    {
+                        "name": "WBC",
+                        "value": 7.2,
+                        "unit": "K/uL",
+                        "range": "4-11",
+                        "critical": False,
+                    }
+                ],
+            },
+            format="json",
+        )
+        self.assertIn(lab.status_code, (403, 404), lab.content)

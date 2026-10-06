@@ -36,12 +36,15 @@ import { useAuth } from '../contexts/AuthContext';
 import StatusKpiCard from '../components/StatusKpiCard';
 import {
   fetchDashboardDetail,
+  fetchIntakeSnapshotSurfaces,
   fetchPatientLabPanels,
   fetchTab6Data,
   formatSessionOrTokenErrorForUi,
   type DashboardDetail,
   type PatientLabPanelApi,
 } from '../api';
+import { mapTab14LabPanelToApi } from '../labResults/labResultModel';
+import { snapshotHospitalVisits } from '../intake/restoreParseSnapshot';
 import { usePatientAppointments } from '../appointments/usePatientAppointments';
 import {
   buildNextSteps,
@@ -137,8 +140,24 @@ const Tab2: React.FC = () => {
         ]);
         if (!cancelled) {
           setDetail(d);
-          setLabPanels(panels);
-          setIncidentCount(tab6.incidents.length);
+          if (panels.length > 0) {
+            setLabPanels(panels);
+          }
+          let visitCount = tab6.incidents.length;
+          if (!panels.length || !visitCount) {
+            const { snap } = await fetchIntakeSnapshotSurfaces(username);
+            if (!panels.length) {
+              setLabPanels(
+                (snap?.labPanels ?? []).map((p, i) =>
+                  mapTab14LabPanelToApi(p, i, d.id)
+                )
+              );
+            }
+            if (!visitCount) {
+              visitCount = snapshotHospitalVisits(snap).length;
+            }
+          }
+          setIncidentCount(visitCount);
         }
       } catch (e) {
         if (!cancelled) {

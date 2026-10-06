@@ -27,6 +27,7 @@ import {
 } from '../onboarding/onboardingStorage';
 import {
   fetchDashboardDetail,
+  fetchIntakeSnapshotSurfaces,
   fetchPatientLabPanels,
   fetchTab5ChronicConditions,
   fetchTab6Data,
@@ -42,9 +43,12 @@ import IncidentRecordCard from '../incidents/IncidentRecordCard';
 import type { IncidentRecord } from '../incidents/incidentModel';
 import LabResultCard from '../labResults/LabResultCard';
 import {
-  mapPatientLabPanelToRow,
-  type LabResultRow,
+    mapPatientLabPanelToRow,
+    mapTab14LabPanelToApi,
+    mapTab14LabPanelToRow,
+    type LabResultRow,
 } from '../labResults/labResultModel';
+import { snapshotHospitalVisits } from '../intake/restoreParseSnapshot';
 import { usePatientAppointments } from '../appointments/usePatientAppointments';
 
 const defaultUserProfile = {
@@ -268,10 +272,19 @@ const Tab1: React.FC = () => {
       setLabLoading(true);
       setLabError(null);
       try {
-        const { panels } = await fetchPatientLabPanels(username);
+        const { patientId, panels } = await fetchPatientLabPanels(username);
         if (!cancelled) {
-          setLabPanels(panels);
-          setLabRows(panels.map(mapPatientLabPanelToRow));
+          if (panels.length > 0) {
+            setLabPanels(panels);
+            setLabRows(panels.map(mapPatientLabPanelToRow));
+          } else {
+            const { snap } = await fetchIntakeSnapshotSurfaces(username);
+            const fromPdf = snap?.labPanels ?? [];
+            setLabPanels(
+              fromPdf.map((p, i) => mapTab14LabPanelToApi(p, i, patientId || ''))
+            );
+            setLabRows(fromPdf.map((p, i) => mapTab14LabPanelToRow(p, i)));
+          }
         }
       } catch (e) {
         if (!cancelled) {
@@ -299,7 +312,22 @@ const Tab1: React.FC = () => {
       try {
         const { incidents } = await fetchTab6Data(username);
         if (!cancelled) {
-          setIncidentRows(incidents.map(mapIncidentApiToTab6Record));
+          if (incidents.length > 0) {
+            setIncidentRows(incidents.map(mapIncidentApiToTab6Record));
+          } else {
+            const { snap } = await fetchIntakeSnapshotSurfaces(username);
+            setIncidentRows(
+              snapshotHospitalVisits(snap).map((v, i) => ({
+                id: (v.reportId || v.encounterId || `PDF-${i + 1}`).trim() || `PDF-${i + 1}`,
+                type: v.visitType || 'Visit',
+                date: v.visitDate || '—',
+                severity: '—',
+                location: v.facilityName || v.location || '—',
+                outcome: v.dischargeDate ? `Discharge ${v.dischargeDate}` : '—',
+                details: v.reason || v.diagnosisNote || '—',
+              }))
+            );
+          }
         }
       } catch (e) {
         if (!cancelled) {

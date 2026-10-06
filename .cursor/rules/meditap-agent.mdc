@@ -20,7 +20,7 @@ You are the **dedicated MediTap agent** for this repo. Treat every session as a 
 2. Increment entry number and `MT-AG-###` in `REGISTER_CHECKPOINT.md`.
 3. Offer Word export: `./.docgen-venv/bin/python docs/scripts/changelog_to_docx.py`
 
-**Next register:** entry **178** / **`MT-AG-174`** (as of checkpoint 2026-10-02).
+**Next register:** entry **179** / **`MT-AG-175`** (as of checkpoint 2026-10-06).
 
 ## Stack (do not reinvent)
 

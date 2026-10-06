@@ -8,6 +8,12 @@ import { getMeditapElevationRequestHeaders } from './auth/staffElevationStorage'
 import { getAdminPatientRequestHeaders, getAdminSelectedPatientId } from './portals/adminPatientStorage';
 import type { IncidentRecord } from './incidents/incidentModel';
 import {
+  pickRichestParseSnapshot,
+  snapshotHospitalVisits,
+  snapshotLastVisitLabel,
+  type StoredParseSnapshot,
+} from './intake/restoreParseSnapshot';
+import {
   cleanConditionDisplayName,
   cleanFacilityDisplayName,
   cleanDemographicFieldValue,
@@ -356,7 +362,7 @@ export async function fetchTab5ChronicConditions(
   ]);
   const catalogById = new Map(catalogs.map((c) => [c.disease_id, c]));
 
-  return rows
+  const fromApi = rows
     .filter((r) => r.patient === current.patient_id)
     .map((r) => {
       const cat = r.disease ? catalogById.get(r.disease) : undefined;
@@ -379,6 +385,21 @@ export async function fetchTab5ChronicConditions(
     .sort((a, b) =>
       (b.diagnosisDate || '').localeCompare(a.diagnosisDate || '')
     );
+  if (fromApi.length) return fromApi;
+  const { snap } = await fetchIntakeSnapshotSurfaces(username);
+  return (snap?.chronicConditions ?? [])
+    .filter((c) => (c.conditionName || '').trim())
+    .map((c) => ({
+      apiId: null,
+      diseaseId: '',
+      name: c.conditionName,
+      icdCode: (c.icdCode || '').trim(),
+      diagnosisDate: (c.diagnosisDate || '').trim(),
+      severity: (c.severity || '').trim(),
+      preExisting: (c.prexisting || '').toLowerCase() === 'yes',
+      currentTreatment: '',
+      hospitalizations: [],
+    }));
 }
 
 export async function saveTab5ChronicCondition(
@@ -1226,6 +1247,45 @@ export async function fetchPatientInsuranceTabData(
       policy: patientInsuranceRowToTab12Policy(row, pol, prov, fullName),
     });
   }
+  if (!rows.length) {
+    const { snap } = await fetchIntakeSnapshotSurfaces(username);
+    for (const ins of snap?.insurances ?? []) {
+      if (!(ins.providerName || '').trim() && !(ins.policyNumber || '').trim()) {
+        continue;
+      }
+      rows.push({
+        meta: {
+          patientInsuranceId: 0,
+          policyUuid: '',
+          providerUuid: '',
+        },
+        policy: {
+          memberId: ins.memberID || '—',
+          policyId: ins.policyNumber || '—',
+          planType: ins.planName || '—',
+          providerName: ins.providerName || '—',
+          providerPhone: '—',
+          providerEmail: '—',
+          policyHolderName: ins.subscriberName || ins.memberName || fullName,
+          coverageType: ins.relationToSubscriber || '—',
+          groupNumber: ins.groupNumber || '—',
+          startDate: ins.startDate || '—',
+          endDate: ins.endDate || '—',
+          copayVPCP: '—',
+          copaySC: '—',
+          copayEUC: '—',
+          prescriptionDPI: '—',
+          healthPWA: '—',
+          inNetworkDAC: '—',
+          outofNetworkDAC: '—',
+          planContactInfo: '—',
+          deductible: '—',
+          maxOutOfPocket: '—',
+          status: 'Active',
+        },
+      });
+    }
+  }
   return { patientName: fullName, dateOfBirth: dob, rows };
 }
 
@@ -1234,6 +1294,11 @@ export async function updateTab12InsuranceRow(input: {
   policy: Tab12InsurancePolicyUi;
 }): Promise<void> {
   const { meta, policy } = input;
+  if (!meta.patientInsuranceId || !meta.policyUuid || !meta.providerUuid) {
+    throw new Error(
+      'Save this chart from Patient Information first so insurance can be edited here.'
+    );
+  }
   const cd = coverageDetailsFromTab12Policy(policy);
   const planName = tab12PlanNameForApi(policy.planType, policy.groupNumber);
   await requestJson<PatientInsuranceApi>(
@@ -1369,7 +1434,7 @@ export async function fetchDashboardDetail(
       };
     });
 
-  const insurance = insLinks
+  let insurance = insLinks
     .filter((i) => i.patient === pid)
     .map((row) => {
       const pol = policyById.get(row.policy);
@@ -1398,7 +1463,7 @@ export async function fetchDashboardDetail(
   const chronicLinks = await fetchAllPages<PatientChronicDiseaseApi>(
     '/api/patient-chronic-diseases/'
   );
-  const chronicConditions = chronicLinks
+  let chronicConditions = chronicLinks
     .filter((c) => c.patient === pid)
     .map((row) => {
       const disease = chronicById.get(row.disease);
@@ -1434,8 +1499,72 @@ export async function fetchDashboardDetail(
     };
   }
 
+  const { snap } = await fetchIntakeSnapshotSurfaces(username);
+  const snapVisits = snapshotHospitalVisits(snap);
+  if (!hospital && snapVisits[0]) {
+    const v = snapVisits[0];
+    hospital = {
+      type: v.visitType || 'Visit',
+      facility: v.facilityName || '—',
+      reason: v.reason || '—',
+      date: v.visitDate || '—',
+      discharge: v.dischargeDate || '—',
+      attending: v.attendingPhysician || '—',
+      reportId: v.reportId || '—',
+    };
+  }
+  if (!chronicConditions.length && snap?.chronicConditions?.length) {
+    chronicConditions = snap.chronicConditions
+      .filter((c) => (c.conditionName || '').trim())
+      .map((c) => ({
+        conditionName: c.conditionName,
+        icdCode: c.icdCode || '—',
+        diagnosisDate: c.diagnosisDate || '—',
+        severity: c.severity || '—',
+        preexisting: c.prexisting || '—',
+        notes: c.notesChronicConditions || '—',
+      }));
+  }
+  if (!insurance.length && snap?.insurances?.length) {
+    insurance = snap.insurances
+      .filter((i) => (i.providerName || '').trim() || (i.policyNumber || '').trim())
+      .map((i) => ({
+        provider: i.providerName || '—',
+        planName: i.planName || '',
+        policyId: i.policyNumber || '—',
+        groupNumber: i.groupNumber || '',
+        memberId: i.memberID || '—',
+        status: 'Active',
+        validUntil: i.endDate || '—',
+      }));
+  }
+  const snapLast = snapshotLastVisitLabel(snap);
+  const lastVisitFromApi =
+    summary.healthSummary.lastVisit &&
+    summary.healthSummary.lastVisit !== 'N/A'
+      ? summary.healthSummary.lastVisit
+      : '';
+  const lastVisitFromSnap = snapLast
+    ? formatDate(snapLast) === 'N/A'
+      ? snapLast
+      : formatDate(snapLast)
+    : '';
+  const lastVisit = lastVisitFromApi || lastVisitFromSnap || 'N/A';
+
   return {
     ...summary,
+    healthSummary: {
+      ...summary.healthSummary,
+      lastVisit,
+      allergies: Math.max(
+        summary.healthSummary.allergies,
+        snap?.allergies?.length ?? 0
+      ),
+      medications: Math.max(
+        summary.healthSummary.medications,
+        snap?.medications?.length ?? 0
+      ),
+    },
     patientProfile: {
       fullName: `${current.given_name} ${current.family_name}`.trim() || summary.name,
       patientId: current.patient_id.slice(0, 8).toUpperCase(),
@@ -1575,7 +1704,7 @@ export type Tab14SaveInput = {
   chronicConditions: Tab14SaveChronic[];
   hospitalVisits: Tab14SaveHospital[];
   noAllergies: boolean;
-  /** When false (patient portal), skip insurance/hospital writes that require staff permissions. */
+  /** When false, related-section failures are non-fatal after demographics PATCH. */
   allowStaffOnlySections?: boolean;
 };
 
@@ -2457,21 +2586,17 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
     for (const row of pmRows.filter((r) => r.patient === pid)) {
       if (row.id != null) await deleteById('/api/patient-medications/', row.id);
     }
-    if (allowStaffOnlySections) {
-      for (const row of piRows.filter((r) => r.patient === pid)) {
-        if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
-      }
+    for (const row of piRows.filter((r) => r.patient === pid)) {
+      if (row.id != null) await deleteById('/api/patient-insurances/', row.id);
     }
     for (const row of pcRows.filter((r) => r.patient === pid)) {
       if (row.id != null)
         await deleteById('/api/patient-chronic-diseases/', row.id);
     }
-    if (allowStaffOnlySections) {
-      for (const row of incRows.filter((r) => r.patient === pid)) {
-        await apiRequest(`/api/incidents/${row.incident_id}/`, {
-          method: 'DELETE',
-        });
-      }
+    for (const row of incRows.filter((r) => r.patient === pid)) {
+      await apiRequest(`/api/incidents/${row.incident_id}/`, {
+        method: 'DELETE',
+      });
     }
 
     if (!input.noAllergies) {
@@ -2579,60 +2704,58 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       });
     }
 
-    if (allowStaffOnlySections) {
-      for (const ins of input.insurances) {
-        if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
-          continue;
-        const provId = await ensureInsuranceProvider(ins.providerName);
-        let planName = (ins.planName || '').trim();
-        if ((ins.groupNumber || '').trim()) {
-          planName = planName
-            ? `${planName} (Group: ${ins.groupNumber.trim()})`
-            : `(Group: ${ins.groupNumber.trim()})`;
-        }
-        const policies = await fetchAllPages<InsurancePolicyApi>(
-          '/api/insurance-policies/'
-        );
-        let policy = policies.find(
-          (p) =>
-            p.provider === provId &&
-            p.policy_number === ins.policyNumber.trim()
-        );
-        if (!policy) {
-          policy = await requestJson<InsurancePolicyApi>(
-            '/api/insurance-policies/',
-            {
-              method: 'POST',
-              body: JSON.stringify({
-                provider: provId,
-                policy_number: ins.policyNumber.trim(),
-                plan_name: planName || null,
-              }),
-            }
-          );
-        } else if (planName) {
-          await requestJson<InsurancePolicyApi>(
-            `/api/insurance-policies/${policy.policy_id}/`,
-            {
-              method: 'PATCH',
-              body: JSON.stringify({ plan_name: planName }),
-            }
-          );
-        }
-        const insKey = `${ins.providerName.trim().toLowerCase()}|${ins.policyNumber.trim().toLowerCase()}`;
-        const preserved = coverageByInsKey.get(insKey) || {};
-        await requestJson<PatientInsuranceApi>('/api/patient-insurances/', {
-          method: 'POST',
-          body: JSON.stringify({
-            patient: pid,
-            policy: policy.policy_id,
-            member_id: (ins.memberID || '').trim() || null,
-            start_date: (ins.startDate || '').trim() || null,
-            end_date: (ins.endDate || '').trim() || null,
-            coverage_details: tab14InsuranceCoverageDetails(ins, preserved),
-          }),
-        });
+    for (const ins of input.insurances) {
+      if (!(ins.providerName || '').trim() || !(ins.policyNumber || '').trim())
+        continue;
+      const provId = await ensureInsuranceProvider(ins.providerName);
+      let planName = (ins.planName || '').trim();
+      if ((ins.groupNumber || '').trim()) {
+        planName = planName
+          ? `${planName} (Group: ${ins.groupNumber.trim()})`
+          : `(Group: ${ins.groupNumber.trim()})`;
       }
+      const policies = await fetchAllPages<InsurancePolicyApi>(
+        '/api/insurance-policies/'
+      );
+      let policy = policies.find(
+        (p) =>
+          p.provider === provId &&
+          p.policy_number === ins.policyNumber.trim()
+      );
+      if (!policy) {
+        policy = await requestJson<InsurancePolicyApi>(
+          '/api/insurance-policies/',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              provider: provId,
+              policy_number: ins.policyNumber.trim(),
+              plan_name: planName || null,
+            }),
+          }
+        );
+      } else if (planName) {
+        await requestJson<InsurancePolicyApi>(
+          `/api/insurance-policies/${policy.policy_id}/`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ plan_name: planName }),
+          }
+        );
+      }
+      const insKey = `${ins.providerName.trim().toLowerCase()}|${ins.policyNumber.trim().toLowerCase()}`;
+      const preserved = coverageByInsKey.get(insKey) || {};
+      await requestJson<PatientInsuranceApi>('/api/patient-insurances/', {
+        method: 'POST',
+        body: JSON.stringify({
+          patient: pid,
+          policy: policy.policy_id,
+          member_id: (ins.memberID || '').trim() || null,
+          start_date: (ins.startDate || '').trim() || null,
+          end_date: (ins.endDate || '').trim() || null,
+          coverage_details: tab14InsuranceCoverageDetails(ins, preserved),
+        }),
+      });
     }
 
     for (const c of input.chronicConditions) {
@@ -2660,45 +2783,47 @@ export async function saveTab14ToBackend(input: Tab14SaveInput): Promise<void> {
       );
     }
 
-    if (allowStaffOnlySections) {
-      for (const hv of input.hospitalVisits) {
-        if (!(hv.facilityName || '').trim() || !(hv.visitDate || '').trim())
-          continue;
-        const hid = await ensureHospital(hv.facilityName);
-        const occurred = `${(hv.visitDate || '').trim()}T12:00:00Z`;
-        const disc = (hv.dischargeDate || '').trim();
-        const att = (hv.attendingPhysician || '').trim();
-        const clinical = [
-          disc ? `Discharge: ${disc}` : '',
-          att ? `Attending: ${att}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n');
-        await requestJson<IncidentApi>('/api/incidents/', {
-          method: 'POST',
-          body: JSON.stringify({
-            patient: pid,
-            hospital: hid,
-            occurred_at: occurred,
-            incident_type: (hv.visitType || '').trim() || 'Visit',
-            summary: (hv.reason || '').trim() || '—',
-            clinical_notes: clinical || null,
-            diagnosis_code: (hv.reportId || '').trim() || null,
-          }),
-        });
-      }
+    for (const hv of input.hospitalVisits) {
+      if (!(hv.facilityName || '').trim() || !(hv.visitDate || '').trim())
+        continue;
+      const hid = await ensureHospital(hv.facilityName);
+      const visitDay = formatDate((hv.visitDate || '').trim());
+      const occurred = `${
+        visitDay === 'N/A'
+          ? new Date().toISOString().slice(0, 10)
+          : visitDay
+      }T12:00:00Z`;
+      const disc = (hv.dischargeDate || '').trim();
+      const att = (hv.attendingPhysician || '').trim();
+      const clinical = [
+        disc ? `Discharge: ${disc}` : '',
+        att ? `Attending: ${att}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      await requestJson<IncidentApi>('/api/incidents/', {
+        method: 'POST',
+        body: JSON.stringify({
+          patient: pid,
+          hospital: hid,
+          occurred_at: occurred,
+          incident_type: (hv.visitType || '').trim() || 'Visit',
+          summary: (hv.reason || '').trim() || '—',
+          clinical_notes: clinical || null,
+          diagnosis_code: (hv.reportId || '').trim() || null,
+        }),
+      });
     }
   };
 
-  // Patient Information + Emergency Contact are already PATCHed above.
-  // Related clinical sync must not undo a successful patient-portal Save.
-  if (allowStaffOnlySections) {
+  // Demographics/emergency contact are already PATCHed. Related clinical
+  // (allergies, meds, insurance, visits, conditions) must still persist so
+  // Dashboard / Labs / Incidents / Insurance match Patient Information.
+  try {
     await syncRelatedClinical();
-  } else {
-    try {
-      await syncRelatedClinical();
-    } catch {
-      // Keep demographics/emergency-contact Save; staff can finish related rows.
+  } catch {
+    if (allowStaffOnlySections) {
+      throw new Error('Could not save related chart sections.');
     }
   }
 }
@@ -2818,6 +2943,24 @@ export async function listPatientDocuments(
     ? `?patient=${encodeURIComponent(patientId)}`
     : '';
   return fetchAllPages<PatientDocumentApi>(`/api/patient-documents/${qs}`);
+}
+
+/** PDF intake sections stored on the document vault (not all mirrored on Patient rows). */
+export async function fetchIntakeSnapshotSurfaces(
+  username: string | null
+): Promise<{ patientId: string | null; snap: StoredParseSnapshot | null }> {
+  const patients = await fetchAllPages<PatientApi>('/api/patients/');
+  const current = pickCurrentPatient(patients, username);
+  if (!current) return { patientId: null, snap: null };
+  try {
+    const docs = await listPatientDocuments(current.patient_id);
+    return {
+      patientId: current.patient_id,
+      snap: pickRichestParseSnapshot(docs),
+    };
+  } catch {
+    return { patientId: current.patient_id, snap: null };
+  }
 }
 
 /** Multipart upload — do not set Content-Type (browser sets boundary). */

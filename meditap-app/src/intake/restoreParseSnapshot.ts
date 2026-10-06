@@ -77,7 +77,8 @@ export function pickRichestParseSnapshot(
       (snap.medications?.length ?? 0) +
       (snap.insurances?.length ?? 0) +
       (snap.hospitalVisits?.length ?? 0) +
-      (snap.chronicConditions?.length ?? 0);
+      (snap.chronicConditions?.length ?? 0) +
+      (snap.labPanels?.length ?? 0) * 3;
     if (score > bestScore) {
       bestScore = score;
       best = snap;
@@ -163,3 +164,26 @@ export function mergeSnapshotIntoClinicalSnapshot(
     labPanels: api.labPanels.length ? api.labPanels : snap.labPanels ?? [],
   };
 }
+
+export function snapshotHospitalVisits(
+  snap: StoredParseSnapshot | null | undefined
+): Tab14HospitalFields[] {
+  if (!snap) return [];
+  if (snap.hospitalVisits?.length) return snap.hospitalVisits;
+  if (
+    snap.hospitalVisit &&
+    Object.values(snap.hospitalVisit).some((v) => String(v || '').trim())
+  ) {
+    return [snap.hospitalVisit];
+  }
+  return [];
+}
+
+export function snapshotLastVisitLabel(
+  snap: StoredParseSnapshot | null | undefined
+): string | null {
+  const visit = snapshotHospitalVisits(snap)[0];
+  const raw = visit?.visitDate?.trim();
+  return raw || null;
+}
+

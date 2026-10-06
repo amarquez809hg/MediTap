@@ -139,6 +139,7 @@ import {
     lbsToKg,
 } from '../vitals/bmi';
 import {
+    collectedOnForApi,
     mapPatientLabPanelToRow,
     mapTab14LabPanelToRow,
     type LabResultLineItem,
@@ -577,7 +578,7 @@ function labPanelToWriteBody(
         patient: patientId,
         display_code: row.displayCode?.trim() || null,
         test_name: row.testName.trim(),
-        collected_on: row.date || new Date().toISOString().slice(0, 10),
+        collected_on: collectedOnForApi(row.date),
         status: row.status || 'Final',
         is_new: row.isNew,
         category: row.category || 'lab',
@@ -2051,10 +2052,9 @@ const Tab14: React.FC = () => {
             const existingLabPanels = labPanels.filter((row) => row.serverId);
             let nextLabPanels = labPanels;
             if (
-                canEditPatientRecords &&
-                (draftLabPanels.length > 0 ||
-                    existingLabPanels.length > 0 ||
-                    removedLabPanelServerIds.length > 0)
+                draftLabPanels.length > 0 ||
+                existingLabPanels.length > 0 ||
+                removedLabPanelServerIds.length > 0
             ) {
                 try {
                     const { patientId } = await fetchPatientLabPanels(username);
@@ -2083,15 +2083,9 @@ const Tab14: React.FC = () => {
                 } catch (labErr) {
                     const msg =
                         labErr instanceof Error ? labErr.message : 'Lab save failed.';
-                    if (msg.includes('403')) {
-                        setLabSaveNotice(
-                            'Chart saved. Lab panel changes need a staff session in the admin portal to persist.'
-                        );
-                    } else {
-                        setLabSaveNotice(
-                            `Chart saved. Some lab results could not be saved: ${msg}`
-                        );
-                    }
+                    setLabSaveNotice(
+                        `Chart saved. Some lab results could not be saved: ${msg}`
+                    );
                 }
             }
 

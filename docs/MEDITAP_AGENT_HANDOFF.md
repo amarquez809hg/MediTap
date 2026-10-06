@@ -35,9 +35,9 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 89+)
 
-- **Last entry:** 169 (`MT-AG-165`) — a new card per patient
-- **Next entry:** 170 (`MT-AG-166`)
-- **Checkpoint date:** 2026-09-22
+- **Last entry:** 178 (`MT-AG-174`) — dashboard/tabs reflect PDF intake
+- **Next entry:** 179 (`MT-AG-175`)
+- **Checkpoint date:** 2026-10-06
 - **Go back matrix:** `docs/PORTAL_GO_BACK_MATRIX.md` (all tabs tracked)
 - **Branch:** `feature/portal-split` (much of Set 6 still uncommitted — rely on register + working tree, not only `git log`)
 

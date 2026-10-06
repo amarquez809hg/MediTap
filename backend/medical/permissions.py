@@ -41,6 +41,56 @@ def user_may_write_patient_chart(user, patient) -> bool:
     return patient_email in _user_login_emails(user)
 
 
+class AuthenticatedCatalogWritePermission(permissions.BasePermission):
+    """
+    GET is open to signed-in users.
+    POST/PATCH: any authenticated user may add catalog rows used by PDF intake
+    (hospitals, insurance providers/policies). Deletes stay staff-only.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if can_edit_intake_records(request):
+            return True
+        if request.method in ("POST", "PUT", "PATCH"):
+            user = getattr(request, "user", None)
+            return bool(user is not None and user.is_authenticated)
+        return False
+
+
+class OwnChartRelatedWritePermission(permissions.BasePermission):
+    """
+    Staff may write any related clinical row.
+    A patient may POST/PATCH/DELETE rows on their own chart so PDF intake
+    Save can populate Labs, Incidents, Insurance, and other dashboard tabs.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if can_edit_intake_records(request):
+            return True
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated:
+            return False
+        if request.method != "POST":
+            return True
+        pid = request.data.get("patient") if hasattr(request, "data") else None
+        if not pid:
+            return False
+        from .models import Patient
+
+        patient = Patient.objects.filter(patient_id=pid).first()
+        return user_may_write_patient_chart(user, patient)
+
+    def has_object_permission(self, request, view, obj):
+        if can_edit_intake_records(request):
+            return True
+        patient = getattr(obj, "patient", None)
+        return user_may_write_patient_chart(getattr(request, "user", None), patient)
+
+
 class OwnChartOrIntakeEditorPermission(permissions.BasePermission):
     """
     Staff/editor/elevation may write any chart.

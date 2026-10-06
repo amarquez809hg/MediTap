@@ -62,6 +62,51 @@ export function mapPatientLabPanelToRow(p: PatientLabPanelApi): LabResultRow {
   };
 }
 
+export function collectedOnForApi(raw?: string | null): string {
+  const t = (raw || '').trim();
+  const m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) {
+    return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  }
+  const parsed = Date.parse(t);
+  if (!Number.isNaN(parsed)) {
+    return new Date(parsed).toISOString().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function mapTab14LabPanelToApi(
+  panel: Tab14LabPanel,
+  index: number,
+  patientId: string
+): PatientLabPanelApi {
+  return {
+    lab_panel_id: `snapshot-${index}`,
+    patient: patientId,
+    display_code: panel.displayCode || `PDF-${index + 1}`,
+    test_name: panel.testName,
+    collected_on: panel.date || '',
+    status: panel.status,
+    is_new: Boolean(panel.isNew),
+    category: panel.category || 'lab',
+    notes: panel.notes || null,
+    clinical_indication: panel.clinicalIndication || null,
+    impression: panel.impression || null,
+    accession_number: panel.accessionNumber || null,
+    modality: panel.modality || null,
+    signed_by: panel.signedBy || null,
+    components: (panel.components || []).map((c) => ({
+      name: c.name,
+      value: c.value,
+      textValue: c.textValue,
+      unit: c.unit,
+      range: c.range,
+      critical: !!c.critical,
+      interpretation: c.interpretation,
+    })),
+  };
+}
+
 export function mapTab14LabPanelToRow(panel: Tab14LabPanel, index: number): LabResultRow {
   return {
     id: panel.displayCode || `PDF-${index + 1}`,

@@ -15,6 +15,7 @@ import {
 import { staffElevateErrorMessage } from '../auth/staffElevateErrorMessage';
 import {
   createTab6Incident,
+  fetchIntakeSnapshotSurfaces,
   fetchTab6Data,
   mapIncidentApiToTab6Record,
   requestPatientIntakeStaffElevation,
@@ -22,6 +23,7 @@ import {
   type HospitalApi,
   type Tab6IncidentPayload,
 } from '../api';
+import { snapshotHospitalVisits } from '../intake/restoreParseSnapshot';
 import IncidentRecordCard from '../incidents/IncidentRecordCard';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import GoBackButton from '../components/GoBackButton';
@@ -166,7 +168,24 @@ const Tab6: React.FC = () => {
         await fetchTab6Data(username);
       setPatientId(pid);
       setHospitals(h);
-      setIncidents(rows.map(mapIncidentApiToTab6Record));
+      if (rows.length > 0) {
+        setIncidents(rows.map(mapIncidentApiToTab6Record));
+      } else {
+        const { snap } = await fetchIntakeSnapshotSurfaces(username);
+        setIncidents(
+          snapshotHospitalVisits(snap).map((v, i) => ({
+            id:
+              (v.reportId || v.encounterId || `PDF-${i + 1}`).trim() ||
+              `PDF-${i + 1}`,
+            type: v.visitType || 'Visit',
+            date: v.visitDate || '—',
+            severity: '—',
+            location: v.facilityName || v.location || '—',
+            outcome: v.dischargeDate ? `Discharge ${v.dischargeDate}` : '—',
+            details: v.reason || v.diagnosisNote || '—',
+          }))
+        );
+      }
     } catch (e) {
       setListError(
         e instanceof Error ? e.message : 'Could not load incident records.'

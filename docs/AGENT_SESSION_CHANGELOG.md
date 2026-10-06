@@ -1433,6 +1433,33 @@
 
 ---
 
+### Entry 178 — `MT-AG-174`
+
+**Type:** Story / Bug Fix
+
+**Key:** `MT-AG-174`
+
+**Summary:** Dashboard and submenu tabs (Labs, Incidents, Conditions, Insurance, Quick Status) did not show clinical rows already extracted into Patient Information / `parse_snapshot`.
+
+**What was done:**
+
+- Patients may POST hospitals, insurance catalogs, lab panels, and own-chart related rows so Tab14 Save populates Dashboard APIs (not staff-only).
+- Dashboard, Quick Status, Labs, Incidents, Conditions, and Insurance hydrate from the richest intake snapshot when the matching API list is empty.
+- Lab `collected_on` and visit `occurred_at` are coerced to ISO dates so PDF dates do not fail Save.
+
+**Outcome:** After Save (or from stored snapshot), Last Visit, lab cards, insurance, and conditions match Patient Information. Production still needs a VM pull/rebuild.
+
+**Primary paths:** `permissions.py`, `views.py`, `api.ts`, `Tab1.tsx`, `Tab2.tsx`, `Tab6.tsx`, `Tab7.tsx`, `Tab14.tsx`, `labResultModel.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **179** / **`MT-AG-175`**
+
+*Last updated: entry 178 (dashboard/tabs reflect PDF intake).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

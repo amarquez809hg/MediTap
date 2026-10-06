@@ -17,6 +17,7 @@ import {
   deletePatientLabPanel,
   ensurePatientForCurrentSession,
   fetchPatientLabPanels,
+  fetchIntakeSnapshotSurfaces,
   requestPatientIntakeStaffElevation,
   updatePatientLabPanel,
 } from '../api';
@@ -25,7 +26,7 @@ import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import GoBackButton from '../components/GoBackButton';
 import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import type { LabResultLineItem, LabResultRow } from '../labResults/labResultModel';
-import { mapPatientLabPanelToRow } from '../labResults/labResultModel';
+import { mapPatientLabPanelToRow, mapTab14LabPanelToRow } from '../labResults/labResultModel';
 import {
   applyDatePreset,
   COLLECTED_DATE_PRESETS,
@@ -146,7 +147,12 @@ const Tab7: React.FC = () => {
     try {
       const { patientId: pid, panels } = await fetchPatientLabPanels(username);
       setPatientId(pid);
-      setRows(panels.map(mapPatientLabPanelToRow));
+      if (panels.length > 0) {
+        setRows(panels.map(mapPatientLabPanelToRow));
+      } else {
+        const { snap } = await fetchIntakeSnapshotSurfaces(username);
+        setRows((snap?.labPanels ?? []).map((p, i) => mapTab14LabPanelToRow(p, i)));
+      }
     } catch (e) {
       setListError(e instanceof Error ? e.message : 'Could not load lab results.');
       setRows([]);

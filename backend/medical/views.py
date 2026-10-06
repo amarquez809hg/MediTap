@@ -14,7 +14,12 @@ from .patient_api_scoping import (
     filter_by_allowed_patients,
     scoped_patient_queryset,
 )
-from .permissions import IntakeEditorWritePermission, OwnChartOrIntakeEditorPermission
+from .permissions import (
+    AuthenticatedCatalogWritePermission,
+    IntakeEditorWritePermission,
+    OwnChartOrIntakeEditorPermission,
+    OwnChartRelatedWritePermission,
+)
 from medapp.intake_editor import can_edit_intake_records
 from medapp.admin_ops import log_admin_activity, request_admin_patient_id, user_is_admin_operator
 
@@ -94,7 +99,7 @@ class PatientViewSet(BaseViewSet):
 class HospitalViewSet(viewsets.ModelViewSet):
     queryset = models.Hospital.objects.all().order_by("name")
     serializer_class = serializers.HospitalSerializer
-    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    permission_classes = [IsAuthenticated, AuthenticatedCatalogWritePermission]
 
     def perform_create(self, serializer):
         serializer.save()
@@ -163,19 +168,19 @@ class PatientAllergyViewSet(BaseViewSet):
 class InsuranceProviderViewSet(viewsets.ModelViewSet):
     queryset = models.InsuranceProvider.objects.all()
     serializer_class = serializers.InsuranceProviderSerializer
-    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    permission_classes = [IsAuthenticated, AuthenticatedCatalogWritePermission]
 
 
 class InsurancePolicyViewSet(viewsets.ModelViewSet):
     queryset = models.InsurancePolicy.objects.select_related("provider").all()
     serializer_class = serializers.InsurancePolicySerializer
-    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    permission_classes = [IsAuthenticated, AuthenticatedCatalogWritePermission]
 
 
 class PatientInsuranceViewSet(viewsets.ModelViewSet):
     queryset = models.PatientInsurance.objects.select_related("patient", "policy").all()
     serializer_class = serializers.PatientInsuranceSerializer
-    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    permission_classes = [IsAuthenticated, OwnChartRelatedWritePermission]
 
     def get_queryset(self):
         return filter_by_allowed_patients(self.request, super().get_queryset(), "patient_id")
@@ -208,13 +213,14 @@ class LabResultViewSet(BaseViewSet):
 
 class PatientLabPanelViewSet(viewsets.ModelViewSet):
     """
-    Patients (authenticated) may list/retrieve their panels via ?patient=.
-    Creates/updates/deletes require superuser, Django group meditap-record-editor, or staff elevation.
+    Patients may list/retrieve their panels via ?patient=.
+    Creates/updates/deletes: staff/editor, or the patient writing their own chart
+    (PDF intake Save so Labs appear on the dashboard).
     """
 
     queryset = models.PatientLabPanel.objects.select_related("patient").all()
     serializer_class = serializers.PatientLabPanelSerializer
-    permission_classes = [IsAuthenticated, IntakeEditorWritePermission]
+    permission_classes = [IsAuthenticated, OwnChartRelatedWritePermission]
     lookup_field = "lab_panel_id"
 
     def get_queryset(self):
