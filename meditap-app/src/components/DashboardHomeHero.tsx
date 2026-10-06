@@ -9,8 +9,8 @@ type DashboardHomeHeroProps = {
 };
 
 const QUICK_ACTIONS = [
-  { href: '/app/intake', icon: 'fas fa-user-edit', labelKey: 'dashboard.updateIntake' },
-  { href: '/app/intake', icon: 'fas fa-file-upload', labelKey: 'dashboard.uploadDocument' },
+  { href: '/app/intake?section=demographics', icon: 'fas fa-user-edit', labelKey: 'dashboard.updateIntake' },
+  { href: '/app/intake?section=demographics', icon: 'fas fa-file-upload', labelKey: 'dashboard.uploadDocument' },
   { href: '/app/status', icon: 'fas fa-chart-line', labelKey: 'dashboard.quickStatusLink' },
 ] as const;
 

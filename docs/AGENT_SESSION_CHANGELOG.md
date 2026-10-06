@@ -1515,6 +1515,34 @@
 
 ---
 
+### Entry 181 — `MT-AG-177`
+
+**Type:** UX
+
+**Key:** `MT-AG-177`
+
+**Summary:** Slim health metrics to three vitals tiles and deep-link dashboard / sidebar Patient Information into the matching Patient Information section.
+
+**What was done:**
+
+- Health metrics show only BMI, BP/heart rate, and Last Visit.
+- Left nav adds Patient Information → `/app/intake?section=demographics`.
+- Clinical section “view” buttons open the matching intake sidebar section (`allergies`, `medications`, `problems`, `results`, `pastEncounters`).
+- Tab14 honors any `?section=` key, not only vitals.
+
+**Outcome:** Dashboard stays lighter; Patient Information navigation lands on the right section.
+
+**Primary paths:** `Tab1.tsx`, `Tab1.css`, `Tab14.tsx`, `DashboardHomeHero.tsx`, i18n locales
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **182** / **`MT-AG-178`**
+
+*Last updated: entry 181 (compact metrics + PI section deep links).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

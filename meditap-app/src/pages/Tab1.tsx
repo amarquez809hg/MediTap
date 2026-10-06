@@ -473,7 +473,7 @@ const Tab1: React.FC = () => {
               </div>
             </div>
             <p className="user-card__hint">{t('dashboard.careOverviewHint')}</p>
-            <PortalNavLink to="/app/intake" className="user-card__profile-link">
+            <PortalNavLink to="/app/intake?section=demographics" className="user-card__profile-link">
               {t('dashboard.updatePatientInfo')}
             </PortalNavLink>
           </div>
@@ -481,6 +481,9 @@ const Tab1: React.FC = () => {
           <nav className="profile-nav">
             <PortalNavLink to="/app/dashboard" className="nav-item active" aria-current="page">
               <i className="fas fa-home"></i> {t('nav.dashboard')}
+            </PortalNavLink>
+            <PortalNavLink to="/app/intake?section=demographics" className="nav-item">
+              <i className="fas fa-id-card"></i> {t('nav.patientInformation')}
             </PortalNavLink>
             <PortalNavLink to="/app/status" className="nav-item">
               <i className="fas fa-chart-line"></i> {t('nav.quickStatus')}
@@ -557,11 +560,8 @@ const Tab1: React.FC = () => {
           )}
 
           <div className="metrics-grid-scroll">
-            <div className="metrics-grid" role="list" aria-label={t('dashboard.metricsAria')}>
+            <div className="metrics-grid metrics-grid--compact" role="list" aria-label={t('dashboard.metricsAria')}>
               <MetricTile iconClass="fas fa-heartbeat" title={t('dashboard.bmiScore')} value={hs.bmi} />
-              <MetricTile iconClass="fas fa-ruler-vertical" title={t('dashboard.height')} value={hs.heightDisplay} />
-              <MetricTile iconClass="fas fa-weight" title={t('dashboard.weight')} value={hs.weightDisplay} />
-              <MetricTile iconClass="fas fa-heartbeat" title={t('dashboard.vitalsUpdated')} value={hs.lmd} />
               <MetricTile
                 iconClass="fas fa-tachometer-alt"
                 title={t('dashboard.bpHeartRate')}
@@ -574,8 +574,6 @@ const Tab1: React.FC = () => {
                 }
               />
               <MetricTile iconClass="fas fa-calendar-alt" title={t('dashboard.lastVisit')} value={hs.lastVisit} />
-              <MetricTile iconClass="fas fa-allergies" title={t('dashboard.knownAllergies')} value={hs.allergies} />
-              <MetricTile iconClass="fas fa-pills" title={t('dashboard.activeMeds')} value={hs.medications} />
             </div>
           </div>
 
@@ -625,7 +623,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/intake"
+              viewHref="/app/intake?section=allergies"
               viewLabel={t('dashboard.allergiesTab')}
             />
           </header>
@@ -684,7 +682,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/intake"
+              viewHref="/app/intake?section=medications"
               viewLabel={t('dashboard.medicationsTab')}
             />
           </header>
@@ -745,7 +743,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/conditions"
+              viewHref="/app/intake?section=problems"
               viewLabel={t('dashboard.problemsTab')}
               addLabel={t('dashboard.addCondition')}
               onAddEntry={() =>
@@ -809,7 +807,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/labs"
+              viewHref="/app/intake?section=results"
               viewLabel={t('dashboard.resultsTab')}
               addLabel={t('dashboard.addLabResult')}
               onAddEntry={() =>
@@ -862,7 +860,7 @@ const Tab1: React.FC = () => {
               </p>
             </div>
             <DashboardSectionActions
-              viewHref="/app/incidents"
+              viewHref="/app/intake?section=pastEncounters"
               viewLabel={t('dashboard.pastEncountersTab')}
               addLabel={t('dashboard.logIncident')}
               onAddEntry={() =>

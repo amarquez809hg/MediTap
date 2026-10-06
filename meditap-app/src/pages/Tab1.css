@@ -571,6 +571,11 @@
     min-width: 0;
 }
 
+.metrics-grid--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 52rem;
+}
+
 .metric-tile {
     background-color: #ffffff;
     padding: clamp(10px, 1.4vw, 20px);

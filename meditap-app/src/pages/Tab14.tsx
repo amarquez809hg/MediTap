@@ -895,9 +895,12 @@ const Tab14: React.FC = () => {
 
     useEffect(() => {
         const section = new URLSearchParams(location.search).get('section');
-        if (section === 'vitals') {
-            const vitals = tab14Sections.find((s) => s.key === 'vitals');
-            setActiveSection(vitals?.id ?? TAB14_SECTIONS_DEFAULT.find((s) => s.key === 'vitals')?.id ?? 6);
+        if (!section) return;
+        const match =
+            tab14Sections.find((s) => s.key === section) ||
+            TAB14_SECTIONS_DEFAULT.find((s) => s.key === section);
+        if (match) {
+            setActiveSection(match.id);
         }
     }, [location.search, tab14Sections]);
 
