@@ -2966,7 +2966,8 @@ export async function fetchIntakeSnapshotSurfaces(
 /** Multipart upload — do not set Content-Type (browser sets boundary). */
 export async function uploadPatientDocument(
   patientId: string,
-  file: File
+  file: File,
+  parseSnapshot?: Record<string, unknown>
 ): Promise<PatientDocumentApi> {
   if (!API_BASE) {
     throw new Error('API base URL is not configured.');
@@ -2978,6 +2979,19 @@ export async function uploadPatientDocument(
   const body = new FormData();
   body.append('patient', patientId);
   body.append('file', file, file.name);
+  if (parseSnapshot) {
+    body.append('parse_snapshot', JSON.stringify(parseSnapshot));
+    const given = String(
+      (parseSnapshot.patientFields as { givenName?: string } | undefined)?.givenName ||
+        ''
+    ).trim();
+    const family = String(
+      (parseSnapshot.patientFields as { familyName?: string } | undefined)?.familyName ||
+        ''
+    ).trim();
+    if (given) body.append('parsed_given_name', given.slice(0, 100));
+    if (family) body.append('parsed_family_name', family.slice(0, 100));
+  }
 
   const response = await fetch(`${API_BASE}/api/patient-documents/`, {
     method: 'POST',
@@ -3074,4 +3088,38 @@ export async function fetchPatientDocumentBlobUrl(
   }
   const blob = await response.blob();
   return URL.createObjectURL(blob);
+}
+
+export async function downloadPatientDocumentFile(
+  documentId: string,
+  filename: string,
+  contentType?: string | null
+): Promise<File> {
+  if (!API_BASE) {
+    throw new Error('API base URL is not configured.');
+  }
+  const auth = await getAuthHeaders();
+  const { 'Content-Type': _omit, ...authRest } = auth;
+  const elevation = getMeditapElevationRequestHeaders();
+  const adminPatient = getAdminPatientRequestHeaders();
+  const response = await fetch(
+    `${API_BASE}/api/patient-documents/${documentId}/download/`,
+    {
+      headers: {
+        ...authRest,
+        ...elevation,
+        ...adminPatient,
+      },
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 401) {
+      emitSessionExpired();
+    }
+    throw new Error(`Download failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  return new File([blob], filename || 'document.pdf', {
+    type: contentType || blob.type || 'application/octet-stream',
+  });
 }

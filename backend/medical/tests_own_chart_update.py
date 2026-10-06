@@ -135,3 +135,63 @@ class OwnChartPatientUpdateTests(TestCase):
             format="json",
         )
         self.assertIn(lab.status_code, (403, 404), lab.content)
+
+    def test_owner_can_patch_document_parse_snapshot(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.client.force_authenticate(user=self.owner)
+        created = self.client.post(
+            "/api/patient-documents/",
+            {
+                "patient": str(self.patient.patient_id),
+                "file": SimpleUploadedFile(
+                    "chart.pdf", b"%PDF-1.4 test", content_type="application/pdf"
+                ),
+            },
+            format="multipart",
+        )
+        self.assertEqual(created.status_code, 201, created.content)
+        doc_id = created.data["document_id"]
+        res = self.client.patch(
+            f"/api/patient-documents/{doc_id}/",
+            {
+                "parse_snapshot": {
+                    "extendedSections": {
+                        "medicalEquipment": [{"title": "Cane", "detail": "Home use"}]
+                    }
+                }
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(
+            res.data["parse_snapshot"]["extendedSections"]["medicalEquipment"][0]["title"],
+            "Cane",
+        )
+
+    def test_other_user_cannot_patch_document_parse_snapshot(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from medical.models import PatientDocument
+
+        self.client.force_authenticate(user=self.owner)
+        created = self.client.post(
+            "/api/patient-documents/",
+            {
+                "patient": str(self.patient.patient_id),
+                "file": SimpleUploadedFile(
+                    "chart.pdf", b"%PDF-1.4 test", content_type="application/pdf"
+                ),
+            },
+            format="multipart",
+        )
+        self.assertEqual(created.status_code, 201, created.content)
+        doc_id = created.data["document_id"]
+        self.client.force_authenticate(user=self.other)
+        res = self.client.patch(
+            f"/api/patient-documents/{doc_id}/",
+            {"parse_snapshot": {"allergies": []}},
+            format="json",
+        )
+        self.assertIn(res.status_code, (403, 404), res.content)
+        doc = PatientDocument.objects.get(document_id=doc_id)
+        self.assertEqual(doc.parse_snapshot, {})

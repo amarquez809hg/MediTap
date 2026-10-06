@@ -288,5 +288,19 @@ class PatientDocumentSerializer(serializers.ModelSerializer):
             return obj.uploaded_by.get_username()
         return None
 
+    def validate_parse_snapshot(self, value):
+        if value in (None, ""):
+            return {}
+        if isinstance(value, str):
+            import json
+
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise serializers.ValidationError("parse_snapshot must be JSON.") from exc
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("parse_snapshot must be an object.")
+        return value
+
     def get_download_url(self, obj):
         return f"/api/patient-documents/{obj.document_id}/download/"

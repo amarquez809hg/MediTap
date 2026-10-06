@@ -300,6 +300,10 @@ class PatientDocumentViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         if self.request.method == "POST":
             return [IsAuthenticated()]
+        # Patients must PATCH parse_snapshot after upload so left-menu
+        # sections survive refresh. Deletes stay staff-only.
+        if self.request.method in ("PUT", "PATCH"):
+            return [IsAuthenticated(), OwnChartRelatedWritePermission()]
         return [IsAuthenticated(), IntakeEditorWritePermission()]
 
     def get_queryset(self):

@@ -87,6 +87,44 @@ export function pickRichestParseSnapshot(
   return bestScore > 0 ? best : ranked[0]?.snap ?? null;
 }
 
+export function snapshotNeedsExtendedRestore(
+  snap: StoredParseSnapshot | null | undefined
+): boolean {
+  return countExtendedEntries(snap?.extendedSections) === 0;
+}
+
+export function buildStoredParseSnapshot(input: {
+  patientFields?: Tab14PatientFields;
+  allergies?: Tab14AllergyRow[];
+  medications?: Tab14MedicationRow[];
+  chronicConditions?: Tab14ChronicRow[];
+  insurances?: Tab14InsuranceRow[];
+  hospitalVisit?: Tab14HospitalFields;
+  hospitalVisits?: Tab14HospitalFields[];
+  labPanels?: Tab14LabPanel[];
+  extendedSections?: Tab14ExtendedSections;
+  vitalsHistory?: unknown[];
+  noKnownDrugAllergies?: boolean;
+  noKnownProblems?: boolean;
+  source?: string;
+}): StoredParseSnapshot {
+  return {
+    patientFields: input.patientFields,
+    allergies: input.allergies,
+    medications: input.medications,
+    chronicConditions: input.chronicConditions,
+    insurances: input.insurances,
+    hospitalVisit: input.hospitalVisit,
+    hospitalVisits: input.hospitalVisits,
+    labPanels: input.labPanels,
+    extendedSections: input.extendedSections,
+    vitalsHistory: input.vitalsHistory,
+    noKnownDrugAllergies: input.noKnownDrugAllergies,
+    noKnownProblems: input.noKnownProblems,
+    source: input.source,
+  };
+}
+
 export function extendedSectionsFromSnapshot(
   snap: StoredParseSnapshot | null | undefined
 ): Tab14ExtendedSections | null {

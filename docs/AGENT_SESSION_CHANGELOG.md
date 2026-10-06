@@ -1460,6 +1460,33 @@
 
 ---
 
+### Entry 179 — `MT-AG-175`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-175`
+
+**Summary:** Patient Information left-menu sections were empty after refresh because PDF parse_snapshot PATCH was staff-only, so vault documents stored no extracted sections.
+
+**What was done:**
+
+- Patients may PATCH their own document `parse_snapshot`.
+- Upload writes the snapshot on POST (JSON in multipart) and PATCH.
+- On load, if the stored snapshot has no extended sections, re-parse the vault PDF and restore the sidebar.
+
+**Outcome:** Related Person, Care Team, Medical Equipment, and the rest of the left menu can refill from the uploaded PDF after reload. Needs VM pull + frontend rebuild.
+
+**Primary paths:** `views.py`, `serializers.py`, `Tab14.tsx`, `api.ts`, `restoreParseSnapshot.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **180** / **`MT-AG-176`**
+
+*Last updated: entry 179 (persist/reparse PDF snapshot for left menu).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

@@ -24,6 +24,7 @@ import {
     uploadPatientDocument,
     updatePatientDocumentStatus,
     fetchPatientDocumentBlobUrl,
+    downloadPatientDocumentFile,
     type PatientLabPanelWriteBody,
     type Tab14LoadResult,
 } from '../api';
@@ -81,6 +82,8 @@ import {
     extendedSectionsFromSnapshot,
     mergeSnapshotIntoClinicalSnapshot,
     pickRichestParseSnapshot,
+    snapshotNeedsExtendedRestore,
+    buildStoredParseSnapshot,
 } from '../intake/restoreParseSnapshot';
 import type {
     Tab14AllergyFieldKey,
@@ -635,6 +638,27 @@ function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument
         return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
     }
     return `Imported: ${chips.join(' · ')} — open each sidebar section to verify, then Save.`;
+}
+
+function parseSnapshotFromBundle(
+    bundle: Tab14IntakeParseResult,
+    source: string
+) {
+    return buildStoredParseSnapshot({
+        patientFields: bundle.patientFields,
+        allergies: bundle.allergies,
+        medications: bundle.medications,
+        chronicConditions: bundle.chronicConditions,
+        insurances: bundle.insurances,
+        hospitalVisit: bundle.hospitalVisit,
+        hospitalVisits: bundle.hospitalVisits,
+        labPanels: bundle.labPanels,
+        extendedSections: bundle.extendedSections,
+        vitalsHistory: bundle.vitalsHistory,
+        noKnownDrugAllergies: Boolean(bundle.noKnownDrugAllergies),
+        noKnownProblems: Boolean(bundle.noKnownProblems),
+        source,
+    });
 }
 
 /**
@@ -1344,25 +1368,20 @@ const Tab14: React.FC = () => {
                 let documentId: string | undefined;
                 if (vaultPatientId) {
                     try {
-                        const doc = await uploadPatientDocument(vaultPatientId, file);
+                        const snapPayload = parseSnapshotFromBundle(
+                            bundle,
+                            canEditPatientRecords
+                                ? 'tab14_staff_parse'
+                                : 'tab14_patient_parse'
+                        );
+                        const doc = await uploadPatientDocument(
+                            vaultPatientId,
+                            file,
+                            snapPayload
+                        );
                         documentId = doc.document_id;
                         await updatePatientDocumentStatus(doc.document_id, {
-                            parse_snapshot: {
-                                patientFields: bundle.patientFields,
-                                allergies: bundle.allergies,
-                                medications: bundle.medications,
-                                chronicConditions: bundle.chronicConditions,
-                                insurances: bundle.insurances,
-                                hospitalVisit: bundle.hospitalVisit,
-                                labPanels: bundle.labPanels,
-                                extendedSections: bundle.extendedSections,
-                                vitalsHistory: bundle.vitalsHistory,
-                                noKnownDrugAllergies: Boolean(bundle.noKnownDrugAllergies),
-                                noKnownProblems: Boolean(bundle.noKnownProblems),
-                                source: canEditPatientRecords
-                                    ? 'tab14_staff_parse'
-                                    : 'tab14_patient_parse',
-                            },
+                            parse_snapshot: snapPayload,
                             parsed_given_name: bundle.patientFields.givenName || '',
                             parsed_family_name: bundle.patientFields.familyName || '',
                         });
@@ -2633,8 +2652,58 @@ const Tab14: React.FC = () => {
                                 );
                                 // Related Person / PoT / Care Team / etc. only live on
                                 // parse_snapshot — restore them so sections are not empty
-                                // after refresh when Demographics already loaded from API.
-                                const snap = pickRichestParseSnapshot(docs);
+                                // after refresh. Older uploads stored empty snapshots
+                                // (patient PATCH was staff-only); re-parse vault PDFs.
+                                let snap = pickRichestParseSnapshot(docs);
+                                if (snapshotNeedsExtendedRestore(snap)) {
+                                    const candidates = docs.slice(0, 4);
+                                    for (const doc of candidates) {
+                                        try {
+                                            const file = await downloadPatientDocumentFile(
+                                                doc.document_id,
+                                                doc.original_filename,
+                                                doc.content_type
+                                            );
+                                            const extracted =
+                                                await extractTab14UploadFileText(file);
+                                            if (!(extracted.text || '').trim()) continue;
+                                            const parsed = parseTab14IntakeDocument(
+                                                extracted.text,
+                                                {
+                                                    preferredVendor:
+                                                        ehrDocumentType || 'auto',
+                                                }
+                                            );
+                                            const rebuilt = parseSnapshotFromBundle(
+                                                parsed,
+                                                'tab14_vault_reparse'
+                                            );
+                                            if (snapshotNeedsExtendedRestore(rebuilt)) {
+                                                continue;
+                                            }
+                                            snap = rebuilt;
+                                            try {
+                                                await updatePatientDocumentStatus(
+                                                    doc.document_id,
+                                                    {
+                                                        parse_snapshot: rebuilt,
+                                                        parsed_given_name:
+                                                            parsed.patientFields
+                                                                .givenName || '',
+                                                        parsed_family_name:
+                                                            parsed.patientFields
+                                                                .familyName || '',
+                                                    }
+                                                );
+                                            } catch {
+                                                /* keep in-memory restore even if PATCH fails */
+                                            }
+                                            break;
+                                        } catch {
+                                            continue;
+                                        }
+                                    }
+                                }
                                 const restoredExt = extendedSectionsFromSnapshot(snap);
                                 if (restoredExt) {
                                     setExtendedSections(restoredExt);
