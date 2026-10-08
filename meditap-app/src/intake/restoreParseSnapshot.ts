@@ -93,6 +93,23 @@ export function snapshotNeedsExtendedRestore(
   return countExtendedEntries(snap?.extendedSections) === 0;
 }
 
+/** True when clinical repeaters look sparse vs a typical Athena/Epic export. */
+export function snapshotNeedsClinicalRestore(
+  snap: StoredParseSnapshot | null | undefined
+): boolean {
+  if (!snap) return true;
+  const meds = snap.medications?.length ?? 0;
+  const allergies = snap.allergies?.length ?? 0;
+  const problems = snap.chronicConditions?.length ?? 0;
+  const labs = snap.labPanels?.length ?? 0;
+  const visits = snapshotHospitalVisits(snap).length;
+  // One medication with empty sibling sections is a classic partial Save/API overwrite.
+  if (meds <= 1 && allergies <= 1 && problems <= 1 && labs === 0 && visits === 0) {
+    return true;
+  }
+  return snapshotNeedsExtendedRestore(snap) && meds + allergies + problems + labs < 4;
+}
+
 export function buildStoredParseSnapshot(input: {
   patientFields?: Tab14PatientFields;
   allergies?: Tab14AllergyRow[];
@@ -148,6 +165,37 @@ type ClinicalMergeInput = {
   labPanels: Tab14LabPanel[];
 };
 
+function namedRowCount(
+  rows: Array<Record<string, unknown>> | null | undefined,
+  keys: string[]
+): number {
+  if (!rows?.length) return 0;
+  return rows.filter((row) =>
+    keys.some((k) => {
+      const v = String(row[k] ?? '').trim();
+      return Boolean(v) && v !== '—' && v !== 'N/A';
+    })
+  ).length;
+}
+
+/**
+ * Prefer the longer named-row list. A single persisted API medication must not
+ * hide a full PDF intake list (and vice versa when staff edited more on the API).
+ */
+export function preferRicherNamedRows<T extends Record<string, unknown>>(
+  apiRows: T[] | null | undefined,
+  snapRows: T[] | null | undefined,
+  nameKeys: string[]
+): T[] {
+  const api = (apiRows ?? []) as T[];
+  const snap = (snapRows ?? []) as T[];
+  const apiN = namedRowCount(api, nameKeys);
+  const snapN = namedRowCount(snap, nameKeys);
+  if (snapN > apiN) return snap;
+  if (apiN > 0) return api;
+  return snap;
+}
+
 /** Clinical repeater rows from snapshot (for filling gaps when API rows are empty). */
 export function mergeSnapshotIntoClinicalSnapshot(
   api: ClinicalMergeInput,
@@ -166,40 +214,62 @@ export function mergeSnapshotIntoClinicalSnapshot(
       labPanels: api.labPanels ?? [],
     };
   }
-  const hospitalVisits =
-    api.hospitalVisits.length > 0
-      ? (api.hospitalVisits as Tab14HospitalFields[])
-      : snap.hospitalVisits?.length
-        ? snap.hospitalVisits
-        : snap.hospitalVisit &&
-            Object.values(snap.hospitalVisit).some((v) => String(v || '').trim())
-          ? [snap.hospitalVisit]
-          : (api.hospitalVisits as Tab14HospitalFields[]);
+  const snapVisits = snapshotHospitalVisits(snap);
+  const hospitalVisits = preferRicherNamedRows(
+    api.hospitalVisits as Tab14HospitalFields[],
+    snapVisits,
+    ['facilityName', 'visitDate', 'reason', 'visitType']
+  );
+
+  const allergies = preferRicherNamedRows(
+    api.allergies as Tab14AllergyRow[],
+    snap.allergies ?? [],
+    ['allergyName']
+  );
+  const medications = preferRicherNamedRows(
+    api.medications as Tab14MedicationRow[],
+    snap.medications ?? [],
+    ['genericName', 'brandName']
+  );
+  const chronicConditions = preferRicherNamedRows(
+    api.chronicConditions as Tab14ChronicRow[],
+    snap.chronicConditions ?? [],
+    ['conditionName', 'icdCode']
+  );
+  const insurances = preferRicherNamedRows(
+    api.insurances as Tab14InsuranceRow[],
+    snap.insurances ?? [],
+    ['providerName', 'policyNumber', 'memberID']
+  );
+  const labPanels = preferRicherNamedRows(
+    api.labPanels,
+    snap.labPanels ?? [],
+    ['testName', 'displayCode']
+  );
 
   return {
-    allergies: api.allergies.length
-      ? (api.allergies as Tab14AllergyRow[])
-      : snap.allergies ?? [],
-    noAllergies: api.allergies.length
-      ? api.noAllergies
-      : Boolean(snap.noKnownDrugAllergies),
-    medications: api.medications.length
-      ? (api.medications as Tab14MedicationRow[])
-      : snap.medications ?? [],
-    noMedications: api.medications.length
-      ? api.noMedications
-      : (snap.medications?.length ?? 0) === 0,
-    chronicConditions: api.chronicConditions.length
-      ? (api.chronicConditions as Tab14ChronicRow[])
-      : snap.chronicConditions ?? [],
-    noChronicConditions: api.chronicConditions.length
-      ? api.noChronicConditions
-      : Boolean(snap.noKnownProblems),
-    insurances: api.insurances.length
-      ? (api.insurances as Tab14InsuranceRow[])
-      : snap.insurances ?? [],
+    allergies,
+    noAllergies:
+      allergies.length > 0
+        ? false
+        : api.allergies.length
+          ? api.noAllergies
+          : Boolean(snap.noKnownDrugAllergies),
+    medications,
+    noMedications: medications.length === 0,
+    chronicConditions,
+    noChronicConditions:
+      chronicConditions.length > 0 &&
+      !chronicConditions.every((c) =>
+        /no\s+known\s+problems/i.test(c.conditionName || '')
+      )
+        ? false
+        : api.chronicConditions.length
+          ? api.noChronicConditions
+          : Boolean(snap.noKnownProblems),
+    insurances,
     hospitalVisits,
-    labPanels: api.labPanels.length ? api.labPanels : snap.labPanels ?? [],
+    labPanels,
   };
 }
 

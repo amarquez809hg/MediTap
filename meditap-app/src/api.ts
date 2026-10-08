@@ -1539,7 +1539,17 @@ export async function fetchDashboardDetail(
       }));
   }
   let allergiesOut = allergies;
-  if (!allergiesOut.length && snap?.allergies?.length) {
+  if ((snap?.allergies?.length ?? 0) > allergiesOut.length) {
+    allergiesOut = (snap?.allergies ?? [])
+      .filter((a) => (a.allergyName || '').trim())
+      .map((a) => ({
+        name: a.allergyName,
+        typeLabel: a.allergyType || a.category || '—',
+        reaction: a.reactionNotes || '—',
+        severity: a.severity || '—',
+        lastObserved: a.lastObserved || '—',
+      }));
+  } else if (!allergiesOut.length && snap?.allergies?.length) {
     allergiesOut = snap.allergies
       .filter((a) => (a.allergyName || '').trim())
       .map((a) => ({
@@ -1551,7 +1561,19 @@ export async function fetchDashboardDetail(
       }));
   }
   let medicationsOut = medications;
-  if (!medicationsOut.length && snap?.medications?.length) {
+  if ((snap?.medications?.length ?? 0) > medicationsOut.length) {
+    medicationsOut = (snap?.medications ?? [])
+      .filter((m) => (m.genericName || '').trim() || (m.brandName || '').trim())
+      .map((m) => ({
+        genericName: m.genericName || '—',
+        brandName: m.brandName || '—',
+        dosage: m.dosage || '—',
+        frequency: m.frequency || '—',
+        purpose: m.purpose || '—',
+        prescriber: m.prescribingPhysician || '—',
+        startDate: m.startDate || '—',
+      }));
+  } else if (!medicationsOut.length && snap?.medications?.length) {
     medicationsOut = snap.medications
       .filter((m) => (m.genericName || '').trim() || (m.brandName || '').trim())
       .map((m) => ({

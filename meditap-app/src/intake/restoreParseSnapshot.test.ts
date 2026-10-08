@@ -43,4 +43,25 @@ describe('restoreParseSnapshot', () => {
     expect(merged.allergies[0]?.allergyName).toBe('Penicillin');
     expect(merged.medications[0]?.genericName).toBe('Lisinopril');
   });
+
+  it('prefers a richer PDF medication list over a sparse API row', () => {
+    const api = {
+      ...emptyMergeSnapshot(),
+      medications: [{ genericName: 'metformin', brandName: '', dosage: '500 mg' } as never],
+    };
+    const merged = mergeSnapshotIntoClinicalSnapshot(api, {
+      medications: [
+        { genericName: 'metformin' } as never,
+        { genericName: 'lisinopril' } as never,
+        { genericName: 'atorvastatin' } as never,
+        { genericName: 'aspirin' } as never,
+        { genericName: 'gabapentin' } as never,
+        { genericName: 'cholecalciferol (Vitamin D3)' } as never,
+        { genericName: 'ibuprofen' } as never,
+        { genericName: 'amoxicillin' } as never,
+      ],
+    });
+    expect(merged.medications.length).toBeGreaterThanOrEqual(8);
+    expect(merged.medications.some((m) => /lisinopril/i.test(m.genericName))).toBe(true);
+  });
 });

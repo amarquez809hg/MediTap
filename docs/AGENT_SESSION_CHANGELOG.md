@@ -1543,6 +1543,33 @@
 
 ---
 
+### Entry 182 — `MT-AG-178`
+
+**Type:** Bug Fix
+
+**Key:** `MT-AG-178`
+
+**Summary:** Patient Information showed only one medication (e.g. metformin) while the Harold Jennings PDF lists nine, because a sparse API row hid the richer PDF parse snapshot.
+
+**What was done:**
+
+- Prefer the richer named clinical list (meds/allergies/problems/labs/visits) when merging API vs parse_snapshot.
+- Re-parse vault PDFs when clinical rows look sparse (not only when extended sections are empty).
+- Prefer the longest Athena medication parser result among Name/Sig/Dose, Name/Authored, and classic.
+
+**Outcome:** Reload/reparse restores the full medication list from the PDF instead of stopping at a single saved API row. User should Save once after reload to persist all rows.
+
+**Primary paths:** `restoreParseSnapshot.ts`, `Tab14.tsx`, `tab14DocumentParse.ts`, `api.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **183** / **`MT-AG-179`**
+
+*Last updated: entry 182 (prefer richer PDF clinical lists).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

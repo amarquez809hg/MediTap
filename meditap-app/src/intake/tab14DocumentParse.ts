@@ -1105,11 +1105,11 @@ function parseAthenaSigDoseRefillMedications(text: string): Tab14MedicationRow[]
 function parseAthenaMedications(text: string): Tab14MedicationRow[] {
   const authored = parseAthenaDataPortabilityMedications(text);
   const sigDose = parseAthenaSigDoseRefillMedications(text);
-  // Prefer the richer Athena table when both match (same export can embed both).
-  if (sigDose.length > authored.length) return sigDose;
-  if (authored.length) return authored;
-  if (sigDose.length) return sigDose;
-  return parseAthenaClassicMedications(text);
+  const classic = parseAthenaClassicMedications(text);
+  // Prefer the longest named list. A sparse "Name Authored" hit must not hide
+  // a complete Harold-style Name/Sig/Dose/Start table (or the reverse).
+  const ranked = [sigDose, authored, classic].sort((a, b) => b.length - a.length);
+  return ranked[0] ?? [];
 }
 
 /** Convert a vitals reading into the patient-field keys used by the Vitals form. */

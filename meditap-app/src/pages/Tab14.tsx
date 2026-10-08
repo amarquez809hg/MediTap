@@ -83,6 +83,7 @@ import {
     mergeSnapshotIntoClinicalSnapshot,
     pickRichestParseSnapshot,
     snapshotNeedsExtendedRestore,
+    snapshotNeedsClinicalRestore,
     buildStoredParseSnapshot,
 } from '../intake/restoreParseSnapshot';
 import type {
@@ -2658,7 +2659,10 @@ const Tab14: React.FC = () => {
                                 // after refresh. Older uploads stored empty snapshots
                                 // (patient PATCH was staff-only); re-parse vault PDFs.
                                 let snap = pickRichestParseSnapshot(docs);
-                                if (snapshotNeedsExtendedRestore(snap)) {
+                                if (
+                                    snapshotNeedsExtendedRestore(snap) ||
+                                    snapshotNeedsClinicalRestore(snap)
+                                ) {
                                     const candidates = docs.slice(0, 4);
                                     for (const doc of candidates) {
                                         try {
@@ -2681,7 +2685,10 @@ const Tab14: React.FC = () => {
                                                 parsed,
                                                 'tab14_vault_reparse'
                                             );
-                                            if (snapshotNeedsExtendedRestore(rebuilt)) {
+                                            if (
+                                                snapshotNeedsExtendedRestore(rebuilt) &&
+                                                snapshotNeedsClinicalRestore(rebuilt)
+                                            ) {
                                                 continue;
                                             }
                                             snap = rebuilt;
