@@ -6,7 +6,11 @@ import {
   normalizePortabilityGluedDates,
   parseCareTeamTableEntries,
   parseExtendedSectionsFromDocument,
+  emptyClinicalEntry,
+  imagingResultsNeedRebuild,
+  isJunkImagingEntry,
   parseImagingResultsEntries,
+  sanitizeImagingResultsEntries,
   parseMentalStatusEntries,
   parseObstetricsHistoryEntries,
   parsePatientInstructionsEntries,
@@ -431,6 +435,33 @@ Imaging Results Imaging Name Status
     expect(img.length).toBe(2);
     expect(img[0].place).toMatch(/Akumin/i);
     expect(img[1].recordedBy).toMatch(/Orr/i);
+
+    const haroldImg = parseImagingResultsEntries(`
+Imaging Results
+Date Imaging Name Status Detail
+05/28/2026 Chest X-ray, 2 views completed No acute cardiopulmonary process. David Nkemelu, MD - Mile High Endocrinology
+06/10/2026 Retinal photography, bilateral retinopathy, OD and OS. completed Mild non-proliferative diabetic retinopathy, OD and OS. Referred to ophthalmology for annual follow-up. Rocky Mountain Eye Associates, (303) 555-4410 1155 Cherokee St, Denver, CO 80204 Ph
+`);
+    expect(haroldImg.length).toBe(2);
+    expect(haroldImg[0].title).toMatch(/Chest X-ray/i);
+    expect(haroldImg[0].detail).toMatch(/No acute cardiopulmonary/i);
+    expect(haroldImg[0].recordedBy).toMatch(/Nkemelu/i);
+    expect(haroldImg[0].place).toMatch(/Mile High Endocrinology/i);
+    expect(haroldImg[1].title).toMatch(/Retinal photography/i);
+    expect(haroldImg[1].detail).toMatch(/Mild non-proliferative/i);
+    expect(haroldImg[1].phone).toMatch(/555-4410/);
+    expect(haroldImg[1].address).toMatch(/Cherokee/);
+    expect(haroldImg.every((e) => !/^status(\s+detail)?$/i.test(e.title))).toBe(true);
+
+    const junkRow = {
+      ...emptyClinicalEntry(),
+      title: 'Status Detail',
+      detail: 'Ph (303) 555-4410',
+      notes: 'Imaging Results',
+    };
+    expect(isJunkImagingEntry(junkRow)).toBe(true);
+    expect(imagingResultsNeedRebuild([junkRow])).toBe(true);
+    expect(sanitizeImagingResultsEntries([junkRow, haroldImg[0]])).toHaveLength(1);
 
     expect(parseProcedureNotesEntries('Procedure Notes\nNone recorded.\n')[0].title).toMatch(
       /none recorded/i

@@ -67,7 +67,8 @@ const SECTION_EXTRA_FIELDS: Partial<Record<Tab14ExtendedSectionKey, Tab14ExtraEn
   planOfTreatment: ['status', 'submitDate', 'instructions'],
   patientInstructions: ['encounterId'],
   surgicalHistory: ['status', 'laterality'],
-  imagingResults: ['status', 'laterality'],
+  // Document columns: Date / Imaging Name / Status / Detail (+ facility contact)
+  imagingResults: ['status', 'laterality', 'phone', 'address'],
   procedures: ['status', 'laterality'],
   familyHistory: ['relationship', 'onsetAge', 'diedAge', 'resolvedAge'],
   medicalHistory: ['response'],
@@ -85,6 +86,7 @@ const CONTACT_SECTION_KEYS = new Set<Tab14ExtendedSectionKey>([
 ]);
 
 const PLAN_OF_TREATMENT_KEY: Tab14ExtendedSectionKey = 'planOfTreatment';
+const IMAGING_RESULTS_KEY: Tab14ExtendedSectionKey = 'imagingResults';
 
 function extraFieldsForRow(
   sectionKey: Tab14ExtendedSectionKey,
@@ -98,9 +100,17 @@ function extraFieldsForRow(
     'performer',
     'location',
   ]);
+  /** Imaging form lays out status / laterality / phone / address explicitly. */
+  const imagingHidden = new Set<Tab14ExtraEntryField>([
+    'status',
+    'laterality',
+    'phone',
+    'address',
+  ]);
   const populated = TAB14_EXTRA_ENTRY_FIELDS.filter((field) => {
     if (mapped.includes(field)) return false;
     if (sectionKey === PLAN_OF_TREATMENT_KEY && potHidden.has(field)) return false;
+    if (sectionKey === IMAGING_RESULTS_KEY && imagingHidden.has(field)) return false;
     return Boolean(String(row[field] ?? '').trim());
   });
   return [...mapped, ...populated];
@@ -129,6 +139,15 @@ function entryAccordionTitle(
     if (row.recordedBy?.trim()) {
       const by = row.recordedBy.trim();
       bits.push(by.length > 28 ? `${by.slice(0, 28)}…` : by);
+    }
+    return bits.join(' · ');
+  }
+  if (sectionKey === IMAGING_RESULTS_KEY) {
+    if (row.date.trim()) bits.push(row.date.trim());
+    if (row.status?.trim()) bits.push(row.status.trim());
+    else if (row.detail.trim()) {
+      const d = row.detail.trim();
+      bits.push(d.length > 40 ? `${d.slice(0, 40)}…` : d);
     }
     return bits.join(' · ');
   }
@@ -236,8 +255,18 @@ export default function Tab14ExtendedSectionPanel({
     >
       <div className="tab14-section-card">
         <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
-          Maps to the document section <strong>{title}</strong>. Values can come from a PDF
-          upload; staff edit or add entries in the admin portal.
+          {sectionKey === IMAGING_RESULTS_KEY ? (
+            <>
+              Maps to document columns <strong>Date</strong>, <strong>Imaging Name</strong>,{' '}
+              <strong>Status</strong>, and <strong>Detail</strong>. Provider, facility, phone,
+              and address capture wrapped table text from any vendor PDF.
+            </>
+          ) : (
+            <>
+              Maps to the document section <strong>{title}</strong>. Values can come from a PDF
+              upload; staff edit or add entries in the admin portal.
+            </>
+          )}
         </p>
 
         {showDateFilter && (
@@ -374,6 +403,107 @@ export default function Tab14ExtendedSectionPanel({
                                 value={row.detail}
                                 onChange={(e) => update(index, { detail: e.target.value })}
                                 placeholder="Optional free-text notes"
+                              />
+                            </div>
+                            {extraFieldsForRow(sectionKey, row).map((field) => (
+                              <div className="form-field" key={field}>
+                                <label>{extraFieldLabel(sectionKey, field)}</label>
+                                <input
+                                  value={row[field] ?? ''}
+                                  onChange={(e) => update(index, { [field]: e.target.value })}
+                                />
+                              </div>
+                            ))}
+                          </>
+                        ) : sectionKey === IMAGING_RESULTS_KEY ? (
+                          <>
+                            <div className="form-field">
+                              <label>Date</label>
+                              <input
+                                value={row.date}
+                                onChange={(e) => update(index, { date: e.target.value })}
+                                placeholder="MM/DD/YYYY or YYYY-MM-DD"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Imaging Name</label>
+                              <input
+                                value={row.title}
+                                onChange={(e) => update(index, { title: e.target.value })}
+                                placeholder="e.g. Chest X-ray, 2 views"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Status</label>
+                              <input
+                                value={row.status ?? ''}
+                                onChange={(e) => update(index, { status: e.target.value })}
+                                placeholder="Completed, pending…"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Detail</label>
+                              <textarea
+                                rows={3}
+                                value={row.detail}
+                                onChange={(e) => update(index, { detail: e.target.value })}
+                                placeholder="Clinical impression / findings"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Ordering / referring provider</label>
+                              <input
+                                value={row.recordedBy ?? ''}
+                                onChange={(e) => update(index, { recordedBy: e.target.value })}
+                                placeholder="e.g. David Nkemelu, MD"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Facility / practice</label>
+                              <input
+                                value={row.place ?? ''}
+                                onChange={(e) => update(index, { place: e.target.value })}
+                                placeholder="Organization / location"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Phone</label>
+                              <input
+                                value={row.phone ?? ''}
+                                onChange={(e) => update(index, { phone: e.target.value })}
+                                placeholder="(303) 555-0000"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Address</label>
+                              <input
+                                value={row.address ?? ''}
+                                onChange={(e) => update(index, { address: e.target.value })}
+                                placeholder="Street, City, ST ZIP"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Laterality</label>
+                              <input
+                                value={row.laterality ?? ''}
+                                onChange={(e) => update(index, { laterality: e.target.value })}
+                                placeholder="OD and OS, bilateral, left, right…"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Time</label>
+                              <input
+                                value={row.time ?? ''}
+                                onChange={(e) => update(index, { time: e.target.value })}
+                                placeholder="HH:MM:SS"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Notes</label>
+                              <textarea
+                                rows={2}
+                                value={row.notes ?? ''}
+                                onChange={(e) => update(index, { notes: e.target.value })}
                               />
                             </div>
                             {extraFieldsForRow(sectionKey, row).map((field) => (

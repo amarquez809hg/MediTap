@@ -1570,6 +1570,89 @@
 
 ---
 
+### Entry 183 — `MT-AG-179`
+
+**Type:** Bug Fix / UX
+
+**Key:** `MT-AG-179`
+
+**Summary:** Imaging Results showed junk fields (`Status Detail`, phone-as-detail) instead of the Harold PDF table columns Date / Imaging Name / Status / Detail.
+
+**What was done:**
+
+- Split Imaging Results parsing into modality-coded rows (Diana US/CT/XR/MRI) vs named Date/Name/Status/Detail table (Harold Chest X-ray / Retinal photography).
+- Map provider, facility, phone, address, laterality into distinct entry fields; keep clinical impression in Detail.
+- Rebuild gate replaces header-junk titles (`Status Detail`, `Imaging Results`).
+- Tab14 Imaging Results form labels/order match the document: Date, Imaging Name, Status, Detail, plus provider / facility / phone / address / laterality.
+
+**Outcome:** Re-upload or reparse Harold Jennings fills two clean imaging rows (Chest X-ray + Retinal photography) with document fields; Diana US studies still parse via the modality path.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `Tab14ExtendedSectionPanel.tsx`, `haroldJenningsPortability.integration.test.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **184** / **`MT-AG-180`**
+
+*Last updated: entry 183 (Imaging Results Date/Name/Status/Detail).*
+
+---
+
+### Entry 184 — `MT-AG-180`
+
+**Type:** Bug Fix / UX
+
+**Key:** `MT-AG-180`
+
+**Summary:** Imaging Results still showed stale “Status Detail” junk after the Date/Name/Status/Detail form work, because rich snapshots skipped vault reparse; make Imaging fields a general document-column rule for any vendor PDF.
+
+**What was done:**
+
+- Detect junk Imaging Results titles (`Status Detail`, section-label notes + phone/address detail) and force vault PDF reparse on Tab14 load even when other sections look rich.
+- Sanitize junk imaging rows out of `parse_snapshot` hydration so the form never shows header chrome.
+- Generalize named Imaging table parsing (facility / referral / phone / address) without Harold-only org hardcodes.
+- Imaging form stays Date → Imaging Name → Status → Detail (+ provider / facility / contact) for all future intakes.
+
+**Outcome:** Reload Patient Information rebuilds Imaging Results from the PDF when junk is present; UI columns match the document table for Athena and other vendor layouts.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `restoreParseSnapshot.ts`, `Tab14.tsx`, `Tab14ExtendedSectionPanel.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **185** / **`MT-AG-181`**
+
+*Last updated: entry 184 (Imaging Results junk rebuild + general document columns).*
+
+---
+
+### Entry 185 — `MT-AG-181`
+
+**Type:** Feature / Bug Fix
+
+**Key:** `MT-AG-181`
+
+**Summary:** Past Encounters showed empty (“No encounters parsed”) for Harold Jennings because only Diana Encounter-ID rows were parsed; adapt fields to Date / Type / Performer / Diagnosis/Notes for any vendor PDF.
+
+**What was done:**
+
+- Added Harold-style `Date Type Performer Diagnosis/Notes` Past Encounters parser (wrapped type/facility lines) alongside Diana Encounter-ID path.
+- Reordered Tab14 Past Encounters form to document columns first; keep Encounter ID / codes for other layouts.
+- Vault reparse when a rich Athena snapshot still has zero encounters; completeness counts diagnosisNote / performer.
+
+**Outcome:** Harold PDF fills 5+ Past Encounter rows (Cole / Nkemelu / facilities / clinical notes); Diana Encounter-ID visits unchanged.
+
+**Primary paths:** `tab14DocumentParse.ts`, `Tab14.tsx`, `restoreParseSnapshot.ts`, `athenaPortabilityCompleteness.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **186** / **`MT-AG-182`**
+
+*Last updated: entry 185 (Past Encounters Date/Type/Performer/Notes).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

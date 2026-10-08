@@ -105,5 +105,35 @@ describe('Harold Jennings Athena Data Portability PDF', () => {
     expect(members.length).toBeGreaterThanOrEqual(1);
     expect(members[0]?.title).toMatch(/Susan\s+Cole/i);
     expect(members[0]?.phone).toMatch(/303|555-7100/);
+
+    const visits = r.hospitalVisits ?? [];
+    expect(visits.length).toBeGreaterThanOrEqual(5);
+    expect(visits.every((v) => Boolean(v.visitDate))).toBe(true);
+    expect(visits.some((v) => /OFFICE\/OUTPT/i.test(v.visitType || ''))).toBe(true);
+    expect(visits.some((v) => /Susan\s+Cole/i.test(v.attendingPhysician || ''))).toBe(true);
+    expect(visits.some((v) => /Nkemelu/i.test(v.attendingPhysician || ''))).toBe(true);
+    expect(visits.some((v) => /Front\s+Range\s+Family/i.test(v.facilityName || ''))).toBe(true);
+    expect(visits.some((v) => /Mile\s+High/i.test(v.facilityName || ''))).toBe(true);
+    expect(
+      visits.some((v) => /metformin|A1c|neuropathy|retinopathy|glucose/i.test(v.diagnosisNote || ''))
+    ).toBe(true);
+
+    const imaging = r.extendedSections?.imagingResults ?? [];
+    expect(imaging.length).toBe(2);
+    expect(imaging.every((e) => !/^status(\s+detail)?$/i.test(e.title))).toBe(true);
+    const chest = imaging.find((e) => /chest\s+x-?ray/i.test(e.title));
+    expect(chest?.date).toBe('05/28/2026');
+    expect(chest?.status).toMatch(/completed/i);
+    expect(chest?.detail).toMatch(/no acute cardiopulmonary/i);
+    expect(chest?.recordedBy).toMatch(/David\s+Nkemelu/i);
+    expect(chest?.place).toMatch(/Mile\s+High\s+Endocrinology/i);
+    const retinal = imaging.find((e) => /retinal\s+photography/i.test(e.title));
+    expect(retinal?.date).toBe('06/10/2026');
+    expect(retinal?.status).toMatch(/completed/i);
+    expect(retinal?.detail).toMatch(/mild non-proliferative diabetic retinopathy/i);
+    expect(retinal?.place).toMatch(/Rocky\s+Mountain\s+Eye/i);
+    expect(retinal?.phone).toMatch(/303.*555-4410/);
+    expect(retinal?.address).toMatch(/1155\s+Cherokee/i);
+    expect(retinal?.laterality).toMatch(/OD\s+and\s+OS/i);
   });
 });

@@ -2094,18 +2094,73 @@ export function parseSurgicalHistoryEntries(block: string): Tab14ClinicalEntry[]
   return rows.slice(0, 40);
 }
 
+/** Header / bleed rows that must never stay as Imaging Results entries. */
+export function isJunkImagingEntry(entry: Tab14ClinicalEntry): boolean {
+  const title = (entry.title || '').trim();
+  const detail = (entry.detail || '').trim();
+  const notes = (entry.notes || '').trim();
+  if (!title) return true;
+  if (
+    /^(status(\s+detail)?|detail|imaging\s*name|date|imaging\s+results|name|organization\s+details)$/i.test(
+      title
+    )
+  ) {
+    return true;
+  }
+  // Section label parked in Notes with phone/address dumped into Detail and no study date.
+  if (
+    !String(entry.date || '').trim() &&
+    /^imaging\s+results$/i.test(notes) &&
+    (/\bPh\b|\(\d{3}\)/i.test(detail) || /\d{2,5}\s+[A-Za-z].*\b[A-Z]{2}\s*\d{5}/i.test(detail))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** True when stored Imaging Results need a PDF rebuild (any vendor). */
+export function imagingResultsNeedRebuild(
+  entries: Tab14ClinicalEntry[] | null | undefined
+): boolean {
+  if (!entries?.length) return false;
+  if (entries.some(isJunkImagingEntry)) return true;
+  // Every row lacks a study date and looks like table chrome rather than a procedure.
+  if (
+    entries.every(
+      (e) =>
+        !String(e.date || '').trim() &&
+        /status|detail|imaging/i.test(e.title || '')
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function sanitizeImagingResultsEntries(
+  entries: Tab14ClinicalEntry[] | null | undefined
+): Tab14ClinicalEntry[] {
+  if (!entries?.length) return [];
+  return entries.filter((e) => !isJunkImagingEntry(e));
+}
+
 /**
  * Athena Imaging Results under Procedures (not Results → Imaging).
- * Example: `08/21/2025 US, pelvis, transabdominal + completed … transvaginal`
+ * Supports:
+ * - Diana: `08/21/2025 US, pelvis, transabdominal + completed …`
+ * - Harold: `Date Imaging Name Status Detail` rows
+ *   `05/28/2026 Chest X-ray, 2 views completed No acute cardiopulmonary process. …`
  */
 export function parseImagingResultsEntries(block: string): Tab14ClinicalEntry[] {
   if (!block || block.length < 8) return [];
 
   let text = normalizePortabilityGluedDates(block)
+    .replace(/Imaging\s+Results\s+Date\s+Imaging\s+Name\s+Status\s+Detail/gi, '\n')
     .replace(/Imaging\s+Results\s+Imaging\s+Name[^\n]{0,160}/gi, '\n')
     .replace(/\bDate\b\s*(?=\d{1,2}\/\d{1,2}\/\d{4})/gi, '\n')
     .replace(/(completed)(Not\s+Available|Jennifer)/gi, '$1 $2')
-    .replace(/\bProcedure\s*\n?\s*Notes\b/gi, '\nProcedure Notes\n');
+    .replace(/\bProcedure\s*\n?\s*Notes\b/gi, '\nProcedure Notes\n')
+    .replace(/\bMedical\s+Equipment\b/gi, '\nMedical Equipment\n');
 
   const cut = text.search(IMAGING_RESULTS_STOP);
   if (cut >= 0) text = text.slice(0, cut);
@@ -2114,7 +2169,19 @@ export function parseImagingResultsEntries(block: string): Tab14ClinicalEntry[] 
     return [clinicalEntry({ title: 'None recorded', detail: 'None recorded.' })];
   }
 
-  const flat = collapseWs(text);
+  const modalityRows = parseModalityCodedImagingResults(text);
+  const namedRows = parseImagingNameStatusDetailTable(text);
+  // Harold Date/Name/Status/Detail must not steal Diana US/CT/XR/MRI rows.
+  if (namedRows.some((r) => /x-?ray|retinal|photography|mammo|echo/i.test(r.title))) {
+    return namedRows.slice(0, 40);
+  }
+  if (modalityRows.length) return modalityRows.slice(0, 40);
+  return namedRows.slice(0, 40);
+}
+
+/** Diana-style modality prefix rows (US / CT / XR / MRI). */
+function parseModalityCodedImagingResults(block: string): Tab14ClinicalEntry[] {
+  const flat = collapseWs(block);
   const rows: Tab14ClinicalEntry[] = [];
   const seen = new Set<string>();
 
@@ -2123,7 +2190,6 @@ export function parseImagingResultsEntries(block: string): Tab14ClinicalEntry[] 
   )) {
     const date = m[1];
     let chunk = m[2];
-    // PDF wraps "… Orr, Akumin … transvaginal MD"
     chunk = collapseWs(chunk).replace(/\btransvaginal\s+(MD)\b/i, '$1');
     const completed = /completed/i.test(chunk);
     const provider =
@@ -2161,12 +2227,162 @@ export function parseImagingResultsEntries(block: string): Tab14ClinicalEntry[] 
         recordedBy: provider,
         place: placeFull || collapseWs(place),
         time,
+        phone,
         notes: phone && !placeFull.includes(phone) ? `Phone: ${phone}` : '',
       })
     );
   }
 
-  return rows.slice(0, 40);
+  return rows;
+}
+
+/**
+ * Harold-style Imaging Results table:
+ * `Date Imaging Name Status Detail`
+ */
+function parseImagingNameStatusDetailTable(block: string): Tab14ClinicalEntry[] {
+  const text = collapseWs(block)
+    .replace(/\bImaging\s+Results\b/gi, ' ')
+    .replace(/\bDate\s+Imaging\s+Name\s+Status\s+Detail\b/gi, ' ')
+    .trim();
+  if (!/\d{1,2}\/\d{1,2}\/\d{4}\s+.+\b(?:completed|active|pending|cancelled)\b/i.test(text)) {
+    return [];
+  }
+  // If every dated row starts with a modality code, leave those to the Diana parser.
+  const datedStarts = [...text.matchAll(/(\d{1,2}\/\d{1,2}\/\d{4})\s+(\S+)/g)];
+  if (
+    datedStarts.length > 0 &&
+    datedStarts.every((m) => /^(?:US|CT|XR|MRI)[,]?$/i.test(m[2]) || /^(?:US|CT|XR|MRI),/i.test(m[2]))
+  ) {
+    return [];
+  }
+
+  const rows: Tab14ClinicalEntry[] = [];
+  const seen = new Set<string>();
+  const re =
+    /(\d{1,2}\/\d{1,2}\/\d{4})\s+((?:(?!\b(?:completed|active|pending|cancelled|ordered)\b).)+?)\s+\b(completed|active|pending|cancelled|ordered)\b\s+([\s\S]*?)(?=\d{1,2}\/\d{1,2}\/\d{4}\s+[A-Za-z]|\bMedical\s+Equipment\b|\bProcedure\s+Notes\b|\bAllergies\b|$)/gi;
+
+  for (const m of text.matchAll(re)) {
+    const date = m[1];
+    let title = collapseWs(m[2]).replace(/^[,.\-–—\s]+|[,.\-–—\s]+$/g, '');
+    const statusRaw = m[3];
+    let remainder = collapseWs(m[4]);
+
+    remainder = remainder
+      .replace(/\bMedical\s+Equipment[\s\S]*$/i, '')
+      .replace(/\bAllergies\b[\s\S]*$/i, '')
+      .trim();
+
+    if (!title || /^(date|imaging\s*name|status|detail)$/i.test(title)) continue;
+    if (/^status(\s+detail)?$/i.test(title) || /^detail$/i.test(title)) continue;
+    // Skip modality-coded rows — Diana path owns those.
+    if (/^(?:US|CT|XR|MRI)\b/i.test(title)) continue;
+
+    // Imaging Name column sometimes wraps referral + phone before Status.
+    const titlePhone =
+      title.match(/\(?\d{3}\)?\s*[-.]?\s*\d{3}\s*[-.]?\s*\d{4}/)?.[0] ?? '';
+    const titleReferredOrg = title.match(
+      /\bReferred\s+to\s+((?!ophthalmology\b)[A-Z][A-Za-z0-9 &.'-]{2,60}?)(?=,|\s*\(|\s*$)/i
+    )?.[1];
+    title = collapseWs(
+      title
+        .replace(titlePhone, ' ')
+        .replace(/\bReferred\s+to\s+(?!ophthalmology\b)[A-Z][A-Za-z0-9 &.'-]{2,60}/i, ' ')
+        .replace(/^[,.\-–—\s]+|[,.\-–—\s]+$/g, '')
+    );
+
+    const phone =
+      remainder.match(/\(?\d{3}\)?\s*[-.]?\s*\d{3}\s*[-.]?\s*\d{4}/)?.[0] ??
+      titlePhone ??
+      '';
+
+    const provider =
+      remainder.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,\s*MD)\b/)?.[1] ??
+      remainder.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\s+MD)\b/)?.[1] ??
+      '';
+
+    const addressM = remainder.match(
+      /(\d{2,5}\s+[A-Za-z0-9 .'-]+(?:St|Street|Ave|Avenue|Blvd|Road|Rd|Dr|Drive|Way|Ln|Lane)\.?[^,]*,\s*[A-Za-z .]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/i
+    );
+    const address = addressM ? collapseWs(addressM[1]) : '';
+
+    let place = '';
+    const afterMd = remainder.match(/MD\s*[-–—]\s*([^,.(]+)/i);
+    if (afterMd) {
+      place = collapseWs(afterMd[1]).replace(/\s*,?\s*Ph\b.*$/i, '');
+    }
+    // Facility / practice before phone or street (any vendor — not Harold-only orgs).
+    const orgBeforeContact = remainder.match(
+      /\b([A-Z][A-Za-z0-9&.'-]+(?:\s+[A-Z][A-Za-z0-9&.'-]+){0,5}\s+(?:Associates|Endocrinology|Clinic|Center|Hospital|Imaging|Radiology|Laboratory|Lab|Group|Practice|Services))\b/i
+    );
+    if (orgBeforeContact) {
+      place = collapseWs(orgBeforeContact[1]);
+    }
+    const referredOrg =
+      titleReferredOrg ||
+      remainder.match(
+        /\bReferred\s+to\s+((?!ophthalmology\b)[A-Z][A-Za-z0-9 &.'-]{2,60}?)(?=,|\s*\(|\s+\d{2,5}\b|\s*$)/i
+      )?.[1];
+    if (referredOrg && !place) {
+      place = collapseWs(referredOrg);
+    }
+
+    // Clinical impression: keep specialty referral phrases; strip provider / facility / contact.
+    let detail = remainder
+      .replace(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,\s*MD\b[\s\S]*$/i, '')
+      .replace(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\s+MD\b[\s\S]*$/i, '')
+      .replace(/\bReferred\s+to\s+(?!ophthalmology\b)[\s\S]*$/i, '')
+      .replace(
+        /\b[A-Z][A-Za-z0-9&.'-]+(?:\s+[A-Z][A-Za-z0-9&.'-]+){0,5}\s+(?:Associates|Endocrinology|Clinic|Center|Hospital|Imaging|Radiology|Laboratory|Lab|Group|Practice|Services)\b[\s\S]*$/i,
+        ''
+      )
+      .replace(/\d{2,5}\s+[A-Za-z0-9 .'-]+(?:St|Street|Ave|Avenue|Blvd|Road|Rd|Dr|Drive)\.?[\s\S]*$/i, '')
+      .replace(/\(?\d{3}\)?\s*[-.]?\s*\d{3}\s*[-.]?\s*\d{4}/g, '')
+      .replace(/\bPh\b/gi, '');
+    const clinicalReferral = remainder.match(
+      /Referred\s+to\s+ophthalmology(?:\s+for\s+[^.]{0,60})?\.?/i
+    )?.[0];
+    detail = collapseWs([detail, clinicalReferral].filter(Boolean).join(' '))
+      .replace(/^[,.\s]+|[,.\s]+$/g, '')
+      .slice(0, 500);
+
+    const lateralityFull =
+      `${title} ${remainder}`.match(/\b(OD\s+and\s+OS|OS\s+and\s+OD)\b/i)?.[1] ??
+      `${title} ${remainder}`.match(/\b(bilateral|left|right)\b/i)?.[1] ??
+      '';
+
+    // Glue wrapped Imaging Name fragments (e.g. "…bilateral" + "retinopathy, OD and OS").
+    if (
+      /\bbilateral$/i.test(title) &&
+      /\bretinopathy\b/i.test(remainder) &&
+      !/\bretinopathy\b/i.test(title)
+    ) {
+      const extra = remainder.match(/retinopathy(?:,\s*OD\s+and\s+OS)?/i)?.[0];
+      if (extra) title = collapseWs(`${title} ${extra}`);
+    }
+
+    const key = `${title.toLowerCase()}|${date}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    rows.push(
+      clinicalEntry({
+        title: title.slice(0, 200),
+        detail: detail || collapseWs(remainder).slice(0, 400),
+        status: statusRaw.replace(/^./, (c) => c.toUpperCase()),
+        date,
+        recordedBy: collapseWs(provider).replace(/,\s*$/, ''),
+        place: place.slice(0, 200),
+        address: address || '',
+        phone: phone || '',
+        laterality: lateralityFull ? collapseWs(lateralityFull) : '',
+        notes: '',
+        time: '',
+      })
+    );
+  }
+
+  return rows;
 }
 
 /** Athena Procedure Notes under Procedures — often “None recorded.” */
@@ -2927,11 +3143,8 @@ export function parseExtendedSectionsFromDocument(text: string): Tab14ExtendedSe
     }
   }
 
-  // Imaging Results under Procedures (Diana: two pelvic US studies)
-  if (
-    out.imagingResults.length === 0 ||
-    out.imagingResults.every((e) => /none recorded|imaging results/i.test(e.title) && !/US|CT|XR|MRI/i.test(e.title))
-  ) {
+  // Imaging Results under Procedures (Diana US studies / Harold Date-Name-Status-Detail)
+  if (out.imagingResults.length === 0 || imagingResultsNeedRebuild(out.imagingResults)) {
     const imgBlocks = sliceAllPortabilityBlocks(
       normalized,
       EXTENDED_HEADER.imagingResults,

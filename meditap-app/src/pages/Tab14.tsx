@@ -84,6 +84,8 @@ import {
     pickRichestParseSnapshot,
     snapshotNeedsExtendedRestore,
     snapshotNeedsClinicalRestore,
+    snapshotNeedsImagingRestore,
+    snapshotNeedsEncountersRestore,
     buildStoredParseSnapshot,
 } from '../intake/restoreParseSnapshot';
 import type {
@@ -2661,7 +2663,9 @@ const Tab14: React.FC = () => {
                                 let snap = pickRichestParseSnapshot(docs);
                                 if (
                                     snapshotNeedsExtendedRestore(snap) ||
-                                    snapshotNeedsClinicalRestore(snap)
+                                    snapshotNeedsClinicalRestore(snap) ||
+                                    snapshotNeedsImagingRestore(snap) ||
+                                    snapshotNeedsEncountersRestore(snap)
                                 ) {
                                     const candidates = docs.slice(0, 4);
                                     for (const doc of candidates) {
@@ -5322,6 +5326,11 @@ const Tab14: React.FC = () => {
                                     }
                                 />
                             )}
+                            <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
+                                Maps to document columns <strong>Date</strong>, <strong>Type</strong>,{' '}
+                                <strong>Performer</strong>, and <strong>Diagnosis/Notes</strong>. Extra
+                                fields capture Encounter ID layouts from other vendor PDFs.
+                            </p>
                             {hospitalVisits.map((visit, index) => (
                                 <Tab14RepeaterAccordion
                                     key={index}
@@ -5330,48 +5339,20 @@ const Tab14: React.FC = () => {
                                     title={repeaterRowTitle(
                                         'hospitalVisit',
                                         index,
-                                        visit.facilityName || visit.visitType || visit.reason
+                                        [
+                                            visit.visitDate,
+                                            visit.visitType,
+                                            visit.attendingPhysician || visit.facilityName,
+                                        ]
+                                            .map((v) => String(v || '').trim())
+                                            .filter(Boolean)
+                                            .join(' · ') ||
+                                            visit.reason ||
+                                            'Past Encounter'
                                     )}
                                     isOpen={isRepeaterAccordionOpen(repeaterAccordionOpen, 'hospitalVisit', index)}
                                     onToggle={() => toggleRepeaterAccordion('hospitalVisit', index)}
                                 >
-                                    <div className="form-field">
-                                        <label>
-                                            Type
-                                            {renderPdfHospitalWarningIcon('visitType')}
-                                        </label>
-                                        <input
-                                            placeholder='e.g. Recent admission, ER, outpatient'
-                                            value={visit.visitType}
-                                            onChange={(e) =>
-                                                handleChange(index, 'visitType', e.target.value, hospitalVisits, setHospitalVisits)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-field">
-                                        <label>
-                                            Facility
-                                            {renderPdfHospitalWarningIcon('facilityName')}
-                                        </label>
-                                        <input
-                                            value={visit.facilityName}
-                                            onChange={(e) =>
-                                                handleChange(index, 'facilityName', e.target.value, hospitalVisits, setHospitalVisits)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-field">
-                                        <label>
-                                            Reason
-                                            {renderPdfHospitalWarningIcon('reason')}
-                                        </label>
-                                        <input
-                                            value={visit.reason}
-                                            onChange={(e) =>
-                                                handleChange(index, 'reason', e.target.value, hospitalVisits, setHospitalVisits)
-                                            }
-                                        />
-                                    </div>
                                     <div className="form-field">
                                         <label>
                                             Date
@@ -5383,6 +5364,71 @@ const Tab14: React.FC = () => {
                                                 handleChange(index, 'visitDate', iso, hospitalVisits, setHospitalVisits)
                                             }
                                             max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>
+                                            Type
+                                            {renderPdfHospitalWarningIcon('visitType')}
+                                        </label>
+                                        <input
+                                            placeholder="e.g. OFFICE/OUTPT EST PT FOCUS/LOW"
+                                            value={visit.visitType}
+                                            onChange={(e) =>
+                                                handleChange(index, 'visitType', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>
+                                            Performer
+                                            {renderPdfHospitalWarningIcon('attendingPhysician')}
+                                        </label>
+                                        <input
+                                            placeholder="e.g. Susan Cole, MD"
+                                            value={visit.attendingPhysician}
+                                            onChange={(e) =>
+                                                handleChange(index, 'attendingPhysician', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>
+                                            Facility / practice
+                                            {renderPdfHospitalWarningIcon('facilityName')}
+                                        </label>
+                                        <input
+                                            placeholder="e.g. Front Range Family Medicine"
+                                            value={visit.facilityName}
+                                            onChange={(e) =>
+                                                handleChange(index, 'facilityName', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>
+                                            Diagnosis / Notes
+                                            {renderPdfHospitalWarningIcon('diagnosisNote')}
+                                        </label>
+                                        <textarea
+                                            rows={5}
+                                            placeholder="Clinical note from the encounter row"
+                                            value={visit.diagnosisNote ?? ''}
+                                            onChange={(e) =>
+                                                handleChange(index, 'diagnosisNote', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
+                                        />
+                                    </div>
+                                    <div className="form-field">
+                                        <label>
+                                            Reason (summary)
+                                            {renderPdfHospitalWarningIcon('reason')}
+                                        </label>
+                                        <input
+                                            value={visit.reason}
+                                            onChange={(e) =>
+                                                handleChange(index, 'reason', e.target.value, hospitalVisits, setHospitalVisits)
+                                            }
                                         />
                                     </div>
                                     <div className="form-field">
@@ -5399,19 +5445,7 @@ const Tab14: React.FC = () => {
                                     </div>
                                     <div className="form-field">
                                         <label>
-                                            Attending
-                                            {renderPdfHospitalWarningIcon('attendingPhysician')}
-                                        </label>
-                                        <input
-                                            value={visit.attendingPhysician}
-                                            onChange={(e) =>
-                                                handleChange(index, 'attendingPhysician', e.target.value, hospitalVisits, setHospitalVisits)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-field">
-                                        <label>
-                                            ReportId
+                                            Report ID
                                             {renderPdfHospitalWarningIcon('reportId')}
                                         </label>
                                         <input
@@ -5433,7 +5467,7 @@ const Tab14: React.FC = () => {
                                     <div className="form-field">
                                         <label>Location</label>
                                         <input
-                                            placeholder='e.g. ELP_ACWHP - Mesa'
+                                            placeholder="e.g. ELP_ACWHP - Mesa"
                                             value={visit.location ?? ''}
                                             onChange={(e) =>
                                                 handleChange(index, 'location', e.target.value, hospitalVisits, setHospitalVisits)
@@ -5443,7 +5477,7 @@ const Tab14: React.FC = () => {
                                     <div className="form-field">
                                         <label>Encounter start</label>
                                         <input
-                                            placeholder='MM/DD/YYYY HH:MM:SS'
+                                            placeholder="MM/DD/YYYY HH:MM:SS"
                                             value={visit.startDateTime ?? ''}
                                             onChange={(e) =>
                                                 handleChange(index, 'startDateTime', e.target.value, hospitalVisits, setHospitalVisits)
@@ -5453,7 +5487,7 @@ const Tab14: React.FC = () => {
                                     <div className="form-field">
                                         <label>Encounter closed</label>
                                         <input
-                                            placeholder='MM/DD/YYYY HH:MM:SS'
+                                            placeholder="MM/DD/YYYY HH:MM:SS"
                                             value={visit.closedDateTime ?? ''}
                                             onChange={(e) =>
                                                 handleChange(index, 'closedDateTime', e.target.value, hospitalVisits, setHospitalVisits)
@@ -5487,16 +5521,6 @@ const Tab14: React.FC = () => {
                                             }
                                         />
                                     </div>
-                                    <div className="form-field">
-                                        <label>Diagnosis note</label>
-                                        <textarea
-                                            rows={3}
-                                            value={visit.diagnosisNote ?? ''}
-                                            onChange={(e) =>
-                                                handleChange(index, 'diagnosisNote', e.target.value, hospitalVisits, setHospitalVisits)
-                                            }
-                                        />
-                                    </div>
                                     {hospitalVisits.length > 1 && (
                                         <button
                                             className="remove-button"
@@ -5505,7 +5529,7 @@ const Tab14: React.FC = () => {
                                                 handleRemoveRepeaterSection('hospitalVisit', index, hospitalVisits, setHospitalVisits)
                                             }
                                         >
-                                            Remove Hospital Visit
+                                            Remove encounter
                                         </button>
                                     )}
                                 </Tab14RepeaterAccordion>
@@ -5517,7 +5541,7 @@ const Tab14: React.FC = () => {
                                     handleAddRepeaterSection('hospitalVisit', hospitalVisits, setHospitalVisits, defaultHospitalVisit)
                                 }
                             >
-                                + Add Another Hospital Visit
+                                + Add Past Encounter
                             </button>
                                 </>
                             )}

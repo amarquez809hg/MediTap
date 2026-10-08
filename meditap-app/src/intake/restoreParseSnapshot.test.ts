@@ -4,8 +4,10 @@ import {
   extendedSectionsFromSnapshot,
   mergeSnapshotIntoClinicalSnapshot,
   pickRichestParseSnapshot,
+  snapshotNeedsEncountersRestore,
+  snapshotNeedsImagingRestore,
 } from './restoreParseSnapshot';
-import { emptyExtendedSections } from './tab14PortabilitySections';
+import { emptyClinicalEntry, emptyExtendedSections } from './tab14PortabilitySections';
 import { emptyMergeSnapshot } from './applyTab14ParseBundle';
 
 describe('restoreParseSnapshot', () => {
@@ -42,6 +44,53 @@ describe('restoreParseSnapshot', () => {
     });
     expect(merged.allergies[0]?.allergyName).toBe('Penicillin');
     expect(merged.medications[0]?.genericName).toBe('Lisinopril');
+  });
+
+  it('flags rich Athena snapshots missing Past Encounters for vault reparse', () => {
+    expect(
+      snapshotNeedsEncountersRestore({
+        medications: [
+          { genericName: 'metformin' } as never,
+          { genericName: 'lisinopril' } as never,
+          { genericName: 'atorvastatin' } as never,
+          { genericName: 'gabapentin' } as never,
+        ],
+        hospitalVisits: [],
+      })
+    ).toBe(true);
+    expect(
+      snapshotNeedsEncountersRestore({
+        medications: [{ genericName: 'metformin' } as never],
+        hospitalVisits: [{ visitDate: '2025-02-11', facilityName: 'Front Range' }],
+      })
+    ).toBe(false);
+  });
+
+  it('strips Imaging Results header junk and flags snapshot for vault reparse', () => {
+    const junk = {
+      ...emptyClinicalEntry(),
+      title: 'Status Detail',
+      detail: 'Ph (303) 555-4410\n1155 Cherokee St, Denver, CO 80204',
+      notes: 'Imaging Results',
+    };
+    const snap = {
+      extendedSections: {
+        ...emptyExtendedSections(),
+        imagingResults: [junk],
+        planOfTreatment: [
+          {
+            ...emptyClinicalEntry(),
+            title: 'free T4',
+            date: '2024-01-01',
+            category: 'Lab',
+          },
+        ],
+      },
+    };
+    expect(snapshotNeedsImagingRestore(snap)).toBe(true);
+    const restored = extendedSectionsFromSnapshot(snap);
+    expect(restored?.imagingResults ?? []).toHaveLength(0);
+    expect(restored?.planOfTreatment).toHaveLength(1);
   });
 
   it('prefers a richer PDF medication list over a sparse API row', () => {

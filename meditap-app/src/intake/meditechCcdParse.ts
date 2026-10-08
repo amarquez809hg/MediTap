@@ -477,11 +477,11 @@ export function parseMeditechImagingResults(text: string): Tab14ClinicalEntry[] 
     rows.push(
       entry({
         title,
-        detail: `Status: ${m[3]}\nPlace: ${collapseWs(m[4]).slice(0, 160)}`,
+        detail: collapseWs(m[4]).slice(0, 400),
         date: tryParseDateToIso(m[1]) || m[1],
         status: m[3],
         place: collapseWs(m[4]).slice(0, 160),
-        notes: 'Imaging Results',
+        notes: '',
       })
     );
   }

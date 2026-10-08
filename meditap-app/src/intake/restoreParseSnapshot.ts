@@ -17,7 +17,9 @@ import type {
 import type { Tab14ExtendedSections } from './tab14PortabilitySections';
 import {
   emptyExtendedSections,
+  imagingResultsNeedRebuild,
   mergeExtendedSections,
+  sanitizeImagingResultsEntries,
 } from './tab14PortabilitySections';
 import type { Tab14MergeSnapshot } from './applyTab14ParseBundle';
 
@@ -110,6 +112,36 @@ export function snapshotNeedsClinicalRestore(
   return snapshotNeedsExtendedRestore(snap) && meds + allergies + problems + labs < 4;
 }
 
+/**
+ * True when Imaging Results still holds table-header junk (e.g. "Status Detail")
+ * from an older parse — force vault PDF reparse even if other sections look rich.
+ */
+export function snapshotNeedsImagingRestore(
+  snap: StoredParseSnapshot | null | undefined
+): boolean {
+  return imagingResultsNeedRebuild(snap?.extendedSections?.imagingResults);
+}
+
+/**
+ * True when a rich Athena chart is missing Past Encounters — often the
+ * Date/Type/Performer table was never parsed (Harold-style) while meds/PoT filled.
+ */
+export function snapshotNeedsEncountersRestore(
+  snap: StoredParseSnapshot | null | undefined
+): boolean {
+  const visits = snapshotHospitalVisits(snap).filter(
+    (v) =>
+      Boolean(String(v.visitDate ?? '').trim()) ||
+      Boolean(String(v.encounterId ?? '').trim()) ||
+      Boolean(String(v.diagnosisNote ?? '').trim()) ||
+      Boolean(String(v.facilityName ?? '').trim())
+  );
+  if (visits.length > 0) return false;
+  const meds = snap?.medications?.length ?? 0;
+  const pot = snap?.extendedSections?.planOfTreatment?.length ?? 0;
+  return meds >= 4 || pot >= 5;
+}
+
 export function buildStoredParseSnapshot(input: {
   patientFields?: Tab14PatientFields;
   allergies?: Tab14AllergyRow[];
@@ -150,6 +182,8 @@ export function extendedSectionsFromSnapshot(
     emptyExtendedSections(),
     snap.extendedSections
   );
+  // Never hydrate header junk into the Imaging Results form.
+  merged.imagingResults = sanitizeImagingResultsEntries(merged.imagingResults);
   return countExtendedEntries(merged) > 0 ? merged : null;
 }
 

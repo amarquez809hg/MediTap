@@ -1453,11 +1453,21 @@ function stripEncounterColumns(
 
 /**
  * Athena Data Portability "Past Encounters" table → one Tab14 hospital visit per encounter.
- * Columns wrap across lines, so the encounter id line carries the primary diagnosis and
- * the following lines continue the type / performer / location / time columns:
- * `19280018 PREVENTIVE MEDJennifer ELP_ACWHP08/21/2025 08/21/2025 Vulvovaginitis 53277000 N76.0 30862 …`
+ *
+ * Supports two common layouts:
+ * - Diana: Encounter ID + wrapped type/performer/location/time + coded diagnosis
+ *   `19280018 PREVENTIVE MEDJennifer ELP_ACWHP08/21/2025 … Vulvovaginitis 53277000 N76.0 …`
+ * - Harold: `Date Type Performer Diagnosis/Notes`
+ *   `02/11/2025 OFFICE/OUTPT Susan Cole, MD New pt physical. …`
  */
 export function parseAthenaPastEncounters(text: string): Tab14HospitalFields[] {
+  const diana = parseAthenaEncounterIdPastEncounters(text);
+  if (diana.length) return diana;
+  return parseAthenaDateTypePerformerPastEncounters(text);
+}
+
+/** Diana-style Past Encounters keyed by numeric Encounter ID. */
+function parseAthenaEncounterIdPastEncounters(text: string): Tab14HospitalFields[] {
   const header = text.match(/Past\s+Encounters\s+Encounter\b/i);
   if (!header || header.index == null) return [];
   const after = text.slice(header.index + header[0].length);
@@ -1549,6 +1559,134 @@ export function parseAthenaPastEncounters(text: string): Tab14HospitalFields[] {
   }
 
   return visits;
+}
+
+/** Visit-type tokens that wrap down the Type column (any vendor). */
+const PAST_ENCOUNTER_TYPE_TOKEN =
+  /^(OFFICE\/OUTPT|INPATIENT(?:\s+ADMIT)?|EMERGENCY(?:\s+DEPT)?|TELEHEALTH|AMBULATORY|INITIAL|NEW\s+PT|EST\s+PT|FOCUS\/LOW|FOCUS\/MOD|FOCUS\/HIGH|AGE\s+\d+(?:-\d+)?YRS?|REFERRAL)\b/i;
+
+/**
+ * Clinical Diagnosis/Notes often resume with these Title-Case starters after a
+ * wrapped Type/Performer fragment — stop peeling facility words here.
+ */
+const PAST_ENCOUNTER_NOTE_STARTER =
+  /^(New|Routine|T2DM|Reports?|Mild|Referred|A1c|Random|Home|Urine|Started|Continue|Vitamin|Discussed|Increased|Negative|Elevated|Noted|Consistent|Still|Essentially|Both|Metformin|Lifestyle|Supplementation|Workup|HbA1c|Provided|Defer|RTC|Diet|Dilated|Recommend|Maintain|Results|No\s+macular|Intermittent|Denies|Exam|Monofilament|Placed|Education|Follow-?up|Swab|Patient|Chief|History|Assessment|Plan)\b/i;
+
+/**
+ * Harold-style Past Encounters: Date | Type | Performer | Diagnosis/Notes
+ * Columns wrap across lines; peel type / provider / facility from each line start.
+ */
+function parseAthenaDateTypePerformerPastEncounters(text: string): Tab14HospitalFields[] {
+  const header = text.match(
+    /Past\s+Encounters\s+Date\s+Type\s+Performer\s+Diagnosis\s*\/\s*Notes/i
+  );
+  const altHeader = !header
+    ? text.match(/Past\s+Encounters(?!\s+Encounter\b)/i)
+    : null;
+  const hit = header ?? altHeader;
+  if (!hit || hit.index == null) return [];
+
+  const after = text.slice(hit.index + hit[0].length);
+  const end = after.search(
+    /(?:^|\n)\s*(?:Goals(?:\s+Section)?|Health\s+Concerns|Payers|Advance\s+Directives|Care\s+Team)\b/i
+  );
+  let block = (end >= 0 ? after.slice(0, end) : after)
+    .replace(/Date\s+Type\s+Performer\s+Diagnosis\s*\/\s*Notes/gi, '\n')
+    .replace(/([A-Za-z])(\d{1,2}\/\d{1,2}\/\d{4})/g, '$1\n$2');
+  if (!/\d{1,2}\/\d{1,2}\/\d{4}\s+OFFICE\/OUTPT/i.test(block) && !header) {
+    // TOC-only "Past Encounters" hit without the dated table.
+    return [];
+  }
+
+  const lines = block
+    .split('\n')
+    .map((line) => collapseWs(line))
+    .filter(Boolean);
+  const startIndexes: number[] = [];
+  lines.forEach((line, i) => {
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}\s+\S/.test(line)) startIndexes.push(i);
+  });
+  if (!startIndexes.length) return [];
+
+  const visits: Tab14HospitalFields[] = [];
+  for (let i = 0; i < startIndexes.length; i++) {
+    const from = startIndexes[i];
+    const to = i + 1 < startIndexes.length ? startIndexes[i + 1] : lines.length;
+    const chunk = lines.slice(from, to);
+    const typeParts: string[] = [];
+    const facilityParts: string[] = [];
+    const noteParts: string[] = [];
+    let dateRaw = '';
+    let provider = '';
+
+    for (let li = 0; li < chunk.length; li++) {
+      let rest = chunk[li];
+      if (li === 0) {
+        const dm = rest.match(/^(\d{1,2}\/\d{1,2}\/\d{4})\s+/);
+        if (dm) {
+          dateRaw = dm[1];
+          rest = rest.slice(dm[0].length);
+        }
+      }
+
+      while (rest) {
+        const tm = rest.match(PAST_ENCOUNTER_TYPE_TOKEN);
+        if (!tm) break;
+        typeParts.push(collapseWs(tm[1]));
+        rest = rest.slice(tm[0].length).trim();
+      }
+
+      if (!provider) {
+        const pm =
+          rest.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+,\s*MD)\b/) ??
+          rest.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\s+MD)\b/);
+        if (pm) {
+          provider = collapseWs(pm[1]).replace(/\s+MD$/i, ', MD');
+          rest = rest.slice(pm[0].length).trim();
+        }
+      }
+
+      // Facility / practice fragments wrap under Performer before Diagnosis/Notes resumes.
+      while (rest) {
+        if (PAST_ENCOUNTER_NOTE_STARTER.test(rest)) break;
+        if (/^[a-z0-9]/.test(rest)) break;
+        const word = rest.match(/^([A-Z][A-Za-z0-9&'.-]*)\s*/);
+        if (!word) break;
+        // Avoid swallowing a second provider name as facility.
+        if (/^(?:MD|DO|NP|PA)$/i.test(word[1])) break;
+        facilityParts.push(word[1]);
+        rest = rest.slice(word[0].length);
+        if (facilityParts.length >= 6) break;
+      }
+
+      if (rest) noteParts.push(rest);
+    }
+
+    const diagnosisNote = collapseWs(noteParts.join(' ')).slice(0, 1200);
+    const facilityName = collapseWs(facilityParts.join(' ')).slice(0, 200);
+    const visitType = collapseWs(typeParts.join(' ')).slice(0, 200);
+    const reason =
+      diagnosisNote
+        .split(/(?<=\.)\s+/)
+        .map((s) => s.trim())
+        .find((s) => s.length > 8)
+        ?.slice(0, 300) ?? diagnosisNote.slice(0, 200);
+
+    const out: Tab14HospitalFields = {};
+    const iso = dateRaw ? tryParseDateToIso(dateRaw) : '';
+    if (iso) out.visitDate = iso;
+    if (visitType) out.visitType = visitType;
+    if (provider) out.attendingPhysician = provider;
+    if (facilityName) out.facilityName = facilityName;
+    if (diagnosisNote) out.diagnosisNote = diagnosisNote;
+    if (reason) out.reason = reason;
+
+    if (Object.values(out).some((v) => String(v ?? '').trim())) {
+      visits.push(pickDefined(out as Record<string, string>));
+    }
+  }
+
+  return visits.slice(0, 40);
 }
 
 /**

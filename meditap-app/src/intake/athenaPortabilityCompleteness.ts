@@ -244,10 +244,16 @@ function scoreLegacyNavKey(
       return { status: 'missing', count: 0, detail: 'No vitals' };
     }
     case 'pastEncounters': {
-      const visits = input.hospitalVisits ?? [];
-      return visits.some(
-        (v) => hasText(v.visitDate) || hasText(v.facilityName) || hasText(v.reason)
-      )
+      const visits = (input.hospitalVisits ?? []).filter(
+        (v) =>
+          hasText(v.visitDate) ||
+          hasText(v.facilityName) ||
+          hasText(v.reason) ||
+          hasText(v.diagnosisNote) ||
+          hasText(v.attendingPhysician) ||
+          hasText(v.encounterId)
+      );
+      return visits.length
         ? {
             status: 'filled',
             count: visits.length,

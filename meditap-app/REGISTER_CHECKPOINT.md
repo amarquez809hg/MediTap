@@ -1,9 +1,12 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `182` (`MT-AG-178`)
-- Next register entry should start at: `183` (`MT-AG-179`)
-- Checkpoint date: `2026-10-07`
+- Last completed register entry: `185` (`MT-AG-181`)
+- Next register entry should start at: `186` (`MT-AG-182`)
+- Checkpoint date: `2026-10-08`
 - Scope baseline (Set 6 — since entry 65):
+  - Past Encounters Date/Type/Performer/Diagnosis Notes (`MT-AG-181`)
+  - Imaging Results junk rebuild + general Date/Name/Status/Detail (`MT-AG-180`)
+  - Imaging Results Date/Name/Status/Detail + form fields (`MT-AG-179`)
   - Prefer richer PDF clinical lists over sparse API rows (`MT-AG-178`)
   - Compact dashboard metrics + Patient Info section deep links (`MT-AG-177`)
   - Dashboard main-5 clinical sections + keep health metrics (`MT-AG-176`)
