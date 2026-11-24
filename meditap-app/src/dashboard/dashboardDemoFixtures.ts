@@ -238,27 +238,27 @@ export function overlayDemoProfile(
 }
 
 export function overlayDemoHealth<T extends Record<string, string | number>>(health: T): T {
-  const next = { ...health };
+  const next: Record<string, string | number> = { ...health };
   if (isBlank(String(next.bmi ?? '')) || String(next.bmi) === 'N/A') {
-    (next as { bmi: string | number }).bmi = DEMO_HEALTH.bmi;
+    next.bmi = DEMO_HEALTH.bmi;
   }
   if (isBlank(String(next.bmiCategory ?? '')) || String(next.bmiCategory) === 'Not recorded') {
-    (next as { bmiCategory: string }).bmiCategory = DEMO_HEALTH.bmiCategory;
+    next.bmiCategory = DEMO_HEALTH.bmiCategory;
   }
   if (isBlank(String(next.bloodPressure ?? ''))) {
-    (next as { bloodPressure: string }).bloodPressure = DEMO_HEALTH.bloodPressure;
+    next.bloodPressure = DEMO_HEALTH.bloodPressure;
   }
   if (isBlank(String(next.heartRate ?? ''))) {
-    (next as { heartRate: string }).heartRate = DEMO_HEALTH.heartRate;
+    next.heartRate = DEMO_HEALTH.heartRate;
   }
   if (isBlank(String(next.lastVisit ?? ''))) {
-    (next as { lastVisit: string }).lastVisit = DEMO_HEALTH.lastVisit;
+    next.lastVisit = DEMO_HEALTH.lastVisit;
   }
   if (isBlank(String(next.heightDisplay ?? ''))) {
-    (next as { heightDisplay: string }).heightDisplay = DEMO_HEALTH.heightDisplay;
+    next.heightDisplay = DEMO_HEALTH.heightDisplay;
   }
   if (isBlank(String(next.weightDisplay ?? ''))) {
-    (next as { weightDisplay: string }).weightDisplay = DEMO_HEALTH.weightDisplay;
+    next.weightDisplay = DEMO_HEALTH.weightDisplay;
   }
-  return next;
+  return next as T;
 }

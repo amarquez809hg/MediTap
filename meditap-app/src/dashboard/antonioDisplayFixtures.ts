@@ -585,7 +585,7 @@ export function overlayBlankPatientFields<T extends object>(
   base: T,
   demo: Tab14PatientFields
 ): T {
-  const next = { ...base } as T & Record<string, unknown>;
+  const next: Record<string, unknown> = { ...(base as Record<string, unknown>) };
   let changed = false;
   for (const [key, value] of Object.entries(demo)) {
     const current = next[key];
@@ -601,7 +601,7 @@ export function overlayBlankPatientFields<T extends object>(
       changed = true;
     }
   }
-  return changed ? next : base;
+  return changed ? (next as T) : base;
 }
 
 export function overlayDemoDashboardDetail(

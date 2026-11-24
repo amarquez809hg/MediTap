@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import PortalNavLink from './PortalNavLink';
 import type { DashboardDetail } from '../api';
-import type { Appointment } from '../appointments/appointmentModel';
+import type { Appointment } from '../appointments/appointmentStorage';
 import './DashboardConsultSheet.css';
 
 type HealthSummary = {
