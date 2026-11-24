@@ -26,34 +26,20 @@ class SunTap:
 
 
 def _aes_cbc(key: bytes, iv: bytes, data: bytes, *, decrypt: bool) -> bytes:
-    try:
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-        cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-        ctx = cipher.decryptor() if decrypt else cipher.encryptor()
-        return ctx.update(data) + ctx.finalize()
-    except ImportError:
-        from Crypto.Cipher import AES
-
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        return cipher.decrypt(data) if decrypt else cipher.encrypt(data)
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    ctx = cipher.decryptor() if decrypt else cipher.encryptor()
+    return ctx.update(data) + ctx.finalize()
 
 
 def _cmac(key: bytes, data: bytes) -> bytes:
-    try:
-        from cryptography.hazmat.primitives.ciphers.algorithms import AES
-        from cryptography.hazmat.primitives.cmac import CMAC
+    from cryptography.hazmat.primitives.ciphers.algorithms import AES
+    from cryptography.hazmat.primitives.cmac import CMAC
 
-        mac = CMAC(AES(key))
-        mac.update(data)
-        return mac.finalize()
-    except ImportError:
-        from Crypto.Cipher import AES
-        from Crypto.Hash import CMAC
-
-        mac = CMAC.new(key, ciphermod=AES)
-        mac.update(data)
-        return mac.digest()
+    mac = CMAC(AES(key))
+    mac.update(data)
+    return mac.finalize()
 
 
 def _truncate(mac: bytes) -> bytes:

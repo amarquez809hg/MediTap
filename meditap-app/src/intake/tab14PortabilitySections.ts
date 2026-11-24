@@ -158,7 +158,9 @@ export const TAB14_PORTABILITY_NAV: Tab14NavSection[] = [
     labelKey: 'patientIntake.sections.results',
     icon: 'fa-flask',
     pdfSections: ['Results'],
-    legacy: true,
+    // Same extended-card chrome as Imaging / PoT (MT-AG-205). Lab panels still
+    // sync to API / Tab7 via resultsClinicalEntries bridge.
+    legacy: false,
   },
   {
     id: 5,
@@ -359,7 +361,6 @@ export type Tab14ExtendedSectionKey = Exclude<
   | 'medications'
   | 'payers'
   | 'problems'
-  | 'results'
   | 'pastEncounters'
 >;
 
@@ -494,6 +495,8 @@ const EXTENDED_HEADER: Record<Tab14ExtendedSectionKey, RegExp> = {
   // Section title — not the column header "Patient Instructions LastModified by"
   patientInstructions: /\bpatient\s+instructions\b(?!\s+LastModified)/i,
   reasonForReferral: /\breason\s+for\s+referral\b/i,
+  // Athena / Epic Results tables (labs + some imaging observations)
+  results: /(?:^|\n)\s*Results\b(?!\s+Imaging)/i,
   // Skip Plan-of-Treatment nested "Procedures None recorded" — real section is
   // "Procedures" then "Surgical History" (often glued on one line).
   procedures: /(?:^|\n)\s*Procedures\b(?!\s+Notes\b)(?!\s+None\s+recorded)/i,
@@ -3032,6 +3035,7 @@ export function parseExtendedSectionsFromDocument(text: string): Tab14ExtendedSe
     planOfTreatment: 'Plan of Treatment',
     patientInstructions: 'Patient Instructions',
     reasonForReferral: 'Reason for Referral',
+    results: 'Results',
     procedures: 'Procedures',
     surgicalHistory: 'Surgical History',
     imagingResults: 'Imaging Results',
@@ -3055,6 +3059,9 @@ export function parseExtendedSectionsFromDocument(text: string): Tab14ExtendedSe
   );
 
   for (const key of TAB14_EXTENDED_SECTION_KEYS) {
+    // Results panels come from athenaResultsParse / Epic lab parsers → labPanels,
+    // then bridge into extended cards (MT-AG-205). Skip generic Q&A slice here.
+    if (key === 'results') continue;
     const stop =
       key === 'planOfTreatment'
         ? PLAN_OF_TREATMENT_STOP

@@ -1,26 +1,22 @@
 # Jira Register Checkpoint
 
-- Last completed register entry: `185` (`MT-AG-181`)
-- Next register entry should start at: `186` (`MT-AG-182`)
-- Checkpoint date: `2026-10-08`
+- Last completed register entry: `221` (`MT-AG-217`)
+- Next register entry should start at: `222` (`MT-AG-218`)
+- Checkpoint date: `2026-11-19`
 - Scope baseline (Set 6 — since entry 65):
-  - Past Encounters Date/Type/Performer/Diagnosis Notes (`MT-AG-181`)
-  - Imaging Results junk rebuild + general Date/Name/Status/Detail (`MT-AG-180`)
-  - Imaging Results Date/Name/Status/Detail + form fields (`MT-AG-179`)
-  - Prefer richer PDF clinical lists over sparse API rows (`MT-AG-178`)
-  - Compact dashboard metrics + Patient Info section deep links (`MT-AG-177`)
-  - Dashboard main-5 clinical sections + keep health metrics (`MT-AG-176`)
-  - Persist/reparse PDF snapshot so Tab14 left menu is not empty (`MT-AG-175`)
-  - Dashboard/tabs hydrate from Patient Information snapshot (`MT-AG-174`)
-  - Restore extended sections from parse_snapshot on load (`MT-AG-173`)
-  - Athena/Epic preferred always run dialect parsers (`MT-AG-172`)
-  - MEDITECH preferred always runs CCD dialect (`MT-AG-171`)
-  - Own-chart claim + patient portal Save (Emergency Contact) (`MT-AG-170`)
-  - Patient PDF intake Save without warning hard-block (`MT-AG-169`)
-  - Demographics bleed cleanup + Tab14 Save staff gate (`MT-AG-168`)
-  - Conditions/Hospitals name cleanup (section bleed) (`MT-AG-167`)
-  - Merge DESFire from main onto this MediTap machine (`MT-AG-166`)
-  - A new DESFire card per patient (`MT-AG-165`)
-  - Per-tap DESFire SUN links (`MT-AG-163`)
-  - Profile card bind panel and reader `--open` (`MT-AG-162`)
-  - DESFire card URL opens a limited public profile (`MT-AG-161`)
+  - Staff message notification / dual portal tokens (`MT-AG-217`)
+  - Patient message quick-select proposals (`MT-AG-216`)
+  - Admin frosted glass sidebar + header (`MT-AG-215`)
+
+## Notes
+
+- Persistent agent rule: `.cursor/rules/meditap-agent.mdc` + `AGENTS.md` + `docs/MEDITAP_AGENT_HANDOFF.md`.
+- Local demo: `AntonioMarquez` / `MrWayne` → `MediTapLocal1!`
+- Patient + admin can stay signed in at once (separate token slots).
+
+## How to continue after chat reset
+
+1. Read this file for next `MT-AG-###`.
+2. Read `docs/MEDITAP_AGENT_HANDOFF.md`.
+3. Append to `docs/AGENT_SESSION_CHANGELOG.md`.
+4. Bump this checkpoint.

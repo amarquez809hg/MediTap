@@ -22,6 +22,7 @@
     "backToLogin": "Volver a iniciar sesión",
     "staffSignIn": "Inicio de sesión del personal",
     "staffSignInRequired": "Se requiere inicio de sesión del personal",
+    "staffAccess": "Acceso del personal",
     "staffUsername": "Usuario del personal",
     "password": "Contraseña",
     "signingIn": "Iniciando sesión…",
@@ -49,7 +50,12 @@
     "patientInsurance": "Seguro del paciente",
     "adminPanel": "Panel de administración",
     "settings": "Configuración",
-    "patientInformation": "Información del paciente"
+    "patientInformation": "Información del paciente",
+    "groups": {
+      "care": "Atención",
+      "records": "Expediente",
+      "account": "Cuenta"
+    }
   },
   "app": {
     "loading": "Cargando…"
@@ -142,8 +148,12 @@
     "navDashboard": "Panel",
     "navStatus": "Estado",
     "navIntake": "Ingreso",
+    "navMessages": "Mensajes",
     "navAppointments": "Citas",
     "navSettings": "Ajustes",
+    "chatFabLabel": "Chat con la clínica",
+    "chatFabShort": "Mensaje a clínica",
+    "chatFabUnread": "Chat con la clínica · {{count}} sin leer",
     "backToAdmin": "Portal admin"
   },
   "adminLogin": {
@@ -236,6 +246,17 @@
     "pastEncounters": "Encuentros previos",
     "pastEncountersSubtitle": "Visitas y eventos clínicos recientes de su expediente y PDF de admisión.",
     "pastEncountersTab": "Encuentros previos en Información del paciente",
+    "recordType": "Tipo",
+    "recordDate": "Fecha",
+    "recordDepartment": "Departamento",
+    "recordLocation": "Ubicación",
+    "recordIcd": "CIE",
+    "recordDiagnosed": "Diagnosticado",
+    "recordTreatment": "Tratamiento",
+    "recordCollected": "Toma",
+    "recordValues": "Valores",
+    "recordOutcome": "Resultado",
+    "recordSummary": "Resumen",
     "noPastEncountersExtended": "No hay encuentros previos para mostrar. Use los botones de arriba para abrir Incidentes o registrar uno con inicio de sesión del personal.",
     "showingPreview": "Mostrando {{shown}} de {{total}}. Abra la pestaña vinculada para la lista completa.",
     "labResults": "Resultados de laboratorio",
@@ -317,6 +338,13 @@
   "quickStatus": {
     "title": "Estado rápido",
     "loadError": "Resumen en vivo no disponible: {{error}}. Los conteos de citas siguen cargando del servidor cuando esté disponible.",
+    "snapshotEyebrow": "Resumen",
+    "chartSnapshot": "Instantánea del expediente",
+    "chartSnapshotHint": "Métricas centrales del expediente de un vistazo. Toque una tarjeta para abrir la pestaña relacionada.",
+    "queueEyebrow": "Lista de trabajo",
+    "actionQueue": "Cola de acciones",
+    "badgePending": "Pendiente",
+    "badgeReview": "Revisar",
     "bmi": "IMC",
     "profileComplete": "Perfil completo",
     "appointments": "Citas",
@@ -345,7 +373,7 @@
     "allergiesCount": "{{count}} en archivo — toque para revisar",
     "needsAttention": "Requiere atención hoy",
     "yourNextSteps": "Sus próximos pasos",
-    "prioritizedHint": "Acciones priorizadas según su expediente, laboratorios y agenda en vivo. Toque una métrica arriba o un paso abajo para abrir la pestaña correcta.",
+    "prioritizedHint": "Acciones priorizadas según su expediente, laboratorios y agenda en vivo. Toque una métrica o fila para abrir la pestaña correcta.",
     "buildingSteps": "Preparando sus próximos pasos…",
     "caughtUp": "Está al día por ahora. Abra el panel para su resumen completo de salud."
   },

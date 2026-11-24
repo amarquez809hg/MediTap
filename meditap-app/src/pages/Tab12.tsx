@@ -53,6 +53,11 @@ import {
   type Tab12InsuranceRowMeta,
   type Tab12InsuranceView,
 } from '../api';
+import {
+  ANTONIO_DISPLAY_BANNER,
+  overlayInsuranceView,
+  shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
 
 function fullAppUrl(path: string) {
   const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -383,14 +388,16 @@ const Tab12: React.FC = () => {
     </IonList>
   );
 
-  const primary = view?.rows[0];
-  const secondary = view?.rows[1];
+  const useDemo = shouldUseDashboardDemo();
+  const displayView = useDemo ? overlayInsuranceView(view) : view;
+  const primary = displayView?.rows[0];
+  const secondary = displayView?.rows[1];
 
   return (
     <IonPage className="ct-page ct-tab12">
       <IonContent fullscreen>
         <div className="patient-insurance-container">
-          <header className="patient-insurance-header">
+          <header className="patient-insurance-header meditap-glass-header">
             <h1>
               <i className="fas fa-shield-alt" aria-hidden />
               {t('insurance.title')}
@@ -428,8 +435,13 @@ const Tab12: React.FC = () => {
             </main>
           )}
 
-          {!loading && !loadError && view && (
+          {!loading && !loadError && displayView && (
             <main className="patient-insurance-main">
+              {useDemo && (
+                <p className="meditap-demo-banner" role="status">
+                  {ANTONIO_DISPLAY_BANNER}
+                </p>
+              )}
               {!canEditInsurance && (
                 <p className="tab12-readonly-hint">
                   {t('insurance.readonlyHint')}
@@ -457,8 +469,8 @@ const Tab12: React.FC = () => {
                   icon={shieldHalfOutline}
                   className="insurance-main-icon ion-margin-bottom"
                 />
-                <h2 className="insurance-header__name">{view.patientName}</h2>
-                <p className="ion-text-medium">DOB: {view.dateOfBirth}</p>
+                <h2 className="insurance-header__name">{displayView.patientName}</h2>
+                <p className="ion-text-medium">DOB: {displayView.dateOfBirth}</p>
               </div>
 
               <div className="tab12-edit-policy-wrap">
@@ -476,7 +488,7 @@ const Tab12: React.FC = () => {
                 </IonButton>
               </div>
 
-              {view.rows.length === 0 && (
+              {displayView.rows.length === 0 && (
                 <p className="ion-text-center tab12-hint tab12-hint--spaced">
                   {t('insurance.empty')}
                 </p>
@@ -489,7 +501,7 @@ const Tab12: React.FC = () => {
                   </div>
                   {renderPolicyDetails(
                     primary.policy,
-                    view.patientName,
+                    displayView.patientName,
                     primary.meta
                   )}
                 </>
@@ -502,15 +514,15 @@ const Tab12: React.FC = () => {
                   </div>
                   {renderPolicyDetails(
                     secondary.policy,
-                    view.patientName,
+                    displayView.patientName,
                     secondary.meta
                   )}
                 </>
               )}
 
-              {view.rows.length > 2 && (
+              {displayView.rows.length > 2 && (
                 <p className="tab12-hint tab12-hint--spaced">
-                  {t('insurance.additionalPolicies', { count: view.rows.length - 2 })}
+                  {t('insurance.additionalPolicies', { count: displayView.rows.length - 2 })}
                 </p>
               )}
             </main>

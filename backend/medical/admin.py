@@ -20,6 +20,7 @@ admin.site.register(models.EpicPatientLink)
 admin.site.register(models.PatientAppointment)
 admin.site.register(models.AdminActivityEvent)
 admin.site.register(models.PatientDocument)
+admin.site.register(models.PortalMessage)
 
 
 @admin.register(models.PatientCard)

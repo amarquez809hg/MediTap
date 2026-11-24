@@ -35,9 +35,9 @@ Outcome: What improved; what is explicitly NOT included / still open.
 
 ### Current checkpoint (update when you add entry 89+)
 
-- **Last entry:** 185 (`MT-AG-181`) — Past Encounters Date/Type/Performer/Notes
-- **Next entry:** 186 (`MT-AG-182`)
-- **Checkpoint date:** 2026-10-07
+- **Last entry:** 221 (`MT-AG-217`) — Staff message notification / dual portal tokens
+- **Next entry:** 222 (`MT-AG-218`)
+- **Checkpoint date:** 2026-11-19
 - **Go back matrix:** `docs/PORTAL_GO_BACK_MATRIX.md` (all tabs tracked)
 - **Branch:** `feature/portal-split` (much of Set 6 still uncommitted — rely on register + working tree, not only `git log`)
 
@@ -154,7 +154,7 @@ Full text of entries is in **Set 6** of `AGENT_SESSION_CHANGELOG.md`.
 
 ## Open backlog (do not mark done until shipped)
 
-Portal remodel Phases **2–6** (user/admin content carve-out, **document vault v1 done**, stronger audit, messaging, cutover). Next: admin review-queue polish, patient portal view-only cleanup. Competitive milestones: Epic FHIR depth, EHR write-back.
+Portal remodel Phases **2–6** (user/admin content carve-out, **document vault v1 done**, stronger audit, messaging v1 done, cutover). **Staff intake review queue** (`MT-AG-208`) + **portal messaging** (`MT-AG-209`) done. Next: FHIR/audit depth, notifications beyond in-app bell, patient portal view-only cleanup, EHR write-back.
 
 ---
 

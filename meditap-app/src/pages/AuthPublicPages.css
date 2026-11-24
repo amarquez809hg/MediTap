@@ -45,7 +45,7 @@
   border-radius: 8px;
   border: 1px solid var(--meditap-border, rgba(255, 255, 255, 0.12));
   background: transparent;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   cursor: pointer;
   font-size: 0.8125rem;
 }
@@ -55,7 +55,7 @@
   padding: 0.75rem 1rem;
   border: none;
   border-radius: 8px;
-  background: var(--meditap-accent, #17a2b8);
+  background: var(--meditap-accent, #1c6ea8);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -81,7 +81,7 @@
 }
 
 .auth-public-alert--success {
-  background: rgba(23, 162, 184, 0.15);
+  background: rgba(28, 110, 168, 0.15);
   color: #9eeaf5;
 }
 
@@ -91,7 +91,7 @@
 }
 
 .auth-public-footer-link a {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   text-decoration: none;
 }
 
@@ -109,8 +109,8 @@
 }
 
 .password-security--public .password-security__suggest-btn {
-  border-color: rgba(23, 162, 184, 0.45);
-  background: rgba(23, 162, 184, 0.18);
+  border-color: rgba(28, 110, 168, 0.45);
+  background: rgba(28, 110, 168, 0.18);
   color: #9eeaf5;
 }
 

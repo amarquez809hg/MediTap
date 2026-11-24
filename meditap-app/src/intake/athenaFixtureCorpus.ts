@@ -67,8 +67,8 @@ export const ATHENA_PORTABILITY_FIXTURE_CORPUS: AthenaFixtureExpectation[] = [
       'immunizations',
       'socialHistory',
       'notes',
+      // Closed MT-AG-181 parser; locked here as filled (MT-AG-203).
+      'pastEncounters',
     ],
-    // Training backlog — remove when Past Encounters dialect is parsed.
-    knownGaps: ['pastEncounters'],
   },
 ];

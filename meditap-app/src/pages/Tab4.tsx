@@ -47,6 +47,12 @@ import {
   NEW_APPOINTMENT_DRAFT_ID,
 } from '../appointments/appointmentStorage';
 import { usePatientAppointments } from '../appointments/usePatientAppointments';
+import {
+  ANTONIO_DISPLAY_BANNER,
+  DEMO_APPOINTMENTS,
+  fillIfEmpty,
+  shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
 
 const Tab4: React.FC = () => {
   const { t } = useTranslation();
@@ -87,6 +93,8 @@ const Tab4: React.FC = () => {
   } = usePatientAppointments(username, elevationNonce, {
     migrateLegacyIfEmpty: canEditAppointments,
   });
+  const useDemo = shouldUseDashboardDemo();
+  const displayAppointments = fillIfEmpty(appointments, useDemo ? DEMO_APPOINTMENTS : []);
 
   const appointmentDatePresets = useMemo(() => buildAppointmentDatePresets(), []);
 
@@ -198,7 +206,7 @@ const Tab4: React.FC = () => {
 
   return (
     <div className="schedule-container">
-      <header className="schedule-header">
+      <header className="schedule-header meditap-glass-header">
         <div className="schedule-header__title-block">
           <h1><i className="fas fa-calendar-check"></i> {t('appointments.title')}</h1>
           {!canEditAppointments && (
@@ -230,11 +238,16 @@ const Tab4: React.FC = () => {
             {loadError}
           </p>
         )}
+        {useDemo && (
+          <p className="meditap-demo-banner" role="status">
+            {ANTONIO_DISPLAY_BANNER}
+          </p>
+        )}
         {loading ? (
           <p className="record-tab-empty">{t('appointments.loading')}</p>
-        ) : appointments.length > 0 ? (
+        ) : displayAppointments.length > 0 ? (
           <div className="appointments-list">
-            {appointments.map((appt) => (
+            {displayAppointments.map((appt) => (
               <AppointmentCard key={appt.id} appt={appt} onManage={openManageModal} />
             ))}
           </div>

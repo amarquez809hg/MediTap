@@ -27,6 +27,7 @@ import Tab11 from './pages/Tab11';
 import Tab12 from './pages/Tab12';
 import Tab13 from './pages/Tab13';
 import Tab14 from './pages/Tab14';
+import VisitNotePrototype from './pages/VisitNotePrototype';
 import EpicCallback from './pages/EpicCallback';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
@@ -45,6 +46,8 @@ import AdminPatientsPage from './portals/AdminPatientsPage';
 import StaffCardAssignPage from './portals/StaffCardAssignPage';
 import AdminPatientHubPage from './portals/AdminPatientHubPage';
 import AdminDocumentReviewQueuePage from './portals/AdminDocumentReviewQueuePage';
+import AdminMessagesPage from './portals/AdminMessagesPage';
+import UserMessagesPage from './portals/UserMessagesPage';
 import AdminHospitalsPage from './portals/AdminHospitalsPage';
 import AdminActivityPage from './portals/AdminActivityPage';
 import AdminClinicalChartsPage from './portals/AdminClinicalChartsPage';
@@ -163,6 +166,9 @@ const AppRoutes: React.FC = () => {
             <Route exact path="/terms">
               <TermsPage />
             </Route>
+            <Route exact path="/visit-note-prototype">
+              <VisitNotePrototype />
+            </Route>
             <Route exact path="/privacy">
               <PrivacyPage />
             </Route>
@@ -248,6 +254,20 @@ const AppRoutes: React.FC = () => {
                 </UserPortalLayout>
               </ProtectedRoute>
             </Route>
+            <Route exact path="/app/visit-note">
+              <ProtectedRoute>
+                <UserPortalLayout>
+                  <VisitNotePrototype />
+                </UserPortalLayout>
+              </ProtectedRoute>
+            </Route>
+            <Route exact path="/app/messages">
+              <ProtectedRoute>
+                <UserPortalLayout>
+                  <UserMessagesPage />
+                </UserPortalLayout>
+              </ProtectedRoute>
+            </Route>
 
             {/* Admin portal */}
             <Route exact path="/admin-portal/login">
@@ -285,6 +305,13 @@ const AppRoutes: React.FC = () => {
               <AdminPortalRoute>
                 <AdminPortalLayout>
                   <AdminDocumentReviewQueuePage />
+                </AdminPortalLayout>
+              </AdminPortalRoute>
+            </Route>
+            <Route exact path="/admin-portal/messages">
+              <AdminPortalRoute>
+                <AdminPortalLayout>
+                  <AdminMessagesPage />
                 </AdminPortalLayout>
               </AdminPortalRoute>
             </Route>

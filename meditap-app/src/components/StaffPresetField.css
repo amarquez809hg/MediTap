@@ -16,7 +16,7 @@
 }
 
 .staff-preset-field__picker:focus {
-  outline: 2px solid rgba(23, 162, 184, 0.35);
+  outline: 2px solid rgba(28, 110, 168, 0.35);
   outline-offset: 1px;
 }
 

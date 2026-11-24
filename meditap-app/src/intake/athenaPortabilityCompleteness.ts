@@ -26,10 +26,12 @@ import type {
   Tab14NavSection,
 } from './tab14PortabilitySections';
 import {
+  emptyExtendedSections,
   TAB14_EXTENDED_SECTION_KEYS,
   TAB14_PORTABILITY_NAV,
   tab14NavLabel,
 } from './tab14PortabilitySections';
+import { clinicalEntriesFromTab14LabPanels } from './resultsClinicalEntries';
 
 export type AthenaSectionStatus = 'filled' | 'none_recorded' | 'thin' | 'missing';
 
@@ -353,6 +355,20 @@ export function shouldScoreAthenaPortability(result: Tab14IntakeParseResult): bo
 export function athenaCompletenessFromParseResult(
   result: Tab14IntakeParseResult
 ): AthenaPortabilityCompletenessResult {
+  // Results is an extended-card section but parsers still emit labPanels.
+  // Mirror panels into extendedSections.results so the scorer stays green.
+  const panels = result.labPanels ?? [];
+  let extendedSections = result.extendedSections;
+  if (panels.length > 0) {
+    const fromLabs = clinicalEntriesFromTab14LabPanels(panels);
+    if (fromLabs.length) {
+      extendedSections = {
+        ...emptyExtendedSections(),
+        ...(extendedSections ?? {}),
+        results: fromLabs,
+      };
+    }
+  }
   return computeAthenaPortabilityCompleteness({
     patientFields: result.patientFields,
     allergies: result.allergies,
@@ -361,9 +377,9 @@ export function athenaCompletenessFromParseResult(
     chronicConditions: result.chronicConditions,
     noKnownProblems: result.noKnownProblems,
     insurances: result.insurances,
-    labPanels: result.labPanels ?? [],
+    labPanels: panels,
     vitalsHistory: result.vitalsHistory,
     hospitalVisits: result.hospitalVisits,
-    extendedSections: result.extendedSections,
+    extendedSections,
   });
 }

@@ -151,26 +151,62 @@ export async function ocrImageDataUrl(
  * If extracted PDF text is very short, render pages to canvas and OCR them
  * (common for scanned intake PDFs). Caps pages for latency.
  *
- * Also OCRs leading pages that individually lack a text layer even when the
- * rest of the PDF is text-rich (Epic Mayo cover sheets are often image-only
- * while later pages have full text — demographics live on that cover).
+ * Also OCRs leading pages that individually lack a text layer — or that look
+ * like an image cover without demographics — even when the rest of the PDF is
+ * text-rich (Epic Mayo cover sheets are often image-only while later pages
+ * have full text; demographics live on that cover).
+ *
+ * Cover pages render at a higher scale for Tesseract; later sparse pages use
+ * the default scale.
  */
-export const MAX_PDF_OCR_PAGES = 8;
+export const MAX_PDF_OCR_PAGES = 12;
+/** Default pdf.js → canvas scale for OCR (non-cover sparse pages). */
+export const PDF_OCR_RENDER_SCALE = 2.75;
+/** Higher scale for page 1 / cover so Patient Name / Address / phone OCR cleaner. */
+export const PDF_OCR_COVER_RENDER_SCALE = 3.5;
+/** Soft char budget: short pages without demographics markers still get OCR. */
+export const COVER_OCR_SOFT_CHAR_BUDGET = 400;
 
-/** Pages among the first `maxPages` whose text layer is sparse/empty. */
+/**
+ * True when a page's text layer is empty/sparse, or looks like chrome-only cover
+ * (headers, logos) without Patient Name / Address / DOB / Communication.
+ */
+export function pageNeedsCoverOcr(pageText: string): boolean {
+  if (isSparseExtractedText(pageText)) return true;
+  const chars = pageText.replace(/\s/g, '');
+  if (chars.length === 0) return true;
+  if (chars.length >= COVER_OCR_SOFT_CHAR_BUDGET) return false;
+
+  const hasDemographicsSignal =
+    /Patient\s+(?:Name|Address|Demographics)\b/i.test(pageText) ||
+    /(?:Date of Birth|D\.?O\.?B\.?)\b/i.test(pageText) ||
+    /\bborn\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[A-Z])/i.test(pageText) ||
+    /\bCommunication\b/i.test(pageText) ||
+    /\b(?:Given|Family)\s+Name\b/i.test(pageText) ||
+    /@[\w.-]+\.\w{2,}/.test(pageText);
+
+  return !hasDemographicsSignal;
+}
+
+/** pdf.js render scale for a page index (1-based). Cover / page 1 is sharper. */
+export function pdfOcrRenderScaleForPage(pageNum: number): number {
+  return pageNum <= 1 ? PDF_OCR_COVER_RENDER_SCALE : PDF_OCR_RENDER_SCALE;
+}
+
+/** Pages among the first `maxPages` that need OCR (sparse or cover-without-demographics). */
 export async function listSparseLeadingPdfPages(
   pdf: PDFDocumentProxy,
   maxPages: number
 ): Promise<number[]> {
   const limit = Math.min(maxPages, pdf.numPages, MAX_PDF_OCR_PAGES);
-  const sparse: number[] = [];
+  const needing: number[] = [];
   for (let pageNum = 1; pageNum <= limit; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
     const pageText = extractTextFromPdfContentItems(content.items);
-    if (isSparseExtractedText(pageText)) sparse.push(pageNum);
+    if (pageNeedsCoverOcr(pageText)) needing.push(pageNum);
   }
-  return sparse;
+  return needing;
 }
 
 export async function augmentPdfTextWithOcr(
@@ -191,7 +227,7 @@ export async function augmentPdfTextWithOcr(
     MAX_PDF_OCR_PAGES
   );
 
-  // Whole-doc sparse → OCR first N pages. Otherwise only OCR sparse leading pages.
+  // Whole-doc sparse → OCR first N pages. Otherwise OCR sparse / cover-like leading pages.
   const pagesToOcr = wasSparse
     ? Array.from({ length: maxPages }, (_, i) => i + 1)
     : await listSparseLeadingPdfPages(pdf, maxPages);
@@ -213,7 +249,8 @@ export async function augmentPdfTextWithOcr(
   try {
     for (const pageNum of pagesToOcr) {
       const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 2.75 });
+      const scale = pdfOcrRenderScaleForPage(pageNum);
+      const viewport = page.getViewport({ scale });
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -227,7 +264,8 @@ export async function augmentPdfTextWithOcr(
       const dataUrl = canvas.toDataURL('image/png');
       const ocrText = await ocrImageDataUrl(dataUrl, languages);
       if (ocrText) {
-        ocrChunks.push(`--- page ${pageNum} ---\n${ocrText}`);
+        const cleaned = normalizeExtractedDocumentText(ocrText);
+        ocrChunks.push(`--- page ${pageNum} ---\n${cleaned || ocrText}`);
       }
     }
   } catch {

@@ -3,7 +3,10 @@ import {
   acceptAllPatientFieldWarnings,
   acceptIndexedFieldWarning,
   acceptPatientFieldWarning,
+  buildReviewWarningsBundle,
+  countReviewWarningsInSnapshot,
   evaluatePatientFieldReviewGate,
+  listIntakeReviewQueueItems,
   matchParsedIdentityToChart,
   rejectIndexedFieldWarning,
   rejectPatientFieldWarning,
@@ -117,5 +120,48 @@ describe('intakeFieldReview', () => {
         chartFamily: 'Marquez',
       }).reason
     ).toBe('mismatch');
+  });
+
+  it('lists a staff review queue across demographics and clinical rows', () => {
+    const items = listIntakeReviewQueueItems({
+      patientWarnings: warnings,
+      patientValues: { givenName: 'Harold', familyName: 'Jennings', email: 'bad' },
+      allergies: allergyWarnings,
+      allergyValues: [{ allergyName: 'Mystery allergen' }],
+    });
+    expect(items).toHaveLength(4);
+    expect(items.some((i) => i.kind === 'patient' && i.field === 'givenName')).toBe(
+      true
+    );
+    expect(items.some((i) => i.kind === 'allergy' && i.sectionKey === 'allergies')).toBe(
+      true
+    );
+    expect(items.find((i) => i.field === 'givenName')?.confidence).toBe('low');
+    expect(items.find((i) => i.field === 'allergyName')?.confidence).toBe('medium');
+    expect(items[0].confidence).toBe('low');
+    expect(
+      listIntakeReviewQueueItems({
+        patientWarnings: warnings,
+        patientDecisions: { givenName: 'accepted', familyName: 'accepted', email: 'accepted' },
+        allergies: allergyWarnings,
+        indexedDecisions: { '0:allergyName': 'accepted' },
+      })
+    ).toHaveLength(0);
+  });
+
+  it('counts flagged fields from vault parse_snapshot reviewWarnings', () => {
+    const bundle = buildReviewWarningsBundle({
+      patient: warnings,
+      allergies: allergyWarnings,
+    });
+    expect(bundle).toBeTruthy();
+    expect(
+      countReviewWarningsInSnapshot({
+        reviewWarnings: bundle,
+        patientFields: { givenName: 'H' },
+      })
+    ).toBe(4);
+    expect(countReviewWarningsInSnapshot({ fieldWarnings: warnings })).toBe(3);
+    expect(countReviewWarningsInSnapshot({})).toBe(0);
   });
 });

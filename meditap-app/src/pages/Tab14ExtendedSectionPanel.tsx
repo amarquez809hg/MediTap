@@ -69,6 +69,8 @@ const SECTION_EXTRA_FIELDS: Partial<Record<Tab14ExtendedSectionKey, Tab14ExtraEn
   surgicalHistory: ['status', 'laterality'],
   // Document columns: Date / Imaging Name / Status / Detail (+ facility contact)
   imagingResults: ['status', 'laterality', 'phone', 'address'],
+  // Results panels: Date / Panel name / Status / Detail (+ category / code)
+  results: ['status', 'category', 'code'],
   procedures: ['status', 'laterality'],
   familyHistory: ['relationship', 'onsetAge', 'diedAge', 'resolvedAge'],
   medicalHistory: ['response'],
@@ -87,6 +89,7 @@ const CONTACT_SECTION_KEYS = new Set<Tab14ExtendedSectionKey>([
 
 const PLAN_OF_TREATMENT_KEY: Tab14ExtendedSectionKey = 'planOfTreatment';
 const IMAGING_RESULTS_KEY: Tab14ExtendedSectionKey = 'imagingResults';
+const RESULTS_KEY: Tab14ExtendedSectionKey = 'results';
 
 function extraFieldsForRow(
   sectionKey: Tab14ExtendedSectionKey,
@@ -107,10 +110,13 @@ function extraFieldsForRow(
     'phone',
     'address',
   ]);
+  /** Results form lays out status / category / code explicitly. */
+  const resultsHidden = new Set<Tab14ExtraEntryField>(['status', 'category', 'code']);
   const populated = TAB14_EXTRA_ENTRY_FIELDS.filter((field) => {
     if (mapped.includes(field)) return false;
     if (sectionKey === PLAN_OF_TREATMENT_KEY && potHidden.has(field)) return false;
     if (sectionKey === IMAGING_RESULTS_KEY && imagingHidden.has(field)) return false;
+    if (sectionKey === RESULTS_KEY && resultsHidden.has(field)) return false;
     return Boolean(String(row[field] ?? '').trim());
   });
   return [...mapped, ...populated];
@@ -142,9 +148,10 @@ function entryAccordionTitle(
     }
     return bits.join(' · ');
   }
-  if (sectionKey === IMAGING_RESULTS_KEY) {
+  if (sectionKey === IMAGING_RESULTS_KEY || sectionKey === RESULTS_KEY) {
     if (row.date.trim()) bits.push(row.date.trim());
     if (row.status?.trim()) bits.push(row.status.trim());
+    else if (row.category?.trim() && sectionKey === RESULTS_KEY) bits.push(row.category.trim());
     else if (row.detail.trim()) {
       const d = row.detail.trim();
       bits.push(d.length > 40 ? `${d.slice(0, 40)}…` : d);
@@ -260,6 +267,13 @@ export default function Tab14ExtendedSectionPanel({
               Maps to document columns <strong>Date</strong>, <strong>Imaging Name</strong>,{' '}
               <strong>Status</strong>, and <strong>Detail</strong>. Provider, facility, phone,
               and address capture wrapped table text from any vendor PDF.
+            </>
+          ) : sectionKey === RESULTS_KEY ? (
+            <>
+              Maps to document <strong>Results</strong> panels — <strong>Date</strong>,{' '}
+              <strong>Panel name</strong>, <strong>Status</strong>, and <strong>Detail</strong>{' '}
+              (analytes / impression). Same accordion cards as other intake sections; Lab Results
+              (Tab7) still holds the component-level API rows.
             </>
           ) : (
             <>
@@ -403,6 +417,82 @@ export default function Tab14ExtendedSectionPanel({
                                 value={row.detail}
                                 onChange={(e) => update(index, { detail: e.target.value })}
                                 placeholder="Optional free-text notes"
+                              />
+                            </div>
+                            {extraFieldsForRow(sectionKey, row).map((field) => (
+                              <div className="form-field" key={field}>
+                                <label>{extraFieldLabel(sectionKey, field)}</label>
+                                <input
+                                  value={row[field] ?? ''}
+                                  onChange={(e) => update(index, { [field]: e.target.value })}
+                                />
+                              </div>
+                            ))}
+                          </>
+                        ) : sectionKey === RESULTS_KEY ? (
+                          <>
+                            <div className="form-field">
+                              <label>Date</label>
+                              <input
+                                value={row.date}
+                                onChange={(e) => update(index, { date: e.target.value })}
+                                placeholder="MM/DD/YYYY or YYYY-MM-DD"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Panel / test name</label>
+                              <input
+                                value={row.title}
+                                onChange={(e) => update(index, { title: e.target.value })}
+                                placeholder="e.g. SureSwab, CBC, Urinalysis"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Status</label>
+                              <input
+                                value={row.status ?? ''}
+                                onChange={(e) => update(index, { status: e.target.value })}
+                                placeholder="Final, Reviewed, Pending…"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Category</label>
+                              <input
+                                value={row.category ?? ''}
+                                onChange={(e) => update(index, { category: e.target.value })}
+                                placeholder="lab, imaging, clinical…"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Display code</label>
+                              <input
+                                value={row.code ?? ''}
+                                onChange={(e) => update(index, { code: e.target.value })}
+                                placeholder="Panel / accession code"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Detail</label>
+                              <textarea
+                                rows={4}
+                                value={row.detail}
+                                onChange={(e) => update(index, { detail: e.target.value })}
+                                placeholder="Analyte lines, impression, or findings"
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Signed / reported by</label>
+                              <input
+                                value={row.recordedBy ?? ''}
+                                onChange={(e) => update(index, { recordedBy: e.target.value })}
+                              />
+                            </div>
+                            <div className="form-field">
+                              <label>Notes</label>
+                              <textarea
+                                rows={2}
+                                value={row.notes ?? ''}
+                                onChange={(e) => update(index, { notes: e.target.value })}
                               />
                             </div>
                             {extraFieldsForRow(sectionKey, row).map((field) => (

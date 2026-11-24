@@ -3,9 +3,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from django.db.models import Q
+from django.db.models import Count, Max, Q
 from django.http import FileResponse
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 import uuid
 
 from . import models, serializers
@@ -25,7 +26,7 @@ from medapp.admin_ops import log_admin_activity, request_admin_patient_id, user_
 
 
 class BaseViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class PatientViewSet(BaseViewSet):
@@ -508,3 +509,175 @@ class PatientDocumentViewSet(viewsets.ModelViewSet):
                 "identity_match": identity_ok,
             }
         )
+
+
+class PortalMessageViewSet(viewsets.ModelViewSet):
+    """
+    Patient ↔ clinic messaging.
+    Patients post to their own chart; staff list/reply and see unread counts for the admin bell.
+    """
+
+    serializer_class = serializers.PortalMessageSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "message_id"
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        qs = models.PortalMessage.objects.select_related("patient", "sender").all()
+        qs = filter_by_allowed_patients(self.request, qs, "patient_id")
+        patient_id = (self.request.query_params.get("patient") or "").strip()
+        if patient_id:
+            qs = qs.filter(patient_id=patient_id)
+        unread = (self.request.query_params.get("unread") or "").strip().lower()
+        if unread in ("1", "true", "yes"):
+            if user_is_admin_operator(self.request):
+                qs = qs.filter(
+                    direction=models.PortalMessage.DIRECTION_PATIENT_TO_CLINIC,
+                    read_at__isnull=True,
+                )
+            else:
+                qs = qs.filter(
+                    direction=models.PortalMessage.DIRECTION_CLINIC_TO_PATIENT,
+                    read_at__isnull=True,
+                )
+        return qs.order_by("created_at")
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        body = serializer.validated_data["body"]
+        if user_is_admin_operator(self.request):
+            patient = serializer.validated_data.get("patient")
+            if patient is None:
+                raise PermissionDenied("Staff replies require a patient id.")
+            allowed = allowed_patient_ids(self.request)
+            if allowed is not None and str(patient.patient_id) not in allowed:
+                raise PermissionDenied("You may not message this patient.")
+            msg = serializer.save(
+                sender=user,
+                patient=patient,
+                direction=models.PortalMessage.DIRECTION_CLINIC_TO_PATIENT,
+                body=body,
+            )
+            log_admin_activity(
+                actor=user,
+                action="portal_message.reply",
+                patient_id=str(patient.patient_id),
+                detail={"message_id": str(msg.message_id)},
+            )
+            return
+
+        # Patient: resolve own chart (ignore mismatched patient payload).
+        own = scoped_patient_queryset(self.request).first()
+        if own is None:
+            raise PermissionDenied("No patient chart is linked to this account.")
+        msg = serializer.save(
+            sender=user,
+            patient=own,
+            direction=models.PortalMessage.DIRECTION_PATIENT_TO_CLINIC,
+            body=body,
+        )
+        log_admin_activity(
+            actor=user,
+            action="portal_message.patient",
+            patient_id=str(own.patient_id),
+            detail={
+                "message_id": str(msg.message_id),
+                "preview": body[:120],
+            },
+        )
+
+    @action(detail=False, methods=["get"], url_path="unread-summary")
+    def unread_summary(self, request):
+        """Admin bell + patient badge counts."""
+        base = filter_by_allowed_patients(
+            request,
+            models.PortalMessage.objects.all(),
+            "patient_id",
+        )
+        if user_is_admin_operator(request):
+            unread_qs = base.filter(
+                direction=models.PortalMessage.DIRECTION_PATIENT_TO_CLINIC,
+                read_at__isnull=True,
+            )
+            by_patient = (
+                unread_qs.values("patient_id")
+                .annotate(
+                    unread_count=Count("message_id"),
+                    latest_at=Max("created_at"),
+                )
+                .order_by("-latest_at")[:20]
+            )
+            patient_ids = [row["patient_id"] for row in by_patient]
+            labels = {
+                str(p.patient_id): f"{p.family_name}, {p.given_name}".strip(", ")
+                for p in models.Patient.objects.filter(patient_id__in=patient_ids)
+            }
+            threads = [
+                {
+                    "patient": str(row["patient_id"]),
+                    "patient_label": labels.get(str(row["patient_id"])) or "Patient",
+                    "unread_count": row["unread_count"],
+                    "latest_at": row["latest_at"].isoformat() if row["latest_at"] else None,
+                }
+                for row in by_patient
+            ]
+            preview = list(
+                unread_qs.select_related("patient", "sender").order_by("-created_at")[:8]
+            )
+            return Response(
+                {
+                    "role": "clinic",
+                    "unread_count": unread_qs.count(),
+                    "threads": threads,
+                    "recent": serializers.PortalMessageSerializer(preview, many=True).data,
+                }
+            )
+
+        unread_qs = base.filter(
+            direction=models.PortalMessage.DIRECTION_CLINIC_TO_PATIENT,
+            read_at__isnull=True,
+        )
+        return Response(
+            {
+                "role": "patient",
+                "unread_count": unread_qs.count(),
+                "threads": [],
+                "recent": serializers.PortalMessageSerializer(
+                    unread_qs.order_by("-created_at")[:8], many=True
+                ).data,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="mark-read")
+    def mark_read(self, request, message_id=None):
+        msg = self.get_object()
+        if msg.read_at is not None:
+            return Response(serializers.PortalMessageSerializer(msg).data)
+
+        is_staff = user_is_admin_operator(request)
+        if is_staff:
+            if msg.direction != models.PortalMessage.DIRECTION_PATIENT_TO_CLINIC:
+                raise PermissionDenied("Staff can only mark patient messages as read.")
+        else:
+            if msg.direction != models.PortalMessage.DIRECTION_CLINIC_TO_PATIENT:
+                raise PermissionDenied("Patients can only mark clinic replies as read.")
+
+        msg.read_at = timezone.now()
+        msg.save(update_fields=["read_at"])
+        return Response(serializers.PortalMessageSerializer(msg).data)
+
+    @action(detail=False, methods=["post"], url_path="mark-thread-read")
+    def mark_thread_read(self, request):
+        patient_id = (request.data.get("patient") or "").strip()
+        if not patient_id:
+            return Response(
+                {"detail": "patient is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        qs = self.get_queryset().filter(patient_id=patient_id, read_at__isnull=True)
+        if user_is_admin_operator(request):
+            qs = qs.filter(direction=models.PortalMessage.DIRECTION_PATIENT_TO_CLINIC)
+        else:
+            qs = qs.filter(direction=models.PortalMessage.DIRECTION_CLINIC_TO_PATIENT)
+        updated = qs.update(read_at=timezone.now())
+        return Response({"marked": updated})

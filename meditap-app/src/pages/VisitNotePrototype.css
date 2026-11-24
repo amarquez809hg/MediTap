@@ -1,0 +1,250 @@
+.visit-note-container {
+  min-height: 100%;
+  background: var(--meditap-bg, #f4f7f9);
+}
+
+.visit-note-container > .visit-note-header {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.visit-note-header__title-block h1 {
+  margin: 0;
+  color: #fff;
+}
+
+.visit-note-header__kicker {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.visit-note-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 clamp(16px, 4vw, 32px) 12px;
+}
+
+.visit-note-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  color: var(--meditap-primary, #0a446c);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--meditap-shadow-sm);
+}
+
+.visit-note-chip i {
+  color: var(--meditap-accent, #1c6ea8);
+}
+
+.visit-note-chip:hover {
+  border-color: var(--meditap-accent, #1c6ea8);
+  color: var(--meditap-accent, #1c6ea8);
+}
+
+.visit-note-banner {
+  margin: 0 clamp(16px, 4vw, 32px) 16px;
+  padding: 10px 14px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  background: rgba(28, 110, 168, 0.1);
+  color: var(--meditap-text-secondary, #495057);
+  font-size: 0.88rem;
+}
+
+.visit-note-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 20px;
+  padding: 0 clamp(16px, 4vw, 32px) 32px;
+  align-items: start;
+}
+
+.visit-note-card {
+  background: #fff;
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  border-radius: var(--meditap-radius, 12px);
+  box-shadow: var(--meditap-shadow-md);
+  padding: 20px 22px 24px;
+}
+
+.visit-note-card h2 {
+  margin: 0 0 14px;
+  color: var(--meditap-primary, #0a446c);
+  font-size: 1.05rem;
+}
+
+.visit-note-card h2:not(:first-child) {
+  margin-top: 22px;
+}
+
+.visit-note-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.visit-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--meditap-text-muted, #5c6f72);
+}
+
+.visit-note-field input,
+.visit-note-field textarea {
+  font: inherit;
+  font-weight: 500;
+  color: var(--meditap-text, #1a2b2e);
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: #fff;
+}
+
+.visit-note-field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.visit-note-fieldset {
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  border-radius: 8px;
+  padding: 8px 12px 10px;
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.visit-note-fieldset--block {
+  flex-direction: column;
+}
+
+.visit-note-fieldset legend {
+  padding: 0 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--meditap-text-muted, #5c6f72);
+}
+
+.visit-note-fieldset label,
+.visit-note-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--meditap-text, #1a2b2e);
+}
+
+.visit-note-check {
+  margin: 0 0 12px;
+}
+
+.visit-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.visit-note-ghost {
+  background: transparent;
+  border: 1px solid var(--meditap-border, #e0e6eb);
+  border-radius: var(--meditap-radius-sm, 8px);
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--meditap-text-secondary, #495057);
+  cursor: pointer;
+}
+
+.visit-note-card--note {
+  position: sticky;
+  top: 12px;
+  background: linear-gradient(180deg, #f8fcfd 0%, #fff 40%);
+}
+
+.visit-note-notehead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.visit-note-notehead h2 {
+  margin-bottom: 4px;
+}
+
+.visit-note-missing,
+.visit-note-complete {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.visit-note-missing {
+  color: #b45309;
+}
+
+.visit-note-complete {
+  color: #047857;
+}
+
+.visit-note-notehint {
+  margin: 0 0 16px;
+  font-size: 0.8rem;
+  color: var(--meditap-text-muted, #5c6f72);
+}
+
+.visit-note-block {
+  margin-bottom: 14px;
+}
+
+.visit-note-block h3 {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--meditap-accent, #1c6ea8);
+}
+
+.visit-note-block p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--meditap-text, #1a2b2e);
+}
+
+@media (max-width: 920px) {
+  .visit-note-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .visit-note-card--note {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .visit-note-row {
+    grid-template-columns: 1fr;
+  }
+}

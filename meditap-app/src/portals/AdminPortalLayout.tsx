@@ -1,8 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import GoBackButton from '../components/GoBackButton';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  fetchPortalMessageUnreadSummary,
+  type PortalMessageUnreadSummary,
+} from '../api';
 import { useAdminPatient } from './AdminPatientContext';
 import { ADMIN_LOGIN_PATH, ADMIN_PORTAL_HOME } from './portalPaths';
 import { ADMIN_PATIENT_VIEW_BASE, ADMIN_PATIENT_VIEW_PATHS } from './adminPatientViewPaths';
@@ -32,6 +36,7 @@ const NAV_SECTIONS: NavSection[] = [
       { to: '/admin-portal/patients', label: 'Patients', icon: 'fa-users' },
       { to: '/admin-portal/cards', label: 'Profile cards', icon: 'fa-id-card' },
       { to: '/admin-portal/documents', label: 'Document review', icon: 'fa-folder-open' },
+      { to: '/admin-portal/messages', label: 'Messages', icon: 'fa-comments' },
       { to: '/admin-portal/hospitals', label: 'Hospitals', icon: 'fa-hospital' },
       { to: '/admin-portal/charts', label: 'Clinical charts', icon: 'fa-notes-medical' },
       { to: ADMIN_PATIENT_VIEW_PATHS.appointments, label: 'Scheduling', icon: 'fa-calendar-check' },
@@ -112,11 +117,50 @@ const AdminPortalLayout: React.FC<AdminPortalLayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [messageSummary, setMessageSummary] =
+    useState<PortalMessageUnreadSummary | null>(null);
+  const notifRef = useRef<HTMLDivElement | null>(null);
+
+  const refreshMessageSummary = useCallback(async () => {
+    try {
+      const next = await fetchPortalMessageUnreadSummary();
+      setMessageSummary(next);
+    } catch {
+      /* non-blocking badge */
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshMessageSummary();
+    const id = window.setInterval(() => void refreshMessageSummary(), 15000);
+    const onFocus = () => void refreshMessageSummary();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [refreshMessageSummary, location.pathname]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!notifRef.current?.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [notifOpen]);
 
   const onLogout = () => {
     clearPatient();
     logout({ redirectTo: ADMIN_LOGIN_PATH });
   };
+
+  const unreadMessages = messageSummary?.unread_count ?? 0;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -298,15 +342,61 @@ const AdminPortalLayout: React.FC<AdminPortalLayoutProps> = ({ children }) => {
               </Link>
             ) : null}
 
-            <button
-              type="button"
-              className="admin-dash__icon-btn"
-              aria-label="Notifications"
-              title="Notifications coming soon"
-            >
-              <i className="fas fa-bell" aria-hidden />
-              <span className="admin-dash__badge">2</span>
-            </button>
+            <div className="admin-dash__notif" ref={notifRef}>
+              <button
+                type="button"
+                className="admin-dash__icon-btn"
+                aria-label={
+                  unreadMessages > 0
+                    ? `${unreadMessages} unread patient messages`
+                    : 'Notifications'
+                }
+                aria-expanded={notifOpen}
+                aria-haspopup="menu"
+                title="Patient messages"
+                onClick={() => {
+                  setNotifOpen((v) => !v);
+                  void refreshMessageSummary();
+                }}
+              >
+                <i className="fas fa-bell" aria-hidden />
+                {unreadMessages > 0 ? (
+                  <span className="admin-dash__badge">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                ) : null}
+              </button>
+              {notifOpen ? (
+                <div className="admin-dash__notif-menu" role="menu">
+                  <p className="admin-dash__notif-title">Patient messages</p>
+                  {unreadMessages === 0 ? (
+                    <p className="admin-dash__notif-empty">No unread messages.</p>
+                  ) : (
+                    <ul>
+                      {(messageSummary?.recent || []).slice(0, 5).map((m) => (
+                        <li key={m.message_id}>
+                          <Link
+                            role="menuitem"
+                            to={`/admin-portal/messages?patient=${m.patient}`}
+                            onClick={() => setNotifOpen(false)}
+                          >
+                            <strong>{m.patient_label || 'Patient'}</strong>
+                            <span>{m.body.slice(0, 80)}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Link
+                    className="admin-dash__notif-all"
+                    to="/admin-portal/messages"
+                    onClick={() => setNotifOpen(false)}
+                  >
+                    Open messages inbox
+                  </Link>
+                </div>
+              ) : null}
+            </div>
 
             <a
               className="admin-dash__icon-btn"

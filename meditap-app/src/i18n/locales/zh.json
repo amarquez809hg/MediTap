@@ -22,6 +22,7 @@
     "backToLogin": "返回登录",
     "staffSignIn": "工作人员登录",
     "staffSignInRequired": "需要工作人员登录",
+    "staffAccess": "工作人员访问",
     "staffUsername": "工作人员用户名",
     "password": "密码",
     "signingIn": "登录中…",
@@ -49,7 +50,12 @@
     "patientInsurance": "患者保险",
     "adminPanel": "管理面板",
     "settings": "设置",
-    "patientInformation": "患者信息"
+    "patientInformation": "患者信息",
+    "groups": {
+      "care": "诊疗",
+      "records": "病历",
+      "account": "账户"
+    }
   },
   "app": {
     "loading": "加载中…"
@@ -142,8 +148,12 @@
     "navDashboard": "仪表盘",
     "navStatus": "状态",
     "navIntake": "入院资料",
+    "navMessages": "消息",
     "navAppointments": "预约",
     "navSettings": "设置",
+    "chatFabLabel": "与诊所聊天",
+    "chatFabShort": "联系诊所",
+    "chatFabUnread": "与诊所聊天 · {{count}} 条未读",
     "backToAdmin": "管理门户"
   },
   "adminLogin": {
@@ -236,6 +246,17 @@
     "pastEncounters": "既往就诊",
     "pastEncountersSubtitle": "来自您的病历与入院 PDF 的近期就诊与临床事件。",
     "pastEncountersTab": "患者信息中的既往就诊",
+    "recordType": "类型",
+    "recordDate": "日期",
+    "recordDepartment": "科室",
+    "recordLocation": "地点",
+    "recordIcd": "ICD",
+    "recordDiagnosed": "诊断日期",
+    "recordTreatment": "治疗",
+    "recordCollected": "采集",
+    "recordValues": "数值",
+    "recordOutcome": "结局",
+    "recordSummary": "摘要",
     "noPastEncountersExtended": "暂无可显示的既往就诊。请使用上方按钮打开事件标签页，或通过工作人员登录记录。",
     "showingPreview": "显示 {{shown}} / {{total}}。打开链接标签页查看完整列表。",
     "staffHintChronic": "仅工作人员或管理员可添加疾病。请输入工作人员凭据以继续。",
@@ -317,6 +338,13 @@
   "quickStatus": {
     "title": "快捷状态",
     "loadError": "实时摘要不可用：{{error}}。预约数量仍会在可用时从服务器加载。",
+    "snapshotEyebrow": "概览",
+    "chartSnapshot": "病历快照",
+    "chartSnapshotHint": "一眼查看核心病历指标。点击卡片可打开对应标签页。",
+    "queueEyebrow": "工作列表",
+    "actionQueue": "待办队列",
+    "badgePending": "待处理",
+    "badgeReview": "复查",
     "bmi": "BMI",
     "profileComplete": "档案完整",
     "appointments": "预约",
@@ -345,7 +373,7 @@
     "allergiesCount": "档案中 {{count}} 项 — 点击查看",
     "needsAttention": "今日需关注",
     "yourNextSteps": "您的下一步",
-    "prioritizedHint": "根据您的实时病历、检验和日程生成的优先操作。点击上方指标或下方步骤可打开对应标签页。",
+    "prioritizedHint": "根据您的实时病历、检验和日程生成的优先操作。点击指标或行可打开对应标签页。",
     "buildingSteps": "正在生成您的下一步…",
     "caughtUp": "您目前已处理完毕。打开仪表盘查看完整健康概览。"
   },

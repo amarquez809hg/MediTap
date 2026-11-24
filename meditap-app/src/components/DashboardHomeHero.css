@@ -9,17 +9,17 @@
   border-radius: var(--meditap-radius, 12px);
   background: linear-gradient(
     135deg,
-    rgba(23, 162, 184, 0.14) 0%,
-    rgba(0, 77, 64, 0.1) 100%
+    rgba(28, 110, 168, 0.14) 0%,
+    rgba(10, 68, 108, 0.1) 100%
   );
-  border: 1px solid rgba(23, 162, 184, 0.28);
+  border: 1px solid rgba(28, 110, 168, 0.28);
 }
 
 .dashboard-hero__greeting {
   margin: 0 0 0.35rem;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--meditap-primary, #0a3d46);
+  color: var(--meditap-primary, #061c34);
   letter-spacing: -0.02em;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .ion-palette-dark .dashboard-hero {
-  border-color: rgba(23, 162, 184, 0.35);
+  border-color: rgba(28, 110, 168, 0.35);
 }
 
 .ion-palette-dark .dashboard-hero__greeting {

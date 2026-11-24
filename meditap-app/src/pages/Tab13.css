@@ -67,8 +67,8 @@ ion-page.ct-page.ct-tab13 ion-content {
   margin: 0;
   padding: 12px 16px;
   border-radius: var(--meditap-radius-sm);
-  background: rgba(23, 162, 184, 0.1);
-  border: 1px solid rgba(23, 162, 184, 0.28);
+  background: rgba(28, 110, 168, 0.1);
+  border: 1px solid rgba(28, 110, 168, 0.28);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -90,7 +90,7 @@ ion-page.ct-page.ct-tab13 ion-content {
   background: var(--meditap-surface);
   border: 1px solid var(--meditap-border);
   border-radius: var(--meditap-radius-sm);
-  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+  box-shadow: 0 1px 3px rgba(4, 12, 24, 0.06);
 }
 
 .tab13-intro__icon {
@@ -147,19 +147,19 @@ ion-page.ct-page.ct-tab13 ion-content {
   background: var(--meditap-surface);
   color: var(--meditap-text);
   transition: filter 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 1px 2px rgba(8, 20, 18, 0.06);
+  box-shadow: 0 1px 2px rgba(4, 12, 24, 0.06);
 }
 
 .tab13-ops__btn:hover {
   filter: brightness(0.98);
-  box-shadow: 0 2px 8px rgba(8, 20, 18, 0.08);
+  box-shadow: 0 2px 8px rgba(4, 12, 24, 0.08);
 }
 
 .tab13-ops__btn--primary {
   background: linear-gradient(
     135deg,
-    var(--meditap-header-glass-start, #17a2b8) 0%,
-    var(--meditap-header-glass-end, #1a6356) 100%
+    var(--meditap-header-glass-start, #1c6ea8) 0%,
+    var(--meditap-header-glass-end, #1a5f8f) 100%
   );
   border-color: rgba(255, 255, 255, 0.2);
   color: #f8fffd;
@@ -229,7 +229,7 @@ ion-page.ct-page.ct-tab13 ion-content {
   background: var(--meditap-surface);
   border: 1px solid var(--meditap-border);
   border-radius: var(--meditap-radius-sm);
-  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+  box-shadow: 0 1px 3px rgba(4, 12, 24, 0.06);
   overflow: hidden;
 }
 
@@ -241,7 +241,7 @@ ion-page.ct-page.ct-tab13 ion-content {
   background: linear-gradient(
     135deg,
     var(--meditap-primary, #0d4a3f) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
@@ -304,7 +304,7 @@ ion-page.ct-page.ct-tab13 ion-content {
 }
 
 .tab13-section-card__link:hover {
-  background: rgba(23, 162, 184, 0.08);
+  background: rgba(28, 110, 168, 0.08);
 }
 
 .tab13-section-card__link ion-icon:first-child {
@@ -332,7 +332,7 @@ ion-page.ct-page.ct-tab13 ion-content {
   border-radius: var(--meditap-radius-sm);
   border: 1px solid var(--meditap-border);
   background: var(--meditap-surface);
-  box-shadow: 0 1px 3px rgba(8, 20, 18, 0.06);
+  box-shadow: 0 1px 3px rgba(4, 12, 24, 0.06);
   overflow: hidden;
 }
 
@@ -352,7 +352,7 @@ ion-page.ct-page.ct-tab13 ion-content {
   background: linear-gradient(
     135deg,
     var(--meditap-primary, #0d4a3f) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }

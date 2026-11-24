@@ -13,6 +13,7 @@ import {
   clearStoredTokens,
   getStoredAccessToken,
   getStoredRefreshToken,
+  resolvePortalTokenSlot,
   setStoredTokens,
 } from '../auth/tokenStorage';
 import { parseJwtPayload } from '../auth/accessTokenClaims';
@@ -128,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch {
         /* ignore */
       }
-      clearStoredTokens();
+      clearStoredTokens(resolvePortalTokenSlot());
       setIsAuthenticated(false);
       setUsername(null);
       setRealmRoles([]);
@@ -142,12 +143,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const slot = resolvePortalTokenSlot();
       try {
-        if (getStoredRefreshToken()) {
+        if (getStoredRefreshToken(slot)) {
           await ensureFreshAccessToken(5);
         }
         if (cancelled) return;
-        const access = getStoredAccessToken();
+        const access = getStoredAccessToken(slot);
         if (access) {
           setIsAuthenticated(true);
           applyTokenPayload(access);
@@ -228,9 +230,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 realmRoles: roles,
               });
 
+        const targetSlot: PortalHome =
+          opts?.requirePortalHome ?? identity.portalHome;
+
         if (opts?.requirePortalHome && identity.portalHome !== opts.requirePortalHome) {
           // Do not persist a wrong-door session (e.g. patient on admin login).
-          clearStoredTokens();
+          // Keep the other portal's slot intact for side-by-side testing.
+          clearStoredTokens(opts.requirePortalHome);
           const mismatch = new Error('PORTAL_MISMATCH');
           (mismatch as Error & { portalHome: PortalHome }).portalHome = identity.portalHome;
           throw mismatch;
@@ -242,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           clearMediTapWorkflowLocalState();
         }
         sessionStorage.setItem('meditap_last_username', nextUser);
-        setStoredTokens(data.access, data.refresh);
+        setStoredTokens(data.access, data.refresh, targetSlot);
         setSessionExpired(false);
         setIsAuthenticated(true);
         applyTokenPayload(data.access);
@@ -277,7 +283,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       /* ignore */
     }
-    clearStoredTokens();
+    // Only sign out this portal door — leave the other portal session alone.
+    clearStoredTokens(resolvePortalTokenSlot());
     setIsAuthenticated(false);
     setUsername(null);
     setRealmRoles([]);

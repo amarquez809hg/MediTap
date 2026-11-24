@@ -312,6 +312,9 @@ Shared chrome: ← Dashboard · logo · LOGOUT · Support FAB.
 | Django Admin URL | [https://www.lomontvista.com/admin/](https://www.lomontvista.com/admin/) |
 | In-app Users | [https://www.lomontvista.com/admin-portal/users](https://www.lomontvista.com/admin-portal/users) |
 | In-app Traffic | [https://www.lomontvista.com/admin-portal/traffic](https://www.lomontvista.com/admin-portal/traffic) — anonymous pageviews/sessions |
+| Allowed admins | `antonio.marquez809@gmail.com`, `rene@ninskers.com`, `antonio@hourglasspartnersinc.com` (`LV_ADMIN_EMAILS` / `FELV/src/config/adminEmails.ts`) |
+| Google Ads tag | `AW-18369444148` in `FELV/index.html` `<head>` |
+| Sign-up conversion | `AW-18369444148/osrMCPDYvv8cELTynbdE` — fires only after register (or OAuth `new_user`) API success via `utils/googleAds.ts` |
 | Staff API | `GET /api/admin/users/`, `GET /api/admin/traffic/`; beacon `POST /api/analytics/pageview/` |
 | Attribution | Landing captures `gclid` / `utm_*` → stored on signup in `UserProfile` |
 | Traffic privacy | Random `session_key` + path only — no names/emails/IPs |

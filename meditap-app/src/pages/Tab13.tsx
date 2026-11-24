@@ -234,7 +234,7 @@ const Tab13: React.FC = () => {
     <IonPage className="ct-page ct-tab13">
       <IonContent fullscreen>
         <div className="admin-panel-container">
-          <header className="admin-panel-header">
+          <header className="admin-panel-header meditap-glass-header">
             <h1>
               <i className="fas fa-user-shield" aria-hidden />
               {t('admin.title')}

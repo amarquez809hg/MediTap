@@ -304,3 +304,60 @@ class PatientDocumentSerializer(serializers.ModelSerializer):
 
     def get_download_url(self, obj):
         return f"/api/patient-documents/{obj.document_id}/download/"
+
+
+class PortalMessageSerializer(serializers.ModelSerializer):
+    sender_username = serializers.SerializerMethodField()
+    patient_label = serializers.SerializerMethodField()
+    is_unread = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.PortalMessage
+        fields = (
+            "message_id",
+            "patient",
+            "patient_label",
+            "sender",
+            "sender_username",
+            "body",
+            "direction",
+            "created_at",
+            "read_at",
+            "is_unread",
+        )
+        read_only_fields = (
+            "message_id",
+            "sender",
+            "sender_username",
+            "patient_label",
+            "direction",
+            "created_at",
+            "read_at",
+            "is_unread",
+        )
+        extra_kwargs = {
+            "patient": {"required": False},
+            "body": {"required": True},
+        }
+
+    def get_sender_username(self, obj):
+        if obj.sender_id and obj.sender:
+            return obj.sender.get_username()
+        return None
+
+    def get_patient_label(self, obj):
+        if not obj.patient_id or not obj.patient:
+            return None
+        p = obj.patient
+        return f"{p.family_name}, {p.given_name}".strip(", ")
+
+    def get_is_unread(self, obj):
+        return obj.read_at is None
+
+    def validate_body(self, value):
+        text = (value or "").strip()
+        if not text:
+            raise serializers.ValidationError("Message body is required.")
+        if len(text) > 4000:
+            raise serializers.ValidationError("Message is too long (max 4000 characters).")
+        return text

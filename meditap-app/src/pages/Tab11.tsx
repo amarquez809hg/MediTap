@@ -97,7 +97,7 @@ const Tab11: React.FC = () => {
     <IonPage className="ct-page ct-tab11">
       <IonContent fullscreen className="settings-page-content">
         <div className="settings-container">
-          <header className="settings-header">
+          <header className="settings-header meditap-glass-header">
             <h1>
               <i className="fas fa-cog" aria-hidden />
               {t('settings.title')}

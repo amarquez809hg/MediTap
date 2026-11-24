@@ -757,9 +757,18 @@ function pickCurrentPatient(
 ): PatientApi | null {
   if (!patients.length) return null;
 
-  // Admin on-behalf: preferred selected chart for staff/editor sessions.
+  // Admin on-behalf only inside the admin portal — never on patient routes,
+  // or staff JWT in a shared tab would steal the patient messaging chart.
+  const onAdminPortal =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/admin-portal') ||
+      window.location.pathname.startsWith('/tab13'));
   const adminId = getAdminSelectedPatientId();
-  if (adminId && currentUserMayBrowseAllPatientsFromToken()) {
+  if (
+    onAdminPortal &&
+    adminId &&
+    currentUserMayBrowseAllPatientsFromToken()
+  ) {
     const byAdmin = patients.find((pt) => pt.patient_id === adminId);
     if (byAdmin) return byAdmin;
   }
@@ -777,9 +786,8 @@ function pickCurrentPatient(
     );
     if (byUsername) return byUsername;
   }
-  if (currentUserMayBrowseAllPatientsFromToken()) {
-    return patients[0];
-  }
+  // Staff browsing all patients must pick an explicit chart in admin — do not
+  // silently bind patient-portal actions to patients[0].
   return null;
 }
 
@@ -3172,4 +3180,79 @@ export async function downloadPatientDocumentFile(
   return new File([blob], filename || 'document.pdf', {
     type: contentType || blob.type || 'application/octet-stream',
   });
+}
+
+export type PortalMessageApi = {
+  message_id: string;
+  patient: string;
+  patient_label: string | null;
+  sender: number | null;
+  sender_username: string | null;
+  body: string;
+  direction: 'patient_to_clinic' | 'clinic_to_patient';
+  created_at: string;
+  read_at: string | null;
+  is_unread: boolean;
+};
+
+export type PortalMessageUnreadSummary = {
+  role: 'clinic' | 'patient';
+  unread_count: number;
+  threads: Array<{
+    patient: string;
+    patient_label: string;
+    unread_count: number;
+    latest_at: string | null;
+  }>;
+  recent: PortalMessageApi[];
+};
+
+export async function listPortalMessages(opts?: {
+  patientId?: string;
+  unread?: boolean;
+}): Promise<PortalMessageApi[]> {
+  const params = new URLSearchParams();
+  if (opts?.patientId) params.set('patient', opts.patientId);
+  if (opts?.unread) params.set('unread', '1');
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  return fetchAllPages<PortalMessageApi>(`/api/portal-messages/${qs}`);
+}
+
+export async function createPortalMessage(input: {
+  body: string;
+  patientId?: string;
+}): Promise<PortalMessageApi> {
+  const payload: Record<string, string> = { body: input.body };
+  if (input.patientId) payload.patient = input.patientId;
+  return requestJson<PortalMessageApi>('/api/portal-messages/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchPortalMessageUnreadSummary(): Promise<PortalMessageUnreadSummary> {
+  return requestJson<PortalMessageUnreadSummary>(
+    '/api/portal-messages/unread-summary/'
+  );
+}
+
+export async function markPortalMessageRead(
+  messageId: string
+): Promise<PortalMessageApi> {
+  return requestJson<PortalMessageApi>(
+    `/api/portal-messages/${messageId}/mark-read/`,
+    { method: 'POST', body: JSON.stringify({}) }
+  );
+}
+
+export async function markPortalThreadRead(
+  patientId: string
+): Promise<{ marked: number }> {
+  return requestJson<{ marked: number }>(
+    '/api/portal-messages/mark-thread-read/',
+    {
+      method: 'POST',
+      body: JSON.stringify({ patient: patientId }),
+    }
+  );
 }

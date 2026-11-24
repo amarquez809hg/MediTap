@@ -22,6 +22,7 @@
     "backToLogin": "Back to log in",
     "staffSignIn": "Staff sign-in",
     "staffSignInRequired": "Staff sign-in required",
+    "staffAccess": "Staff access",
     "staffUsername": "Staff username",
     "password": "Password",
     "signingIn": "Signing in…",
@@ -49,7 +50,12 @@
     "patientInsurance": "Patient Insurance",
     "adminPanel": "Admin Panel",
     "settings": "Settings",
-    "patientInformation": "Patient Information"
+    "patientInformation": "Patient Information",
+    "groups": {
+      "care": "Care",
+      "records": "Records",
+      "account": "Account"
+    }
   },
   "app": {
     "loading": "Loading…"
@@ -142,8 +148,12 @@
     "navDashboard": "Dashboard",
     "navStatus": "Status",
     "navIntake": "Intake",
+    "navMessages": "Messages",
     "navAppointments": "Appointments",
     "navSettings": "Settings",
+    "chatFabLabel": "Chat with clinic",
+    "chatFabShort": "Message clinic",
+    "chatFabUnread": "Chat with clinic · {{count}} unread",
     "backToAdmin": "Admin portal"
   },
   "adminLogin": {
@@ -236,6 +246,17 @@
     "pastEncounters": "Past encounters",
     "pastEncountersSubtitle": "Recent visits and clinical events from your chart and intake PDF.",
     "pastEncountersTab": "Past encounters in Patient Information",
+    "recordType": "Type",
+    "recordDate": "Date",
+    "recordDepartment": "Department",
+    "recordLocation": "Location",
+    "recordIcd": "ICD",
+    "recordDiagnosed": "Diagnosed",
+    "recordTreatment": "Treatment",
+    "recordCollected": "Collected",
+    "recordValues": "Values",
+    "recordOutcome": "Outcome",
+    "recordSummary": "Summary",
     "noPastEncountersExtended": "No past encounters to show. Use the buttons above to open Incidents or log one with staff sign-in.",
     "showingPreview": "Showing {{shown}} of {{total}}. Open the linked tab for the full list.",
     "labResults": "Lab results",
@@ -317,6 +338,13 @@
   "quickStatus": {
     "title": "Quick Status",
     "loadError": "Live summary unavailable: {{error}}. Appointment counts still load from the server when available.",
+    "snapshotEyebrow": "Overview",
+    "chartSnapshot": "Chart snapshot",
+    "chartSnapshotHint": "Core chart metrics at a glance. Tap a card to open the related tab.",
+    "queueEyebrow": "Worklist",
+    "actionQueue": "Action queue",
+    "badgePending": "Pending",
+    "badgeReview": "Review",
     "bmi": "BMI",
     "profileComplete": "Profile complete",
     "appointments": "Appointments",
@@ -345,7 +373,7 @@
     "allergiesCount": "{{count}} on file — tap to review",
     "needsAttention": "Needs attention today",
     "yourNextSteps": "Your next steps",
-    "prioritizedHint": "Prioritized actions from your live chart, labs, and schedule. Tap a metric above or a step below to open the right tab.",
+    "prioritizedHint": "Prioritized actions from your live chart, labs, and schedule. Tap a metric or row to open the right tab.",
     "buildingSteps": "Building your next steps…",
     "caughtUp": "You are caught up for now. Open the dashboard for your full health overview."
   },

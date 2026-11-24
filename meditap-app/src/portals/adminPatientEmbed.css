@@ -8,11 +8,11 @@
   --embed-panel: var(--meditap-surface, #ffffff);
   --embed-panel-2: var(--meditap-bg-alt, #eef2f5);
   --embed-border: var(--meditap-border, #e0e6eb);
-  --embed-accent: var(--meditap-accent, #17a2b8);
-  --embed-accent-soft: rgba(23, 162, 184, 0.12);
+  --embed-accent: var(--meditap-accent, #1c6ea8);
+  --embed-accent-soft: rgba(28, 110, 168, 0.12);
   --embed-surface: var(--meditap-bg, #f4f7f9);
   --embed-surface-2: var(--meditap-bg-alt, #eef2f5);
-  --embed-primary: var(--meditap-primary, #004d40);
+  --embed-primary: var(--meditap-primary, #0a446c);
 
   display: flex;
   flex-direction: column;
@@ -24,7 +24,7 @@
   /* Same light clinical field as standalone patient portal */
   background: var(--embed-surface);
   color: var(--embed-ink);
-  border-left: 1px solid rgba(23, 162, 184, 0.22);
+  border-left: 1px solid rgba(28, 110, 168, 0.22);
 }
 
 .admin-patient-embed--empty {
@@ -33,9 +33,9 @@
   padding: 2rem 1.25rem;
   overflow: auto;
   background:
-    radial-gradient(700px 320px at 20% 0%, rgba(23, 162, 184, 0.1), transparent 55%),
+    radial-gradient(700px 320px at 20% 0%, rgba(28, 110, 168, 0.1), transparent 55%),
     var(--ad-bg, #071210);
-  color: #e8f2ef;
+  color: #e8f0f8;
 }
 
 .admin-patient-embed__empty-card {
@@ -43,7 +43,7 @@
   text-align: center;
   padding: 1.75rem 1.4rem;
   border-radius: 16px;
-  border: 1px solid rgba(148, 180, 172, 0.22);
+  border: 1px solid rgba(148, 180, 210, 0.22);
   background: var(--ad-panel, #10201c);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
@@ -61,7 +61,7 @@
 
 .admin-patient-embed__empty-card p {
   margin: 0 0 1.1rem;
-  color: var(--ad-muted, #8aa399);
+  color: var(--ad-muted, #8a9aab);
   line-height: 1.45;
 }
 
@@ -84,15 +84,15 @@
 
 .admin-patient-embed__primary {
   border: none;
-  background: linear-gradient(135deg, var(--embed-accent), #0e7490);
+  background: linear-gradient(135deg, var(--embed-accent), #0a446c);
   color: #fff;
   font-weight: 600;
 }
 
 .admin-patient-embed__secondary {
-  border: 1px solid rgba(148, 180, 172, 0.28);
+  border: 1px solid rgba(148, 180, 210, 0.28);
   background: transparent;
-  color: #e8f2ef;
+  color: #e8f0f8;
 }
 
 .admin-patient-embed__empty-actions a {
@@ -112,8 +112,8 @@
   background:
     linear-gradient(
       105deg,
-      rgba(0, 77, 64, 0.08) 0%,
-      rgba(23, 162, 184, 0.1) 42%,
+      rgba(10, 68, 108, 0.08) 0%,
+      rgba(28, 110, 168, 0.1) 42%,
       rgba(255, 255, 255, 0.9) 100%
     ),
     var(--embed-panel);
@@ -165,7 +165,7 @@
 .admin-patient-embed__banner-actions a:hover,
 .admin-patient-embed__banner-actions button:hover {
   background: var(--embed-accent-soft);
-  border-color: rgba(23, 162, 184, 0.45);
+  border-color: rgba(28, 110, 168, 0.45);
   color: var(--embed-primary);
 }
 
@@ -194,8 +194,8 @@
 }
 
 .admin-patient-embed__subnav a.is-active {
-  background: rgba(23, 162, 184, 0.16);
-  border-color: rgba(23, 162, 184, 0.35);
+  background: rgba(28, 110, 168, 0.16);
+  border-color: rgba(28, 110, 168, 0.35);
   color: var(--embed-primary);
   font-weight: 600;
 }

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import timedelta
@@ -15,32 +13,28 @@ from django.utils import timezone
 from medical import models
 
 from .epic_token_crypto import decrypt_epic_token, encrypt_epic_token
+from .safe_http import https_json_response, require_https_url
 
 logger = logging.getLogger(__name__)
 
 
 def _http_form_post(url: str, form: dict[str, str]) -> dict:
+    require_https_url(url, label="Epic token URL")
     body = urllib.parse.urlencode(form).encode()
     req = urllib.request.Request(url, data=body, method="POST")
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="replace")
-        raise ValueError(f"HTTP {e.code}: {err_body[:800]}") from e
+    return https_json_response(req)
 
 
 def _fhir_get(url: str, access_token: str) -> dict:
+    require_https_url(url, label="Epic FHIR URL")
     req = urllib.request.Request(url, method="GET")
     req.add_header("Authorization", f"Bearer {access_token}")
     req.add_header("Accept", "application/fhir+json")
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="replace")
-        raise ValueError(f"FHIR HTTP {e.code}: {err_body[:800]}") from e
+        return https_json_response(req)
+    except ValueError as e:
+        raise ValueError(str(e).replace("HTTP ", "FHIR HTTP ", 1)) from e
 
 
 def _store_tokens(link: models.EpicPatientLink, token_json: dict) -> None:

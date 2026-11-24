@@ -1,22 +1,22 @@
-/* Admin ops surfaces — MediTap glass language on dark portal shell */
+/* Admin ops surfaces — light content canvas (navy chrome stays in shell) */
 
 .admin-ops {
   max-width: 1100px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 2.5rem;
-  color: var(--admin-portal-text, #e8eef5);
+  color: var(--admin-portal-text, #1a2b2e);
 }
 
 .admin-ops__header h1 {
   margin: 0 0 0.35rem;
   font-size: 1.55rem;
-  color: #f3f7fb;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.25);
+  color: #0a446c;
+  text-shadow: none;
 }
 
 .admin-ops__header p {
   margin: 0 0 0.75rem;
-  color: var(--admin-portal-muted, #9aabbc);
+  color: var(--admin-portal-muted, #5b6b7c);
   line-height: 1.45;
 }
 
@@ -80,7 +80,7 @@
       rgba(255, 255, 255, 0.06) 38%,
       rgba(255, 255, 255, 0) 62%
     ),
-    linear-gradient(135deg, rgba(46, 140, 158, 0.85) 0%, rgba(26, 99, 86, 0.9) 100%);
+    linear-gradient(135deg, rgba(46, 140, 158, 0.85) 0%, rgba(10, 68, 108, 0.9) 100%);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow:
@@ -447,4 +447,77 @@
   .admin-ops__search input {
     background: rgba(18, 34, 50, 0.92);
   }
+}
+
+
+/* Light canvas overrides (body sets --admin-portal-* to ink colors) */
+.admin-ops__search input {
+  border: 1px solid rgba(28, 58, 110, 0.16);
+  background: #fff;
+  color: #1a2b2e;
+  box-shadow: 0 4px 12px rgba(15, 35, 60, 0.04);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.admin-ops__search button,
+.admin-ops__actions button,
+.admin-ops__table button {
+  border: 1px solid rgba(28, 110, 168, 0.35);
+  color: #fff;
+  text-shadow: none;
+  background: linear-gradient(135deg, #1c6ea8, #0a446c);
+  box-shadow: 0 8px 18px rgba(16, 48, 92, 0.18);
+}
+
+.admin-ops__error {
+  color: #b91c1c;
+}
+
+.admin-ops__ok {
+  color: #15803d;
+}
+
+.admin-ops__table-wrap {
+  border: 1px solid rgba(28, 58, 110, 0.12);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.06);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.admin-ops__table th,
+.admin-ops__table td {
+  border-bottom: 1px solid rgba(28, 58, 110, 0.08);
+  color: #1a2b2e;
+}
+
+.admin-ops__table th {
+  color: #5b6b7c;
+  background: #f8fafc;
+}
+
+.admin-ops__card {
+  border: 1px solid rgba(28, 58, 110, 0.12);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.06);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.admin-ops__card strong {
+  color: #0a446c;
+}
+
+.admin-ops__card span {
+  color: #5b6b7c;
+}
+
+.admin-ops__card:hover {
+  border-color: rgba(28, 110, 168, 0.35);
+  box-shadow: 0 12px 28px rgba(15, 35, 60, 0.1);
+}
+
+.admin-ops__docs-hint {
+  color: #5b6b7c !important;
 }

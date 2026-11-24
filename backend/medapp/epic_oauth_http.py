@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import base64
-import json
-import urllib.error
 import urllib.parse
 import urllib.request
 
 from django.conf import settings
+
+from .safe_http import https_json_response, require_https_url
 
 
 def epic_token_form_post(form: dict[str, str]) -> dict:
@@ -21,6 +21,7 @@ def epic_token_form_post(form: dict[str, str]) -> dict:
     url = (getattr(settings, "EPIC_TOKEN_URL", "") or "").strip()
     if not url:
         raise ValueError("Epic token URL is not configured on the server.")
+    require_https_url(url, label="Epic token URL")
 
     payload = dict(form)
     client_id = (getattr(settings, "EPIC_CLIENT_ID", "") or "").strip()
@@ -37,10 +38,4 @@ def epic_token_form_post(form: dict[str, str]) -> dict:
         payload.pop("client_secret", None)
 
     req.data = urllib.parse.urlencode(payload).encode()
-
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="replace")
-        raise ValueError(f"HTTP {e.code}: {err_body[:800]}") from e
+    return https_json_response(req)

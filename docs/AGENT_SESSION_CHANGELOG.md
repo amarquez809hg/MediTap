@@ -1653,6 +1653,1036 @@
 
 ---
 
+### Entry 186 — `MT-AG-182`
+
+**Type:** Security / Assessment
+
+**Key:** `MT-AG-182`
+
+**Summary:** Free local security pass (Bandit, pip-audit, npm audit, Django settings/auth review) with MediTap-format findings report for secure-website hardening while Coverity credentials are pending.
+
+**What was done:**
+
+- Ran Bandit, pip-audit, and npm audit; reviewed SECRET_KEY, SECURE_*, DRF defaults, password policy, AllowAny surfaces, XSS sinks.
+- Wrote `docs/MEDITAP_LOCAL_SECURITY_PASS_REPORT_2026-10-14.md` (executive summary, SEC-IDs, checklist, remediation phases).
+- Interactive canvas summary for the team.
+
+**Outcome:** Prioritized Critical/High backlog (hardcoded SECRET_KEY, Capacitor iOS, SECURE_*, python-jose, DRF default). Remediation not started in this entry.
+
+**Primary paths:** `docs/MEDITAP_LOCAL_SECURITY_PASS_REPORT_2026-10-14.md`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **187** / **`MT-AG-183`**
+
+*Last updated: entry 186 (local security pass report).*
+
+---
+
+### Entry 187 — `MT-AG-183`
+
+**Type:** Security / Hardening
+
+**Key:** `MT-AG-183`
+
+**Summary:** Remediate Critical/High findings from the local security pass (SEC-001–009): production SECRET_KEY/SECURE_*, DRF auth default, PyJWT, Epic HTTPS allow-list, Capacitor 7.6.9, cryptography-only SUN.
+
+**What was done:**
+
+- `settings.py`: require `SECRET_KEY` when `DEBUG` is false; enable `SECURE_*` / HSTS / secure cookies in production; DRF default `IsAuthenticated`; register password validators skip only in DEBUG.
+- `medical/views.py` `BaseViewSet` → `IsAuthenticated` (public auth/card routes keep explicit `AllowAny`).
+- Replaced `python-jose` with `PyJWT` for staff elevation / intake editor; removed PyCrypto fallback from `sun_crypto.py`.
+- Epic outbound HTTP via `safe_http.require_https_url` / `https_urlopen` (scheme allow-list).
+- Bumped `@capacitor/ios|core|cli` to **7.6.9**; `npm audit fix` (prod deps `--omit=dev`: **0** vulns).
+- Tests: `medapp.tests_safe_http`; re-ran own-chart update tests; Bandit High **0**; pip-audit clean.
+
+**Outcome:** Website/API hardening for the reported Critical/High items is in place locally. Remaining npm noise is mostly vitest/cypress/rollup (dev toolchain; needs `--force` / major bumps). Production VM must set a real `SECRET_KEY` and run with `DEBUG=0` so `SECURE_*` apply. Coverity CI still waits on org credentials.
+
+**Primary paths:** `backend/medapp/settings.py`, `backend/medapp/safe_http.py`, `backend/medical/views.py`, `backend/requirements.txt`, `meditap-app/package.json`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **188** / **`MT-AG-184`**
+
+*Last updated: entry 187 (security remediation SEC-001–009).*
+
+---
+
+### Entry 188 — `MT-AG-184`
+
+**Type:** Documentation / Security
+
+**Key:** `MT-AG-184`
+
+**Summary:** MediTap-branded PDF covering security findings (MT-AG-182) and remediations (MT-AG-183).
+
+**What was done:**
+
+- Updated `docs/generate_meditap_security_pass_pdf.py` for findings + fix status, before/after metrics, checklist, remaining ops.
+- Wrote Desktop + docs copies of the PDF.
+
+**Outcome:** Corporate PDF available for stakeholders without re-reading the markdown report alone.
+
+**Primary paths:** `~/Desktop/MediTap_Security_Findings_and_Remediation_2026-10-16.pdf`, `docs/MEDITAP_SECURITY_FINDINGS_AND_REMEDIATION_2026-10-16.pdf`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **189** / **`MT-AG-185`**
+
+*Last updated: entry 188 (security findings & remediation PDF).*
+
+---
+
+### Entry 189 — `MT-AG-185`
+
+**Type:** Security / Dependencies
+
+**Key:** `MT-AG-185`
+
+**Summary:** Complete Phase 2 dependency upgrades - clear remaining npm Critical/High (vitest tinypool, Cypress extract-zip/uuid, Vite/rollup).
+
+**What was done:**
+
+- Bumped toolchain: Vite **6.4.x**, Vitest **5.0.5**, Cypress **16.2**, `@vitejs/plugin-legacy` **6**, jsdom **26**, rollup override **4.64.7**.
+- Pointed `vite.config.ts` at `vitest/config` for Vitest 5.
+- `npm audit` → **0 vulnerabilities** (full tree, not only `--omit=dev`).
+- Smoke: unit tests (29) passed; production build verified.
+
+**Outcome:** Phase 2 residual npm issues closed. Prod and dev dependency audits are clean.
+
+**Primary paths:** `meditap-app/package.json`, `meditap-app/package-lock.json`, `meditap-app/vite.config.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **190** / **`MT-AG-186`**
+
+*Last updated: entry 189 (Phase 2 npm dependency upgrades).*
+
+---
+
+### Entry 190 — `MT-AG-186`
+
+**Type:** Documentation / Security
+
+**Key:** `MT-AG-186`
+
+**Summary:** MediTap-branded Phase 2 dependency upgrade report (MD + PDF) for MT-AG-185 changes.
+
+**What was done:**
+
+- Added `docs/MEDITAP_PHASE2_DEPENDENCY_UPGRADES_2026-10-16.md` and generator `docs/generate_meditap_phase2_deps_pdf.py`.
+- Wrote Desktop + docs PDF copies.
+
+**Outcome:** Stakeholders have a standalone Phase 2 report covering version bumps, advisories cleared, and verification.
+
+**Primary paths:** `~/Desktop/MediTap_Phase2_Dependency_Upgrades_2026-10-16.pdf`, `docs/MEDITAP_PHASE2_DEPENDENCY_UPGRADES_2026-10-16.pdf`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **191** / **`MT-AG-187`**
+
+*Last updated: entry 190 (Phase 2 dependency upgrade PDF).*
+
+---
+
+### Entry 191 — `MT-AG-187`
+
+**Type:** UX / Prototype
+
+**Key:** `MT-AG-187`
+
+**Summary:** Visual prototype of a hospital-style two-pane outpatient visit note in MediTap glass chrome, on localhost only (no persist).
+
+**What was done:**
+
+- Added `VisitNotePrototype` with structured fields left + live assembled note right, sample vascular consult data.
+- Public preview `/visit-note-prototype` (no login) and portal route `/app/visit-note` with Go back.
+- Dashboard strip to open the portal prototype.
+- Tool chips to Labs / Imaging / Appointments / History / Encounters.
+
+**Outcome:** Localhost preview ready for review. Does not save to API or change Tab14 encounter persistence.
+
+**Primary paths:** `meditap-app/src/pages/VisitNotePrototype.tsx`, `meditap-app/src/App.tsx`, `meditap-app/src/pages/Tab1.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **192** / **`MT-AG-188`**
+
+*Last updated: entry 191 (visit-note visual prototype).*
+
+---
+
+### Entry 192 — `MT-AG-188`
+
+**Type:** UX / Dashboard
+
+**Key:** `MT-AG-188`
+
+**Summary:** Fuse hospital consult-sheet layout into the patient dashboard (two-pane care overview from live chart data).
+
+**What was done:**
+
+- Replaced the dashboard hero + prototype strip with `DashboardConsultSheet`: tool chips, structured patient/vitals fields on the left, assembled care note on the right.
+- Note uses real profile, appointments, allergies, medications, and problems — not sample vascular text.
+- Existing next-steps and clinical preview sections stay below.
+
+**Outcome:** Dashboard itself now reads like the outpatient consult display while keeping MediTap chrome and sidebar.
+
+**Primary paths:** `meditap-app/src/components/DashboardConsultSheet.tsx`, `meditap-app/src/pages/Tab1.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **193** / **`MT-AG-189`**
+
+*Last updated: entry 192 (dashboard consult-sheet fusion).*
+
+---
+
+### Entry 193 — `MT-AG-189`
+
+**Type:** UX / Dashboard
+
+**Key:** `MT-AG-189`
+
+**Summary:** Restyle dashboard scroll sections (next steps through past encounters) as consult-sheet cards so they match the two-pane header.
+
+**What was done:**
+
+- Wrapped next steps, health metrics, appointments, allergies, medications, problems, results, and past encounters in `dash-stack-block` cards.
+- Matched typography, borders, empty states, and metric tiles to the consult-sheet look.
+
+**Outcome:** Scrolling the dashboard stays in the same hospital-sheet organization instead of the old large-title + dashed empty strips.
+
+**Primary paths:** `meditap-app/src/pages/Tab1.tsx`, `meditap-app/src/pages/Tab1.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **194** / **`MT-AG-190`**
+
+*Last updated: entry 193 (dashboard lower-section consult cards).*
+
+---
+
+### Entry 194 — `MT-AG-190`
+
+**Type:** UX / Dashboard
+
+**Key:** `MT-AG-190`
+
+**Summary:** Local-only sample chart fill so dashboard consult cards show appointments, allergies, meds, problems, labs, and encounters.
+
+**What was done:**
+
+- Added `dashboardDemoFixtures.ts` (vascular/primary-care sample rows).
+- On Vite DEV, empty dashboard sections display the sample data; nothing is written to the API.
+- Banner: “Sample preview data… not saved.” Disable with `?demo=0`.
+
+**Outcome:** Empty localhost chart can be reviewed with filled cards. Real rows still win when present.
+
+**Primary paths:** `meditap-app/src/dashboard/dashboardDemoFixtures.ts`, `meditap-app/src/pages/Tab1.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **195** / **`MT-AG-191`**
+
+*Last updated: entry 194 (dashboard demo fill).*
+
+---
+
+### Entry 195 — `MT-AG-191`
+
+**Type:** UX / Dashboard
+
+**Key:** `MT-AG-191`
+
+**Summary:** Static left-rail identity + full menu; one corporate/medical record-card format for all dashboard lists.
+
+**What was done:**
+
+- Sidebar is a compact identity card on top and a non-scrolling nav that shows every destination.
+- Snapshot fields stay in the consult sheet (removed from the rail so the menu is not pushed off-screen).
+- Appointments, allergies, medications, problems, labs, and encounters all use `DashboardRecordCard`.
+
+**Outcome:** Left menu stays fully visible; dashboard cards share one clinical format.
+
+**Primary paths:** `meditap-app/src/pages/Tab1.tsx`, `meditap-app/src/pages/Tab1.css`, `meditap-app/src/components/DashboardRecordCard.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **196** / **`MT-AG-192`**
+
+*Last updated: entry 195 (rail menu + unified record cards).*
+
+---
+
+### Entry 196 — `MT-AG-192`
+
+**Type:** UX / Intake
+
+**Key:** `MT-AG-192`
+
+**Summary:** Grouped Add Patient Information menu plus one clinical field format across EHR modes.
+
+**What was done:**
+
+- Left menu is a compact rail with clinical family headings; vendor TOC order is unchanged.
+- Demographics, repeaters, extended sections, and Epic occurrence cards share the same labeled two-column field chrome.
+- Parse, save, staff gate, and per-EHR section lists were not changed.
+
+**Outcome:** Athena / MEDITECH / Epic / Generic still swap sections as before, but the page no longer changes visual language.
+
+**Primary paths:** `meditap-app/src/pages/Tab14.tsx`, `meditap-app/src/pages/Tab14.css`, `meditap-app/src/intake/tab14NavGroups.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **197** / **`MT-AG-193`**
+
+*Last updated: entry 196 (intake rail + unified field format).*
+
+---
+
+### Entry 197 — `MT-AG-193`
+
+**Type:** UX / Chrome
+
+**Key:** `MT-AG-193`
+
+**Summary:** One frosted-glass header language for the patient portal bar and every chart tab title.
+
+**What was done:**
+
+- Shared `.meditap-glass-header` (sheen, blur, teal-to-forest tint) is now the page-title recipe.
+- Patient portal chrome uses the same glass; nav links are frosted pills.
+- Local solid-teal / document-style header overrides were removed so dashboard, intake, appointments, labs, incidents, settings, insurance, admin, and visit note match.
+
+**Outcome:** Headers read as one corporate glass band instead of mixed white and solid teal bars.
+
+**Primary paths:** `meditap-app/src/theme/meditap-shared.css`, `meditap-app/src/portals/portalShell.css`, `meditap-app/src/portals/UserPortalLayout.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **198** / **`MT-AG-194`**
+
+*Last updated: entry 197 (glass headers).*
+
+---
+
+### Entry 198 — `MT-AG-194`
+
+**Type:** UX / Chrome
+
+**Key:** `MT-AG-194`
+
+**Summary:** Darker blue glass headers so titles and pills stay readable.
+
+**What was done:**
+
+- Header glass tokens shifted from pale teal to navy-blue.
+- Sheen overlays were reduced so white labels and frosted buttons no longer wash out.
+
+**Outcome:** Portal and page headers keep the glass look with clearer contrast.
+
+**Primary paths:** `meditap-app/src/theme/meditap-shared.css`, `meditap-app/src/portals/portalShell.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **199** / **`MT-AG-195`**
+
+*Last updated: entry 198 (darker blue glass headers).*
+
+---
+
+### Entry 199 — `MT-AG-195`
+
+**Type:** UX / Dashboard
+
+**Key:** `MT-AG-195`
+
+**Summary:** Split the dashboard left rail into a patient identity card and grouped menu sections.
+
+**What was done:**
+
+- Replaced the mixed identity-plus-list rail with a Patient Snapshot card (avatar, name, id, compact DOB/blood/contact, update link).
+- Grouped the static destinations under Care, Records, and Account so every menu item stays visible without scrolling the rail.
+- Added EN/ES/ZH group labels and slightly stronger card chrome so the identity block reads as the first part of the panel.
+
+**Outcome:** The left panel now reads as two parts: user info card first, then sectioned menu. Destinations still hard-navigate (verified Patient Information → intake).
+
+**Primary paths:** `meditap-app/src/pages/Tab1.tsx`, `meditap-app/src/pages/Tab1.css`, `meditap-app/src/i18n/locales/en.json`, `es.json`, `zh.json`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **200** / **`MT-AG-196`**
+
+*Last updated: entry 199 (dashboard rail identity card + grouped menu).*
+
+---
+
+### Entry 200 — `MT-AG-196`
+
+**Type:** UX / Local display fixtures
+
+**Key:** `MT-AG-196`
+
+**Summary:** Fill Antonio Marquez’s empty tab surfaces with a local reference chart so every current display format is visible.
+
+**What was done:**
+
+- Added a localhost-only Antonio chart (identity, appointments, problems, labs, encounters, insurance, and every Tab14 section).
+- Wired Dashboard, Quick Status, Appointments, Patient History, Incidents, Labs, Insurance, and Patient Information to show that chart when the live lists are empty.
+- Left a sample-preview banner on those tabs. Nothing is posted to the API.
+
+**Outcome:** Clicking through Antonio’s portal now shows how each tab currently renders filled cards and intake sections. Settings and Admin stay unchanged.
+
+**Primary paths:** `meditap-app/src/dashboard/antonioDisplayFixtures.ts`, `dashboardDemoFixtures.ts`, `pages/Tab1.tsx`, `Tab2.tsx`, `Tab4.tsx`, `Tab5.tsx`, `Tab6.tsx`, `Tab7.tsx`, `Tab12.tsx`, `Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **201** / **`MT-AG-197`**
+
+*Last updated: entry 200 (Antonio local display fixtures).*
+
+---
+
+### Entry 201 — `MT-AG-197`
+
+**Type:** UX / Chrome
+
+**Key:** `MT-AG-197`
+
+**Summary:** Restyle staff elevation modals to match the corporate navy glass system.
+
+**What was done:**
+
+- Gave shared and Tab4–14 staff unlock dialogs a navy glass header, teal field labels, and navy primary action.
+- Softened the backdrop to a blue glass wash and aligned Cancel / Unlock controls with the rest of the portal chrome.
+
+**Outcome:** Staff sign-in no longer looks like a plain white dialog; it matches the glassy headers used across MediTap.
+
+**Primary paths:** `meditap-app/src/theme/meditap-shared.css`, `components/StaffElevationModal.tsx`, `components/StaffElevationModal.css`, `pages/Tab14.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **202** / **`MT-AG-198`**
+
+*Last updated: entry 201 (corporate staff elevation modal).*
+
+---
+
+### Entry 202 — `MT-AG-198`
+
+**Type:** UX / Theme
+
+**Key:** `MT-AG-198`
+
+**Summary:** Retarget the site palette from teal/green to navy / navy glass.
+
+**What was done:**
+
+- Updated shared light and dark MediTap tokens (primary, accent, Ionic brand, shadows) to the navy glass family.
+- Replaced leftover teal hex/rgba fallbacks across tabs, portals, cards, and public pages; admin shell neutrals shifted off green-black.
+
+**Outcome:** Links, buttons, active nav, and soft fills follow the same navy system as the glass headers instead of the old teal brand.
+
+**Primary paths:** `meditap-app/src/theme/variables.css`, `theme/meditap-ion-dark-overrides.css`, `theme/meditap-shared.css`, plus page/portal CSS under `src/`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **203** / **`MT-AG-199`**
+
+*Last updated: entry 202 (navy palette retarget).*
+
+---
+
+### Entry 203 — `MT-AG-199`
+
+**Type:** UX / Tab2
+
+**Key:** `MT-AG-199`
+
+**Summary:** Clinical / corporate Quick Status — chart snapshot vs action queue, navy KPI chrome.
+
+**What was done:**
+
+- Split Tab2 into **Chart snapshot** (core metrics) and **Action queue** / worklist (labs, incidents, next steps) with section eyebrows and hints.
+- Restyled `StatusKpiCard` for clinical navy left strip, optional REVIEW/PENDING badges, queue tone; removed rainbow KPI highlights.
+- Rewrote Tab2 CSS + shared status-card styles; i18n keys (en/es/zh) for snapshot/queue copy and badges.
+
+**Outcome:** `/app/status?demo=1` reads as a clinical worklist (navy glass cards + prioritized queue) instead of a colorful KPI board. Verified with Antonio demo fixtures loaded.
+
+**Primary paths:** `meditap-app/src/pages/Tab2.tsx`, `Tab2.css`, `components/StatusKpiCard.tsx`, `theme/meditap-shared.css`, i18n `quickStatus.*`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **204** / **`MT-AG-200`**
+
+*Last updated: entry 203 (Tab2 clinical Quick Status).*
+
+---
+
+### Entry 204 — `MT-AG-200`
+
+**Type:** Security / Planning
+
+**Key:** `MT-AG-200`
+
+**Summary:** Rank code-inspection vendors by external recognition while Black Duck Coverity pricing has not replied.
+
+**What was done:**
+
+- Wrote a MediTap decision brief ranking Veracode, Checkmarx, Black Duck Coverity, Snyk, Sonar, GitHub CodeQL, and Semgrep.
+- Separated headline validation (Tier 1) from continuous CI and the existing free local pass.
+
+**Outcome:** Headline shortlist is Veracode or Checkmarx, with Black Duck still Plan A if they reply. Snyk, Semgrep, or CodeQL cover continuous inspection. Local Bandit/audit work stays supporting evidence.
+
+**Primary paths:** `docs/MEDITAP_SECURITY_VALIDATION_OPTIONS_2026-11-05.md`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **205** / **`MT-AG-201`**
+
+*Last updated: entry 204 (security validation options).*
+
+---
+
+### Entry 205 — `MT-AG-201`
+
+**Type:** Security / Planning
+
+**Key:** `MT-AG-201`
+
+**Summary:** Add official pricing-page links for the code-inspection shortlist.
+
+**What was done:**
+
+- Confirmed live pricing or quote URLs for Veracode, Checkmarx, Black Duck Coverity, Snyk, SonarQube Cloud and Server, GitHub Code Security, and Semgrep.
+- Appended section 8 to the 2026-11-05 validation brief with the list price each public page actually shows.
+
+**Outcome:** Quote-only vendors (Veracode, Checkmarx, Coverity) stay form-based. Snyk Team ($25/month), SonarQube Cloud Team (from $34/month), GitHub Code Security ($30 per active committer), and Semgrep Free/Team are the pages with a number.
+
+**Primary paths:** `docs/MEDITAP_SECURITY_VALIDATION_OPTIONS_2026-11-05.md`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **206** / **`MT-AG-202`**
+
+*Last updated: entry 205 (security vendor pricing pages).*
+
+---
+
+### Entry 206 — `MT-AG-202`
+
+**Type:** Product / Planning
+
+**Key:** `MT-AG-202`
+
+**Summary:** Brief de áreas de oportunidad (PDF intake + portal) con beneficio al sitio y empaque en tres sprints; export Word/PDF.
+
+**What was done:**
+
+- Documentó fallas reales del reconocimiento PDF (gaps dialectales, OCR, NextGen stub, Results legacy, scores) y propuestas P0–P2.
+- Ligó cada área al beneficio competitivo del sitio (confianza staff, multi-EHR, mensajería, FHIR, auditoría).
+- Generó Markdown MediTap-format + `.docx` / `.pdf` vía `docs/scripts/md_brief_to_docx_pdf.py`.
+
+**Outcome:** Roadmap claro para stakeholders: Sprint A exactitud PDF, Sprint B producto de intake, Sprint C portal completo. No incluye implementación de parsers.
+
+**Primary paths:** `docs/MEDITAP_OPPORTUNITY_AREAS_PDF_PORTAL_2026-11-11.md` (+ `.docx`, `.pdf`), `docs/scripts/md_brief_to_docx_pdf.py`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **207** / **`MT-AG-203`**
+
+*Last updated: entry 206 (opportunity areas PDF/portal brief).*
+
+---
+
+### Entry 207 — `MT-AG-203`
+
+**Type:** Feature / Intake (gap closure)
+
+**Key:** `MT-AG-203`
+
+**Summary:** Close two declared P0 PDF gaps — Harold Past Encounters corpus lock + Epic Mayo Payers from Primary insurance narrative. NextGen still deferred (no test PDF).
+
+**What was done:**
+
+- **Harold Past Encounters:** Parser already existed (`MT-AG-181`); training corpus still listed `pastEncounters` under `knownGaps`, which made CI *require* the section to stay empty. Removed the gap, added `pastEncounters` to Harold `mustBeFilled`, updated `ATHENA_INTAKE_TRAINING.md`.
+- **Epic Jane Doe Payers:** Full Mayo PDF has no Insurance TOC table; page 409 notes carry `Primary insurance: FEDERAL BCBS STANDARD` / `Secondary insurance: N/A`. Added `parseEpicMayoInsurance`, wired into `parseEpicMayoDialect`, appended those lines to the CI snapshot, locked `payers` in `epicFixtureCorpus`, unit tests in `epicMayoInsurance.test.ts`.
+- Explicitly **skipped NextGen** until a real NextGen Healthcare test document is available.
+
+**How it works on the site now:**
+
+1. **Athena · Harold Jennings** — Upload with EHR = Athena (or Auto). Tab14 **Past Encounters** fills Date / Type / Performer / Diagnosis-Notes rows (Cole, Nkemelu, etc.). Completeness scorer marks `pastEncounters` **filled**; Athena % no longer treats it as a training gap.
+2. **Epic · Jane Doe Mayo** — Upload with EHR = Epic. Tab14 **Payers / Insurance** shows provider **FEDERAL BCBS STANDARD** (Primary). Secondary `N/A` is ignored. Joanna Smith Centralus path unchanged (`BLUE CROSS` table via `parseEpicInsurance`).
+3. **NextGen** — Still selectable but dialect remains stub → general extract only. Do not raise the bar until a fixture PDF exists.
+
+**Outcome:** Opportunity-doc P0 items “Harold pastEncounters” and “Epic Payers” are closed and regression-locked. Remaining P0 without fixtures: third Athena PDF, second MEDITECH CCD, OCR cover upgrades, NextGen.
+
+**Primary paths:** `athenaFixtureCorpus.ts`, `epicMayoMyHealthSummaryParse.ts`, `epicHealthSummaryParse.ts`, `epicFixtureCorpus.ts`, `epicMayoInsurance.test.ts`, `epic_jane_doe_my_health_summary.snapshot.txt`, `docs/ATHENA_INTAKE_TRAINING.md`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **208** / **`MT-AG-204`**
+
+*Last updated: entry 207 (Harold encounters lock + Epic Mayo Payers).*
+
+---
+
+### Entry 208 — `MT-AG-204`
+
+**Type:** Feature / Intake (OCR)
+
+**Key:** `MT-AG-204`
+
+**Summary:** Strengthen PDF cover / leading-page OCR for demographics — higher page budget, sharper cover render, chrome-only cover detection.
+
+**What was done:**
+
+- Raised `MAX_PDF_OCR_PAGES` from **8 → 12**.
+- Cover / page 1 renders at scale **3.5** (`PDF_OCR_COVER_RENDER_SCALE`); later sparse pages stay at **2.75**.
+- Added `pageNeedsCoverOcr`: sparse pages **or** short pages (&lt;400 chars) without Patient Name / Address / DOB / Communication still trigger OCR (Epic Mayo chrome-only covers).
+- OCR chunks run through `normalizeExtractedDocumentText` before prepend so glued labels are milder for parsers.
+- Unit tests: `documentTextExtraction.ocr.test.ts`. Tab14 empty-parse hint mentions cover + leading-page OCR.
+- Updated opportunity briefs + `ATHENA_INTAKE_TRAINING.md`.
+
+**How it works on the site now:**
+
+1. Upload a PDF on Tab14 (Epic Jane Doe or any scan).  
+2. If the whole file is sparse → OCR up to **12** leading pages (was 8).  
+3. If later pages are text-rich but page 1 is empty **or** only has “My Health Summary / Mayo Clinic” chrome → page 1 still OCRs at **higher resolution**.  
+4. OCR text is prepended so Demographics parsers see Patient Name / Address / phone first; provenance OCR warnings still apply when `usedOcr` is true.  
+5. Hard-refresh + re-upload required to see the new path (stale uploads keep old extract).
+
+**Outcome:** Opportunity P0 “stronger OCR” materially improved for Epic cover demographics. Still open: finer adaptive DPI beyond cover/default, Document AI fallback, NextGen.
+
+**Primary paths:** `meditap-app/src/intake/documentTextExtraction.ts`, `documentTextExtraction.ocr.test.ts`, `pages/Tab14.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **209** / **`MT-AG-205`**
+
+*Last updated: entry 208 (stronger cover OCR).*
+
+---
+
+### Entry 209 — `MT-AG-205`
+
+**Type:** UX / Intake
+
+**Key:** `MT-AG-205`
+
+**Summary:** Unify Tab14 Results with extended clinical cards (same accordion chrome as Imaging / PoT); keep labPanels for API / Tab7.
+
+**What was done:**
+
+- Marked `results` as `legacy: false` in `TAB14_PORTABILITY_NAV`; included in `Tab14ExtendedSectionKey`.
+- Added `resultsClinicalEntries.ts` bridge: lab panels ↔ Result cards (analyte lines in Detail).
+- `Tab14ExtendedSectionPanel` Results layout: Date / Panel name / Status / Category / Display code / Detail.
+- Removed the old dedicated Results repeater form from `Tab14.tsx`; section now uses the shared extended panel.
+- Sync on PDF upload, API lab load, snapshot restore, and card edits → `labPanels`.
+- Completeness scorer mirrors `labPanels` into `extendedSections.results` so Athena/Epic corpora stay green.
+- Tests: `resultsClinicalEntries.test.ts`; corpora still pass.
+
+**How it works on the site now:**
+
+1. Open Tab14 → **Results** in the left menu.  
+2. Panels appear as the same accordion cards as Imaging / Care Team (`1# SureSwab · date · Final`), not the old multi-field lab form.  
+3. Detail shows analyte summary / impression from the PDF.  
+4. Edits sync back to lab panel rows used by **Save** and **Lab Results (Tab7)**.  
+5. Hard-refresh + re-upload (or reload saved chart) to see cards; Epic multi-hit Results still uses the occurrence panel when present.
+
+**Outcome:** Opportunity F6 / P1 “unify Results” closed. Component-level editing remains on Tab7; Tab14 Results matches the rest of the intake visual system.
+
+**Primary paths:** `tab14PortabilitySections.ts`, `resultsClinicalEntries.ts`, `Tab14ExtendedSectionPanel.tsx`, `Tab14.tsx`, `athenaPortabilityCompleteness.ts`, `restoreParseSnapshot.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **210** / **`MT-AG-206`**
+
+*Last updated: entry 209 (Results extended cards).*
+
+---
+
+### Entry 210 — `MT-AG-206`
+
+**Type:** Product / Status
+
+**Key:** `MT-AG-206`
+
+**Summary:** Progress report of the opportunity plan — what closed (gaps, OCR, Results) vs deferred/open (NextGen, review queue, portal).
+
+**What was done:**
+
+- Wrote MediTap-format progress report against `MT-AG-202` with Done / Deferred / Open boards and verify steps.
+- Exported PDF to `docs/` and Desktop for stakeholder access.
+
+**Outcome:** Clear cut: Sprint A ~70%, Sprint B ~30% (Results), Sprint C not started. Next product candidate remains admin review queue.
+
+**Primary paths:** `docs/MEDITAP_OPPORTUNITY_PROGRESS_REPORT_2026-11-17.md` (+ `.pdf`)
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **211** / **`MT-AG-207`**
+
+*Last updated: entry 210 (opportunity progress report).*
+
+---
+
+### Entry 211 — `MT-AG-207`
+
+**Type:** Product / Status
+
+**Key:** `MT-AG-207`
+
+**Summary:** Detailed completed-deliveries report — what was done and benefits for each opportunity-plan closure (MT-AG-202–205).
+
+**What was done:**
+
+- Expanded each completed item with actions, on-site behavior, and product benefits.
+- Exported PDF to `docs/` and Desktop for stakeholder presentation.
+
+**Outcome:** Stakeholder-ready narrative of what MediTap already gained from the opportunity plan, without mixing open backlog.
+
+**Primary paths:** `docs/MEDITAP_OPPORTUNITY_COMPLETED_DETAIL_2026-11-17.md` (+ `.pdf`)
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **212** / **`MT-AG-208`**
+
+*Last updated: entry 211 (completed deliveries detail report).*
+
+---
+
+### Entry 212 — `MT-AG-208`
+
+**Type:** Feature
+
+**Key:** `MT-AG-208`
+
+**Summary:** Staff intake review queue — Accept / Reject / Jump worklist for PDF-flagged fields, with confidence chips and vault queue counts.
+
+**What was done:**
+
+- Added `listIntakeReviewQueueItems` (+ confidence from warning reason) and vault helpers `buildReviewWarningsBundle` / `countReviewWarningsInSnapshot`.
+- Tab14 staff UI: navy glass **Staff review queue** above the active panel (Accept, Reject, Jump, Accept all); Save footer points to the queue instead of a lone Accept-all button.
+- Persist `reviewWarnings` (+ `fieldWarnings`) onto document `parse_snapshot` after PDF import.
+- Admin **Document review** (`/admin-portal/documents`): Flagged fields column + “Flagged only” filter.
+- Unit tests for queue listing, confidence ordering, and snapshot counts.
+
+**How it works on site:**
+
+1. Staff uploads a PDF on Patient Information (`/app/intake`) with elevation active.
+2. When fields are flagged (OCR / bleed / terminology), a **Staff review queue** appears listing each value with low/medium confidence, reason, and provenance.
+3. **Jump** opens the sidebar section; **Accept** keeps the import; **Reject** clears the field; **Accept all** clears the queue.
+4. Ops can open Admin → Document review and filter to uploads that still have flagged fields, then Open hub → Intake to finish Accept/Reject.
+
+**Outcome:** Sprint B P0 portal “admin review queue” is live as daily staff workflow (not only per-field icons). Field-confidence chips close the related P1 partially. Messaging / FHIR / NextGen / new fixtures remain open.
+
+**Primary paths:** `intakeFieldReview.ts`, `IntakeFieldReviewQueue.tsx`, `Tab14.tsx`, `Tab14.css`, `AdminDocumentReviewQueuePage.tsx`, `restoreParseSnapshot.ts`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **213** / **`MT-AG-209`**
+
+*Last updated: entry 212 (staff intake review queue).*
+
+---
+
+### Entry 213 — `MT-AG-209`
+
+**Type:** Feature
+
+**Key:** `MT-AG-209`
+
+**Summary:** Patient ↔ clinic portal messaging — user chat sends a note; admin bell + Messages inbox notify staff.
+
+**What was done:**
+
+- Django `PortalMessage` model + migration `0023`, API `/api/portal-messages/` (list/create, unread-summary, mark-read, mark-thread-read).
+- Patient portal `/app/messages` chat UI; nav **Messages**.
+- Admin `/admin-portal/messages` inbox with reply; sidebar nav **Messages**.
+- Admin top-bar bell shows live unread count + dropdown of recent patient messages (polls every 30s); links into the thread.
+- Activity trail logs `portal_message.patient` / `portal_message.reply`.
+- API tests `medical.tests_portal_messages`; Go back matrix updated.
+
+**How it works on site:**
+
+1. Patient opens **Messages** in the user portal, writes a note, **Send to clinic**.
+2. Admin shell bell badge increments; opening the bell lists the preview; **Open messages inbox** (or a preview row) opens the thread.
+3. Staff reply from the inbox; patient sees the clinic bubble on the next Messages visit (unread clinic replies auto-mark when opened).
+
+**Outcome:** Sprint C P0 messaging v1 is live end-to-end (in-app notification, not email/push yet). Requires `migrate` for `0023_portal_message` on local/Docker DB.
+
+**Primary paths:** `medical/models.py`, `views.py`, `serializers.py`, `0023_portal_message.py`, `UserMessagesPage.tsx`, `AdminMessagesPage.tsx`, `AdminPortalLayout.tsx`, `api.ts`, `App.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **214** / **`MT-AG-210`**
+
+*Last updated: entry 213 (portal messaging v1).*
+
+---
+
+### Entry 214 — `MT-AG-210`
+
+**Type:** UX
+
+**Key:** `MT-AG-210`
+
+**Summary:** Glassy floating chat FAB (bottom-right) on the patient portal for one-tap clinic messaging.
+
+**What was done:**
+
+- Added `PatientChatFab` — fixed navy-glass circle with comments icon, unread badge from clinic replies, hard-nav to `/app/messages`.
+- Mounted on `UserPortalLayout` (hidden while already on Messages).
+- i18n EN/ES/ZH labels.
+
+**How it works on site:** On any patient portal page, tap the bottom-right glass chat bubble → Messages thread with clinic staff.
+
+**Outcome:** Messaging is reachable without hunting the nav; matches MediTap header glass language.
+
+**Primary paths:** `PatientChatFab.tsx`, `PatientChatFab.css`, `UserPortalLayout.tsx`, `i18n/locales/*.json`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **215** / **`MT-AG-211`**
+
+*Last updated: entry 214 (patient chat FAB).*
+
+---
+
+### Entry 215 — `MT-AG-211`
+
+**Type:** UX
+
+**Key:** `MT-AG-211`
+
+**Summary:** Replace bare chat sphere with glass message pill + corporate Clinic messages workspace.
+
+**What was done:**
+
+- FAB now uses inline SVG chat bubble + “Clinic / Message clinic” label (no Font Awesome dependency).
+- `/app/messages` redesigned: navy glass hero, channel meta strip, conversation card, empty state, compose bar with Send.
+
+**How it works on site:** Dashboard shows a labeled glass message control bottom-right; Messages opens a corporate clinic-channel workspace.
+
+**Outcome:** Messaging entry and page read as a staff-facing product surface, not a blank form + empty circle.
+
+**Primary paths:** `PatientChatFab.tsx`, `PatientChatFab.css`, `UserMessagesPage.tsx`, `userMessages.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **216** / **`MT-AG-212`**
+
+*Last updated: entry 215 (corporate clinic messages UX).*
+
+---
+
+### Entry 216 — `MT-AG-212`
+
+**Type:** UX
+
+**Key:** `MT-AG-212`
+
+**Summary:** Staff portal messaging redesign — restore icons, corporate Clinic messages inbox, dashboard Messages quick access + unread KPI.
+
+**What was done:**
+
+- Restored Font Awesome CDN in `index.html` (admin bell/help/nav icons were empty squares).
+- Redesigned `/admin-portal/messages` with glass hero, inbox avatars, empty states, compose row.
+- Admin home: Messages quick link + **Unread messages** KPI from portal inbox.
+
+**How it works on site:** Staff see working bell/help icons; Messages matches patient-side corporate channel; dashboard surfaces unread patient notes.
+
+**Outcome:** Staff messaging UX aligned with the patient redesign; broken shell icons fixed system-wide.
+
+**Primary paths:** `index.html`, `AdminMessagesPage.tsx`, `adminMessages.css`, `AdminPortalHome.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **217** / **`MT-AG-213`**
+
+*Last updated: entry 216 (staff messaging redesign).*
+
+---
+
+### Entry 217 — `MT-AG-213`
+
+**Type:** UX
+
+**Key:** `MT-AG-213`
+
+**Summary:** Replace admin portal forest-green shell with MediTap navy glass palette.
+
+**What was done:**
+
+- Retinted sidebar, home body, panels, borders, and muted text from green (`#0c1a17` / `rgba(16,32,28)` / mint edges) to navy (`#0a1628` / `rgba(14,28,48)` / blue-gray edges).
+- Aligned Messages hero border + patient-embed edges to the same navy glass language.
+
+**How it works on site:** Admin dashboard/sidebar no longer reads as dark green; it matches patient navy + blue accent.
+
+**Outcome:** Staff portal color system consistent with MediTap brand.
+
+**Primary paths:** `adminDashboard.css`, `adminMessages.css`, `adminPatientEmbed.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **218** / **`MT-AG-214`**
+
+*Last updated: entry 217 (admin navy palette).*
+
+---
+
+### Entry 218 — `MT-AG-214`
+
+**Type:** UX
+
+**Key:** `MT-AG-214`
+
+**Summary:** Admin content canvas turned white/light — sidebar + header stay navy.
+
+**What was done:**
+
+- `admin-dash__body` uses light `#f5f8fc` canvas with navy ink.
+- Home KPIs/panels/quick links/activity rows restyled as white cards.
+- Ops tables/cards + Clinic messages workspace lightened for the same canvas.
+
+**How it works on site:** Left menu and top bar remain dark navy; the center workspace is white/corporate light.
+
+**Outcome:** Clear chrome vs content separation matching typical clinical admin UIs.
+
+**Primary paths:** `adminDashboard.css`, `adminOps.css`, `adminMessages.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **219** / **`MT-AG-215`**
+
+*Last updated: entry 218 (admin light content canvas).*
+
+---
+
+### Entry 219 — `MT-AG-215`
+
+**Type:** UX
+
+**Key:** `MT-AG-215`
+
+**Summary:** Admin sidebar + header frosted glass — softer contrast vs white canvas.
+
+**What was done:**
+
+- Shell background lightened so chrome can frost over it.
+- Sidebar and topbar use translucent navy glass + stronger blur (patient-header language).
+- Search, icon buttons, menus, and foot cards switched to glassy pills.
+
+**How it works on site:** Left menu and header stay navy-tinted but read as glass over the light canvas instead of opaque dark slabs.
+
+**Outcome:** Lower contrast between chrome and white content while keeping brand navy.
+
+**Follow-up:** Slightly darkened glass opacity (~0.74–0.78) after user feedback — still frosted, not solid.
+
+**Primary paths:** `adminDashboard.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **220** / **`MT-AG-216`**
+
+*Last updated: entry 219 (admin frosted chrome + darker tweak).*
+
+---
+
+### Entry 220 — `MT-AG-216`
+
+**Type:** UX
+
+**Key:** `MT-AG-216`
+
+**Summary:** Patient Messages quick-select proposals for common clinic requests.
+
+**What was done:**
+
+- Added `patientMessageProposals.ts` with common portal asks (appointments, refill, labs, documents, referral, meds, follow-up, forms, billing).
+- Compose area shows chip quick-select + **Write my own**; picking a chip fills the draft (editable before send).
+
+**How it works on site:** Open Clinic messages → tap a Quick request or Write my own → edit if needed → Send.
+
+**Outcome:** Faster non-urgent clinic messaging without forcing free-text from scratch.
+
+**Primary paths:** `patientMessageProposals.ts`, `UserMessagesPage.tsx`, `userMessages.css`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **221** / **`MT-AG-217`**
+
+*Last updated: entry 220 (patient message proposals).*
+
+---
+
+### Entry 221 — `MT-AG-217`
+
+**Type:** Bug
+
+**Key:** `MT-AG-217`
+
+**Summary:** Staff bell stayed at 0 — patient Messages used staff JWT / shared token.
+
+**What was done:**
+
+- Dual portal token slots (`meditap_access_token_user` / `_admin`) so patient + staff can stay signed in side-by-side.
+- Patient chart picker no longer uses admin-selected patient on `/app/*` routes.
+- Patient Messages refuses staff-session sends; create no longer passes patient id (avoids clinic-reply path).
+- Admin bell refreshes on focus/visibility; repaired the misclassified refill message in local DB.
+
+**How it works on site:** Sign in as patient on patient portal AND staff on admin portal (separate slots). Patient send → staff unread/bell increments.
+
+**Outcome:** Clinic notification path works when patient actually posts as patient.
+
+**Primary paths:** `tokenStorage.ts`, `AuthContext.tsx`, `api.ts` (`pickCurrentPatient`), `UserMessagesPage.tsx`, `AdminPortalLayout.tsx`
+**Branch:** `feature/portal-split`
+
+---
+
+**Next register entry:** **222** / **`MT-AG-218`**
+
+*Last updated: entry 221 (staff message notification fix).*
+
+---
+
 ### 78) PDF field provenance warnings and verification UI
 
 **Type:** Feature / Bug Fix

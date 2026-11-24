@@ -52,7 +52,7 @@
 }
 
 .public-page__nav .header-language-picker--nav:hover {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .onboarding-page__header .header-language-picker--nav {
@@ -63,8 +63,8 @@
 }
 
 .onboarding-page__header .header-language-picker--nav:hover {
-  color: var(--meditap-accent, #17a2b8);
-  border-color: rgba(23, 162, 184, 0.35);
+  color: var(--meditap-accent, #1c6ea8);
+  border-color: rgba(28, 110, 168, 0.35);
 }
 
 .login-container .nav {

@@ -14,8 +14,8 @@
 }
 
 .glass-date-field:focus-within {
-  border-color: var(--meditap-accent, #17a2b8);
-  box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.18);
+  border-color: var(--meditap-accent, #1c6ea8);
+  box-shadow: 0 0 0 3px rgba(28, 110, 168, 0.18);
 }
 
 .glass-date-field--disabled {
@@ -49,8 +49,8 @@
   width: 44px;
   border: none;
   border-left: 1px solid var(--meditap-border, #dbe3df);
-  background: var(--meditap-surface-muted, #f5f7f6);
-  color: var(--meditap-accent, #17a2b8);
+  background: var(--meditap-surface-muted, #f5f7fa);
+  color: var(--meditap-accent, #1c6ea8);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -59,8 +59,8 @@
 }
 
 .glass-date-field__calendar-btn:hover:not(:disabled) {
-  background: rgba(23, 162, 184, 0.12);
-  color: var(--meditap-primary-tint, #1a6356);
+  background: rgba(28, 110, 168, 0.12);
+  color: var(--meditap-primary-tint, #1a5f8f);
 }
 
 .glass-date-backdrop {
@@ -102,9 +102,9 @@
   border-radius: 16px 16px 0 0;
   background: linear-gradient(
     90deg,
-    var(--meditap-primary-tint, #1a6356),
-    var(--meditap-accent, #17a2b8),
-    var(--meditap-primary-tint, #1a6356)
+    var(--meditap-primary-tint, #1a5f8f),
+    var(--meditap-accent, #1c6ea8),
+    var(--meditap-primary-tint, #1a5f8f)
   );
   pointer-events: none;
 }
@@ -193,8 +193,8 @@
 
 .glass-date-jump__select:focus {
   outline: none;
-  border-color: var(--meditap-accent, #17a2b8);
-  box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.35);
+  border-color: var(--meditap-accent, #1c6ea8);
+  box-shadow: 0 0 0 2px rgba(28, 110, 168, 0.35);
 }
 
 .glass-date-jump__select--month {
@@ -298,8 +298,8 @@
 .glass-date-cell--selected {
   background: linear-gradient(
     135deg,
-    var(--ion-color-primary, #17a2b8) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--ion-color-primary, #1c6ea8) 0%,
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
   color: #fff;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);

@@ -7,7 +7,6 @@ from __future__ import annotations
 import base64
 import json
 import logging
-import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import timedelta
@@ -28,6 +27,7 @@ from medical.serializers import EpicPatientLinkSerializer
 
 from .epic_fhir_sync import sync_epic_into_patient
 from .epic_token_crypto import clear_epic_tokens, encrypt_epic_token
+from .safe_http import https_json_response, require_https_url
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +53,11 @@ def _patient_from_state(state: str) -> models.Patient:
 
 
 def _http_form_post(url: str, form: dict[str, str]) -> dict:
+    require_https_url(url, label="Epic token URL")
     body = urllib.parse.urlencode(form).encode()
     req = urllib.request.Request(url, data=body, method="POST")
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 — trusted config URL
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="replace")
-        raise ValueError(f"HTTP {e.code}: {err_body[:800]}") from e
+    return https_json_response(req)
 
 
 def _decode_jwt_payload_segment(token: str) -> dict | None:

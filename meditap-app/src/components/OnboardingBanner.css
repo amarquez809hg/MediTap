@@ -9,10 +9,10 @@
   border-radius: var(--meditap-radius, 12px);
   background: linear-gradient(
     135deg,
-    rgba(23, 162, 184, 0.14) 0%,
-    rgba(0, 77, 64, 0.1) 100%
+    rgba(28, 110, 168, 0.14) 0%,
+    rgba(10, 68, 108, 0.1) 100%
   );
-  border: 1px solid rgba(23, 162, 184, 0.28);
+  border: 1px solid rgba(28, 110, 168, 0.28);
 }
 
 .onboarding-banner__text {
@@ -25,7 +25,7 @@
   margin-bottom: 0.25rem;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--meditap-primary, #0a3d46);
+  color: var(--meditap-primary, #061c34);
   letter-spacing: -0.01em;
 }
 
@@ -58,7 +58,7 @@
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -68,18 +68,18 @@
 }
 
 .onboarding-banner__dismiss:hover {
-  color: var(--meditap-accent-hover, #138496);
-  background: rgba(23, 162, 184, 0.08);
+  color: var(--meditap-accent-hover, #155a8c);
+  background: rgba(28, 110, 168, 0.08);
   text-decoration: none;
 }
 
 .onboarding-banner__dismiss:focus-visible {
-  outline: 2px solid var(--meditap-accent, #17a2b8);
+  outline: 2px solid var(--meditap-accent, #1c6ea8);
   outline-offset: 2px;
 }
 
 .ion-palette-dark .onboarding-banner {
-  border-color: rgba(23, 162, 184, 0.35);
+  border-color: rgba(28, 110, 168, 0.35);
 }
 
 .ion-palette-dark .onboarding-banner__text strong {
@@ -96,7 +96,7 @@
 
 .ion-palette-dark .onboarding-banner__dismiss:hover {
   color: #a8e6ef;
-  background: rgba(23, 162, 184, 0.15);
+  background: rgba(28, 110, 168, 0.15);
 }
 
 @media (max-width: 900px) {

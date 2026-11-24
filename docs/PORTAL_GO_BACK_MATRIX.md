@@ -38,6 +38,8 @@
 | `/app/settings` | `/tab11` | Settings | Header + shell | `chartPageGoBackFallback()` | ok |
 | `/app/insurance` | `/tab12` | Insurance | Header + shell | `chartPageGoBackFallback()` | ok |
 | `/app/intake` | `/tab14` | Patient information | Custom header leave (+ unsaved modal) | `chartPageGoBackFallback()` via portal `goBack` | ok-special |
+| `/app/visit-note` | — | Visit note prototype | Header + shell | `chartPageGoBackFallback()` | ok |
+| `/app/messages` | — | Patient messages | Header + shell | `chartPageGoBackFallback()` | ok |
 
 Shell chrome (`UserPortalLayout`): always shows Go back with fallback `/app/dashboard` (or chart hub when we pass chart fallback — currently dashboard; page headers use chart fallback).
 
@@ -49,6 +51,7 @@ Shell chrome (`UserPortalLayout`): always shows Go back with fallback `/app/dash
 | `/admin-portal/patients` | Patients list | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/cards` | Assign a profile card | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/patients/:id` | Patient hub | Page + top-bar Go back | Admin home | ok |
+| `/admin-portal/messages` | Clinic messages inbox | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/charts` | Clinical charts | Page + top-bar Go back | Admin home | ok |
 | `/admin-portal/patient-view` (+ sections) | Embedded patient UI | Banner + subnav; page Go back | Charts / hub / home | ok |
 | `/admin-portal/hospitals` | Hospitals | Page + top-bar Go back | Admin home | ok |
@@ -71,6 +74,7 @@ Admin shell UI: sidebar layout in `AdminPortalLayout` + `adminDashboard.css` (da
 | `/card/s/:cardId` | NFC per-tap profile (public, no portal chrome) | n/a |
 | `/forgot-password`, `/reset-password` | Auth recovery | n/a |
 | `/onboarding` | Onboarding | n/a |
+| `/visit-note-prototype` | Public visit-note visual preview (no PHI) | n/a |
 | `/epic-callback` | OAuth return | n/a (redirects to panel) |
 
 ## Manual smoke checklist (run after any nav / Ionic / shell change)

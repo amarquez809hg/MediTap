@@ -8,7 +8,7 @@
   z-index: 99999;
   padding: 14px 16px 18px;
   background: rgba(8, 12, 20, 0.95);
-  border-top: 1px solid rgba(23, 162, 184, 0.25);
+  border-top: 1px solid rgba(28, 110, 168, 0.25);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
@@ -40,7 +40,7 @@
 }
 
 .mt-cookie-banner__link {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   font-weight: 600;
   text-decoration: none;
 }
@@ -83,10 +83,10 @@
   color: #fff;
   background: linear-gradient(
     135deg,
-    var(--meditap-accent, #17a2b8) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--meditap-accent, #1c6ea8) 0%,
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
-  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+  box-shadow: 0 4px 12px rgba(28, 110, 168, 0.3);
 }
 
 .mt-cookie-banner__btn--accept:hover {

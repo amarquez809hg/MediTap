@@ -43,6 +43,7 @@ router.register(r'patient-lab-panels', mviews.PatientLabPanelViewSet)
 router.register(r'patient-appointments', mviews.PatientAppointmentViewSet)
 router.register(r'admin-activity', mviews.AdminActivityEventViewSet, basename='admin-activity')
 router.register(r'patient-documents', mviews.PatientDocumentViewSet, basename='patient-document')
+router.register(r'portal-messages', mviews.PortalMessageViewSet, basename='portal-message')
 
 urlpatterns = [
     path("", healthz),  # returns {"status":"ok"}

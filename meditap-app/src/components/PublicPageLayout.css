@@ -35,7 +35,7 @@
 }
 
 .public-page__logo:hover {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .public-page__nav {
@@ -54,7 +54,7 @@
 
 .public-page__nav-link:hover,
 .public-page__nav-link.is-active {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .public-page__main {
@@ -77,7 +77,7 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   text-decoration: none;
   margin-bottom: 1rem;
 }
@@ -124,7 +124,7 @@
   margin: 1.25rem 0 0.5rem;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .public-page__card p,
@@ -148,10 +148,10 @@
 .public-page__card--accent {
   background: linear-gradient(
     145deg,
-    rgba(26, 99, 86, 0.35) 0%,
-    rgba(23, 162, 184, 0.2) 100%
+    rgba(10, 68, 108, 0.35) 0%,
+    rgba(28, 110, 168, 0.2) 100%
   );
-  border-color: rgba(23, 162, 184, 0.25);
+  border-color: rgba(28, 110, 168, 0.25);
 }
 
 .public-page__card--accent h2,
@@ -186,7 +186,7 @@
 
 .public-page__footer-link:hover,
 .public-page__footer-link.is-active {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .public-page__footer-sep {
@@ -201,7 +201,7 @@
 }
 
 .public-page__inline-link {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   font-weight: 600;
   text-decoration: none;
 }

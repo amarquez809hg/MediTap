@@ -1,4 +1,4 @@
-/* Tab2 — Quick Status (scoped Ionic shell only; layout/cards: Tab5.css + meditap-shared.css) */
+/* Tab2 — Quick Status clinical layout */
 
 ion-page.ct-page.ct-tab2 {
   --ion-background-color: var(--meditap-bg);
@@ -16,8 +16,10 @@ ion-page.ct-page.ct-tab2 ion-header ion-toolbar ion-title {
 
 ion-page.ct-page.ct-tab2 ion-content.custom-content {
   --background: var(--meditap-bg);
-  --padding-start: 16px;
-  --padding-end: 16px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 0;
+  --padding-bottom: 28px;
 }
 
 ion-page.ct-page.ct-tab2 .chronic-conditions-container {
@@ -26,26 +28,99 @@ ion-page.ct-page.ct-tab2 .chronic-conditions-container {
   min-height: auto;
   width: 100%;
   box-sizing: border-box;
-  padding-left: clamp(12px, 3vw, 24px);
-  padding-right: clamp(12px, 3vw, 24px);
+  padding-left: clamp(10px, 2.5vw, 20px);
+  padding-right: clamp(10px, 2.5vw, 20px);
+  padding-bottom: 8px;
 }
 
 .tab2-inline-warning {
-  margin: 0 0 16px;
-  padding: 12px 14px;
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: #7a2e0e;
-  background: #fff4e6;
-  border: 1px solid #f0c9a0;
-  border-radius: var(--meditap-radius-sm, 8px);
-}
-
-.tab2-next-steps-hint {
-  margin: -8px 0 16px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
   font-size: 0.88rem;
   line-height: 1.45;
-  color: var(--meditap-text-muted, #666);
+  color: #5b3a12;
+  background: #f7f1e6;
+  border: 1px solid #e2d2b6;
+  border-radius: 8px;
+}
+
+.tab2-section {
+  margin: 0 0 22px;
+}
+
+.tab2-section--queue {
+  padding-top: 4px;
+  border-top: 1px solid #e4ecef;
+}
+
+.tab2-section__header {
+  margin: 0 0 12px;
+}
+
+.tab2-section__eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--meditap-accent, #1c6ea8);
+}
+
+.tab2-section__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--meditap-primary-shade, #061c34);
+}
+
+.tab2-section__sub,
+.tab2-next-steps-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--meditap-text-secondary, #495057);
+}
+
+.tab2-kpi-grid {
+  margin: 0 0 4px;
+}
+
+.tab2-kpi-grid ion-col {
+  padding: 6px;
+}
+
+.tab2-kpi-grid--queue {
+  margin-bottom: 10px;
+}
+
+.tab2-allergy-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d5dee6;
+  background: #f5f8fb;
+  color: var(--meditap-text-secondary, #495057);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.tab2-allergy-strip i {
+  margin-top: 2px;
+  color: var(--meditap-primary, #0a446c);
+}
+
+.tab2-allergy-strip--severe {
+  border-color: rgba(155, 44, 44, 0.28);
+  background: rgba(155, 44, 44, 0.06);
+  color: #7a2424;
+}
+
+.tab2-allergy-strip--severe i {
+  color: #9b2c2c;
 }
 
 .tab2-next-steps-loading {
@@ -54,34 +129,13 @@ ion-page.ct-page.ct-tab2 .chronic-conditions-container {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 32px 20px;
+  padding: 28px 18px;
   color: var(--meditap-text-muted, #666);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .tab2-next-steps-loading p {
   margin: 0;
-}
-
-.tab2-kpi-grid {
-  margin-bottom: 8px;
-}
-
-.tab2-urgency-heading {
-  margin: 8px 0 4px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--meditap-primary, #0a3d46);
-}
-
-.tab2-urgency-heading--alert {
-  color: #b45309;
-}
-
-.tab2-urgency-icon {
-  vertical-align: -0.15em;
-  margin-right: 6px;
-  font-size: 1.15em;
 }
 
 .tab2-next-steps-empty {
@@ -89,6 +143,17 @@ ion-page.ct-page.ct-tab2 .chronic-conditions-container {
   padding: 20px 16px;
   text-align: center;
   color: var(--meditap-text-muted, #666);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.45;
+}
+
+@media (max-width: 576px) {
+  ion-page.ct-page.ct-tab2 .chronic-conditions-container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .tab2-kpi-grid ion-col {
+    padding: 5px;
+  }
 }

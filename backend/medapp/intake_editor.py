@@ -8,9 +8,9 @@ but chart field edits happen only from the admin portal (staff session).
 
 from __future__ import annotations
 
+import jwt
 from django.conf import settings
 from django.contrib.auth.models import Group
-from jose import JWTError, jwt as jose_jwt
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -57,8 +57,8 @@ def intake_elevation_valid(request) -> bool:
         getattr(settings, "MEDITAP_ELEVATION_SIGNING_KEY", "") or settings.SECRET_KEY
     )
     try:
-        payload = jose_jwt.decode(raw, signing_key, algorithms=["HS256"])
-    except JWTError:
+        payload = jwt.decode(raw, signing_key, algorithms=["HS256"])
+    except jwt.PyJWTError:
         return False
     if payload.get("typ") != "meditap-patient-intake-elevation":
         return False

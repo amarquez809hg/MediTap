@@ -16,10 +16,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 40px;
-    background-color: var(--meditap-primary);
-    color: #fff;
-    box-shadow: var(--meditap-shadow-md);
     z-index: 10;
 }
 
@@ -38,8 +34,9 @@
 }
 
 .profile-header__username {
-    font-size: 0.9rem;
-    opacity: 0.9;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: rgba(248, 255, 253, 0.88);
 }
 
 .logout-btn {
@@ -71,22 +68,22 @@
 /* --- SIDEBAR (Left Column) --- */
 /* Grows with content (e.g. long email) between min/max; nav stretches to match. */
 .profile-sidebar {
-    /* Grid: column width = max(snapshot intrinsic, nav intrinsic), so long email widens the bar. */
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    align-content: start;
-    width: max-content;
-    min-width: 280px;
-    max-width: min(560px, 94vw);
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
     box-sizing: border-box;
-    background-color: #ffffff; /* White sidebar background */
+    background-color: #ffffff;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-    padding: 30px 0;
+    padding: 12px 10px 12px;
     flex-shrink: 0;
     height: 100%;
-    overflow-x: auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+}
+
+.profile-sidebar--rail {
+    width: 260px;
 }
 
 .user-card {
@@ -103,6 +100,92 @@
     margin-bottom: 20px;
 }
 
+.user-card--rail {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    text-align: left;
+    padding: 14px 12px 12px;
+    margin: 0 0 14px;
+    border: 1px solid #c9d8e0;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f6fafc 0%, #eef5f8 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.user-card--rail__eyebrow {
+    margin: 0;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--meditap-accent, #1c6ea8);
+}
+
+.user-card--rail__identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-card--rail .user-avatar {
+    margin: 0;
+    width: 44px;
+    height: 44px;
+}
+
+.user-card--rail__meta {
+    min-width: 0;
+}
+
+.user-card--rail .user-name {
+    font-size: 0.92rem;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-card--rail .user-id {
+    font-size: 0.7rem;
+    margin: 0;
+    word-break: break-all;
+}
+
+.user-card--rail__facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 10px;
+    margin: 0;
+}
+
+.user-card--rail__facts dt {
+    margin: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--meditap-accent, #1c6ea8);
+}
+
+.user-card--rail__facts dd {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--meditap-text, #1a2b2e);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.user-card--rail__facts-wide {
+    grid-column: 1 / -1;
+}
+
+.user-card--rail .user-card__profile-link {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
 .user-avatar--compact {
     width: 64px;
     height: 64px;
@@ -112,13 +195,13 @@
 .user-avatar--glass {
     border: 2px solid rgba(255, 255, 255, 0.5);
     box-shadow:
-        0 10px 28px rgba(23, 162, 184, 0.38),
-        0 0 0 4px rgba(23, 162, 184, 0.12),
+        0 10px 28px rgba(28, 110, 168, 0.38),
+        0 0 0 4px rgba(28, 110, 168, 0.12),
         inset 0 1px 0 rgba(255, 255, 255, 0.45);
     background: linear-gradient(
         145deg,
-        rgba(23, 162, 184, 0.25) 0%,
-        rgba(26, 99, 86, 0.2) 100%
+        rgba(28, 110, 168, 0.25) 0%,
+        rgba(10, 68, 108, 0.2) 100%
     );
 }
 
@@ -145,6 +228,124 @@
 }
 
 /* Tab-style section headers on the dashboard (aligned with Tab4 schedule-header) */
+/* Consult-sheet stack: lower dashboard sections match the two-pane cards */
+.dash-demo-banner {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: var(--meditap-radius-sm, 8px);
+    background: rgba(28, 110, 168, 0.1);
+    color: var(--meditap-text-secondary, #495057);
+    font-size: 0.85rem;
+}
+
+.dash-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 4px;
+    padding-bottom: 12px;
+}
+
+.dash-stack-block {
+    background: #fff;
+    border: 1px solid var(--meditap-border, #e0e6eb);
+    border-radius: var(--meditap-radius, 12px);
+    box-shadow: var(--meditap-shadow-md);
+    padding: 18px 20px 16px;
+}
+
+.dash-stack-block .dashboard-tab-section,
+.dash-stack-block .dashboard-tab-section--secondary {
+    margin: 0 0 12px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--meditap-border, #e0e6eb);
+}
+
+.dash-stack-block .dashboard-tab-section__title,
+.dash-stack-block .dashboard-tab-section__title--h2 {
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+    gap: 8px;
+}
+
+.dash-stack-block .dashboard-tab-section__subtitle {
+    font-size: 0.8rem;
+    max-width: none;
+}
+
+.dash-stack-block .dashboard-empty-strip {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 6px 0 2px;
+    margin: 0;
+    text-align: left;
+    border-radius: 0;
+}
+
+.dash-stack-block .dashboard-empty-strip p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.dash-stack-block .metrics-grid-scroll {
+    margin-bottom: 0;
+}
+
+.dash-stack-block .metrics-grid--compact {
+    max-width: none;
+}
+
+.dash-stack-block .metric-tile {
+    box-shadow: none;
+    border: 1px solid var(--meditap-border, #e0e6eb);
+    border-radius: 8px;
+}
+
+.dash-stack-block .metric-tile:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.dash-stack-block .dashboard-clinical-card {
+    box-shadow: none;
+}
+
+.dash-stack-block .dashboard-more-hint {
+    margin: 8px 0 0;
+}
+
+.dash-stack-block .dashboard-next-steps {
+    margin-bottom: 0;
+}
+
+.dash-stack-block .dashboard-next-steps__title {
+    font-size: 1.05rem;
+}
+
+.dash-stack-block .dashboard-next-steps__grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.dash-stack-block .dashboard-next-step {
+    box-shadow: none;
+}
+
+.dash-stack-block .dashboard-next-step:hover {
+    transform: none;
+}
+
+.dash-stack-block .dashboard-setup-strip {
+    margin: 12px 0 0;
+    border-style: solid;
+}
+
+.dash-stack-block .dashboard-appointments,
+.dash-stack-block .dashboard-preview-block {
+    margin-bottom: 0;
+}
+
 .dashboard-tab-section {
     display: flex;
     flex-wrap: wrap;
@@ -254,14 +455,14 @@
 .dashboard-clinical-card__header h3 {
     margin: 0;
     font-size: 1.05rem;
-    color: var(--meditap-primary, #0f766e);
+    color: var(--meditap-primary, #0a446c);
 }
 
 .dashboard-clinical-card__badge {
     flex-shrink: 0;
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--meditap-accent, #0891b2);
+    color: var(--meditap-accent, #1c6ea8);
     background: rgba(8, 145, 178, 0.1);
     border-radius: 999px;
     padding: 4px 10px;
@@ -322,7 +523,7 @@
 
 .dashboard-empty-strip .info-button--secondary:hover,
 .dashboard-empty-btn--secondary:hover {
-    background-color: rgba(23, 162, 184, 0.12);
+    background-color: rgba(28, 110, 168, 0.12);
     color: var(--meditap-accent);
     box-shadow: none;
 }
@@ -336,8 +537,8 @@
     margin-bottom: 1.5rem;
     padding: 1rem 1.25rem;
     border-radius: var(--meditap-radius, 12px);
-    border: 1px dashed var(--meditap-accent, #17a2b8);
-    background: rgba(23, 162, 184, 0.08);
+    border: 1px dashed var(--meditap-accent, #1c6ea8);
+    background: rgba(28, 110, 168, 0.08);
 }
 
 .dashboard-setup-strip p {
@@ -388,8 +589,8 @@
     overflow: hidden;
     background: linear-gradient(
         180deg,
-        rgba(23, 162, 184, 0.08) 0%,
-        rgba(26, 99, 86, 0.04) 100%
+        rgba(28, 110, 168, 0.08) 0%,
+        rgba(10, 68, 108, 0.04) 100%
     );
 }
 
@@ -460,12 +661,37 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(23, 162, 184, 0.45) transparent;
-    padding-bottom: 16px;
+    flex: 1 1 auto;
+    overflow: hidden;
+    padding-bottom: 8px;
+}
+
+.profile-nav--static {
+    overflow: visible;
+}
+
+.profile-nav--grouped {
+    gap: 2px;
+    padding: 4px 2px 4px;
+    border-top: 1px solid #e4ecef;
+}
+
+.profile-nav-group {
+    margin: 0 0 8px;
+}
+
+.profile-nav-group:last-child {
+    margin-bottom: 0;
+}
+
+.profile-nav-group__label {
+    margin: 0;
+    padding: 4px 10px 3px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--meditap-accent, #1c6ea8);
 }
 
 .profile-nav::-webkit-scrollbar {
@@ -473,7 +699,7 @@
 }
 
 .profile-nav::-webkit-scrollbar-thumb {
-    background: rgba(23, 162, 184, 0.45);
+    background: rgba(28, 110, 168, 0.45);
     border-radius: 999px;
 }
 
@@ -482,20 +708,21 @@
 }
 
 .nav-item {
-    padding: 15px 30px;
+    padding: 8px 14px;
     text-decoration: none;
     color: #555;
-    font-size: 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    border-left: 5px solid transparent;
+    border-left: 3px solid transparent;
     transition: background-color 0.2s, border-left-color 0.2s;
 }
 
 .nav-item i {
-    margin-right: 15px;
-    font-size: 18px;
-    width: 20px; /* Ensures alignment */
+    margin-right: 10px;
+    font-size: 0.9rem;
+    width: 16px;
 }
 
 .nav-item:hover {
@@ -504,7 +731,7 @@
 }
 
 .nav-item.active {
-    background-color: rgba(23, 162, 184, 0.12);
+    background-color: rgba(28, 110, 168, 0.12);
     border-left-color: var(--meditap-accent);
     color: var(--meditap-accent);
     font-weight: 600;
@@ -584,7 +811,7 @@
     display: flex;
     align-items: center;
     min-width: 0;
-    border: 1px solid rgba(23, 162, 184, 0.08);
+    border: 1px solid rgba(28, 110, 168, 0.08);
     transition: transform 0.18s ease, box-shadow 0.22s ease;
 }
 
@@ -598,7 +825,7 @@
     font-size: clamp(1.15rem, 2.4vw, 2.25rem);
     color: var(--meditap-accent);
     margin-right: clamp(6px, 1vw, 20px);
-    background-color: rgba(23, 162, 184, 0.12);
+    background-color: rgba(28, 110, 168, 0.12);
     padding: clamp(5px, 0.9vw, 10px);
     border-radius: 8px;
 }
@@ -675,7 +902,7 @@
     font-size: 0.9rem;
     line-height: 1.45;
     color: var(--meditap-text, #1a1a1a);
-    background: rgba(23, 162, 184, 0.12);
+    background: rgba(28, 110, 168, 0.12);
     border: 1px solid var(--meditap-border, #c5d5d8);
 }
 
@@ -774,7 +1001,8 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    .profile-sidebar {
+    .profile-sidebar,
+    .profile-sidebar--rail {
         display: flex;
         flex-direction: column;
         width: 100%;

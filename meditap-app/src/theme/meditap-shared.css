@@ -90,13 +90,13 @@ ion-page[class*='ct-page'] ion-content {
     ),
     linear-gradient(
       135deg,
-      var(--meditap-header-glass-start, #17a2b8) 0%,
-      var(--meditap-header-glass-end, #1a6356) 100%
+      var(--meditap-header-glass-start, rgba(10, 68, 108, 0.92)) 0%,
+      var(--meditap-header-glass-end, rgba(6, 28, 52, 0.96)) 100%
     ) !important;
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow:
-    0 8px 22px rgba(8, 20, 18, 0.22),
+    0 8px 22px rgba(4, 12, 24, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition:
     filter 0.15s ease,
@@ -115,8 +115,8 @@ ion-page[class*='ct-page'] ion-content {
     ),
     linear-gradient(
       135deg,
-      var(--meditap-header-glass-start, #17a2b8) 0%,
-      var(--meditap-header-glass-end, #1a6356) 100%
+      var(--meditap-header-glass-start, rgba(10, 68, 108, 0.92)) 0%,
+      var(--meditap-header-glass-end, rgba(6, 28, 52, 0.96)) 100%
     ) !important;
   color: #fff;
 }
@@ -127,7 +127,7 @@ ion-page[class*='ct-page'] ion-content {
 }
 
 .meditap-glass-btn--outline {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   text-shadow: none;
   background:
     linear-gradient(
@@ -135,15 +135,15 @@ ion-page[class*='ct-page'] ion-content {
       rgba(255, 255, 255, 0.75) 0%,
       rgba(255, 255, 255, 0.45) 100%
     ) !important;
-  border: 1px solid rgba(23, 162, 184, 0.45);
+  border: 1px solid rgba(28, 110, 168, 0.45);
   box-shadow:
-    0 6px 18px rgba(23, 162, 184, 0.18),
+    0 6px 18px rgba(28, 110, 168, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .meditap-glass-btn--outline:hover {
   filter: none;
-  color: var(--meditap-accent-hover, #138496);
+  color: var(--meditap-accent-hover, #155a8c);
   background:
     linear-gradient(
       120deg,
@@ -151,7 +151,7 @@ ion-page[class*='ct-page'] ion-content {
       rgba(230, 248, 252, 0.75) 100%
     ) !important;
   box-shadow:
-    0 8px 20px rgba(23, 162, 184, 0.22),
+    0 8px 20px rgba(28, 110, 168, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
@@ -169,7 +169,7 @@ ion-page[class*='ct-page'] ion-content {
   gap: 0.4rem;
   border-radius: var(--meditap-radius-sm, 8px);
   box-shadow:
-    0 4px 14px rgba(8, 20, 18, 0.18),
+    0 4px 14px rgba(4, 12, 24, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -179,7 +179,7 @@ ion-page[class*='ct-page'] ion-content {
 
 .meditap-glass-btn--compact.meditap-glass-btn--outline {
   box-shadow:
-    0 4px 12px rgba(23, 162, 184, 0.15),
+    0 4px 12px rgba(28, 110, 168, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
@@ -191,81 +191,147 @@ ion-page[class*='ct-page'] ion-content {
   font-size: 0.85rem;
 }
 
-/* ---- Quick Status (Tab2) — IonCard metrics ---- */
-ion-card.status-card {
+/* ---- Quick Status (Tab2) — clinical metric cards ---- */
+ion-card.status-card,
+ion-card.status-card--clinical {
   margin: 0;
-  border-radius: var(--meditap-radius);
-  box-shadow: var(--meditap-shadow-sm);
-  border: 1px solid rgba(0, 77, 64, 0.1);
-  --background: var(--meditap-surface);
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid #d5dee6;
+  border-left: 3px solid var(--meditap-primary, #0a446c);
+  --background: var(--meditap-surface, #fff);
+  background: linear-gradient(180deg, #fbfcfd 0%, #ffffff 55%);
+}
+
+ion-card.status-card--queue {
+  border-left-color: var(--meditap-accent, #1c6ea8);
+}
+
+ion-card.status-card ion-card-header {
+  padding: 12px 14px 0;
+}
+
+ion-card.status-card ion-card-content {
+  padding: 8px 14px 14px;
+}
+
+ion-card.status-card .status-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 ion-card.status-card ion-card-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--meditap-text-muted);
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--meditap-accent, #1c6ea8);
+  line-height: 1.3;
+}
+
+ion-card.status-card .status-card__badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--meditap-primary, #0a446c);
+  line-height: 1.4;
+}
+
+ion-card.status-card--queue .status-card__badge {
+  background: var(--meditap-accent, #1c6ea8);
 }
 
 ion-card.status-card ion-card-subtitle {
-  color: var(--meditap-text-muted);
-  font-size: 0.8rem;
+  margin: 0;
+  color: var(--meditap-text-secondary, #495057);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 ion-card.status-card .status-value {
-  font-size: 2rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  color: var(--meditap-primary);
-  line-height: 1.15;
-  margin-bottom: 4px;
-}
-
-ion-card.status-card.highlight-1 {
-  border-top: 4px solid var(--meditap-accent);
-}
-
-ion-card.status-card.highlight-2 {
-  border-top: 4px solid var(--meditap-primary-tint);
-}
-
-ion-card.status-card.highlight-3 {
-  border-top: 4px solid var(--ion-color-tertiary);
-}
-
-ion-card.status-card.highlight-4 {
-  border-top: 4px solid #5c6bc0;
-}
-
-ion-card.status-card.highlight-5 {
-  border-top: 4px solid #8d6e63;
-}
-
-ion-card.status-card.highlight-6 {
-  border-top: 4px solid #e65100;
+  color: var(--meditap-primary-shade, #061c34);
+  line-height: 1.1;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
 }
 
 ion-card.status-card--clickable {
   cursor: pointer;
   transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 ion-card.status-card--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--meditap-shadow-md, 0 8px 20px rgba(8, 20, 18, 0.12));
+  border-color: #b9c9d6;
+  box-shadow: 0 6px 16px rgba(6, 28, 52, 0.08);
 }
 
 ion-card.status-card--clickable:active {
-  transform: translateY(0);
+  box-shadow: none;
 }
 
 ion-card.task-list-card {
-  margin-top: 8px;
-  border-radius: var(--meditap-radius);
-  box-shadow: var(--meditap-shadow-sm);
-  border: 1px solid var(--meditap-border);
+  margin: 0;
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid #d5dee6;
   overflow: hidden;
-  --background: var(--meditap-surface);
+  --background: var(--meditap-surface, #fff);
+}
+
+ion-card.task-list-card .task-list {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+ion-card.task-list-card ion-item {
+  --background: transparent;
+  --padding-start: 14px;
+  --inner-padding-end: 12px;
+  --min-height: 64px;
+  --border-color: #e6edf2;
+}
+
+ion-card.task-list-card ion-item ion-icon[slot='start'] {
+  margin-inline-end: 12px;
+  color: var(--meditap-primary, #0a446c);
+  font-size: 1.2rem;
+}
+
+ion-card.task-list-card ion-item.tab2-step--danger ion-icon[slot='start'] {
+  color: #9b2c2c;
+}
+
+ion-card.task-list-card ion-item ion-label h3 {
+  margin: 0 0 2px;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--meditap-primary-shade, #061c34);
+}
+
+ion-card.task-list-card ion-item ion-label p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--meditap-text-secondary, #495057);
+  line-height: 1.35;
+}
+
+ion-card.task-list-card ion-item ion-icon[slot='end'] {
+  color: #8a9aab;
+  font-size: 1rem;
 }
 
 .chronic-conditions-container h2.section-title {
@@ -289,13 +355,15 @@ ion-card.task-list-card {
   gap: 8px;
 }
 
-/* ---- Shared glass headers (Dashboard + Tabs) ---- */
+/* ---- Shared glass headers (portal chrome + every chart tab) ---- */
 :root {
-  --meditap-header-glass-start: var(--meditap-accent, #17a2b8);
-  --meditap-header-glass-end: var(--meditap-primary-tint, #1a6356);
-  --meditap-header-height: 82px;
+  --meditap-header-glass-start: rgba(10, 68, 108, 0.92);
+  --meditap-header-glass-end: rgba(6, 28, 52, 0.96);
+  --meditap-header-height: 76px;
+  --meditap-header-ink: #f4f8fc;
 }
 
+.meditap-glass-header,
 .profile-container .profile-header,
 .chronic-conditions-header,
 .schedule-header,
@@ -303,27 +371,49 @@ ion-card.task-list-card {
 .patient-insurance-header,
 .admin-panel-header,
 .settings-header,
-.lab-results-header {
+.lab-results-header,
+.visit-note-header {
   position: relative;
   overflow: hidden;
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
   width: 100%;
   max-width: 100%;
   min-height: var(--meditap-header-height);
   margin: 0 !important;
-  padding: 16px 24px !important;
+  padding: 14px clamp(16px, 4vw, 32px) !important;
   border-radius: 0 !important;
   box-sizing: border-box;
-  background: linear-gradient(
-    135deg,
-    var(--meditap-header-glass-start) 0%,
-    var(--meditap-header-glass-end) 100%
-  ) !important;
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--meditap-header-ink);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.05) 28%,
+      transparent 62%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start) 0%,
+      var(--meditap-header-glass-end) 100%
+    ) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  backdrop-filter: blur(20px) saturate(165%);
+  border: none !important;
+  border-bottom: 1px solid rgba(150, 200, 230, 0.22) !important;
   box-shadow:
-    0 10px 24px rgba(8, 20, 18, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 14px 36px rgba(4, 12, 24, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(4, 12, 24, 0.2);
+}
+
+.meditap-glass-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Match dashboard structure: full-width container/header, padded body content */
@@ -333,7 +423,8 @@ ion-card.task-list-card {
 .admin-panel-container,
 .settings-container,
 .lab-results-container,
-.chronic-conditions-container {
+.chronic-conditions-container,
+.visit-note-container {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
@@ -344,7 +435,8 @@ ion-card.task-list-card {
 .admin-panel-container > .admin-panel-header,
 .settings-container > .settings-header,
 .lab-results-container > .lab-results-header,
-.chronic-conditions-container > .chronic-conditions-header {
+.chronic-conditions-container > .chronic-conditions-header,
+.visit-note-container > .visit-note-header {
   width: 100%;
   margin-top: -16px !important;
   margin-left: 0 !important;
@@ -556,6 +648,7 @@ ion-card.task-list-card {
   box-sizing: border-box;
 }
 
+.meditap-glass-header::before,
 .profile-container .profile-header::before,
 .chronic-conditions-header::before,
 .schedule-header::before,
@@ -563,19 +656,24 @@ ion-card.task-list-card {
 .patient-insurance-header::before,
 .admin-panel-header::before,
 .settings-header::before,
-.lab-results-header::before {
+.lab-results-header::before,
+.visit-note-header::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.24) 0%,
-    rgba(255, 255, 255, 0.06) 36%,
-    rgba(255, 255, 255, 0) 62%
-  );
+  background:
+    radial-gradient(120% 140% at 8% -20%, rgba(255, 255, 255, 0.16), transparent 46%),
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 40%,
+      transparent 68%
+    );
 }
 
+.meditap-glass-header .logo,
+.meditap-glass-header h1,
 .profile-container .profile-header .logo,
 .profile-container .profile-header h1,
 .chronic-conditions-header h1,
@@ -584,10 +682,42 @@ ion-card.task-list-card {
 .patient-insurance-header h1,
 .admin-panel-header h1,
 .settings-header h1,
-.lab-results-header h1 {
-  color: #f8fffd !important;
+.lab-results-header h1,
+.visit-note-header h1 {
+  color: var(--meditap-header-ink) !important;
   margin: 0 !important;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.24);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 12px rgba(0, 8, 20, 0.45);
+}
+
+.meditap-glass-header h1 i,
+.chronic-conditions-header h1 i,
+.schedule-header h1 i,
+.incident-records-header h1 i,
+.patient-insurance-header h1 i,
+.admin-panel-header h1 i,
+.settings-header h1 i,
+.lab-results-header h1 i,
+.visit-note-header h1 i,
+.tab14-add-patient .chronic-conditions-header h1 i {
+  margin-right: 10px;
+  color: rgba(248, 255, 253, 0.92) !important;
+  opacity: 0.95;
+}
+
+.meditap-glass-header__actions,
+.profile-header__right,
+.tab14-header-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .profile-container .profile-header .logout-btn,
@@ -614,11 +744,18 @@ ion-card.task-list-card {
 .settings-header .add-policy-header-btn,
 .lab-results-header .book-btn,
 .lab-results-header .header-language-picker--app,
-.lab-results-header .download-btn {
-  background: rgba(255, 255, 255, 0.16) !important;
+.lab-results-header .download-btn,
+.meditap-glass-header .book-btn,
+.meditap-glass-header .header-language-picker--app,
+.meditap-glass-header .logout-btn,
+.meditap-glass-header .tab14-sample-data-btn,
+.tab14-header-actions .tab14-sample-data-btn {
+  background: rgba(255, 255, 255, 0.14) !important;
   color: #fff !important;
-  border: 1px solid rgba(255, 255, 255, 0.28) !important;
-  box-shadow: none !important;
+  border: 1px solid rgba(210, 230, 245, 0.42) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .profile-container .profile-header .logout-btn:hover,
@@ -645,10 +782,15 @@ ion-card.task-list-card {
 .settings-header .add-policy-header-btn:hover,
 .lab-results-header .book-btn:hover,
 .lab-results-header .header-language-picker--app:hover,
-.lab-results-header .download-btn:hover {
-  background: rgba(255, 255, 255, 0.16) !important;
-  border-color: rgba(255, 255, 255, 0.38) !important;
-  box-shadow: none !important;
+.lab-results-header .download-btn:hover,
+.meditap-glass-header .book-btn:hover,
+.meditap-glass-header .header-language-picker--app:hover,
+.meditap-glass-header .logout-btn:hover,
+.meditap-glass-header .tab14-sample-data-btn:hover,
+.tab14-header-actions .tab14-sample-data-btn:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.46) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   filter: none !important;
   transform: none !important;
 }
@@ -665,15 +807,24 @@ ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-toolbar {
   margin: 0 !important;
   border-radius: 0 !important;
   box-sizing: border-box;
-  background: linear-gradient(
-    135deg,
-    var(--meditap-header-glass-start) 0%,
-    var(--meditap-header-glass-end) 100%
-  ) !important;
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 8px 24px rgba(8, 20, 18, 0.2);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.08) 36%,
+      transparent 70%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start) 0%,
+      var(--meditap-header-glass-end) 100%
+    ) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  backdrop-filter: blur(20px) saturate(165%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 12px 32px rgba(4, 12, 24, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 
 ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-toolbar::before {
@@ -705,17 +856,24 @@ ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-title {
   border-radius: 0;
   box-sizing: border-box;
   color: #f8fffd;
-  background: linear-gradient(
-    135deg,
-    var(--meditap-header-glass-start) 0%,
-    var(--meditap-header-glass-end) 100%
-  );
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.08) 36%,
+      transparent 70%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start) 0%,
+      var(--meditap-header-glass-end) 100%
+    );
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  backdrop-filter: blur(20px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow:
-    0 10px 24px rgba(8, 20, 18, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 12px 32px rgba(4, 12, 24, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
 }
 
 /* Dark mode: every MediTap tab page + content follows MediTap tokens */
@@ -787,4 +945,242 @@ ion-page[class*='ct-page'] > ion-header:not([collapse='condense']) ion-title {
 .record-tab-empty-cta,
 .lab-results-empty-cta {
   margin-top: 16px;
+}
+
+.meditap-demo-banner {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: var(--meditap-radius-sm, 8px);
+  background: rgba(28, 110, 168, 0.1);
+  color: var(--meditap-text-secondary, #495057);
+  font-size: 0.85rem;
+}
+
+/* ---- Corporate staff elevation modals (shared + Tab4–14) ---- */
+.staff-elevation-modal,
+.tab14-staff-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.staff-elevation-modal__backdrop,
+.tab14-staff-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background:
+    linear-gradient(
+      160deg,
+      rgba(6, 28, 52, 0.62) 0%,
+      rgba(4, 16, 32, 0.78) 100%
+    );
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.staff-elevation-modal__backdrop:disabled,
+.tab14-staff-modal__backdrop:disabled {
+  cursor: default;
+}
+
+.staff-elevation-modal__panel,
+.tab14-staff-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  max-height: min(90vh, 640px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(150, 200, 230, 0.28);
+  background:
+    linear-gradient(180deg, #f7fafc 0%, #ffffff 42%, #ffffff 100%);
+  color: var(--meditap-text, #1a2b2e);
+  box-shadow:
+    0 24px 48px rgba(4, 12, 24, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.staff-elevation-modal__header,
+.tab14-staff-modal__panel > h2 {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 16px 22px 15px;
+  color: var(--meditap-header-ink, #f4f8fc);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.05) 28%,
+      transparent 62%
+    ),
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, rgba(10, 68, 108, 0.92)) 0%,
+      var(--meditap-header-glass-end, rgba(6, 28, 52, 0.96)) 100%
+    );
+  border-bottom: 1px solid rgba(150, 200, 230, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(4, 12, 24, 0.18);
+}
+
+.staff-elevation-modal__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(180, 220, 240, 0.92);
+}
+
+.staff-elevation-modal__header h2,
+.tab14-staff-modal__panel > h2 {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--meditap-header-ink, #f4f8fc);
+  line-height: 1.25;
+}
+
+.staff-elevation-modal__hint,
+.tab14-staff-modal__hint {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: var(--meditap-text-secondary, #495057);
+  line-height: 1.45;
+}
+
+.tab14-staff-modal__hint,
+.tab14-staff-modal__panel > form {
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+.tab14-staff-modal__hint {
+  padding-top: 18px;
+}
+
+.tab14-staff-modal__panel > form {
+  padding-bottom: 22px;
+}
+
+.staff-elevation-modal__panel .form-field label,
+.tab14-staff-modal__panel .form-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--meditap-accent, #1c6ea8);
+}
+
+.staff-elevation-modal__panel .form-field input,
+.tab14-staff-modal__panel .form-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid #c9d8e0;
+  background: #fff;
+  color: var(--meditap-text, #1a2b2e);
+  font: inherit;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.staff-elevation-modal__panel .form-field input:focus,
+.tab14-staff-modal__panel .form-field input:focus {
+  outline: none;
+  border-color: rgba(28, 110, 168, 0.7);
+  box-shadow:
+    0 0 0 3px rgba(28, 110, 168, 0.16),
+    inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.staff-elevation-modal__error,
+.tab14-staff-modal__error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #8a1f1f;
+  background: rgba(198, 40, 40, 0.08);
+  border: 1px solid rgba(198, 40, 40, 0.18);
+}
+
+.staff-elevation-modal__actions,
+.tab14-staff-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.staff-elevation-modal__btn,
+.tab14-staff-modal__btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.staff-elevation-modal__btn:disabled,
+.tab14-staff-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.staff-elevation-modal__btn--secondary,
+.tab14-staff-modal__btn--secondary {
+  background: #fff;
+  border-color: #c9d8e0;
+  color: var(--meditap-text, #1a2b2e);
+}
+
+.staff-elevation-modal__btn--secondary:hover:not(:disabled),
+.tab14-staff-modal__btn--secondary:hover:not(:disabled) {
+  background: #f3f7f9;
+  border-color: #b4c7d2;
+}
+
+.staff-elevation-modal__btn--primary,
+.tab14-staff-modal__btn--primary {
+  background:
+    linear-gradient(
+      135deg,
+      var(--meditap-header-glass-start, rgba(10, 68, 108, 0.96)) 0%,
+      rgba(12, 84, 120, 0.98) 55%,
+      var(--meditap-header-glass-end, rgba(6, 28, 52, 0.98)) 100%
+    );
+  border-color: rgba(150, 200, 230, 0.35);
+  color: #fff;
+  box-shadow:
+    0 8px 18px rgba(6, 28, 52, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.staff-elevation-modal__btn--primary:hover:not(:disabled),
+.tab14-staff-modal__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
 }

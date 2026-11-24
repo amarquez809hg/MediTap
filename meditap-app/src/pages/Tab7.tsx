@@ -28,6 +28,12 @@ import { chartPageGoBackFallback } from '../navigation/portalGoBack';
 import type { LabResultLineItem, LabResultRow } from '../labResults/labResultModel';
 import { mapPatientLabPanelToRow, mapTab14LabPanelToRow } from '../labResults/labResultModel';
 import {
+  ANTONIO_DISPLAY_BANNER,
+  DEMO_LABS,
+  fillIfEmpty,
+  shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
+import {
   applyDatePreset,
   COLLECTED_DATE_PRESETS,
   CRITICAL_FLAG_OPTIONS,
@@ -107,6 +113,8 @@ const Tab7: React.FC = () => {
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
   const [rows, setRows] = useState<LabResultRow[]>([]);
+  const useDemo = shouldUseDashboardDemo();
+  const displayRows = fillIfEmpty(rows, useDemo ? DEMO_LABS : []);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
@@ -409,7 +417,7 @@ const Tab7: React.FC = () => {
     <IonPage>
       <IonContent fullscreen>
         <div className="lab-results-container">
-          <header className="lab-results-header">
+          <header className="lab-results-header meditap-glass-header">
             <div className="lab-results-header__title-block">
               <h1>
                 <i className="fas fa-vial" aria-hidden />
@@ -445,14 +453,19 @@ const Tab7: React.FC = () => {
           )}
 
           <main className="lab-results-main">
+            {useDemo && (
+              <p className="meditap-demo-banner" role="status">
+                {ANTONIO_DISPLAY_BANNER}
+              </p>
+            )}
             {loading ? (
               <div className="lab-results-loading">
                 <IonSpinner name="crescent" />
                 <p>{t('labs.loading')}</p>
               </div>
-            ) : rows.length > 0 ? (
+            ) : displayRows.length > 0 ? (
               <div className="results-list">
-                {rows.map((result) => (
+                {displayRows.map((result) => (
                   <LabResultCard
                     key={result.serverId || result.id}
                     result={result}

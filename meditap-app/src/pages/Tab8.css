@@ -37,14 +37,14 @@
 }
 
 .tab8-issue-card:hover {
-  border-color: rgba(23, 162, 184, 0.45);
-  background: rgba(23, 162, 184, 0.08);
+  border-color: rgba(28, 110, 168, 0.45);
+  background: rgba(28, 110, 168, 0.08);
 }
 
 .tab8-issue-card--selected {
-  border-color: rgba(23, 162, 184, 0.65);
-  background: rgba(23, 162, 184, 0.14);
-  box-shadow: 0 0 0 1px rgba(23, 162, 184, 0.25);
+  border-color: rgba(28, 110, 168, 0.65);
+  background: rgba(28, 110, 168, 0.14);
+  box-shadow: 0 0 0 1px rgba(28, 110, 168, 0.25);
 }
 
 .tab8-issue-card__title {
@@ -65,7 +65,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .tab8-field-hint,
@@ -92,8 +92,8 @@
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  background: rgba(23, 162, 184, 0.15);
-  border: 1px solid rgba(23, 162, 184, 0.35);
+  background: rgba(28, 110, 168, 0.15);
+  border: 1px solid rgba(28, 110, 168, 0.35);
   color: #a8e8ff;
   font-size: 0.875rem;
 }
@@ -113,7 +113,7 @@
 }
 
 .faq-item.active {
-  border-color: rgba(23, 162, 184, 0.45);
+  border-color: rgba(28, 110, 168, 0.45);
 }
 
 .faq-question {
@@ -139,7 +139,7 @@
 .faq-icon {
   font-size: 1.25rem;
   line-height: 1;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   flex-shrink: 0;
   margin-left: 0.75rem;
 }
@@ -198,8 +198,8 @@
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  outline: 2px solid rgba(23, 162, 184, 0.45);
-  border-color: var(--meditap-accent, #17a2b8);
+  outline: 2px solid rgba(28, 110, 168, 0.45);
+  border-color: var(--meditap-accent, #1c6ea8);
 }
 
 .ion-palette-dark .tab8-contact-wrap .form-group label {
@@ -231,10 +231,10 @@
   cursor: pointer;
   background: linear-gradient(
     135deg,
-    var(--meditap-accent, #17a2b8) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--meditap-accent, #1c6ea8) 0%,
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
-  box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
+  box-shadow: 0 6px 16px rgba(28, 110, 168, 0.3);
 }
 
 .submit-button:hover {
@@ -242,7 +242,7 @@
 }
 
 .tab8-mail-link {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   font-weight: 600;
   text-decoration: none;
 }

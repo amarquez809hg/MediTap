@@ -4,6 +4,7 @@ import {
   clearStoredTokens,
   getStoredAccessToken,
   getStoredRefreshToken,
+  resolvePortalTokenSlot,
   setStoredTokens,
 } from './tokenStorage';
 import { emitSessionExpired } from './sessionEvents';
@@ -11,10 +12,12 @@ import { emitSessionExpired } from './sessionEvents';
 /**
  * Refreshes the access token when it is missing or expires within minValiditySeconds.
  * Clears storage and emits session-expired when refresh fails but a refresh token existed.
+ * Uses the portal slot for the current path (patient vs admin can coexist).
  */
 export async function ensureFreshAccessToken(minValiditySeconds = 30): Promise<void> {
-  const access = getStoredAccessToken();
-  const refresh = getStoredRefreshToken();
+  const slot = resolvePortalTokenSlot();
+  const access = getStoredAccessToken(slot);
+  const refresh = getStoredRefreshToken(slot);
   if (!refresh) return;
   const remain = access ? accessTokenSecondsRemaining(access) : 0;
   if (access && remain !== null && remain > minValiditySeconds) return;
@@ -28,10 +31,10 @@ export async function ensureFreshAccessToken(minValiditySeconds = 30): Promise<v
     body: JSON.stringify({ refresh }),
   });
   if (!r.ok) {
-    clearStoredTokens();
+    clearStoredTokens(slot);
     emitSessionExpired();
     return;
   }
   const data = (await r.json()) as { access: string; refresh?: string };
-  setStoredTokens(data.access, data.refresh ?? refresh);
+  setStoredTokens(data.access, data.refresh ?? refresh, slot);
 }

@@ -24,6 +24,12 @@ import {
   type Tab6IncidentPayload,
 } from '../api';
 import { snapshotHospitalVisits } from '../intake/restoreParseSnapshot';
+import {
+  ANTONIO_DISPLAY_BANNER,
+  DEMO_ENCOUNTERS,
+  fillIfEmpty,
+  shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
 import IncidentRecordCard from '../incidents/IncidentRecordCard';
 import HeaderLanguagePicker from '../components/HeaderLanguagePicker';
 import GoBackButton from '../components/GoBackButton';
@@ -122,6 +128,8 @@ const Tab6: React.FC = () => {
   const hasEditorRealmRole = hasRealmRole(recordEditorRole);
 
   const [incidents, setIncidents] = useState<IncidentRecord[]>([]);
+  const useDemo = shouldUseDashboardDemo();
+  const displayIncidents = fillIfEmpty(incidents, useDemo ? DEMO_ENCOUNTERS : []);
   const [hospitals, setHospitals] = useState<HospitalApi[]>([]);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -322,7 +330,7 @@ const Tab6: React.FC = () => {
 
   return (
     <div className="incident-records-container">
-      <header className="incident-records-header">
+      <header className="incident-records-header meditap-glass-header">
         <div className="incident-records-header__title-block">
           <h1>
             <i className="fas fa-clipboard-list"></i> {t('incidents.title')}
@@ -363,11 +371,16 @@ const Tab6: React.FC = () => {
       )}
 
       <main className="incident-records-main">
+        {useDemo && (
+          <p className="meditap-demo-banner" role="status">
+            {ANTONIO_DISPLAY_BANNER}
+          </p>
+        )}
         {loading ? (
           <p className="tab6-inline-hint">{t('incidents.loading')}</p>
-        ) : incidents.length > 0 ? (
+        ) : displayIncidents.length > 0 ? (
           <div className="incidents-list">
-            {incidents.map((incident) => (
+            {displayIncidents.map((incident) => (
               <IncidentRecordCard
                 key={incident.serverId || incident.id}
                 incident={incident}

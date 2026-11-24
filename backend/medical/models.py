@@ -560,3 +560,41 @@ class PatientCard(models.Model):
         uid = self.card_uid or "unbound"
         return f"{self.patient} card {uid}"
 
+
+class PortalMessage(models.Model):
+    """
+    Patient ↔ clinic secure message (portal messaging v1).
+    Patients open the thread from the user portal; staff see unread in the
+    admin bell / Messages inbox.
+    """
+
+    DIRECTION_PATIENT_TO_CLINIC = "patient_to_clinic"
+    DIRECTION_CLINIC_TO_PATIENT = "clinic_to_patient"
+    DIRECTION_CHOICES = [
+        (DIRECTION_PATIENT_TO_CLINIC, "Patient to clinic"),
+        (DIRECTION_CLINIC_TO_PATIENT, "Clinic to patient"),
+    ]
+
+    message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="portal_messages"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="portal_messages_sent",
+    )
+    body = models.TextField()
+    direction = models.CharField(max_length=32, choices=DIRECTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # When the recipient side marks the message read (clinic for inbound, patient for replies).
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("created_at",)
+
+    def __str__(self):
+        return f"{self.direction} · {self.patient_id} · {self.created_at}"
+

@@ -23,16 +23,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(ei&czih%!g@*4-a0x671qt0zs1pa%$8_xm$!tg(q2tsu%m=%b'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set DEBUG=1 only for local troubleshooting (never on meditap.ai).
 DEBUG = os.getenv("DEBUG", "").strip().lower() in ("1", "true", "yes")
 
+# SECURITY WARNING: keep the secret key used in production secret!
+# Production MUST set SECRET_KEY in the environment. A hardcoded fallback is
+# allowed only when DEBUG is on (local / docker-compose).
+_secret = (os.getenv("SECRET_KEY") or "").strip()
+if _secret:
+    SECRET_KEY = _secret
+elif DEBUG:
+    SECRET_KEY = "django-insecure-dev-only-not-for-production"
+else:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured(
+        "SECRET_KEY environment variable is required when DEBUG is false."
+    )
+
 _allowed_raw = os.getenv("ALLOWED_HOSTS", "").strip()
 if _allowed_raw == "*":
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "backend", "0.0.0.0"]
+    # Host header allow-list for local compose — not a network bind.
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "backend", "0.0.0.0"]  # nosec B104
 elif _allowed_raw:
     ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()]
 else:
@@ -113,9 +126,10 @@ CORS_ALLOW_HEADERS = (
 )
 
 # Django REST Framework global settings
+# Default deny anonymous access; public auth/card routes set AllowAny explicitly.
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -241,9 +255,13 @@ try:
     )
 except ValueError:
     MEDITAP_REGISTER_MIN_PASSWORD_LENGTH = 8
-# When True (default), register skips Django AUTH_PASSWORD_VALIDATORS (no "too common" etc.).
-# Set MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS=0 on the API host to enforce full Django checks.
-_reg_skip_raw = os.getenv("MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS", "1").strip().lower()
+# When True, register skips Django AUTH_PASSWORD_VALIDATORS (no "too common" etc.).
+# Default: skip only in DEBUG (local/demo). Production enforces full validators unless
+# MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS=1 is set explicitly.
+_reg_skip_default = "1" if DEBUG else "0"
+_reg_skip_raw = os.getenv(
+    "MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS", _reg_skip_default
+).strip().lower()
 MEDITAP_REGISTER_SKIP_PASSWORD_VALIDATORS = _reg_skip_raw not in (
     "0",
     "false",
@@ -277,6 +295,36 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================
+# Production HTTPS / browser hardening (behind nginx TLS)
+# ============================================
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+    try:
+        SECURE_HSTS_SECONDS = max(0, int(os.getenv("SECURE_HSTS_SECONDS", "31536000") or "0"))
+    except ValueError:
+        SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
 
 # ============================================
 # Email (password reset, support contact)

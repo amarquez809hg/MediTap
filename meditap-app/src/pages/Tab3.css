@@ -63,7 +63,7 @@
   min-height: 100%;
   background: linear-gradient(
     105deg,
-    rgba(0, 77, 64, 0.55) 0%,
+    rgba(10, 68, 108, 0.55) 0%,
     rgba(0, 40, 50, 0.5) 45%,
     rgba(0, 0, 0, 0.35) 100%
   );
@@ -117,8 +117,8 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--meditap-accent, #17a2b8);
-  box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.25);
+  background: var(--meditap-accent, #1c6ea8);
+  box-shadow: 0 0 0 3px rgba(28, 110, 168, 0.25);
 }
 
 /* —— Login card —— */
@@ -152,9 +152,9 @@
   height: 3px;
   background: linear-gradient(
     90deg,
-    var(--meditap-primary-tint, #1a6356),
-    var(--meditap-accent, #17a2b8),
-    var(--meditap-primary-tint, #1a6356)
+    var(--meditap-primary-tint, #1a5f8f),
+    var(--meditap-accent, #1c6ea8),
+    var(--meditap-primary-tint, #1a5f8f)
   );
   opacity: 0.95;
 }
@@ -169,9 +169,9 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--meditap-accent, #17a2b8);
-  background: rgba(23, 162, 184, 0.12);
-  border: 1px solid rgba(23, 162, 184, 0.28);
+  color: var(--meditap-accent, #1c6ea8);
+  background: rgba(28, 110, 168, 0.12);
+  border: 1px solid rgba(28, 110, 168, 0.28);
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
   margin-bottom: 0.875rem;
@@ -276,8 +276,8 @@
   min-height: 40px;
   padding: 0.45rem 0.85rem;
   border-radius: 10px;
-  border: 1px solid rgba(23, 162, 184, 0.45);
-  background: rgba(23, 162, 184, 0.9);
+  border: 1px solid rgba(28, 110, 168, 0.45);
+  background: rgba(28, 110, 168, 0.9);
   color: #fff !important;
   font: inherit;
   font-size: 0.85rem;
@@ -346,8 +346,8 @@
 }
 
 .login-card__input:focus {
-  outline: 2px solid rgba(23, 162, 184, 0.5);
-  border-color: rgba(23, 162, 184, 0.6);
+  outline: 2px solid rgba(28, 110, 168, 0.5);
+  border-color: rgba(28, 110, 168, 0.6);
 }
 
 .login-card__forgot {
@@ -532,14 +532,14 @@
   color: #fff;
   background: linear-gradient(
     135deg,
-    var(--meditap-accent, #17a2b8) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--meditap-accent, #1c6ea8) 0%,
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
-  box-shadow: 0 8px 24px rgba(23, 162, 184, 0.35);
+  box-shadow: 0 8px 24px rgba(28, 110, 168, 0.35);
 }
 
 .login-card__btn--primary:not(:disabled):hover {
-  box-shadow: 0 10px 28px rgba(23, 162, 184, 0.45);
+  box-shadow: 0 10px 28px rgba(28, 110, 168, 0.45);
   filter: brightness(1.05);
 }
 
@@ -709,7 +709,7 @@
   width: 1.05rem;
   height: 1.05rem;
   margin-top: 0.15rem;
-  accent-color: var(--meditap-accent, #17a2b8);
+  accent-color: var(--meditap-accent, #1c6ea8);
   cursor: pointer;
 }
 

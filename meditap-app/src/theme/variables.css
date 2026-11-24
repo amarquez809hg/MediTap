@@ -1,16 +1,16 @@
-/* MediTap — shared palette (matches dashboard: dark teal + cyan accent) */
+/* MediTap — shared palette (navy / navy-glass, aligned with portal headers) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --meditap-primary: #004d40;
-  --meditap-primary-shade: #00332a;
-  --meditap-primary-tint: #1a6356;
-  --meditap-accent: #17a2b8;
-  --meditap-accent-hover: #138aa5;
+  --meditap-primary: #0a446c;
+  --meditap-primary-shade: #061c34;
+  --meditap-primary-tint: #1a5f8f;
+  --meditap-accent: #1c6ea8;
+  --meditap-accent-hover: #155a8c;
   --meditap-bg: #f4f7f9;
   --meditap-bg-alt: #eef2f5;
   --meditap-surface: #ffffff;
-  --meditap-surface-muted: #f5f7f6;
+  --meditap-surface-muted: #f5f7fa;
   --meditap-border: #e0e6eb;
   --meditap-border-light: #eee;
   --meditap-text: #1a2b2e;
@@ -18,31 +18,31 @@
   --meditap-text-muted: #5c6f72;
   --meditap-radius: 12px;
   --meditap-radius-sm: 8px;
-  --meditap-shadow-sm: 0 2px 10px rgba(0, 77, 64, 0.06);
-  --meditap-shadow-md: 0 4px 20px rgba(0, 77, 64, 0.08);
+  --meditap-shadow-sm: 0 2px 10px rgba(10, 68, 108, 0.08);
+  --meditap-shadow-md: 0 4px 20px rgba(6, 28, 52, 0.1);
 
   --ion-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  --ion-color-primary: #004d40;
-  --ion-color-primary-rgb: 0, 77, 64;
+  --ion-color-primary: #0a446c;
+  --ion-color-primary-rgb: 10, 68, 108;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #00332a;
-  --ion-color-primary-tint: #1a6356;
+  --ion-color-primary-shade: #061c34;
+  --ion-color-primary-tint: #1a5f8f;
 
-  --ion-color-secondary: #17a2b8;
-  --ion-color-secondary-rgb: 23, 162, 184;
+  --ion-color-secondary: #1c6ea8;
+  --ion-color-secondary-rgb: 28, 110, 168;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #138f9f;
-  --ion-color-secondary-tint: #2eabbf;
+  --ion-color-secondary-shade: #155a8c;
+  --ion-color-secondary-tint: #3380b5;
 
-  --ion-color-tertiary: #26a69a;
-  --ion-color-tertiary-rgb: 38, 166, 154;
+  --ion-color-tertiary: #3d6f94;
+  --ion-color-tertiary-rgb: 61, 111, 148;
   --ion-color-tertiary-contrast: #ffffff;
   --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #219187;
-  --ion-color-tertiary-tint: #3cafa4;
+  --ion-color-tertiary-shade: #345f7e;
+  --ion-color-tertiary-tint: #507d9f;
 }
 
 /* Dark palette + Ionic dark semantics live in meditap-ion-dark-overrides.css

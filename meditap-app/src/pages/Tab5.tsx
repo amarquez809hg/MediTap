@@ -24,6 +24,12 @@ import {
   type Tab5ChronicHospitalization,
 } from '../api';
 import ConditionCard from '../chronic/ConditionCard';
+import {
+  ANTONIO_DISPLAY_BANNER,
+  DEMO_PROBLEMS,
+  fillIfEmpty,
+  shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
 import StaffPresetField from '../components/StaffPresetField';
 import {
   CHRONIC_CONDITION_NAME_OPTIONS,
@@ -65,6 +71,8 @@ const Tab5: React.FC = () => {
   const [conditions, setConditions] = useState<Tab5ChronicCondition[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
+  const useDemo = shouldUseDashboardDemo();
+  const displayConditions = fillIfEmpty(conditions, useDemo ? DEMO_PROBLEMS : []);
 
   const [draft, setDraft] = useState<Tab5ChronicCondition | null>(null);
   const [isNewCondition, setIsNewCondition] = useState(false);
@@ -254,7 +262,7 @@ const Tab5: React.FC = () => {
 
   return (
     <div className="chronic-conditions-container">
-      <header className="chronic-conditions-header">
+      <header className="chronic-conditions-header meditap-glass-header">
         <div className="chronic-conditions-header__title-block">
           <h1>
             <i className="fas fa-notes-medical" aria-hidden /> {t('chronic.title')}
@@ -288,11 +296,16 @@ const Tab5: React.FC = () => {
             {listError}
           </p>
         )}
+        {useDemo && (
+          <p className="meditap-demo-banner" role="status">
+            {ANTONIO_DISPLAY_BANNER}
+          </p>
+        )}
         {loading ? (
           <p className="tab5-loading">{t('chronic.loading')}</p>
-        ) : conditions.length > 0 ? (
+        ) : displayConditions.length > 0 ? (
           <div className="conditions-list">
-            {conditions.map((condition) => (
+            {displayConditions.map((condition) => (
               <ConditionCard
                 key={condition.apiId ?? condition.diseaseId}
                 condition={condition}

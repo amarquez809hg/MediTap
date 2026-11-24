@@ -55,13 +55,17 @@ import {
     acceptHospitalFieldWarning,
     acceptIndexedFieldWarning,
     acceptPatientFieldWarning,
+    buildReviewWarningsBundle,
     evaluatePatientFieldReviewGate,
+    listIntakeReviewQueueItems,
     rejectHospitalFieldWarning,
     rejectIndexedFieldWarning,
     rejectPatientFieldWarning,
     type FieldReviewState,
     type IndexedFieldReviewState,
+    type IntakeReviewQueueItem,
 } from '../intake/intakeFieldReview';
+import IntakeFieldReviewQueue from '../components/IntakeFieldReviewQueue';
 import { mergeAllergiesFromPdf } from '../intake/mergeTab14Allergies';
 import {
     mergeChronicConditionsFromPdf,
@@ -79,6 +83,7 @@ import {
     type Tab14MergeSnapshot,
 } from '../intake/applyTab14ParseBundle';
 import {
+    countExtendedEntries,
     extendedSectionsFromSnapshot,
     mergeSnapshotIntoClinicalSnapshot,
     pickRichestParseSnapshot,
@@ -88,6 +93,15 @@ import {
     snapshotNeedsEncountersRestore,
     buildStoredParseSnapshot,
 } from '../intake/restoreParseSnapshot';
+import {
+    ANTONIO_DISPLAY_BANNER,
+    ANTONIO_EXTENDED_SECTIONS,
+    ANTONIO_PATIENT_FIELDS,
+    ANTONIO_TAB14_SNAPSHOT,
+    ANTONIO_VITALS_HISTORY,
+    overlayBlankPatientFields,
+    shouldUseDashboardDemo,
+} from '../dashboard/antonioDisplayFixtures';
 import type {
     Tab14AllergyFieldKey,
     Tab14AllergyRowWarnings,
@@ -116,6 +130,7 @@ import {
     type Tab14ExtendedSections,
 } from '../intake/tab14PortabilitySections';
 import { buildTab14SidebarNavForEhr, ehrSidebarNavLabel } from '../intake/ehrSidebarNav';
+import { groupTab14SidebarNav } from '../intake/tab14NavGroups';
 import Tab14ExtendedSectionPanel from './Tab14ExtendedSectionPanel';
 import {
     loadTab14LegacyFromLocalStorage,
@@ -151,6 +166,11 @@ import {
     type LabResultLineItem,
     type LabResultRow,
 } from '../labResults/labResultModel';
+import {
+    clinicalEntriesFromLabResultRows,
+    clinicalEntriesFromTab14LabPanels,
+    labResultRowsFromClinicalEntries,
+} from '../intake/resultsClinicalEntries';
 import { LAB_STATUS_OPTIONS } from '../labResults/labResultFieldCatalog';
 import {
     IonPage,
@@ -638,7 +658,7 @@ function summarizeTab14ParseResult(b: ReturnType<typeof parseTab14IntakeDocument
     else if (Object.keys(b.hospitalVisit).length) chips.push('Hospital visit');
     if (b.labPanels.length) chips.push(`Lab Results (${b.labPanels.length})`);
     if (!chips.length) {
-        return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (first page OCR).';
+        return 'No labeled fields matched. Use a text-based PDF or a clear photo; scanned PDFs may take longer (cover + leading-page OCR).';
     }
     return `Imported: ${chips.join(' · ')} — open each sidebar section to verify, then Save.`;
 }
@@ -891,6 +911,10 @@ const Tab14: React.FC = () => {
     const tab14Sections = useMemo(
         () => buildTab14SidebarNavForEhr(ehrDocumentType),
         [ehrDocumentType]
+    );
+    const tab14NavGroups = useMemo(
+        () => groupTab14SidebarNav(tab14Sections),
+        [tab14Sections]
     );
     // error handling 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1433,6 +1457,13 @@ const Tab14: React.FC = () => {
                     nextExtended = mergeExtendedSections(nextExtended, bundle.extendedSections);
                 }
             }
+            // Results is an extended-card section: mirror parsed lab panels into cards.
+            if (snapshot.labPanels.length > 0) {
+                nextExtended = {
+                    ...nextExtended,
+                    results: clinicalEntriesFromTab14LabPanels(snapshot.labPanels),
+                };
+            }
             setExtendedSections(nextExtended);
             const nextVitalsHistory = parsedBundles
                 .map((b) => b.vitalsHistory ?? [])
@@ -1602,6 +1633,35 @@ const Tab14: React.FC = () => {
             setPdfAllergyWarnings(nextAllergy);
             setPdfMedicationWarnings(nextMedication);
             setPdfHospitalWarnings(nextHospital);
+            const reviewWarningsBundle = buildReviewWarningsBundle({
+                patient: warningsFromUpload,
+                allergies: nextAllergy,
+                medications: nextMedication,
+                chronic: nextChronic,
+                insurances: nextInsurance,
+                hospital: nextHospital,
+            });
+            if (reviewWarningsBundle) {
+                newEntries.forEach((entry, i) => {
+                    if (!entry.documentId) return;
+                    const bundle = parsedBundles[i] ?? parsedBundles[0];
+                    if (!bundle) return;
+                    void updatePatientDocumentStatus(entry.documentId, {
+                        parse_snapshot: {
+                            ...parseSnapshotFromBundle(
+                                bundle,
+                                canEditPatientRecords
+                                    ? 'tab14_staff_parse'
+                                    : 'tab14_patient_parse'
+                            ),
+                            reviewWarnings: reviewWarningsBundle,
+                            fieldWarnings: warningsFromUpload,
+                        },
+                    }).catch(() => {
+                        /* best-effort vault review metadata */
+                    });
+                });
+            }
             if (replaceChartFromPdf) {
                 setNoAllergies(snapshot.noAllergies);
                 setNoMedications(snapshot.noMedications);
@@ -2345,6 +2405,243 @@ const Tab14: React.FC = () => {
         setPdfHospitalWarnings(undefined);
     };
 
+    const intakeReviewQueueItems = useMemo(
+        () =>
+            listIntakeReviewQueueItems({
+                patientWarnings: pdfFieldWarnings,
+                patientDecisions: pdfFieldReview,
+                patientValues: patientInfo as Partial<
+                    Record<Tab14PatientFieldKey, string | string[]>
+                >,
+                allergies: pdfAllergyWarnings,
+                medications: pdfMedicationWarnings,
+                chronic: pdfChronicWarnings,
+                insurances: pdfInsuranceWarnings,
+                hospital: pdfHospitalWarnings,
+                indexedDecisions: pdfIndexedReview,
+                allergyValues: allergies,
+                medicationValues: medications,
+                chronicValues: chronicConditions,
+                insuranceValues: insurances,
+                hospitalValues:
+                    hospitalVisits[hospitalVisits.length - 1] ?? undefined,
+            }),
+        [
+            pdfFieldWarnings,
+            pdfFieldReview,
+            patientInfo,
+            pdfAllergyWarnings,
+            pdfMedicationWarnings,
+            pdfChronicWarnings,
+            pdfInsuranceWarnings,
+            pdfHospitalWarnings,
+            pdfIndexedReview,
+            allergies,
+            medications,
+            chronicConditions,
+            insurances,
+            hospitalVisits,
+        ]
+    );
+
+    const handleAcceptReviewQueueItem = (item: IntakeReviewQueueItem) => {
+        if (item.kind === 'patient') {
+            const next = acceptPatientFieldWarning(
+                pdfFieldWarnings,
+                pdfFieldReview,
+                item.field as Tab14PatientFieldKey
+            );
+            setPdfFieldWarnings(next.warnings);
+            setPdfFieldReview(next.decisions);
+            return;
+        }
+        if (item.kind === 'hospital') {
+            const next = acceptHospitalFieldWarning(
+                pdfHospitalWarnings,
+                pdfIndexedReview,
+                item.field as Tab14HospitalFieldKey
+            );
+            setPdfHospitalWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            return;
+        }
+        if (item.kind === 'allergy') {
+            const next = acceptIndexedFieldWarning(
+                pdfAllergyWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14AllergyFieldKey
+            );
+            setPdfAllergyWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            return;
+        }
+        if (item.kind === 'medication') {
+            const next = acceptIndexedFieldWarning(
+                pdfMedicationWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14MedicationFieldKey
+            );
+            setPdfMedicationWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            return;
+        }
+        if (item.kind === 'chronic') {
+            const next = acceptIndexedFieldWarning(
+                pdfChronicWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14ChronicFieldKey
+            );
+            setPdfChronicWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            return;
+        }
+        if (item.kind === 'insurance') {
+            const next = acceptIndexedFieldWarning(
+                pdfInsuranceWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14InsuranceFieldKey
+            );
+            setPdfInsuranceWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+        }
+    };
+
+    const handleRejectReviewQueueItem = (item: IntakeReviewQueueItem) => {
+        if (item.kind === 'patient') {
+            const next = rejectPatientFieldWarning(
+                pdfFieldWarnings,
+                pdfFieldReview,
+                item.field as Tab14PatientFieldKey
+            );
+            setPdfFieldWarnings(next.warnings);
+            setPdfFieldReview(next.decisions);
+            setPatientInfo((prev) => ({
+                ...prev,
+                [item.field]:
+                    item.field === 'additionalEmails' ? [] : '',
+            }));
+            return;
+        }
+        if (item.kind === 'hospital') {
+            const next = rejectHospitalFieldWarning(
+                pdfHospitalWarnings,
+                pdfIndexedReview,
+                item.field as Tab14HospitalFieldKey
+            );
+            setPdfHospitalWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setHospitalVisits((prev) => {
+                if (!prev.length) return prev;
+                const rows = [...prev];
+                const last = rows.length - 1;
+                rows[last] = { ...rows[last], [item.field]: '' };
+                return rows;
+            });
+            return;
+        }
+        if (item.kind === 'allergy') {
+            const next = rejectIndexedFieldWarning(
+                pdfAllergyWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14AllergyFieldKey
+            );
+            setPdfAllergyWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setAllergies((prev) => {
+                const rows = [...prev];
+                if (!rows[item.index]) return prev;
+                rows[item.index] = { ...rows[item.index], [item.field]: '' };
+                return rows;
+            });
+            return;
+        }
+        if (item.kind === 'medication') {
+            const next = rejectIndexedFieldWarning(
+                pdfMedicationWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14MedicationFieldKey
+            );
+            setPdfMedicationWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setMedications((prev) => {
+                const rows = [...prev];
+                if (!rows[item.index]) return prev;
+                rows[item.index] = { ...rows[item.index], [item.field]: '' };
+                return rows;
+            });
+            return;
+        }
+        if (item.kind === 'chronic') {
+            const next = rejectIndexedFieldWarning(
+                pdfChronicWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14ChronicFieldKey
+            );
+            setPdfChronicWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setChronicConditions((prev) => {
+                const rows = [...prev];
+                if (!rows[item.index]) return prev;
+                rows[item.index] = { ...rows[item.index], [item.field]: '' };
+                return rows;
+            });
+            return;
+        }
+        if (item.kind === 'insurance') {
+            const next = rejectIndexedFieldWarning(
+                pdfInsuranceWarnings,
+                pdfIndexedReview,
+                item.index,
+                item.field as Tab14InsuranceFieldKey
+            );
+            setPdfInsuranceWarnings(next.warnings);
+            setPdfIndexedReview(next.decisions);
+            setInsurances((prev) => {
+                const rows = [...prev];
+                if (!rows[item.index]) return prev;
+                rows[item.index] = { ...rows[item.index], [item.field]: '' };
+                return rows;
+            });
+        }
+    };
+
+    const handleAcceptAllReviewQueue = () => {
+        const next = acceptAllPatientFieldWarnings(
+            pdfFieldWarnings,
+            pdfFieldReview,
+            {
+                allergies: pdfAllergyWarnings,
+                medications: pdfMedicationWarnings,
+                chronic: pdfChronicWarnings,
+                insurances: pdfInsuranceWarnings,
+                hospital: pdfHospitalWarnings,
+                decisions: pdfIndexedReview,
+            }
+        );
+        setPdfFieldWarnings(next.warnings);
+        setPdfFieldReview(next.decisions);
+        setPdfIndexedReview(next.indexedDecisions);
+        setPdfAllergyWarnings(next.allergies);
+        setPdfMedicationWarnings(next.medications);
+        setPdfChronicWarnings(next.chronic);
+        setPdfInsuranceWarnings(next.insurances);
+        setPdfHospitalWarnings(next.hospital);
+    };
+
+    const handleJumpReviewQueueItem = (item: IntakeReviewQueueItem) => {
+        const match =
+            tab14Sections.find((s) => s.key === item.sectionKey) ||
+            TAB14_SECTIONS_DEFAULT.find((s) => s.key === item.sectionKey);
+        if (match) setActiveSection(match.id);
+    };
+
     const renderPdfFieldWarningIcon = (field: Tab14PatientFieldKey) => {
         const warning = pdfFieldWarnings?.[field];
         if (!warning) return null;
@@ -2757,8 +3054,13 @@ const Tab14: React.FC = () => {
                     try {
                         const { panels } = await fetchPatientLabPanels(username);
                         if (!cancelled && panels.length > 0) {
-                            setLabPanels(panels.map(mapPatientLabPanelToRow));
+                            const rows = panels.map(mapPatientLabPanelToRow);
+                            setLabPanels(rows);
                             setRemovedLabPanelServerIds([]);
+                            setExtendedSections((prev) => ({
+                                ...prev,
+                                results: clinicalEntriesFromLabResultRows(rows),
+                            }));
                         }
                     } catch {
                         /* lab panels optional on load */
@@ -2782,6 +3084,25 @@ const Tab14: React.FC = () => {
             cancelled = true;
         };
     }, [authReady, username, canEditPatientRecords]);
+
+    const antonioDisplayAppliedRef = useRef(false);
+    useEffect(() => {
+        if (loadingIntake || !shouldUseDashboardDemo() || antonioDisplayAppliedRef.current) {
+            return;
+        }
+        antonioDisplayAppliedRef.current = true;
+        applySnapshotToForm(
+            mergeSnapshotIntoClinicalSnapshot(buildMergeSnapshot(), ANTONIO_TAB14_SNAPSHOT)
+        );
+        setPatientInfo((prev) => overlayBlankPatientFields(prev, ANTONIO_PATIENT_FIELDS));
+        setVitalsHistory((prev) => (prev.length > 0 ? prev : ANTONIO_VITALS_HISTORY));
+        setExtendedSections((prev) =>
+            countExtendedEntries(prev) > 0 ? prev : ANTONIO_EXTENDED_SECTIONS
+        );
+        setSavedFormSnapshot('');
+        // Apply once after the first load. Snapshot merge keeps any richer API rows.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingIntake]);
 
     const renderPatientVitalsFields = () => (
         <>
@@ -3081,7 +3402,7 @@ const Tab14: React.FC = () => {
         <IonPage className="ct-page ct-tab14">
             <IonContent>
                 <div className="chronic-conditions-container tab14-add-patient">
-                    <header className="chronic-conditions-header">
+                    <header className="chronic-conditions-header meditap-glass-header">
                         <h1>
                             <i className="fas fa-user-plus" aria-hidden /> {t('patientIntake.title')}
                         </h1>
@@ -3277,22 +3598,29 @@ const Tab14: React.FC = () => {
                         </div>
 
                         <div className="tab14-layout">
-                            <aside className="tab14-sidebar" aria-label={t('patientIntake.sectionsAria')}>
-                                <nav className="tab14-nav">
-                                    {tab14Sections.map((s) => {
-                                        const label = ehrSidebarNavLabel(s, ehrDocumentType);
-                                        return (
-                                        <button
-                                            key={s.key}
-                                            type="button"
-                                            className={`tab14-nav-item${activeSection === s.id ? ' active' : ''}`}
-                                            onClick={() => setActiveSection(s.id)}
-                                        >
-                                            <i className={`fas ${s.icon}`} aria-hidden />
-                                            <span>{label}</span>
-                                        </button>
-                                        );
-                                    })}
+                            <aside className="tab14-sidebar tab14-sidebar--rail" aria-label={t('patientIntake.sectionsAria')}>
+                                <nav className="tab14-nav tab14-nav--grouped">
+                                    {tab14NavGroups.map((group) => (
+                                        <div key={group.id} className="tab14-nav-group">
+                                            {(group.items.length > 1 || group.groupId === 'patient') && (
+                                                <p className="tab14-nav-group__label">{group.label}</p>
+                                            )}
+                                            {group.items.map((s) => {
+                                                const label = ehrSidebarNavLabel(s, ehrDocumentType);
+                                                return (
+                                                    <button
+                                                        key={s.key}
+                                                        type="button"
+                                                        className={`tab14-nav-item${activeSection === s.id ? ' active' : ''}`}
+                                                        onClick={() => setActiveSection(s.id)}
+                                                    >
+                                                        <i className={`fas ${s.icon}`} aria-hidden />
+                                                        <span>{label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
                                 </nav>
                             </aside>
                             <div className="tab14-main-panel">
@@ -3306,6 +3634,20 @@ const Tab14: React.FC = () => {
                                         <p>{t('patientIntake.patientViewOnlyBanner')}</p>
                                     </div>
                                 )}
+                                {shouldUseDashboardDemo() && (
+                                    <p className="meditap-demo-banner" role="status">
+                                        {ANTONIO_DISPLAY_BANNER}
+                                    </p>
+                                )}
+                                {canEditPatientRecords && intakeReviewQueueItems.length > 0 ? (
+                                    <IntakeFieldReviewQueue
+                                        items={intakeReviewQueueItems}
+                                        onAccept={handleAcceptReviewQueueItem}
+                                        onReject={handleRejectReviewQueueItem}
+                                        onAcceptAll={handleAcceptAllReviewQueue}
+                                        onJump={handleJumpReviewQueueItem}
+                                    />
+                                ) : null}
                                 <div className="tab14-panel-header">
                                     <h2>
                                         {(() => {
@@ -3967,368 +4309,7 @@ const Tab14: React.FC = () => {
                             </fieldset>
                         )}
 
-                        {activeSection === 7 && (
-                            <fieldset
-                                className={`tab14-record-fieldset${!canEditPatientRecords ? ' tab14-record-fieldset--locked' : ''}`}
-                            >
-                            <div className="tab14-section-card">
-                                {ehrDocumentType === 'epic' &&
-                                (epicSectionOccurrencesByKey.results?.length ?? 0) > 0 ? (
-                                    renderEpicSectionMultiHit('results', 'Results')
-                                ) : (
-                                    <>
-                                {!canEditPatientRecords && (
-                                    <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
-                                        {t('patientIntake.patientLabsReadOnly')}
-                                    </p>
-                                )}
-                                {labPanels.length === 0 ? (
-                                    <p className="tab14-panel-sub" style={{ marginTop: 0 }}>
-                                        Upload a PDF with lab or imaging results, or add a panel below.
-                                    </p>
-                                ) : (
-                                    <>
-                                        <Tab14RepeaterToolbar
-                                            onExpandAll={() =>
-                                                setAllRepeaterAccordion('labResult', labPanels.length, true)
-                                            }
-                                            onCollapseAll={() =>
-                                                setAllRepeaterAccordion('labResult', labPanels.length, false)
-                                            }
-                                        />
-                                        {labPanels.map((panel, index) => (
-                                            <Tab14RepeaterAccordion
-                                                key={panel.serverId ?? panel.id}
-                                                sectionKey="labResult"
-                                                index={index}
-                                                title={labResultAccordionTitle(panel, index)}
-                                                isOpen={isRepeaterAccordionOpen(
-                                                    repeaterAccordionOpen,
-                                                    'labResult',
-                                                    index
-                                                )}
-                                                onToggle={() => toggleRepeaterAccordion('labResult', index)}
-                                            >
-                                                <div className="form-field">
-                                                    <label>Test / panel name</label>
-                                                    <input
-                                                        value={panel.testName}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                testName: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Display code</label>
-                                                    <input
-                                                        value={panel.displayCode ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                displayCode: e.target.value || null,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Collected on</label>
-                                                    <GlassDateInput
-                                                        value={panel.date}
-                                                        onChange={(iso) =>
-                                                            updateLabPanelField(index, { date: iso })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Status</label>
-                                                    <select
-                                                        value={panel.status}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                status: e.target.value,
-                                                            })
-                                                        }
-                                                    >
-                                                        {!LAB_STATUS_OPTIONS.includes(
-                                                            panel.status as (typeof LAB_STATUS_OPTIONS)[number]
-                                                        ) && panel.status ? (
-                                                            <option value={panel.status}>{panel.status}</option>
-                                                        ) : null}
-                                                        {LAB_STATUS_OPTIONS.map((status) => (
-                                                            <option key={status} value={status}>
-                                                                {status}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Category</label>
-                                                    <select
-                                                        value={panel.category || 'lab'}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                category: e.target
-                                                                    .value as Tab14LabPanelCategory,
-                                                            })
-                                                        }
-                                                    >
-                                                        {TAB14_LAB_CATEGORIES.map((cat) => (
-                                                            <option key={cat} value={cat}>
-                                                                {cat}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <label className="no-allergies-row">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={panel.isNew}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                isNew: e.target.checked,
-                                                            })
-                                                        }
-                                                    />
-                                                    Mark as new
-                                                </label>
-                                                <div className="form-field">
-                                                    <label>Clinical indication</label>
-                                                    <textarea
-                                                        rows={2}
-                                                        value={panel.clinicalIndication ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                clinicalIndication: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Impression</label>
-                                                    <textarea
-                                                        rows={2}
-                                                        value={panel.impression ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                impression: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Accession number</label>
-                                                    <input
-                                                        value={panel.accessionNumber ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                accessionNumber: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Modality</label>
-                                                    <input
-                                                        value={panel.modality ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                modality: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Signed by</label>
-                                                    <input
-                                                        value={panel.signedBy ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                signedBy: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="form-field">
-                                                    <label>Notes</label>
-                                                    <textarea
-                                                        rows={2}
-                                                        value={panel.notes ?? ''}
-                                                        onChange={(e) =>
-                                                            updateLabPanelField(index, {
-                                                                notes: e.target.value,
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <h4 className="tab14-lab-components-heading">Components</h4>
-                                                {panel.results.map((comp, compIndex) => (
-                                                    <div
-                                                        key={`${panel.id}-comp-${compIndex}`}
-                                                        className="tab14-lab-component-block section-block"
-                                                    >
-                                                        <div className="form-field">
-                                                            <label>Analyte / component name</label>
-                                                            <input
-                                                                value={comp.name}
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        { name: e.target.value }
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div className="form-field">
-                                                            <label>Numeric value</label>
-                                                            <input
-                                                                type="number"
-                                                                step="any"
-                                                                value={
-                                                                    comp.value == null
-                                                                        ? ''
-                                                                        : String(comp.value)
-                                                                }
-                                                                onChange={(e) => {
-                                                                    const raw = e.target.value.trim();
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        {
-                                                                            value:
-                                                                                raw === ''
-                                                                                    ? undefined
-                                                                                    : Number(raw),
-                                                                        }
-                                                                    );
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="form-field">
-                                                            <label>Text / qualitative value</label>
-                                                            <input
-                                                                value={comp.textValue ?? ''}
-                                                                placeholder='e.g. &lt;0.6'
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        {
-                                                                            textValue:
-                                                                                e.target.value,
-                                                                        }
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div className="form-field">
-                                                            <label>Unit</label>
-                                                            <input
-                                                                value={comp.unit}
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        { unit: e.target.value }
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div className="form-field">
-                                                            <label>Reference range</label>
-                                                            <input
-                                                                value={comp.range}
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        { range: e.target.value }
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <div className="form-field">
-                                                            <label>Interpretation</label>
-                                                            <input
-                                                                value={comp.interpretation ?? ''}
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        {
-                                                                            interpretation:
-                                                                                e.target.value,
-                                                                        }
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <label className="no-allergies-row">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={comp.critical}
-                                                                onChange={(e) =>
-                                                                    updateLabComponentField(
-                                                                        index,
-                                                                        compIndex,
-                                                                        {
-                                                                            critical:
-                                                                                e.target.checked,
-                                                                        }
-                                                                    )
-                                                                }
-                                                            />
-                                                            Critical / flagged
-                                                        </label>
-                                                        {panel.results.length > 1 && (
-                                                            <button
-                                                                className="remove-button"
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    removeLabComponent(
-                                                                        index,
-                                                                        compIndex
-                                                                    )
-                                                                }
-                                                            >
-                                                                Remove component
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                                <button
-                                                    className="add-section-button"
-                                                    type="button"
-                                                    onClick={() => addLabComponent(index)}
-                                                >
-                                                    + Add component
-                                                </button>
-
-                                                <button
-                                                    className="remove-button"
-                                                    type="button"
-                                                    onClick={() => removeLabPanelAt(index)}
-                                                >
-                                                    Remove lab result
-                                                </button>
-                                            </Tab14RepeaterAccordion>
-                                        ))}
-                                    </>
-                                )}
-                                <button
-                                    className="add-section-button"
-                                    type="button"
-                                    onClick={addLabPanel}
-                                >
-                                    + Add lab result
-                                </button>
-                                    </>
-                                )}
-                            </div>
-                            </fieldset>
-                        )}
+                        {/* Results (section 7) uses Tab14ExtendedSectionPanel — MT-AG-205 */}
 
                         {activeSection >= 1 && activeSection <= 5 && (
                                 <fieldset
@@ -5612,9 +5593,14 @@ const Tab14: React.FC = () => {
                                 title={epicTitle}
                                 entries={extendedSections[key] ?? []}
                                 canEdit={canEditPatientRecords}
-                                onChange={(next) =>
-                                    setExtendedSections((prev) => ({ ...prev, [key]: next }))
-                                }
+                                onChange={(next) => {
+                                    setExtendedSections((prev) => ({ ...prev, [key]: next }));
+                                    if (key === 'results') {
+                                        setLabPanels((prior) =>
+                                            labResultRowsFromClinicalEntries(next, prior)
+                                        );
+                                    }
+                                }}
                             />
                         );
                     })()}
@@ -5711,46 +5697,13 @@ const Tab14: React.FC = () => {
                                             ))}
                                     </ul>
                                 )}
-                                {evaluatePatientFieldReviewGate(
-                                    pdfFieldWarnings,
-                                    pdfFieldReview,
-                                    {
-                                        allergies: pdfAllergyWarnings,
-                                        medications: pdfMedicationWarnings,
-                                        chronic: pdfChronicWarnings,
-                                        insurances: pdfInsuranceWarnings,
-                                        hospital: pdfHospitalWarnings,
-                                        decisions: pdfIndexedReview,
-                                    }
-                                ).unresolvedCount > 0 ? (
-                                    <button
-                                        type="button"
-                                        className="tab14-pdf-review-btn tab14-pdf-review-btn--accept"
-                                        onClick={() => {
-                                            const next = acceptAllPatientFieldWarnings(
-                                                pdfFieldWarnings,
-                                                pdfFieldReview,
-                                                {
-                                                    allergies: pdfAllergyWarnings,
-                                                    medications: pdfMedicationWarnings,
-                                                    chronic: pdfChronicWarnings,
-                                                    insurances: pdfInsuranceWarnings,
-                                                    hospital: pdfHospitalWarnings,
-                                                    decisions: pdfIndexedReview,
-                                                }
-                                            );
-                                            setPdfFieldWarnings(next.warnings);
-                                            setPdfFieldReview(next.decisions);
-                                            setPdfIndexedReview(next.indexedDecisions);
-                                            setPdfAllergyWarnings(next.allergies);
-                                            setPdfMedicationWarnings(next.medications);
-                                            setPdfChronicWarnings(next.chronic);
-                                            setPdfInsuranceWarnings(next.insurances);
-                                            setPdfHospitalWarnings(next.hospital);
-                                        }}
-                                    >
-                                        Accept all flagged fields
-                                    </button>
+                                {intakeReviewQueueItems.length > 0 ? (
+                                    <p className="tab14-intake-review-queue__footer-hint">
+                                        {intakeReviewQueueItems.length} flagged field
+                                        {intakeReviewQueueItems.length === 1 ? '' : 's'}{' '}
+                                        remain in the staff review queue above — Accept all
+                                        there, or Save keeps imported values.
+                                    </p>
                                 ) : null}
                             </div>
                         )}

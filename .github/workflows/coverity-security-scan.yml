@@ -1,0 +1,84 @@
+# Black Duck Security Scan → Coverity (SAST)
+# Docs:
+# https://docs.blackduck.com/r/bridge/latest/bridge-cli-guide/using-the-black-duck-security-scan-action-with-coverity.html
+#
+# Before first run:
+# 1) Create Coverity project + stream (names below must exist, or use defaults).
+# 2) GitHub → Settings → Secrets and variables → Actions:
+#    - Secret COVERITY_USER
+#    - Secret COVERITY_PASSPHRASE
+#    - Variable COVERITY_URL  (e.g. https://your-instance.coverity.com or SaaS URL)
+# 3) Push once to main (or develop) for a FULL baseline scan before PR comments work.
+#
+# Coverity Cloud (default): leave coverity_local unset/false.
+# Coverity Connect on-prem: set coverity_local: true
+
+name: CI-Coverity-Basic
+
+on:
+  push:
+    branches: [main, master, develop, stage, release, feature/portal-split]
+  pull_request:
+    branches: [main, master, develop, stage, release, feature/portal-split]
+  workflow_dispatch:
+
+jobs:
+  coverity:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # required for coverity_prComment_enabled
+      security-events: write
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v5
+
+      - name: Coverity Scan
+        id: black-duck-security-scan
+        uses: blackduck-inc/black-duck-security-scan@v2.1.0
+        with:
+          ### SCANNING (required)
+          coverity_url: ${{ vars.COVERITY_URL }}
+          coverity_user: ${{ secrets.COVERITY_USER }}
+          coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+
+          # Prefer repo-aligned names (must exist in Coverity, or create them first)
+          coverity_project_name: ${{ github.event.repository.name }}
+          coverity_stream_name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+
+          ### Coverity Connect (on-prem) — uncomment if not using Coverity Cloud
+          # coverity_local: true
+
+          ### POLICY: break the job when Outstanding Issues are present
+          # Uncomment after baseline exists and policy view name matches your server
+          # coverity_policy_view: 'Outstanding Issues'
+
+          ### PULL REQUEST COMMENTS (need a prior full baseline on the base branch)
+          coverity_prComment_enabled: true
+          # Default impact filter is High. Uncomment to widen:
+          # coverity_prComment_impacts: 'High,Medium'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+          ### MediTap is Django + Ionic/Vite (interpreted). If capture is empty,
+          # ask your Coverity admin for the preferred capture flags, e.g.:
+          # coverity_args: '--fs-capture-search .'
+          # Or set an explicit build/capture command once they confirm it:
+          # coverity_build_command: 'true'
+          # coverity_clean_command: 'true'
+
+          # Wait for analysis so PR comments / policy can run
+          coverity_waitForScan: true
+
+      - name: Coverity scan status
+        if: always()
+        run: |
+          echo "Black Duck Security Scan exit status: ${{ steps.black-duck-security-scan.outputs.status }}"
+
+      - name: Save Bridge logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-logs
+          path: ${{ github.workspace }}/.bridge
+          include-hidden-files: true

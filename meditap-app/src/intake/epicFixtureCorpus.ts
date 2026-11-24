@@ -39,9 +39,8 @@ export const EPIC_HEALTH_SUMMARY_FIXTURE_CORPUS: EpicFixtureExpectation[] = [
       'pastEncounters',
       'careTeam',
       'planOfTreatment',
-    ],
-    knownGaps: [
-      'Payers',
+      // Closed MT-AG-203 — Mayo Primary insurance narrative → Payers.
+      'payers',
     ],
   },
 ];

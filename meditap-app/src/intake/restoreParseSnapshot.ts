@@ -22,6 +22,7 @@ import {
   sanitizeImagingResultsEntries,
 } from './tab14PortabilitySections';
 import type { Tab14MergeSnapshot } from './applyTab14ParseBundle';
+import { clinicalEntriesFromTab14LabPanels } from './resultsClinicalEntries';
 
 export type StoredParseSnapshot = {
   patientFields?: Tab14PatientFields;
@@ -37,6 +38,9 @@ export type StoredParseSnapshot = {
   noKnownDrugAllergies?: boolean;
   noKnownProblems?: boolean;
   source?: string;
+  /** Flagged PDF/OCR fields for admin review-queue counts (not chart data). */
+  reviewWarnings?: import('./intakeFieldReview').IntakeReviewWarningsBundle;
+  fieldWarnings?: import('./tab14IntakeTypes').Tab14PatientFieldWarnings;
 };
 
 function asObject(raw: unknown): Record<string, unknown> | null {
@@ -156,6 +160,8 @@ export function buildStoredParseSnapshot(input: {
   noKnownDrugAllergies?: boolean;
   noKnownProblems?: boolean;
   source?: string;
+  reviewWarnings?: import('./intakeFieldReview').IntakeReviewWarningsBundle;
+  fieldWarnings?: import('./tab14IntakeTypes').Tab14PatientFieldWarnings;
 }): StoredParseSnapshot {
   return {
     patientFields: input.patientFields,
@@ -171,19 +177,25 @@ export function buildStoredParseSnapshot(input: {
     noKnownDrugAllergies: input.noKnownDrugAllergies,
     noKnownProblems: input.noKnownProblems,
     source: input.source,
+    ...(input.reviewWarnings ? { reviewWarnings: input.reviewWarnings } : {}),
+    ...(input.fieldWarnings ? { fieldWarnings: input.fieldWarnings } : {}),
   };
 }
 
 export function extendedSectionsFromSnapshot(
   snap: StoredParseSnapshot | null | undefined
 ): Tab14ExtendedSections | null {
-  if (!snap?.extendedSections) return null;
+  if (!snap?.extendedSections && !(snap?.labPanels?.length)) return null;
   const merged = mergeExtendedSections(
     emptyExtendedSections(),
-    snap.extendedSections
+    snap?.extendedSections ?? emptyExtendedSections()
   );
   // Never hydrate header junk into the Imaging Results form.
   merged.imagingResults = sanitizeImagingResultsEntries(merged.imagingResults);
+  // Results cards: prefer stored extended rows; else mirror snapshot lab panels.
+  if (!(merged.results?.length) && (snap?.labPanels?.length ?? 0) > 0) {
+    merged.results = clinicalEntriesFromTab14LabPanels(snap!.labPanels);
+  }
   return countExtendedEntries(merged) > 0 ? merged : null;
 }
 

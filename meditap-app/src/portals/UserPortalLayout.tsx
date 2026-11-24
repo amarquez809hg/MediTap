@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import GoBackButton from '../components/GoBackButton';
+import PatientChatFab from '../components/PatientChatFab';
 import PortalNavLink from '../components/PortalNavLink';
 import { canAccessAdminPortal } from './portalIdentity';
 import { ADMIN_PORTAL_HOME } from './portalPaths';
@@ -24,7 +25,7 @@ const UserPortalLayout: React.FC<UserPortalLayoutProps> = ({ children }) => {
 
   return (
     <div className="portal-shell portal-shell--user" data-portal="user">
-      <header className="portal-shell__chrome" aria-label="User portal">
+      <header className="portal-shell__chrome meditap-glass-header" aria-label="User portal">
         <div className="portal-shell__brand">
           <GoBackButton fallback={chartPageGoBackFallback()} variant="shell" />
           <span className="portal-shell__product">MediTap</span>
@@ -34,6 +35,7 @@ const UserPortalLayout: React.FC<UserPortalLayoutProps> = ({ children }) => {
           <PortalNavLink to="/app/dashboard">{t('portal.navDashboard')}</PortalNavLink>
           <PortalNavLink to="/app/status">{t('portal.navStatus')}</PortalNavLink>
           <PortalNavLink to="/app/intake">{t('portal.navIntake')}</PortalNavLink>
+          <PortalNavLink to="/app/messages">{t('portal.navMessages')}</PortalNavLink>
           <PortalNavLink to="/app/appointments">{t('portal.navAppointments')}</PortalNavLink>
           <PortalNavLink to="/app/settings">{t('portal.navSettings')}</PortalNavLink>
           {showAdminReturn ? (
@@ -54,6 +56,7 @@ const UserPortalLayout: React.FC<UserPortalLayoutProps> = ({ children }) => {
         </nav>
       </header>
       <div className="portal-shell__body">{children}</div>
+      <PatientChatFab />
     </div>
   );
 };

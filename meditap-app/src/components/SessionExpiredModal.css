@@ -67,8 +67,8 @@
   color: #fff;
   background: linear-gradient(
     135deg,
-    var(--ion-color-primary, #17a2b8) 0%,
-    var(--meditap-primary-tint, #1a6356) 100%
+    var(--ion-color-primary, #1c6ea8) 0%,
+    var(--meditap-primary-tint, #1a5f8f) 100%
   );
 }
 

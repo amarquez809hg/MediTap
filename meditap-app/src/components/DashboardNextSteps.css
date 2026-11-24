@@ -10,14 +10,14 @@
   margin: 0 0 0.35rem;
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--meditap-primary, #0a3d46);
+  color: var(--meditap-primary, #061c34);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .dashboard-next-steps__title i {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .dashboard-next-steps__hint {
@@ -73,7 +73,7 @@
 }
 
 .dashboard-next-step:hover {
-  border-color: var(--meditap-accent, #17a2b8);
+  border-color: var(--meditap-accent, #1c6ea8);
   box-shadow: 0 6px 18px rgba(10, 61, 70, 0.08);
   transform: translateY(-1px);
 }
@@ -90,8 +90,8 @@
 }
 
 .dashboard-next-step--primary .dashboard-next-step__icon {
-  background: rgba(23, 162, 184, 0.15);
-  color: var(--meditap-accent, #17a2b8);
+  background: rgba(28, 110, 168, 0.15);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .dashboard-next-step--warning .dashboard-next-step__icon {
@@ -134,7 +134,7 @@
   flex-shrink: 0;
   margin-top: 0.15rem;
   font-size: 0.75rem;
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
   opacity: 0.7;
 }
 

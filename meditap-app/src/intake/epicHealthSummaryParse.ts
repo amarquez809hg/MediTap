@@ -15,6 +15,7 @@ import {
   parseEpicMayoAgeHint,
   parseEpicMayoAllergies,
   parseEpicMayoEncounters,
+  parseEpicMayoInsurance,
   parseEpicMayoMedications,
   parseEpicMayoPatientIdentityGuard,
   parseEpicMayoResults,
@@ -806,6 +807,7 @@ function parseEpicMayoDialect(raw: string): Tab14IntakeParseResult {
   const demographics = inventoryEpicPatientDemographics(text);
   const noteFromClinic = inventoryEpicNoteFromClinic(text);
   const sidebarSections = inventoryEpicSidebarSectionOccurrences(text);
+  const insurances = parseEpicMayoInsurance(text);
 
   const patientFields = scrubImplausibleEpicPatientNames({
     ...parseEpicMayoPatientIdentityGuard(),
@@ -819,7 +821,7 @@ function parseEpicMayoDialect(raw: string): Tab14IntakeParseResult {
     patientFields,
     noKnownDrugAllergies: allergies.length === 0 && /No known active allergies/i.test(flat),
     noKnownProblems: detectNoKnownProblems(text),
-    insurances: [],
+    insurances,
     allergies,
     medications,
     chronicConditions,

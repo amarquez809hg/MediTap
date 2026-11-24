@@ -40,7 +40,7 @@ cd meditap-app && npx vitest run src/intake/athenaFixtureCorpus.integration.test
 Current locked baselines (raise when parsers improve):
 
 - Diana Smith — target high (near-full menu).
-- Harold Jennings — allow `pastEncounters` as a known gap until that dialect is parsed.
+- Harold Jennings — `pastEncounters` closed (Date/Type/Performer/Notes); locked in `mustBeFilled` (`MT-AG-203`).
 
 ## What this is *not*
 
@@ -50,10 +50,12 @@ Current locked baselines (raise when parsers improve):
 
 ## Next upgrades (product)
 
-1. Close Harold `pastEncounters` → remove from `knownGaps`, raise `minScorePercent`.
-2. Add a third clinic Athena PDF to the corpus.
+1. ~~Close Harold `pastEncounters`~~ — done (`MT-AG-181` parser + `MT-AG-203` corpus lock).
+2. Add a third clinic Athena PDF to the corpus (when available).
 3. Add a second Meditech CCD PDF to `MEDITECH_CCD_FIXTURE_CORPUS` when available.
-4. Only then: Document AI / LLM fallback when `shouldScoreAthenaPortability` is false or score stays low.
+4. ~~Close Epic Jane Doe **Payers**~~ — done (`MT-AG-203`).
+5. Only then: Document AI / LLM fallback when `shouldScoreAthenaPortability` is false or score stays low.  
+   **Deferred:** NextGen dialect until a real NextGen test PDF exists.
 
 ## Other EHR formats (not Athena)
 
@@ -76,7 +78,7 @@ Full PDF is gitignored (~28MB) — keep a local copy under that dummyPDFs name f
 cd meditap-app && npx vitest run src/intake/epicFixtureCorpus.integration.test.ts
 ```
 
-**Known gaps on Jane Doe:** Payers. Cover demographics come from **first-page OCR** (image-only page 1) + `parseEpicMayoCoverDemographics`. Baseline ≥90%. Joanna Smith remains in `updHealthSummary.integration.test.ts`.
+**Payers on Jane Doe:** closed (`MT-AG-203`) via Mayo note lines `Primary insurance:` / `Secondary insurance:` → Tab14 Payers (`parseEpicMayoInsurance`). Cover demographics come from **cover OCR** (`MT-AG-204`: up to 12 pages, sharper page-1 scale, chrome-only covers without Patient Name/Address also trigger OCR) + `parseEpicMayoCoverDemographics`. Baseline ≥90%. Joanna Smith remains in `updHealthSummary.integration.test.ts` (Centralus `BLUE CROSS` table).
 
 Meditech reuses Athena TOC/section parsers where headers match; dialects live in `meditechCcdParse.ts`.
 

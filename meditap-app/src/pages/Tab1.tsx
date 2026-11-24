@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { queueOpenAddEntry, type OpenAddEntryPath } from '../auth/openAddEntry';
 import { navigatePortal } from '../navigation/portalGoBack';
 import PortalNavLink from '../components/PortalNavLink';
-import DashboardHomeHero from '../components/DashboardHomeHero';
+import DashboardConsultSheet from '../components/DashboardConsultSheet';
 import DashboardNextSteps from '../components/DashboardNextSteps';
 import DashboardSectionActions from '../components/DashboardSectionActions';
 import OnboardingBanner from '../components/OnboardingBanner';
@@ -37,11 +37,8 @@ import {
   type PatientLabPanelApi,
   type Tab5ChronicCondition,
 } from '../api';
-import AppointmentCard from '../appointments/AppointmentCard';
-import ConditionCard from '../chronic/ConditionCard';
-import IncidentRecordCard from '../incidents/IncidentRecordCard';
+import DashboardRecordCard from '../components/DashboardRecordCard';
 import type { IncidentRecord } from '../incidents/incidentModel';
-import LabResultCard from '../labResults/LabResultCard';
 import {
     mapPatientLabPanelToRow,
     mapTab14LabPanelToApi,
@@ -50,12 +47,25 @@ import {
 } from '../labResults/labResultModel';
 import { snapshotHospitalVisits } from '../intake/restoreParseSnapshot';
 import { usePatientAppointments } from '../appointments/usePatientAppointments';
+import {
+  DEMO_ALLERGIES,
+  DEMO_APPOINTMENTS,
+  DEMO_ENCOUNTERS,
+  DEMO_LABS,
+  DEMO_MEDICATIONS,
+  DEMO_PROBLEMS,
+  fillIfEmpty,
+  overlayDemoHealth,
+  overlayDemoProfile,
+  shouldUseDashboardDemo,
+} from '../dashboard/dashboardDemoFixtures';
+import { ANTONIO_DISPLAY_BANNER } from '../dashboard/antonioDisplayFixtures';
 
 const defaultUserProfile = {
   name: 'Patient',
   id: '—',
   email: '—',
-  avatarUrl: 'https://placehold.co/100x100/17A2B8/FFFFFF?text=PT',
+  avatarUrl: 'https://placehold.co/100x100/1C6EA8/FFFFFF?text=PT',
   healthSummary: {
     bmi: 'N/A' as string | number,
     bmiCategory: 'Not recorded',
@@ -245,7 +255,7 @@ const Tab1: React.FC = () => {
           id: d.id,
           email: d.email,
           healthSummary: d.healthSummary,
-          avatarUrl: `https://placehold.co/100x100/17A2B8/FFFFFF?text=${encodeURIComponent(
+          avatarUrl: `https://placehold.co/100x100/1C6EA8/FFFFFF?text=${encodeURIComponent(
             initials
           )}`,
         }));
@@ -348,14 +358,38 @@ const Tab1: React.FC = () => {
     };
   }, [username, dashboardRefreshKey]);
 
-  const hs = user.healthSummary;
-  const allergyRows = detail?.allergies ?? [];
-  const medicationRows = detail?.medications ?? [];
+  const useDemo = shouldUseDashboardDemo();
+  const hs = useDemo ? overlayDemoHealth(user.healthSummary) : user.healthSummary;
+  const allergyRows = fillIfEmpty(detail?.allergies ?? [], useDemo ? DEMO_ALLERGIES : []);
+  const medicationRows = fillIfEmpty(detail?.medications ?? [], useDemo ? DEMO_MEDICATIONS : []);
+  const displayAppointments = fillIfEmpty(appointments, useDemo ? DEMO_APPOINTMENTS : []);
+  const displayLabs = fillIfEmpty(labRows, useDemo ? DEMO_LABS : []);
+  const displayIncidents = fillIfEmpty(incidentRows, useDemo ? DEMO_ENCOUNTERS : []);
+  const displayChronic = fillIfEmpty(chronicConditions, useDemo ? DEMO_PROBLEMS : []);
+  const displayProfile = useDemo
+    ? overlayDemoProfile(detail?.patientProfile)
+    : detail?.patientProfile;
+  const identityFact = (value?: string) => {
+    const v = (value || '').trim();
+    return v && v !== '—' ? v : '';
+  };
+  const identityDob = identityFact(displayProfile?.dateOfBirth);
+  const identityBlood = identityFact(displayProfile?.bloodType);
+  const identityPhone = identityFact(displayProfile?.phone);
+  const identityEmail = identityFact(user.email);
+  const identityContact = identityPhone || identityEmail;
   const allergyPreview = allergyRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
   const medicationPreview = medicationRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
-  const labPreview = labRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
-  const incidentPreview = incidentRows.slice(0, DASHBOARD_PREVIEW_LIMIT);
-  const chronicPreview = chronicConditions.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const labPreview = displayLabs.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const incidentPreview = displayIncidents.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const chronicPreview = displayChronic.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const showingDemoFill =
+    useDemo &&
+    (appointments.length === 0 ||
+      (detail?.allergies ?? []).length === 0 ||
+      labRows.length === 0 ||
+      incidentRows.length === 0 ||
+      chronicConditions.length === 0);
 
   const labAttention = React.useMemo(() => countLabAttention(labPanels), [labPanels]);
 
@@ -364,7 +398,7 @@ const Tab1: React.FC = () => {
     return trimNextStepsForDashboard(
       buildNextSteps(
         detail,
-        appointments,
+        displayAppointments,
         labAttention.pending,
         labAttention.newPanels,
         { surface: 'dashboard', username },
@@ -375,7 +409,7 @@ const Tab1: React.FC = () => {
   }, [
     loadingSummary,
     detail,
-    appointments,
+    displayAppointments,
     labAttention.pending,
     labAttention.newPanels,
     username,
@@ -385,7 +419,7 @@ const Tab1: React.FC = () => {
 
   const welcomeGreeting = greetingForDisplayName(user.name, t);
   const welcomeContext = welcomeContextLine(
-    appointments,
+    displayAppointments,
     loadingSummary,
     Boolean(summaryError),
     t
@@ -404,9 +438,9 @@ const Tab1: React.FC = () => {
 
   return (
     <div className="profile-container">
-      <header className="profile-header">
-        <div className="logo">{t('dashboard.title')}</div>
-        <div className="profile-header__right">
+      <header className="profile-header meditap-glass-header">
+        <h1 className="logo">{t('dashboard.title')}</h1>
+        <div className="profile-header__right meditap-glass-header__actions">
           {username && (
             <span className="profile-header__username">{username}</span>
           )}
@@ -430,85 +464,93 @@ const Tab1: React.FC = () => {
 
 
       <main className="profile-main">
-        <aside className="profile-sidebar profile-sidebar--compact">
-          <div className="user-card user-card--compact">
-            <img
-              src={user.avatarUrl}
-              alt=""
-              className="user-avatar user-avatar--compact user-avatar--glass"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.onerror = null;
-                target.src =
-                  'https://placehold.co/100x100/17A2B8/FFFFFF?text=PT';
-              }}
-            />
-            <h2 className="user-name">{user.name}</h2>
-            <p className="user-id">{user.id}</p>
-            <div className="patient-mini-profile" aria-label={t('dashboard.patientSummaryAria')}>
-              <h3 className="patient-mini-profile__title">{t('dashboard.patientSnapshot')}</h3>
-              <div className="patient-mini-profile__grid">
-                <span className="patient-mini-profile__label">{t('dashboard.dob')}</span>
-                <span className="patient-mini-profile__value">
-                  {detail?.patientProfile.dateOfBirth || '—'}
-                </span>
-                <span className="patient-mini-profile__label">{t('dashboard.blood')}</span>
-                <span className="patient-mini-profile__value">
-                  {detail?.patientProfile.bloodType || '—'}
-                </span>
-                <span className="patient-mini-profile__label">{t('dashboard.sex')}</span>
-                <span className="patient-mini-profile__value">
-                  {detail?.patientProfile.sexAtBirth || '—'}
-                </span>
-                <span className="patient-mini-profile__label">{t('dashboard.phone')}</span>
-                <span className="patient-mini-profile__value">
-                  {detail?.patientProfile.phone || '—'}
-                </span>
-                <div className="patient-mini-profile__email-row">
-                  <span className="patient-mini-profile__label">{t('dashboard.email')}</span>
-                  <span className="patient-mini-profile__value patient-mini-profile__value--email">
-                    {detail?.patientProfile.email || user.email || '—'}
-                  </span>
-                </div>
+        <aside className="profile-sidebar profile-sidebar--rail">
+          <section className="user-card user-card--rail" aria-label={t('dashboard.patientSnapshot')}>
+            <p className="user-card--rail__eyebrow">{t('dashboard.patientSnapshot')}</p>
+            <div className="user-card--rail__identity">
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="user-avatar user-avatar--compact user-avatar--glass"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src =
+                    'https://placehold.co/100x100/1C6EA8/FFFFFF?text=PT';
+                }}
+              />
+              <div className="user-card--rail__meta">
+                <h2 className="user-name">{user.name}</h2>
+                <p className="user-id">{user.id}</p>
               </div>
             </div>
-            <p className="user-card__hint">{t('dashboard.careOverviewHint')}</p>
+            {(identityDob || identityBlood || identityContact) && (
+              <dl className="user-card--rail__facts">
+                {identityDob ? (
+                  <div>
+                    <dt>{t('dashboard.dob')}</dt>
+                    <dd>{identityDob}</dd>
+                  </div>
+                ) : null}
+                {identityBlood ? (
+                  <div>
+                    <dt>{t('dashboard.blood')}</dt>
+                    <dd>{identityBlood}</dd>
+                  </div>
+                ) : null}
+                {identityContact ? (
+                  <div className="user-card--rail__facts-wide">
+                    <dt>{identityPhone ? t('dashboard.phone') : t('dashboard.email')}</dt>
+                    <dd>{identityContact}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            )}
             <PortalNavLink to="/app/intake?section=demographics" className="user-card__profile-link">
               {t('dashboard.updatePatientInfo')}
             </PortalNavLink>
-          </div>
+          </section>
 
-          <nav className="profile-nav">
-            <PortalNavLink to="/app/dashboard" className="nav-item active" aria-current="page">
-              <i className="fas fa-home"></i> {t('nav.dashboard')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/intake?section=demographics" className="nav-item">
-              <i className="fas fa-id-card"></i> {t('nav.patientInformation')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/status" className="nav-item">
-              <i className="fas fa-chart-line"></i> {t('nav.quickStatus')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/appointments" className="nav-item">
-              <i className="fas fa-calendar-check"></i> {t('nav.appointments')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/labs" className="nav-item">
-              <i className="fas fa-vial"></i> {t('nav.labResults')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/incidents" className="nav-item">
-              <i className="fas fa-clipboard-list"></i> {t('nav.incidentRecords')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/conditions" className="nav-item">
-              <i className="fas fa-notes-medical"></i> {t('nav.patientHistory')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/insurance" className="nav-item">
-              <i className="fas fa-id-card"></i> {t('nav.patientInsurance')}
-            </PortalNavLink>
-            <PortalNavLink to="/admin-portal/panel" className="nav-item">
-              <i className="fas fa-user-shield"></i> {t('nav.adminPanel')}
-            </PortalNavLink>
-            <PortalNavLink to="/app/settings" className="nav-item">
-              <i className="fas fa-cog"></i> {t('nav.settings')}
-            </PortalNavLink>
+          <nav className="profile-nav profile-nav--static profile-nav--grouped" aria-label={t('nav.dashboard')}>
+            <div className="profile-nav-group">
+              <p className="profile-nav-group__label">{t('nav.groups.care')}</p>
+              <PortalNavLink to="/app/dashboard" className="nav-item active" aria-current="page">
+                <i className="fas fa-home"></i> {t('nav.dashboard')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/intake?section=demographics" className="nav-item">
+                <i className="fas fa-id-card"></i> {t('nav.patientInformation')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/status" className="nav-item">
+                <i className="fas fa-chart-line"></i> {t('nav.quickStatus')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/appointments" className="nav-item">
+                <i className="fas fa-calendar-check"></i> {t('nav.appointments')}
+              </PortalNavLink>
+            </div>
+            <div className="profile-nav-group">
+              <p className="profile-nav-group__label">{t('nav.groups.records')}</p>
+              <PortalNavLink to="/app/labs" className="nav-item">
+                <i className="fas fa-vial"></i> {t('nav.labResults')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/incidents" className="nav-item">
+                <i className="fas fa-clipboard-list"></i> {t('nav.incidentRecords')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/conditions" className="nav-item">
+                <i className="fas fa-notes-medical"></i> {t('nav.patientHistory')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/insurance" className="nav-item">
+                <i className="fas fa-id-card"></i> {t('nav.patientInsurance')}
+              </PortalNavLink>
+            </div>
+            <div className="profile-nav-group">
+              <p className="profile-nav-group__label">{t('nav.groups.account')}</p>
+              <PortalNavLink to="/admin-portal/panel" className="nav-item">
+                <i className="fas fa-user-shield"></i> {t('nav.adminPanel')}
+              </PortalNavLink>
+              <PortalNavLink to="/app/settings" className="nav-item">
+                <i className="fas fa-cog"></i> {t('nav.settings')}
+              </PortalNavLink>
+            </div>
           </nav>
         </aside>
 
@@ -524,8 +566,28 @@ const Tab1: React.FC = () => {
             />
           )}
 
-          <DashboardHomeHero greeting={welcomeGreeting} contextLine={welcomeContext} />
+          <DashboardConsultSheet
+            greeting={welcomeGreeting}
+            contextLine={welcomeContext}
+            patientName={user.name}
+            profile={displayProfile}
+            emailFallback={user.email}
+            health={hs}
+            appointments={displayAppointments}
+            allergyNames={allergyPreview.map((row) => row.name).filter(Boolean)}
+            medicationNames={medicationPreview.map((row) => row.genericName).filter(Boolean)}
+            problemNames={chronicPreview.map((c) => c.name || c.diseaseId).filter(Boolean)}
+            loading={loadingSummary}
+          />
 
+          {showingDemoFill && (
+            <p className="dash-demo-banner" role="status">
+              {ANTONIO_DISPLAY_BANNER}
+            </p>
+          )}
+
+          <div className="dash-stack">
+          <section className="dash-stack-block">
           <DashboardNextSteps steps={dashboardNextSteps} loading={loadingSummary} />
 
           {!loadingSummary && healthSummaryNeedsSetup(hs) && (
@@ -536,12 +598,14 @@ const Tab1: React.FC = () => {
               </PortalNavLink>
             </div>
           )}
+          </section>
 
+          <section className="dash-stack-block">
           <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
-              <h1 className="dashboard-tab-section__title">
+              <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-heartbeat"></i> {t('dashboard.healthMetrics')}
-              </h1>
+              </h2>
               <p className="dashboard-tab-section__subtitle">
                 {t('dashboard.healthMetricsSubtitle')}
                 {loadingSummary ? ` ${t('dashboard.healthMetricsSyncing')}` : ''}.
@@ -576,8 +640,10 @@ const Tab1: React.FC = () => {
               <MetricTile iconClass="fas fa-calendar-alt" title={t('dashboard.lastVisit')} value={hs.lastVisit} />
             </div>
           </div>
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-calendar-check"></i> {t('dashboard.upcomingAppointments')}
@@ -596,14 +662,21 @@ const Tab1: React.FC = () => {
             />
           </header>
 
-          {appointments.length > 0 ? (
-            <div className="appointments-list dashboard-appointments">
-              {appointments.map((appt) => (
-                <AppointmentCard
+          {displayAppointments.length > 0 ? (
+            <div className="dash-record-grid dashboard-appointments" role="list">
+              {displayAppointments.map((appt) => (
+                <DashboardRecordCard
                   key={appt.id}
-                  appt={appt}
-                  manageHref="/app/appointments"
-                  manageLabel={t('common.manage')}
+                  title={appt.specialist}
+                  badge={appt.status}
+                  href="/app/appointments"
+                  actionLabel={t('common.manage')}
+                  fields={[
+                    { label: t('dashboard.recordType'), value: appt.type },
+                    { label: t('dashboard.recordDate'), value: `${appt.date} · ${appt.time}` },
+                    { label: t('dashboard.recordDepartment'), value: appt.department },
+                    { label: t('dashboard.recordLocation'), value: appt.location },
+                  ]}
                 />
               ))}
             </div>
@@ -612,8 +685,10 @@ const Tab1: React.FC = () => {
               <p>{t('dashboard.noAppointmentsExtended')}</p>
             </div>
           )}
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-allergies"></i> {t('dashboard.allergies')}
@@ -632,30 +707,18 @@ const Tab1: React.FC = () => {
               {t('dashboard.loadingAllergies')}
             </p>
           ) : allergyPreview.length > 0 ? (
-            <div className="dashboard-clinical-list dashboard-preview-block" role="list">
+            <div className="dash-record-grid dashboard-preview-block" role="list">
               {allergyPreview.map((row, idx) => (
-                <article
+                <DashboardRecordCard
                   key={`allergy-${idx}-${row.name}`}
-                  className="dashboard-clinical-card"
-                  role="listitem"
-                >
-                  <header className="dashboard-clinical-card__header">
-                    <h3>{row.name || '—'}</h3>
-                    <span className="dashboard-clinical-card__badge">
-                      {row.severity || '—'}
-                    </span>
-                  </header>
-                  <p>
-                    <strong>{t('dashboard.allergyType')}</strong> {row.typeLabel || '—'}
-                  </p>
-                  <p>
-                    <strong>{t('dashboard.allergyReaction')}</strong> {row.reaction || '—'}
-                  </p>
-                  <p>
-                    <strong>{t('dashboard.allergyLastObserved')}</strong>{' '}
-                    {row.lastObserved || '—'}
-                  </p>
-                </article>
+                  title={row.name || '—'}
+                  badge={row.severity}
+                  fields={[
+                    { label: t('dashboard.allergyType'), value: row.typeLabel },
+                    { label: t('dashboard.allergyReaction'), value: row.reaction },
+                    { label: t('dashboard.allergyLastObserved'), value: row.lastObserved },
+                  ]}
+                />
               ))}
             </div>
           ) : (
@@ -671,8 +734,10 @@ const Tab1: React.FC = () => {
               })}
             </p>
           )}
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-pills"></i> {t('dashboard.medications')}
@@ -691,32 +756,19 @@ const Tab1: React.FC = () => {
               {t('dashboard.loadingMedications')}
             </p>
           ) : medicationPreview.length > 0 ? (
-            <div className="dashboard-clinical-list dashboard-preview-block" role="list">
+            <div className="dash-record-grid dashboard-preview-block" role="list">
               {medicationPreview.map((row, idx) => (
-                <article
+                <DashboardRecordCard
                   key={`med-${idx}-${row.genericName}`}
-                  className="dashboard-clinical-card"
-                  role="listitem"
-                >
-                  <header className="dashboard-clinical-card__header">
-                    <h3>{row.genericName || '—'}</h3>
-                    <span className="dashboard-clinical-card__badge">
-                      {row.dosage || '—'}
-                    </span>
-                  </header>
-                  <p>
-                    <strong>{t('dashboard.medBrand')}</strong> {row.brandName || '—'}
-                  </p>
-                  <p>
-                    <strong>{t('dashboard.medFrequency')}</strong> {row.frequency || '—'}
-                  </p>
-                  <p>
-                    <strong>{t('dashboard.medPurpose')}</strong> {row.purpose || '—'}
-                  </p>
-                  <p>
-                    <strong>{t('dashboard.medPrescriber')}</strong> {row.prescriber || '—'}
-                  </p>
-                </article>
+                  title={row.genericName || '—'}
+                  badge={row.dosage}
+                  fields={[
+                    { label: t('dashboard.medBrand'), value: row.brandName },
+                    { label: t('dashboard.medFrequency'), value: row.frequency },
+                    { label: t('dashboard.medPurpose'), value: row.purpose },
+                    { label: t('dashboard.medPrescriber'), value: row.prescriber },
+                  ]}
+                />
               ))}
             </div>
           ) : (
@@ -732,8 +784,10 @@ const Tab1: React.FC = () => {
               })}
             </p>
           )}
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-notes-medical"></i> {t('dashboard.problems')}
@@ -766,38 +820,46 @@ const Tab1: React.FC = () => {
             </p>
           )}
           {!chronicLoading && !chronicError && chronicPreview.length > 0 && (
-            <div className="conditions-list conditions-list--dashboard dashboard-preview-block">
+            <div className="dash-record-grid dashboard-preview-block" role="list">
               {chronicPreview.map((c, idx) => (
-                <ConditionCard
+                <DashboardRecordCard
                   key={
                     c.apiId != null
                       ? `chronic-${c.apiId}`
                       : `chronic-draft-${idx}-${c.diseaseId}`
                   }
-                  condition={c}
-                  manageHref="/app/conditions"
-                  manageLabel={t('common.manage')}
+                  title={c.name || c.diseaseId}
+                  badge={c.severity}
+                  href="/app/conditions"
+                  actionLabel={t('common.manage')}
+                  fields={[
+                    { label: t('dashboard.recordIcd'), value: c.icdCode },
+                    { label: t('dashboard.recordDiagnosed'), value: c.diagnosisDate },
+                    { label: t('dashboard.recordTreatment'), value: c.currentTreatment },
+                  ]}
                 />
               ))}
             </div>
           )}
-          {!chronicLoading && !chronicError && chronicConditions.length === 0 && (
+          {!chronicLoading && !chronicError && displayChronic.length === 0 && (
             <div className="dashboard-empty-strip">
               <p>{t('dashboard.noProblemsExtended')}</p>
             </div>
           )}
           {!chronicLoading &&
             !chronicError &&
-            chronicConditions.length > DASHBOARD_PREVIEW_LIMIT && (
+            displayChronic.length > DASHBOARD_PREVIEW_LIMIT && (
               <p className="dashboard-more-hint">
                 {t('dashboard.showingPreview', {
                   shown: DASHBOARD_PREVIEW_LIMIT,
-                  total: chronicConditions.length,
+                  total: displayChronic.length,
                 })}
               </p>
             )}
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-vial"></i> {t('dashboard.results')}
@@ -830,27 +892,47 @@ const Tab1: React.FC = () => {
             </p>
           )}
           {!labLoading && !labError && labPreview.length > 0 && (
-            <div className="results-list results-list--dashboard dashboard-preview-block">
+            <div className="dash-record-grid dashboard-preview-block" role="list">
               {labPreview.map((result) => (
-                <LabResultCard key={result.id} result={result} />
+                <DashboardRecordCard
+                  key={result.id}
+                  title={result.testName}
+                  badge={result.status}
+                  href="/app/labs"
+                  actionLabel={t('common.manage')}
+                  fields={[
+                    { label: t('dashboard.recordCollected'), value: result.date },
+                    {
+                      label: t('dashboard.recordValues'),
+                      value: result.results
+                        .slice(0, 2)
+                        .map((line) =>
+                          `${line.name} ${line.textValue || line.value || ''} ${line.unit}`.trim()
+                        )
+                        .join(' · '),
+                    },
+                  ]}
+                />
               ))}
             </div>
           )}
-          {!labLoading && !labError && labRows.length === 0 && (
+          {!labLoading && !labError && displayLabs.length === 0 && (
             <div className="dashboard-empty-strip dashboard-preview-block">
               <p>{t('dashboard.noResultsExtended')}</p>
             </div>
           )}
-          {!labLoading && !labError && labRows.length > DASHBOARD_PREVIEW_LIMIT && (
+          {!labLoading && !labError && displayLabs.length > DASHBOARD_PREVIEW_LIMIT && (
             <p className="dashboard-more-hint">
               {t('dashboard.showingPreview', {
                 shown: DASHBOARD_PREVIEW_LIMIT,
-                total: labRows.length,
+                total: displayLabs.length,
               })}
             </p>
           )}
+          </section>
 
-          <header className="dashboard-tab-section dashboard-tab-section--secondary">
+          <section className="dash-stack-block">
+          <header className="dashboard-tab-section">
             <div className="dashboard-tab-section__titles">
               <h2 className="dashboard-tab-section__title dashboard-tab-section__title--h2">
                 <i className="fas fa-clipboard-list"></i> {t('dashboard.pastEncounters')}
@@ -883,27 +965,41 @@ const Tab1: React.FC = () => {
             </p>
           )}
           {!incidentLoading && !incidentError && incidentPreview.length > 0 && (
-            <div className="incidents-list incidents-list--dashboard dashboard-preview-block">
+            <div className="dash-record-grid dashboard-preview-block" role="list">
               {incidentPreview.map((incident) => (
-                <IncidentRecordCard key={incident.id} incident={incident} />
+                <DashboardRecordCard
+                  key={incident.id}
+                  title={incident.type}
+                  badge={incident.id}
+                  href="/app/incidents"
+                  actionLabel={t('common.manage')}
+                  fields={[
+                    { label: t('dashboard.recordDate'), value: incident.date },
+                    { label: t('dashboard.recordLocation'), value: incident.location },
+                    { label: t('dashboard.recordOutcome'), value: incident.outcome },
+                    { label: t('dashboard.recordSummary'), value: incident.details },
+                  ]}
+                />
               ))}
             </div>
           )}
-          {!incidentLoading && !incidentError && incidentRows.length === 0 && (
+          {!incidentLoading && !incidentError && displayIncidents.length === 0 && (
             <div className="dashboard-empty-strip">
               <p>{t('dashboard.noPastEncountersExtended')}</p>
             </div>
           )}
           {!incidentLoading &&
             !incidentError &&
-            incidentRows.length > DASHBOARD_PREVIEW_LIMIT && (
+            displayIncidents.length > DASHBOARD_PREVIEW_LIMIT && (
               <p className="dashboard-more-hint">
                 {t('dashboard.showingPreview', {
                   shown: DASHBOARD_PREVIEW_LIMIT,
-                  total: incidentRows.length,
+                  total: displayIncidents.length,
                 })}
               </p>
             )}
+          </section>
+          </div>
         </section>
       </main>
 

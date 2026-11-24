@@ -41,12 +41,14 @@ import type {
   Tab14AllergyRow,
   Tab14ChronicRow,
   Tab14HospitalFields,
+  Tab14InsuranceRow,
   Tab14LabComponent,
   Tab14LabPanel,
   Tab14MedicationRow,
   Tab14PatientFields,
   Tab14VitalReading,
 } from './tab14IntakeTypes';
+import { emptyInsuranceRow } from './tab14IntakeTypes';
 import type { Tab14ClinicalEntry, Tab14ExtendedSections } from './tab14PortabilitySections';
 import {
   emptyClinicalEntry,
@@ -1041,6 +1043,38 @@ export function buildEpicMayoExtendedOverlays(text: string): Tab14ExtendedSectio
   }
 
   return out;
+}
+
+/**
+ * Mayo My Health Summary often lacks a dedicated Insurance TOC table.
+ * Clinical notes still record:
+ *   Primary insurance: FEDERAL BCBS STANDARD
+ *   Secondary insurance: N/A
+ * Map those lines into Tab14 Payers so the section is not empty when present.
+ */
+export function parseEpicMayoInsurance(text: string): Tab14InsuranceRow[] {
+  const rows: Tab14InsuranceRow[] = [];
+  const primary = text.match(
+    /Primary\s+insurance\s*:\s*([^\n]+?)(?=\s*(?:Secondary\s+insurance|Financial\s+concerns|ADVANCE\s+DIRECTIVES|\n\s*\n|$))/i
+  );
+  const secondary = text.match(
+    /Secondary\s+insurance\s*:\s*([^\n]+?)(?=\s*(?:Financial\s+concerns|ADVANCE\s+DIRECTIVES|Primary\s+insurance|\n\s*\n|$))/i
+  );
+
+  const pushPlan = (raw: string | undefined, planLabel: string) => {
+    if (!raw) return;
+    const name = collapseWs(raw).replace(/\s+/g, ' ').trim();
+    if (!name || /^(N\/?A|none|not\s+applicable|unknown|-)$/i.test(name)) return;
+    if (name.length < 2 || name.length > 120) return;
+    const row = emptyInsuranceRow();
+    row.providerName = name;
+    row.planName = `${planLabel}: ${name}`.slice(0, 160);
+    rows.push(row);
+  };
+
+  pushPlan(primary?.[1], 'Primary');
+  pushPlan(secondary?.[1], 'Secondary');
+  return rows;
 }
 
 /** Age mention from narrative when demographics page has no DOB. */

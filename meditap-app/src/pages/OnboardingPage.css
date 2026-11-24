@@ -65,12 +65,12 @@
 }
 
 .onboarding-step.is-current {
-  border-color: var(--meditap-accent, #17a2b8);
-  box-shadow: 0 0 0 1px rgba(23, 162, 184, 0.25);
+  border-color: var(--meditap-accent, #1c6ea8);
+  box-shadow: 0 0 0 1px rgba(28, 110, 168, 0.25);
 }
 
 .onboarding-step.is-done .onboarding-step__marker {
-  background: rgba(23, 162, 184, 0.25);
+  background: rgba(28, 110, 168, 0.25);
   color: #9eeaf5;
 }
 
@@ -103,7 +103,7 @@
   display: inline-block;
   padding: 0.55rem 1rem;
   border-radius: 8px;
-  background: var(--meditap-accent, #17a2b8);
+  background: var(--meditap-accent, #1c6ea8);
   color: #fff;
   text-decoration: none;
   font-weight: 600;
@@ -124,7 +124,7 @@
 }
 
 .onboarding-page__hint a {
-  color: var(--meditap-accent, #17a2b8);
+  color: var(--meditap-accent, #1c6ea8);
 }
 
 .onboarding-page__loading {

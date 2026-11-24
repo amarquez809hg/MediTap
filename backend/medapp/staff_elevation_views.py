@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import time
 
+import jwt
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseNotFound, JsonResponse
 from django.views.decorators.http import require_GET
-from jose import jwt as jose_jwt
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -39,7 +39,9 @@ def _issue_elevation_response(patient_sub: str, staff_sub: str) -> Response:
         "iat": now,
         "exp": exp,
     }
-    elevation_token = jose_jwt.encode(payload, signing_key, algorithm="HS256")
+    elevation_token = jwt.encode(payload, signing_key, algorithm="HS256")
+    if isinstance(elevation_token, bytes):
+        elevation_token = elevation_token.decode("ascii")
     return Response({"elevation_token": elevation_token, "expires_in": ttl})
 
 

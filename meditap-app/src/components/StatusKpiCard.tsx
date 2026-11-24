@@ -13,10 +13,15 @@ export type StatusKpiCardProps = {
   value: React.ReactNode;
   subtitle: string;
   href: string;
-  highlightClass: string;
   onNavigate: (href: string) => void;
   loading?: boolean;
   ariaLabel?: string;
+  /** Optional clinical chip, e.g. New / Severe / Due */
+  badge?: string;
+  /** Softer emphasis for action-queue metrics */
+  queue?: boolean;
+  /** @deprecated rainbow highlights removed; kept for call-site compatibility */
+  highlightClass?: string;
 };
 
 const StatusKpiCard: React.FC<StatusKpiCardProps> = ({
@@ -24,19 +29,25 @@ const StatusKpiCard: React.FC<StatusKpiCardProps> = ({
   value,
   subtitle,
   href,
-  highlightClass,
   onNavigate,
   loading = false,
   ariaLabel,
+  badge,
+  queue = false,
 }) => (
   <IonCard
     button
-    className={`status-card status-card--clickable ${highlightClass}`}
+    className={`status-card status-card--clinical status-card--clickable${
+      queue ? ' status-card--queue' : ''
+    }`}
     onClick={() => onNavigate(href)}
     aria-label={ariaLabel ?? `${title}: ${subtitle}. Open tab.`}
   >
     <IonCardHeader>
-      <IonCardTitle>{title}</IonCardTitle>
+      <div className="status-card__title-row">
+        <IonCardTitle>{title}</IonCardTitle>
+        {badge ? <span className="status-card__badge">{badge}</span> : null}
+      </div>
     </IonCardHeader>
     <IonCardContent>
       {loading ? (

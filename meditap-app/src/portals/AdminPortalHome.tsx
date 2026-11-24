@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  fetchPortalMessageUnreadSummary,
   listAdminActivity,
   listHospitalsForAdmin,
   searchPatientsForAdmin,
@@ -45,6 +46,7 @@ function relativeTime(iso: string): string {
 
 function activityIcon(action: string): string {
   const a = action.toLowerCase();
+  if (a.includes('portal_message') || a.includes('message')) return 'fa-comments';
   if (a.includes('document')) return 'fa-file-medical';
   if (a.includes('hospital')) return 'fa-hospital';
   if (a.includes('login') || a.includes('auth')) return 'fa-sign-in-alt';
@@ -65,6 +67,7 @@ type HomeStats = {
   hospitals: number;
   incomplete: number;
   actionsToday: number;
+  unreadMessages: number;
 };
 
 /**
@@ -80,6 +83,7 @@ const AdminPortalHome: React.FC = () => {
     hospitals: 0,
     incomplete: 0,
     actionsToday: 0,
+    unreadMessages: 0,
   });
   const [selectedPatient, setSelectedPatient] = useState<PatientApi | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,10 +92,11 @@ const AdminPortalHome: React.FC = () => {
   const load = async () => {
     setLoading(true);
     try {
-      const [patients, hospitals, events] = await Promise.all([
+      const [patients, hospitals, events, messageSummary] = await Promise.all([
         searchPatientsForAdmin(''),
         listHospitalsForAdmin(),
         listAdminActivity(),
+        fetchPortalMessageUnreadSummary().catch(() => null),
       ]);
       const incomplete = patients.filter(isIncomplete);
       const startOfDay = new Date();
@@ -107,6 +112,7 @@ const AdminPortalHome: React.FC = () => {
         hospitals: hospitals.length,
         incomplete: incomplete.length,
         actionsToday,
+        unreadMessages: messageSummary?.unread_count ?? 0,
       });
 
       if (selected?.patientId) {
@@ -157,11 +163,11 @@ const AdminPortalHome: React.FC = () => {
       tone: 'teal',
     },
     {
-      key: 'actions',
-      label: 'Staff actions today',
-      value: stats.actionsToday,
-      hint: loading ? 'Loading…' : 'From the activity trail',
-      icon: 'fa-heartbeat',
+      key: 'messages',
+      label: 'Unread messages',
+      value: stats.unreadMessages,
+      hint: loading ? 'Loading…' : 'Patient portal inbox',
+      icon: 'fa-comments',
       tone: 'orange',
     },
   ];
@@ -173,6 +179,13 @@ const AdminPortalHome: React.FC = () => {
       desc: 'Search and open charts',
       icon: 'fa-users',
       tone: 'blue',
+    },
+    {
+      to: '/admin-portal/messages',
+      label: 'Messages',
+      desc: 'Patient portal inbox',
+      icon: 'fa-comments',
+      tone: 'violet',
     },
     {
       to: '/admin-portal/hospitals',
